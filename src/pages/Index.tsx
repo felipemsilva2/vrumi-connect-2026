@@ -7,44 +7,37 @@ import GovernmentSupport from "@/components/GovernmentSupport";
 import Footer from "@/components/Footer";
 import { Car } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-
 const Index = () => {
   const navigate = useNavigate();
-
-  return (
-    <main className="min-h-screen">
-      <MinimalModernHero
-        logo={
-          <div className="flex items-center gap-2">
-            <Car className="w-10 h-10" style={{ color: "#10b981" }} />
-            <span
-              className="text-2xl font-black"
-              style={{ color: "#000000", fontFamily: "Inter, sans-serif" }}
-            >
-              CNH FÁCIL
-            </span>
-          </div>
-        }
-        badge="Plataforma #1"
-        title="Passe na sua CNH com Facilidade"
-        subtitle="Tudo o que você precisa em um só lugar"
-        description="Flashcards inteligentes e materiais teóricos completos para garantir sua aprovação no exame de habilitação."
-        primaryButton={{
-          label: "Começar Agora",
-          onClick: () => navigate("/auth"),
-        }}
-        secondaryButton={{
-          label: "Entrar no Dashboard",
-          onClick: () => navigate("/auth"),
-        }}
-        stats={[
-          { value: "10K+", label: "Alunos Aprovados" },
-          { value: "95%", label: "Taxa de Aprovação" },
-          { value: "500+", label: "Questões" },
-          { value: "4.9★", label: "Avaliação" },
-        ]}
-        accentColor="#10b981"
-      />
+  return <main className="min-h-screen">
+      <MinimalModernHero logo={<div className="flex items-center gap-2">
+            <Car className="w-10 h-10" style={{
+        color: "#10b981"
+      }} />
+            <span className="text-2xl font-black" style={{
+        color: "#000000",
+        fontFamily: "Inter, sans-serif"
+      }}>Habilita
+      </span>
+          </div>} badge="Plataforma #1" title="Passe na sua CNH com Facilidade" subtitle="Tudo o que você precisa em um só lugar" description="Flashcards inteligentes e materiais teóricos completos para garantir sua aprovação no exame de habilitação." primaryButton={{
+      label: "Começar Agora",
+      onClick: () => navigate("/auth")
+    }} secondaryButton={{
+      label: "Entrar no Dashboard",
+      onClick: () => navigate("/auth")
+    }} stats={[{
+      value: "10K+",
+      label: "Alunos Aprovados"
+    }, {
+      value: "95%",
+      label: "Taxa de Aprovação"
+    }, {
+      value: "500+",
+      label: "Questões"
+    }, {
+      value: "4.9★",
+      label: "Avaliação"
+    }]} accentColor="#10b981" />
       <section id="recursos" className="py-20 px-4 bg-background">
         <div className="container mx-auto max-w-7xl">
           <div className="text-center mb-16">
@@ -67,8 +60,6 @@ const Index = () => {
         <FAQ />
       </section>
       <Footer />
-    </main>
-  );
+    </main>;
 };
-
 export default Index;
