@@ -112,7 +112,7 @@ const Footer = () => {
                 <MapPin className="w-5 h-5 flex-shrink-0 mt-0.5" style={{
                 color: "#10b981"
               }} />
-                <span>São Paulo, SP - Brasil</span>
+                <span>Brasília,DF - Brasil</span>
               </li>
             </ul>
           </div>

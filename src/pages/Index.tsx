@@ -42,9 +42,7 @@ const Index = () => {
             <h2 className="text-4xl md:text-5xl font-bold text-foreground mb-4">
               Diga adeus à sala de aula. Estude do seu jeito.
             </h2>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              O Habilita é a ponte entre o material denso do governo e a sua aprovação.
-            </p>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">O Conduzly é a ponte entre o material denso do governo e a sua aprovação.</p>
           </div>
           <FeaturesSectionWithHoverEffects />
         </div>
