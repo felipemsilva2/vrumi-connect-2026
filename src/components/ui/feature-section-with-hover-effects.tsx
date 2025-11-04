@@ -19,10 +19,10 @@ export function FeaturesSectionWithHoverEffects() {
       icon: <IconBrain />,
     },
     {
-      title: "Materiais Completos",
+      title: "Economize R$ 1.000, não apenas tempo",
       description:
-        "Todo conteúdo teórico necessário para sua aprovação, organizado e de fácil acesso.",
-      icon: <IconBook />,
+        "A maior vantagem da nova lei é financeira. Pule o custo do CFC e pague apenas pelo método de estudo mais eficiente do mercado.",
+      icon: <IconClock />,
     },
     {
       title: "Acompanhe seu Progresso",
@@ -31,34 +31,16 @@ export function FeaturesSectionWithHoverEffects() {
       icon: <IconChartBar />,
     },
     {
-      title: "Economize Tempo",
+      title: "100% Oficial, 0% Chatice",
       description:
-        "Estude no seu ritmo, reduza custos com aulas extras e aprove de primeira.",
-      icon: <IconClock />,
+        "Nós lemos o CTB e as apostilas oficiais do Contran para você. Transformamos tudo em lições fáceis e um banco de 500+ questões.",
+      icon: <IconBook />,
     },
     {
-      title: "Foco no que Importa",
+      title: "Simulados Fiéis ao DETRAN",
       description:
-        "Conteúdo atualizado com as questões mais recentes dos exames de habilitação.",
+        "Responda provas idênticas à oficial. Mesmo número de questões, mesmo tempo e mesmas matérias. Sem surpresas no dia.",
       icon: <IconTarget />,
-    },
-    {
-      title: "Resultados Comprovados",
-      description:
-        "95% de taxa de aprovação entre nossos alunos na primeira tentativa.",
-      icon: <IconTrendingUp />,
-    },
-    {
-      title: "Certificado de Conclusão",
-      description:
-        "Receba certificado ao completar todos os módulos do curso teórico.",
-      icon: <IconAward />,
-    },
-    {
-      title: "Atualizações Constantes",
-      description:
-        "Conteúdo sempre atualizado com as últimas mudanças na legislação de trânsito.",
-      icon: <IconSparkles />,
     },
   ];
   return (

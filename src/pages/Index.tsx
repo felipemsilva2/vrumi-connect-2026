@@ -16,11 +16,11 @@ const Index = () => {
         <MinimalModernHero logo={<div className="flex items-center gap-2">
             
             
-          </div>} badge="Plataforma #1" title="Passe na sua CNH com Facilidade" subtitle="Tudo o que você precisa em um só lugar" description="Flashcards inteligentes e materiais teóricos completos para garantir sua aprovação no exame de habilitação." primaryButton={{
+          </div>} badge="A LEI MUDOU. O CURSO TEÓRICO NÃO É MAIS OBRIGATÓRIO." title="O novo jeito de tirar sua CNH." subtitle="Troque as 45h de sala de aula por um app inteligente e economize 80% do valor da sua habilitação." description="Para que gastar R$1.000+ com o curso teórico se você pode ter o mesmo conteúdo oficial de forma rápida e interativa? O Habilita transforma as apostilas do governo em simulados, flashcards e lições que realmente aprovam." primaryButton={{
         label: "Começar Agora",
         onClick: () => navigate("/auth")
       }} secondaryButton={{
-        label: "Entrar no Dashboard",
+        label: "Já tenho conta",
         onClick: () => navigate("/auth")
       }} stats={[{
         value: "10K+",
@@ -40,10 +40,10 @@ const Index = () => {
         <div className="container mx-auto max-w-7xl">
           <div className="text-center mb-16">
             <h2 className="text-4xl md:text-5xl font-bold text-foreground mb-4">
-              Por que escolher nossa plataforma?
+              Diga adeus à sala de aula. Estude do seu jeito.
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Recursos inteligentes desenvolvidos para maximizar sua aprovação
+              O Habilita é a ponte entre o material denso do governo e a sua aprovação.
             </p>
           </div>
           <FeaturesSectionWithHoverEffects />
