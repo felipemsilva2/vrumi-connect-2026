@@ -31,6 +31,7 @@ interface DashboardProps {
 
 export const DashboardWithSidebar = ({ user, profile }: DashboardProps) => {
   const [isDark, setIsDark] = useState(false);
+  const [selected, setSelected] = useState("Dashboard");
 
   useEffect(() => {
     if (isDark) {
@@ -43,16 +44,27 @@ export const DashboardWithSidebar = ({ user, profile }: DashboardProps) => {
   return (
     <div className={`flex min-h-screen w-full ${isDark ? 'dark' : ''}`}>
       <div className="flex w-full bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100">
-        <Sidebar user={user} />
-        <MainContent isDark={isDark} setIsDark={setIsDark} user={user} profile={profile} />
+        <Sidebar user={user} selected={selected} setSelected={setSelected} />
+        <MainContent 
+          isDark={isDark} 
+          setIsDark={setIsDark} 
+          user={user} 
+          profile={profile}
+          selected={selected}
+        />
       </div>
     </div>
   );
 };
 
-const Sidebar = ({ user }: { user: any }) => {
+interface SidebarProps {
+  user: any;
+  selected: string;
+  setSelected: (value: string) => void;
+}
+
+const Sidebar = ({ user, selected, setSelected }: SidebarProps) => {
   const [open, setOpen] = useState(true);
-  const [selected, setSelected] = useState("Dashboard");
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -259,35 +271,74 @@ const ToggleClose = ({ open, setOpen }: any) => {
   );
 };
 
-const MainContent = ({ isDark, setIsDark, user, profile }: any) => {
+import { FlashcardsView } from "@/components/dashboard/FlashcardsView";
+import { SimuladosView } from "@/components/dashboard/SimuladosView";
+import { MateriaisView } from "@/components/dashboard/MateriaisView";
+import { EstatisticasView } from "@/components/dashboard/EstatisticasView";
+import { ConquistasView } from "@/components/dashboard/ConquistasView";
+import { PerfilView } from "@/components/dashboard/PerfilView";
+
+const MainContent = ({ isDark, setIsDark, user, profile, selected }: any) => {
   const successRate = profile?.total_questions_answered 
     ? Math.round((profile.correct_answers / profile.total_questions_answered) * 100)
     : 0;
 
+  const renderContent = () => {
+    switch (selected) {
+      case "Flashcards":
+        return <FlashcardsView />
+      case "Simulados":
+        return <SimuladosView />
+      case "Materiais":
+        return <MateriaisView />
+      case "Estatísticas":
+        return <EstatisticasView />
+      case "Conquistas":
+        return <ConquistasView />
+      case "Meu Perfil":
+        return <PerfilView user={user} profile={profile} />
+      default:
+        return <DashboardHome user={user} profile={profile} />
+    }
+  }
+
   return (
     <div className="flex-1 bg-gray-50 dark:bg-gray-950 p-6 overflow-auto">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Dashboard</h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-1">
-            Olá, {profile?.full_name || user?.email?.split('@')[0]}! Continue estudando para sua CNH
-          </p>
+      {selected === "Dashboard" && (
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Dashboard</h1>
+            <p className="text-gray-600 dark:text-gray-400 mt-1">
+              Olá, {profile?.full_name || user?.email?.split('@')[0]}! Continue estudando para sua CNH
+            </p>
+          </div>
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => setIsDark(!isDark)}
+              className="flex h-10 w-10 items-center justify-center rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
+            >
+              {isDark ? (
+                <Sun className="h-4 w-4" />
+              ) : (
+                <Moon className="h-4 w-4" />
+              )}
+            </button>
+          </div>
         </div>
-        <div className="flex items-center gap-4">
-          <button
-            onClick={() => setIsDark(!isDark)}
-            className="flex h-10 w-10 items-center justify-center rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
-          >
-            {isDark ? (
-              <Sun className="h-4 w-4" />
-            ) : (
-              <Moon className="h-4 w-4" />
-            )}
-          </button>
-        </div>
-      </div>
+      )}
       
+      {renderContent()}
+    </div>
+  )
+}
+
+const DashboardHome = ({ user, profile }: any) => {
+  const successRate = profile?.total_questions_answered 
+    ? Math.round((profile.correct_answers / profile.total_questions_answered) * 100)
+    : 0
+
+  return (
+    <>
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <div className="p-6 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm hover:shadow-md transition-shadow">
@@ -446,8 +497,8 @@ const MainContent = ({ isDark, setIsDark, user, profile }: any) => {
           </div>
         </div>
       </div>
-    </div>
-  );
-};
+    </>
+  )
+}
 
 export default DashboardWithSidebar;

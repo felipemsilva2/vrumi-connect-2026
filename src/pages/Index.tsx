@@ -5,12 +5,17 @@ import FAQ from "@/components/FAQ";
 import Testimonials from "@/components/Testimonials";
 import GovernmentSupport from "@/components/GovernmentSupport";
 import Footer from "@/components/Footer";
+import { Navbar } from "@/components/Navbar";
+import PricingSection from "@/components/PricingSection";
 import { Car } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+
 const Index = () => {
   const navigate = useNavigate();
-  return <main className="min-h-screen">
-      <MinimalModernHero logo={<div className="flex items-center gap-2">
+  return <main className="min-h-screen pt-20">
+      <Navbar />
+      <section id="inicio">
+        <MinimalModernHero logo={<div className="flex items-center gap-2">
             <Car className="w-10 h-10" style={{
         color: "#10b981"
       }} />
@@ -38,6 +43,7 @@ const Index = () => {
       value: "4.9★",
       label: "Avaliação"
     }]} accentColor="#10b981" />
+      </section>
       <section id="recursos" className="py-20 px-4 bg-background">
         <div className="container mx-auto max-w-7xl">
           <div className="text-center mb-16">
@@ -51,6 +57,7 @@ const Index = () => {
           <FeaturesSectionWithHoverEffects />
         </div>
       </section>
+      <PricingSection />
       <FlashcardSection />
       <section id="depoimentos">
         <Testimonials />
