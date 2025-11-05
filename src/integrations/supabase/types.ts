@@ -22,6 +22,7 @@ export type Database = {
           created_at: string | null
           difficulty: string | null
           id: string
+          image_url: string | null
           lesson_id: string | null
           question: string
           updated_at: string | null
@@ -33,6 +34,7 @@ export type Database = {
           created_at?: string | null
           difficulty?: string | null
           id?: string
+          image_url?: string | null
           lesson_id?: string | null
           question: string
           updated_at?: string | null
@@ -44,6 +46,7 @@ export type Database = {
           created_at?: string | null
           difficulty?: string | null
           id?: string
+          image_url?: string | null
           lesson_id?: string | null
           question?: string
           updated_at?: string | null
@@ -109,6 +112,7 @@ export type Database = {
           difficulty: string | null
           explanation: string | null
           id: string
+          image_url: string | null
           option_a: string
           option_b: string
           option_c: string
@@ -123,6 +127,7 @@ export type Database = {
           difficulty?: string | null
           explanation?: string | null
           id?: string
+          image_url?: string | null
           option_a: string
           option_b: string
           option_c: string
@@ -137,6 +142,7 @@ export type Database = {
           difficulty?: string | null
           explanation?: string | null
           id?: string
+          image_url?: string | null
           option_a?: string
           option_b?: string
           option_c?: string
@@ -194,6 +200,7 @@ export type Database = {
           created_at: string | null
           estimated_time: string | null
           id: string
+          images: Json | null
           order_number: number
           title: string
           updated_at: string | null
@@ -204,6 +211,7 @@ export type Database = {
           created_at?: string | null
           estimated_time?: string | null
           id?: string
+          images?: Json | null
           order_number: number
           title: string
           updated_at?: string | null
@@ -214,6 +222,7 @@ export type Database = {
           created_at?: string | null
           estimated_time?: string | null
           id?: string
+          images?: Json | null
           order_number?: number
           title?: string
           updated_at?: string | null

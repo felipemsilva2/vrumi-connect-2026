@@ -5,6 +5,7 @@ import { useToast } from "@/hooks/use-toast"
 import { Button } from "@/components/ui/button"
 import { Card, CardHeader, CardContent } from "@/components/ui/card"
 import { motion, AnimatePresence } from "framer-motion"
+import { ImageWithFallback } from "@/components/ImageWithFallback"
 
 interface QuizQuestion {
   id: string
@@ -16,6 +17,7 @@ interface QuizQuestion {
   correct_option: string
   explanation: string
   chapter_id: string
+  image_url?: string
 }
 
 interface QuizAttempt {
@@ -375,6 +377,17 @@ export const SimuladosView = () => {
                       <h3 className="text-lg font-semibold text-foreground mb-6">
                         {currentQ.question_text}
                       </h3>
+
+                      {currentQ.image_url && (
+                        <div className="mb-6 flex justify-center">
+                          <ImageWithFallback
+                            src={currentQ.image_url}
+                            alt="Imagem da questão"
+                            className="max-w-md w-full rounded-lg shadow-md"
+                            fallbackClassName="h-64"
+                          />
+                        </div>
+                      )}
 
                       <div className="space-y-3">
                         {['A', 'B', 'C', 'D'].map((option) => {

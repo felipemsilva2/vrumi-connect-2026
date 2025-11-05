@@ -3,6 +3,7 @@ import { BookOpen, ArrowRight, ArrowLeft, RotateCcw, CheckCircle, XCircle } from
 import { motion, AnimatePresence } from "framer-motion"
 import { supabase } from "@/integrations/supabase/client"
 import { useToast } from "@/hooks/use-toast"
+import { ImageWithFallback } from "@/components/ImageWithFallback"
 
 interface Flashcard {
   id: string
@@ -10,6 +11,7 @@ interface Flashcard {
   answer: string
   category: string
   difficulty: string
+  image_url?: string
 }
 
 interface FlashcardStats {
@@ -207,6 +209,18 @@ export const FlashcardsView = () => {
                 <h3 className="text-xl font-semibold text-foreground text-center mb-4">
                   {isFlipped ? "Resposta" : "Pergunta"}
                 </h3>
+                
+                {!isFlipped && card.image_url && (
+                  <div className="mb-4 flex justify-center">
+                    <ImageWithFallback
+                      src={card.image_url}
+                      alt="Imagem do flashcard"
+                      className="max-w-xs w-full rounded-lg shadow-md"
+                      fallbackClassName="h-48"
+                    />
+                  </div>
+                )}
+                
                 <p className="text-lg text-foreground text-center">
                   {isFlipped ? card.answer : card.question}
                 </p>
