@@ -55,6 +55,15 @@ export const MateriaisView = () => {
     fetchUserProgress()
   }, [])
 
+  // Listener para zoom de imagens inline
+  useEffect(() => {
+    const handleImageZoom = (e: any) => {
+      setZoomedImage(e.detail);
+    };
+    document.addEventListener('image-zoom', handleImageZoom);
+    return () => document.removeEventListener('image-zoom', handleImageZoom);
+  }, [])
+
   const fetchChapters = async () => {
     try {
       const { data, error } = await supabase
@@ -311,9 +320,13 @@ export const MateriaisView = () => {
                       prose-strong:text-foreground prose-strong:font-semibold
                       prose-ul:my-4 prose-ul:space-y-2
                       prose-li:text-muted-foreground prose-li:leading-relaxed
-                      prose-a:text-primary prose-a:no-underline hover:prose-a:underline"
+                      prose-a:text-primary prose-a:no-underline hover:prose-a:underline
+                      prose-img:rounded-lg prose-img:shadow-md prose-img:max-w-xs prose-img:mx-auto prose-img:my-4 prose-img:cursor-pointer prose-img:hover:shadow-xl prose-img:transition-shadow"
                     dangerouslySetInnerHTML={{ 
                       __html: section.content
+                        .replace(/!\[(.*?)\]\((.*?)\)/g, (match, alt, src) => {
+                          return `<img src="${src}" alt="${alt}" onclick="document.dispatchEvent(new CustomEvent('image-zoom', {detail: '${src}'}))" class="inline-image" />`
+                        })
                         .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
                         .replace(/### (.*?)(\n|$)/g, '<h3>$1</h3>')
                         .replace(/#### (.*?)(\n|$)/g, '<h4>$1</h4>')
