@@ -1,50 +1,126 @@
-import { useState } from "react"
-import { BookOpen, ArrowRight, ArrowLeft, RotateCcw } from "lucide-react"
+import { useState, useEffect } from "react"
+import { BookOpen, ArrowRight, ArrowLeft, RotateCcw, CheckCircle, XCircle } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
+import { supabase } from "@/integrations/supabase/client"
+import { useToast } from "@/hooks/use-toast"
 
-const flashcardsData = [
-  {
-    id: 1,
-    category: "Legislação de Trânsito",
-    question: "Qual a velocidade máxima permitida em vias urbanas?",
-    answer: "60 km/h, exceto quando houver sinalização indicando velocidade diferente."
-  },
-  {
-    id: 2,
-    category: "Sinalização",
-    question: "O que significa uma placa triangular com borda vermelha?",
-    answer: "Sinalização de advertência, alertando sobre condições perigosas à frente."
-  },
-  {
-    id: 3,
-    category: "Direção Defensiva",
-    question: "O que é direção defensiva?",
-    answer: "É dirigir de forma a evitar acidentes, apesar das ações incorretas dos outros e das condições adversas."
-  },
-  {
-    id: 4,
-    category: "Primeiros Socorros",
-    question: "Qual a primeira ação ao prestar socorro em um acidente?",
-    answer: "Sinalizar o local do acidente para evitar novos acidentes."
-  },
-  {
-    id: 5,
-    category: "Mecânica Básica",
-    question: "Com que frequência deve-se verificar o óleo do motor?",
-    answer: "Semanalmente ou a cada 1000 km rodados, sempre com o motor frio."
-  }
-]
+interface Flashcard {
+  id: string
+  question: string
+  answer: string
+  category: string
+  difficulty: string
+}
+
+interface FlashcardStats {
+  times_reviewed: number
+  times_correct: number
+  times_incorrect: number
+}
 
 export const FlashcardsView = () => {
+  const [flashcards, setFlashcards] = useState<Flashcard[]>([])
   const [currentCard, setCurrentCard] = useState(0)
   const [isFlipped, setIsFlipped] = useState(false)
   const [direction, setDirection] = useState(0)
+  const [stats, setStats] = useState<FlashcardStats>({ times_reviewed: 0, times_correct: 0, times_incorrect: 0 })
+  const [loading, setLoading] = useState(true)
+  const { toast } = useToast()
 
-  const handleNext = () => {
-    if (currentCard < flashcardsData.length - 1) {
+  useEffect(() => {
+    fetchFlashcards()
+  }, [])
+
+  const fetchFlashcards = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("flashcards")
+        .select("*")
+        .order("created_at")
+
+      if (error) throw error
+      setFlashcards(data || [])
+      if (data && data.length > 0) {
+        fetchCardStats(data[0].id)
+      }
+    } catch (error) {
+      console.error("Error fetching flashcards:", error)
+      toast({
+        title: "Erro ao carregar flashcards",
+        description: "Tente novamente mais tarde",
+        variant: "destructive",
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const fetchCardStats = async (cardId: string) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+
+      const { data, error } = await supabase
+        .from("user_flashcard_stats")
+        .select("*")
+        .eq("user_id", user.id)
+        .eq("flashcard_id", cardId)
+        .maybeSingle()
+
+      if (error) throw error
+      if (data) {
+        setStats({
+          times_reviewed: data.times_reviewed || 0,
+          times_correct: data.times_correct || 0,
+          times_incorrect: data.times_incorrect || 0,
+        })
+      } else {
+        setStats({ times_reviewed: 0, times_correct: 0, times_incorrect: 0 })
+      }
+    } catch (error) {
+      console.error("Error fetching card stats:", error)
+    }
+  }
+
+  const updateCardStats = async (isCorrect: boolean) => {
+    if (flashcards.length === 0) return
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+
+      const currentFlashcard = flashcards[currentCard]
+
+      const { error } = await supabase
+        .from("user_flashcard_stats")
+        .upsert({
+          user_id: user.id,
+          flashcard_id: currentFlashcard.id,
+          times_reviewed: stats.times_reviewed + 1,
+          times_correct: stats.times_correct + (isCorrect ? 1 : 0),
+          times_incorrect: stats.times_incorrect + (isCorrect ? 0 : 1),
+          last_reviewed: new Date().toISOString(),
+        })
+
+      if (error) throw error
+    } catch (error) {
+      console.error("Error updating card stats:", error)
+    }
+  }
+
+  const handleNext = async (wasCorrect?: boolean) => {
+    if (wasCorrect !== undefined && isFlipped) {
+      await updateCardStats(wasCorrect)
+    }
+    
+    if (currentCard < flashcards.length - 1) {
       setDirection(1)
       setIsFlipped(false)
-      setTimeout(() => setCurrentCard(currentCard + 1), 200)
+      const nextIndex = currentCard + 1
+      setTimeout(() => {
+        setCurrentCard(nextIndex)
+        fetchCardStats(flashcards[nextIndex].id)
+      }, 200)
     }
   }
 
@@ -52,16 +128,33 @@ export const FlashcardsView = () => {
     if (currentCard > 0) {
       setDirection(-1)
       setIsFlipped(false)
-      setTimeout(() => setCurrentCard(currentCard - 1), 200)
+      const prevIndex = currentCard - 1
+      setTimeout(() => {
+        setCurrentCard(prevIndex)
+        fetchCardStats(flashcards[prevIndex].id)
+      }, 200)
     }
   }
 
   const handleReset = () => {
     setCurrentCard(0)
     setIsFlipped(false)
+    fetchCardStats(flashcards[0].id)
   }
 
-  const card = flashcardsData[currentCard]
+  if (loading) {
+    return <div className="text-center py-8">Carregando flashcards...</div>
+  }
+
+  if (flashcards.length === 0) {
+    return (
+      <div className="text-center py-8">
+        <p className="text-muted-foreground">Nenhum flashcard disponível no momento.</p>
+      </div>
+    )
+  }
+
+  const card = flashcards[currentCard]
 
   return (
     <div className="space-y-6">
@@ -69,7 +162,7 @@ export const FlashcardsView = () => {
         <div>
           <h2 className="text-2xl font-bold text-foreground">Flashcards de Estudo</h2>
           <p className="text-muted-foreground mt-1">
-            Cartão {currentCard + 1} de {flashcardsData.length}
+            Cartão {currentCard + 1} de {flashcards.length}
           </p>
         </div>
         <button
@@ -93,7 +186,7 @@ export const FlashcardsView = () => {
           >
             <motion.div
               className="relative cursor-pointer"
-              onClick={() => setIsFlipped(!isFlipped)}
+              onClick={() => !isFlipped && setIsFlipped(true)}
               animate={{ rotateY: isFlipped ? 180 : 0 }}
               transition={{ duration: 0.6 }}
               style={{ transformStyle: "preserve-3d" }}
@@ -117,9 +210,35 @@ export const FlashcardsView = () => {
                 <p className="text-lg text-foreground text-center">
                   {isFlipped ? card.answer : card.question}
                 </p>
-                <p className="text-sm text-muted-foreground mt-6">
-                  Clique para virar o cartão
-                </p>
+                {!isFlipped && (
+                  <p className="text-sm text-muted-foreground mt-6">
+                    Clique para ver a resposta
+                  </p>
+                )}
+                {isFlipped && (
+                  <div className="flex gap-3 mt-6">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleNext(false)
+                      }}
+                      className="flex items-center gap-2 px-4 py-2 bg-destructive/10 text-destructive rounded-lg hover:bg-destructive/20 transition-colors"
+                    >
+                      <XCircle className="h-4 w-4" />
+                      Errei
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleNext(true)
+                      }}
+                      className="flex items-center gap-2 px-4 py-2 bg-success/10 text-success rounded-lg hover:bg-success/20 transition-colors"
+                    >
+                      <CheckCircle className="h-4 w-4" />
+                      Acertei
+                    </button>
+                  </div>
+                )}
               </div>
             </motion.div>
           </motion.div>
@@ -136,8 +255,8 @@ export const FlashcardsView = () => {
           Anterior
         </button>
         <button
-          onClick={handleNext}
-          disabled={currentCard === flashcardsData.length - 1}
+          onClick={() => handleNext()}
+          disabled={currentCard === flashcards.length - 1}
           className="flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           Próximo
@@ -147,16 +266,20 @@ export const FlashcardsView = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">
         <div className="bg-card border border-border rounded-lg p-4">
-          <h4 className="font-medium text-foreground mb-2">Estudados Hoje</h4>
-          <p className="text-2xl font-bold text-primary">12</p>
+          <h4 className="font-medium text-foreground mb-2">Cards Totais</h4>
+          <p className="text-2xl font-bold text-primary">{flashcards.length}</p>
         </div>
         <div className="bg-card border border-border rounded-lg p-4">
-          <h4 className="font-medium text-foreground mb-2">Total Estudados</h4>
-          <p className="text-2xl font-bold text-success">156</p>
+          <h4 className="font-medium text-foreground mb-2">Revisões</h4>
+          <p className="text-2xl font-bold text-secondary">{stats.times_reviewed}</p>
         </div>
         <div className="bg-card border border-border rounded-lg p-4">
-          <h4 className="font-medium text-foreground mb-2">Faltam Revisar</h4>
-          <p className="text-2xl font-bold text-secondary">34</p>
+          <h4 className="font-medium text-foreground mb-2">Taxa de Acerto</h4>
+          <p className="text-2xl font-bold text-success">
+            {stats.times_reviewed > 0 
+              ? Math.round((stats.times_correct / stats.times_reviewed) * 100) 
+              : 0}%
+          </p>
         </div>
       </div>
     </div>
