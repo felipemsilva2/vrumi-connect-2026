@@ -1,8 +1,11 @@
 import { useEffect, useState } from "react"
-import { BookOpen, Clock, CheckCircle2, Play } from "lucide-react"
+import { BookOpen, Clock, CheckCircle2, Play, ArrowLeft, List } from "lucide-react"
 import { supabase } from "@/integrations/supabase/client"
 import { useToast } from "@/hooks/use-toast"
 import { Progress } from "@/components/ui/progress"
+import { Card, CardHeader, CardContent } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { motion } from "framer-motion"
 
 interface Chapter {
   id: string
@@ -172,45 +175,139 @@ export const MateriaisView = () => {
 
   // View: Lesson Content
   if (selectedLesson) {
-    return (
-      <div className="space-y-6">
-        <button
-          onClick={handleBackToLessons}
-          className="text-primary hover:underline flex items-center gap-2"
-        >
-          ← Voltar para lições
-        </button>
+    // Processa o conteúdo markdown para HTML estruturado
+    const processContent = (content: string) => {
+      const sections: { title: string; content: string }[] = []
+      const lines = content.split('\n')
+      let currentSection: { title: string; content: string } | null = null
 
-        <div className="bg-card border border-border rounded-xl p-6">
-          <div className="flex items-start justify-between mb-4">
-            <div>
-              <h2 className="text-2xl font-bold text-foreground">{selectedLesson.title}</h2>
-              <p className="text-muted-foreground flex items-center gap-2 mt-2">
-                <Clock className="h-4 w-4" />
-                {selectedLesson.estimated_time}
-              </p>
+      lines.forEach(line => {
+        if (line.startsWith('# ')) {
+          // Título principal - ignorar, já está no header
+          return
+        } else if (line.startsWith('## ')) {
+          // Nova seção
+          if (currentSection) {
+            sections.push(currentSection)
+          }
+          currentSection = {
+            title: line.replace('## ', '').trim(),
+            content: ''
+          }
+        } else if (currentSection) {
+          // Adiciona conteúdo à seção atual
+          currentSection.content += line + '\n'
+        }
+      })
+
+      if (currentSection) {
+        sections.push(currentSection)
+      }
+
+      return sections
+    }
+
+    const sections = processContent(selectedLesson.content)
+
+    return (
+      <div className="min-h-screen bg-background flex flex-col items-center py-6 px-4">
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="w-full max-w-4xl mb-6"
+        >
+          <Button
+            variant="ghost"
+            onClick={handleBackToLessons}
+            className="mb-4 hover:bg-accent"
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Voltar para lições
+          </Button>
+
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+            <div className="flex items-start gap-4">
+              <div className="p-3 bg-primary/10 rounded-xl">
+                <BookOpen className="text-primary h-7 w-7" />
+              </div>
+              <div>
+                <h1 className="text-3xl font-bold text-foreground">
+                  {selectedLesson.title}
+                </h1>
+                <div className="flex items-center text-sm text-muted-foreground mt-2">
+                  <Clock size={16} className="mr-1" /> 
+                  {selectedLesson.estimated_time}
+                </div>
+              </div>
             </div>
-            {!isLessonCompleted(selectedLesson.id) && (
-              <button
+
+            {!isLessonCompleted(selectedLesson.id) ? (
+              <Button
                 onClick={markLessonComplete}
-                className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
+                className="bg-green-500 hover:bg-green-600 text-white flex items-center gap-2 shadow-md"
               >
+                <CheckCircle2 size={18} /> 
                 Marcar como Concluído
-              </button>
-            )}
-            {isLessonCompleted(selectedLesson.id) && (
-              <div className="flex items-center gap-2 text-success">
-                <CheckCircle2 className="h-5 w-5" />
-                <span className="font-medium">Concluído</span>
+              </Button>
+            ) : (
+              <div className="flex items-center gap-2 px-4 py-2 bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800 rounded-lg">
+                <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-400" />
+                <span className="font-medium text-green-600 dark:text-green-400">Concluído</span>
               </div>
             )}
           </div>
+        </motion.div>
 
-          <div 
-            className="prose prose-slate dark:prose-invert max-w-none"
-            dangerouslySetInnerHTML={{ __html: selectedLesson.content.replace(/\n/g, '<br />') }}
-          />
-        </div>
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="w-full max-w-4xl space-y-6"
+        >
+          {sections.map((section, index) => (
+            <motion.div
+              key={index}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 + index * 0.05 }}
+            >
+              <Card className="shadow-lg rounded-2xl border-2 border-border/50 hover:shadow-xl transition-shadow">
+                <CardHeader className="pb-4">
+                  <h2 className="text-xl font-semibold text-foreground flex items-center gap-2">
+                    <List size={20} className="text-primary" /> 
+                    {section.title}
+                  </h2>
+                </CardHeader>
+                <CardContent>
+                  <div 
+                    className="prose prose-slate dark:prose-invert max-w-none
+                      prose-headings:text-foreground prose-headings:font-semibold
+                      prose-h3:text-lg prose-h3:mt-6 prose-h3:mb-3
+                      prose-h4:text-base prose-h4:mt-4 prose-h4:mb-2
+                      prose-p:text-muted-foreground prose-p:leading-relaxed prose-p:mb-4
+                      prose-strong:text-foreground prose-strong:font-semibold
+                      prose-ul:my-4 prose-ul:space-y-2
+                      prose-li:text-muted-foreground prose-li:leading-relaxed
+                      prose-a:text-primary prose-a:no-underline hover:prose-a:underline"
+                    dangerouslySetInnerHTML={{ 
+                      __html: section.content
+                        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                        .replace(/### (.*?)(\n|$)/g, '<h3>$1</h3>')
+                        .replace(/#### (.*?)(\n|$)/g, '<h4>$1</h4>')
+                        .replace(/\n- /g, '\n<li>')
+                        .replace(/<li>/g, '<ul><li>')
+                        .replace(/(<li>.*?)(\n\n|$)/gs, '$1</li></ul>')
+                        .replace(/<\/ul>\n<ul>/g, '')
+                        .replace(/\n\n/g, '</p><p>')
+                        .replace(/^(.)/g, '<p>$1')
+                        .replace(/(.)\n$/g, '$1</p>')
+                    }}
+                  />
+                </CardContent>
+              </Card>
+            </motion.div>
+          ))}
+        </motion.div>
       </div>
     )
   }
