@@ -102,7 +102,14 @@ export const MateriaisView = () => {
         .order("order_number")
 
       if (error) throw error
-      setLessons(data || [])
+      
+      // Transform the data to match our Lesson interface
+      const transformedLessons: Lesson[] = (data || []).map(lesson => ({
+        ...lesson,
+        images: lesson.images ? (lesson.images as unknown as LessonImage[]) : undefined
+      }))
+      
+      setLessons(transformedLessons)
     } catch (error) {
       console.error("Error fetching lessons:", error)
       toast({
