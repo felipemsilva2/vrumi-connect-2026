@@ -29,7 +29,7 @@ const Navbar = () => {
           duration: 0.3
         }} onClick={() => navigate("/")}>
             <Car className="w-8 h-8 text-primary" />
-            <span className="text-xl font-black text-foreground">Conduzly </span>
+            <span className="text-xl font-black text-foreground">Zutobi</span>
           </motion.div>
         </div>
         
