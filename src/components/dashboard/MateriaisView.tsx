@@ -310,33 +310,40 @@ export const MateriaisView = () => {
                     {section.title}
                   </h2>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="space-y-6">
                   <div 
-                    className="prose prose-slate dark:prose-invert max-w-none
-                      prose-headings:text-foreground prose-headings:font-semibold
-                      prose-h3:text-lg prose-h3:mt-6 prose-h3:mb-3
-                      prose-h4:text-base prose-h4:mt-4 prose-h4:mb-2
-                      prose-p:text-muted-foreground prose-p:leading-relaxed prose-p:mb-4
-                      prose-strong:text-foreground prose-strong:font-semibold
-                      prose-ul:my-4 prose-ul:space-y-2
-                      prose-li:text-muted-foreground prose-li:leading-relaxed
-                      prose-a:text-primary prose-a:no-underline hover:prose-a:underline
-                      prose-img:rounded-lg prose-img:shadow-md prose-img:max-w-xs prose-img:mx-auto prose-img:my-4 prose-img:cursor-pointer prose-img:hover:shadow-xl prose-img:transition-shadow"
+                    className="space-y-6
+                      [&_h3]:text-xl [&_h3]:font-bold [&_h3]:text-foreground [&_h3]:mb-4 [&_h3]:mt-6 [&_h3]:pb-2 [&_h3]:border-b-2 [&_h3]:border-primary/20
+                      [&_h4]:text-lg [&_h4]:font-semibold [&_h4]:text-primary [&_h4]:mb-3 [&_h4]:mt-5
+                      [&_p]:text-base [&_p]:text-muted-foreground [&_p]:leading-relaxed [&_p]:mb-4
+                      [&_strong]:font-semibold [&_strong]:text-foreground [&_strong]:bg-primary/10 [&_strong]:px-1.5 [&_strong]:py-0.5 [&_strong]:rounded [&_strong]:text-sm
+                      [&_ul]:space-y-3 [&_ul]:my-5 [&_ul]:pl-0
+                      [&_li]:flex [&_li]:items-start [&_li]:gap-3 [&_li]:text-muted-foreground [&_li]:leading-relaxed [&_li]:bg-card [&_li]:p-3 [&_li]:rounded-lg [&_li]:border [&_li]:border-border/50
+                      [&_li]:before:content-['•'] [&_li]:before:text-primary [&_li]:before:text-xl [&_li]:before:font-bold [&_li]:before:flex-shrink-0
+                      [&_img]:rounded-xl [&_img]:shadow-lg [&_img]:max-w-md [&_img]:mx-auto [&_img]:my-8 [&_img]:cursor-pointer [&_img]:hover:shadow-2xl [&_img]:transition-all [&_img]:hover:scale-105 [&_img]:border-4 [&_img]:border-border"
                     dangerouslySetInnerHTML={{ 
                       __html: section.content
+                        // Processa imagens markdown com figure
                         .replace(/!\[(.*?)\]\((.*?)\)/g, (match, alt, src) => {
-                          return `<img src="${src}" alt="${alt}" onclick="document.dispatchEvent(new CustomEvent('image-zoom', {detail: '${src}'}))" class="inline-image" />`
+                          return `<figure class="my-8 flex flex-col items-center">
+                            <img src="${src}" alt="${alt}" onclick="document.dispatchEvent(new CustomEvent('image-zoom', {detail: '${src}'}))" />
+                            <figcaption class="text-center text-sm text-muted-foreground mt-3 italic">${alt}</figcaption>
+                          </figure>`
                         })
+                        // Headers
+                        .replace(/^### (.*?)$/gm, '<h3>$1</h3>')
+                        .replace(/^#### (.*?)$/gm, '<h4>$1</h4>')
+                        // Texto em negrito
                         .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                        .replace(/### (.*?)(\n|$)/g, '<h3>$1</h3>')
-                        .replace(/#### (.*?)(\n|$)/g, '<h4>$1</h4>')
-                        .replace(/\n- /g, '\n<li>')
-                        .replace(/<li>/g, '<ul><li>')
-                        .replace(/(<li>.*?)(\n\n|$)/gs, '$1</li></ul>')
-                        .replace(/<\/ul>\n<ul>/g, '')
+                        // Listas
+                        .replace(/^- (.+?)$/gm, '<li>$1</li>')
+                        .replace(/(<li>.*?<\/li>\n?)+/g, '<ul>$&</ul>')
+                        // Parágrafos
                         .replace(/\n\n/g, '</p><p>')
-                        .replace(/^(.)/g, '<p>$1')
-                        .replace(/(.)\n$/g, '$1</p>')
+                        .replace(/^(?!<[hulf]|<figure)(.*?)$/gm, '<p>$1</p>')
+                        .replace(/<p><\/p>/g, '')
+                        .replace(/<p>(<[hulf])/g, '$1')
+                        .replace(/(<\/[hulf][^>]*>)<\/p>/g, '$1')
                     }}
                   />
                   
