@@ -5,6 +5,8 @@ import { useToast } from "@/hooks/use-toast"
 import { Progress } from "@/components/ui/progress"
 import { Card, CardHeader, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
+import { ImageWithFallback } from "@/components/ImageWithFallback"
 import { motion } from "framer-motion"
 
 interface Chapter {
@@ -16,6 +18,13 @@ interface Chapter {
   estimated_time: string
 }
 
+interface LessonImage {
+  url: string
+  caption: string
+  section: string
+  position: number
+}
+
 interface Lesson {
   id: string
   chapter_id: string
@@ -23,6 +32,7 @@ interface Lesson {
   content: string
   order_number: number
   estimated_time: string
+  images?: LessonImage[]
 }
 
 interface UserProgress {
@@ -37,6 +47,7 @@ export const MateriaisView = () => {
   const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null)
   const [userProgress, setUserProgress] = useState<UserProgress[]>([])
   const [loading, setLoading] = useState(true)
+  const [zoomedImage, setZoomedImage] = useState<string | null>(null)
   const { toast } = useToast()
 
   useEffect(() => {
@@ -177,9 +188,9 @@ export const MateriaisView = () => {
   if (selectedLesson) {
     // Processa o conteúdo markdown para HTML estruturado
     const processContent = (content: string) => {
-      const sections: { title: string; content: string }[] = []
+      const sections: { title: string; content: string; images: LessonImage[] }[] = []
       const lines = content.split('\n')
-      let currentSection: { title: string; content: string } | null = null
+      let currentSection: { title: string; content: string; images: LessonImage[] } | null = null
 
       lines.forEach(line => {
         if (line.startsWith('# ')) {
@@ -190,9 +201,14 @@ export const MateriaisView = () => {
           if (currentSection) {
             sections.push(currentSection)
           }
+          const sectionTitle = line.replace('## ', '').trim()
           currentSection = {
-            title: line.replace('## ', '').trim(),
-            content: ''
+            title: sectionTitle,
+            content: '',
+            images: selectedLesson.images?.filter(img => 
+              img.section.toLowerCase().includes(sectionTitle.toLowerCase()) ||
+              sectionTitle.toLowerCase().includes(img.section.toLowerCase())
+            ) || []
           }
         } else if (currentSection) {
           // Adiciona conteúdo à seção atual
@@ -303,11 +319,47 @@ export const MateriaisView = () => {
                         .replace(/(.)\n$/g, '$1</p>')
                     }}
                   />
+                  
+                  {section.images && section.images.length > 0 && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+                      {section.images.sort((a, b) => a.position - b.position).map((image, imgIdx) => (
+                        <div key={imgIdx} className="flex flex-col items-center space-y-2">
+                          <ImageWithFallback
+                            src={image.url}
+                            alt={image.caption}
+                            className="max-w-full h-auto rounded-lg shadow-md cursor-pointer hover:shadow-xl transition-shadow border-2 border-border/50"
+                            fallbackClassName="h-64 w-full"
+                            onClick={() => setZoomedImage(image.url)}
+                          />
+                          <p className="text-sm text-muted-foreground text-center italic">
+                            {image.caption}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </motion.div>
           ))}
         </motion.div>
+
+        {/* Modal de Zoom para Imagens */}
+        <Dialog open={!!zoomedImage} onOpenChange={() => setZoomedImage(null)}>
+          <DialogContent className="max-w-4xl">
+            <DialogHeader>
+              <DialogTitle>Visualização Ampliada</DialogTitle>
+            </DialogHeader>
+            <img 
+              src={zoomedImage || ''} 
+              alt="Imagem ampliada" 
+              className="w-full h-auto rounded-lg"
+            />
+            <DialogDescription className="text-center text-sm text-muted-foreground mt-2">
+              Clique fora da imagem ou pressione ESC para fechar
+            </DialogDescription>
+          </DialogContent>
+        </Dialog>
       </div>
     )
   }
