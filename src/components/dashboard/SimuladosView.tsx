@@ -1,8 +1,10 @@
-import { useState, useEffect } from "react"
-import { Clock, Play, History, Trophy, CheckCircle, XCircle } from "lucide-react"
+import { useState, useEffect, useRef } from "react"
+import { Clock, Play, History, Trophy, CheckCircle, XCircle, ArrowLeft, ArrowRight } from "lucide-react"
 import { supabase } from "@/integrations/supabase/client"
 import { useToast } from "@/hooks/use-toast"
-import { Progress } from "@/components/ui/progress"
+import { Button } from "@/components/ui/button"
+import { Card, CardHeader, CardContent } from "@/components/ui/card"
+import { motion, AnimatePresence } from "framer-motion"
 
 interface QuizQuestion {
   id: string
@@ -32,10 +34,11 @@ export const SimuladosView = () => {
   const [currentQuestion, setCurrentQuestion] = useState(0)
   const [selectedAnswer, setSelectedAnswer] = useState<string>("")
   const [userAnswers, setUserAnswers] = useState<Record<number, string>>({})
-  const [timeLeft, setTimeLeft] = useState(2400) // 40 minutos
+  const [timeLeft, setTimeLeft] = useState(2400)
   const [quizStarted, setQuizStarted] = useState(false)
   const [attemptHistory, setAttemptHistory] = useState<QuizAttempt[]>([])
-  const [currentAttemptId, setCurrentAttemptId] = useState<string>("")
+  const [showConfirmFinish, setShowConfirmFinish] = useState(false)
+  const timerRef = useRef<number | null>(null)
   const { toast } = useToast()
 
   useEffect(() => {
@@ -43,11 +46,13 @@ export const SimuladosView = () => {
   }, [])
 
   useEffect(() => {
-    let timer: NodeJS.Timeout
+    if (timerRef.current) window.clearInterval(timerRef.current)
+    
     if (quizStarted && timeLeft > 0 && view === "quiz") {
-      timer = setInterval(() => {
+      timerRef.current = window.setInterval(() => {
         setTimeLeft((prev) => {
           if (prev <= 1) {
+            window.clearInterval(timerRef.current!)
             finishQuiz()
             return 0
           }
@@ -55,7 +60,10 @@ export const SimuladosView = () => {
         })
       }, 1000)
     }
-    return () => clearInterval(timer)
+
+    return () => {
+      if (timerRef.current) window.clearInterval(timerRef.current)
+    }
   }, [quizStarted, timeLeft, view])
 
   const fetchAttemptHistory = async () => {
@@ -87,7 +95,6 @@ export const SimuladosView = () => {
 
       if (error) throw error
       
-      // Shuffle questions
       const shuffled = (data || []).sort(() => Math.random() - 0.5)
       setQuestions(shuffled)
       setView("quiz")
@@ -95,7 +102,7 @@ export const SimuladosView = () => {
       setCurrentQuestion(0)
       setUserAnswers({})
       setSelectedAnswer("")
-      setTimeLeft(type === "official" ? 2400 : 1200) // 40 min ou 20 min
+      setTimeLeft(type === "official" ? 2400 : 1200)
     } catch (error) {
       console.error("Error starting quiz:", error)
       toast({
@@ -123,6 +130,11 @@ export const SimuladosView = () => {
       setCurrentQuestion(currentQuestion - 1)
       setSelectedAnswer(userAnswers[currentQuestion - 1] || "")
     }
+  }
+
+  const jumpTo = (index: number) => {
+    setCurrentQuestion(index)
+    setSelectedAnswer(userAnswers[index] || "")
   }
 
   const finishQuiz = async () => {
@@ -156,9 +168,6 @@ export const SimuladosView = () => {
       if (attemptError) throw attemptError
 
       if (attemptData) {
-        setCurrentAttemptId(attemptData.id)
-
-        // Save individual answers
         const answers = questions.map((q, index) => ({
           attempt_id: attemptData.id,
           question_id: q.id,
@@ -174,6 +183,7 @@ export const SimuladosView = () => {
       }
 
       setQuizStarted(false)
+      setShowConfirmFinish(false)
       setView("results")
       fetchAttemptHistory()
     } catch (error) {
@@ -189,7 +199,7 @@ export const SimuladosView = () => {
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60)
     const secs = seconds % 60
-    return `${mins}:${secs.toString().padStart(2, "0")}`
+    return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`
   }
 
   const calculateCorrectAnswers = () => {
@@ -206,76 +216,86 @@ export const SimuladosView = () => {
     const passed = score >= 70
 
     return (
-      <div className="space-y-6">
-        <div className="bg-card border border-border rounded-xl p-8 text-center">
-          <div className={`w-24 h-24 mx-auto rounded-full flex items-center justify-center mb-4 ${passed ? 'bg-success/10' : 'bg-destructive/10'}`}>
-            {passed ? (
-              <CheckCircle className="h-12 w-12 text-success" />
-            ) : (
-              <XCircle className="h-12 w-12 text-destructive" />
-            )}
-          </div>
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="space-y-6"
+      >
+        <Card className="shadow-lg border-2">
+          <CardContent className="p-8 text-center">
+            <div className={`w-24 h-24 mx-auto rounded-full flex items-center justify-center mb-4 ${passed ? 'bg-green-50 dark:bg-green-950' : 'bg-red-50 dark:bg-red-950'}`}>
+              {passed ? (
+                <CheckCircle className="h-12 w-12 text-green-600 dark:text-green-400" />
+              ) : (
+                <XCircle className="h-12 w-12 text-red-600 dark:text-red-400" />
+              )}
+            </div>
 
-          <h2 className="text-3xl font-bold mb-2">
-            {passed ? "Parabéns! Você foi aprovado!" : "Não foi dessa vez"}
-          </h2>
-          
-          <p className="text-6xl font-bold my-6" style={{ color: passed ? 'hsl(var(--success))' : 'hsl(var(--destructive))' }}>
-            {score}%
-          </p>
-
-          <p className="text-muted-foreground mb-6">
-            Você acertou {calculateCorrectAnswers()} de {questions.length} questões
-          </p>
-
-          {!passed && (
-            <p className="text-sm text-muted-foreground mb-4">
-              É necessário 70% de acertos para aprovação. Continue estudando!
+            <h2 className="text-3xl font-bold mb-2">
+              {passed ? "Parabéns! Você foi aprovado!" : "Não foi dessa vez"}
+            </h2>
+            
+            <p className={`text-6xl font-bold my-6 ${passed ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+              {score}%
             </p>
-          )}
 
-          <div className="flex gap-3 justify-center">
-            <button
-              onClick={() => setView("menu")}
-              className="px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
-            >
-              Voltar ao Menu
-            </button>
-            <button
-              onClick={() => startQuiz(questions.length === 30 ? "official" : "practice")}
-              className="px-6 py-3 bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary/90 transition-colors"
-            >
-              Tentar Novamente
-            </button>
-          </div>
-        </div>
+            <p className="text-muted-foreground mb-6">
+              Você acertou {calculateCorrectAnswers()} de {questions.length} questões
+            </p>
 
-        <div className="bg-card border border-border rounded-xl p-6">
-          <h3 className="text-xl font-bold mb-4">Revisão das Questões</h3>
-          <div className="space-y-4">
+            {!passed && (
+              <p className="text-sm text-muted-foreground mb-4">
+                É necessário 70% de acertos para aprovação. Continue estudando!
+              </p>
+            )}
+
+            <div className="flex gap-3 justify-center">
+              <Button
+                onClick={() => setView("menu")}
+                variant="outline"
+                size="lg"
+              >
+                Voltar ao Menu
+              </Button>
+              <Button
+                onClick={() => startQuiz(questions.length === 30 ? "official" : "practice")}
+                size="lg"
+                className="bg-green-500 hover:bg-green-600"
+              >
+                Tentar Novamente
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="shadow-lg">
+          <CardHeader>
+            <h3 className="text-xl font-bold">Revisão das Questões</h3>
+          </CardHeader>
+          <CardContent className="space-y-4">
             {questions.map((q, index) => {
               const userAnswer = userAnswers[index]
               const isCorrect = userAnswer === q.correct_option
               
               return (
-                <div key={q.id} className={`p-4 rounded-lg border ${isCorrect ? 'border-success/50 bg-success/5' : 'border-destructive/50 bg-destructive/5'}`}>
+                <div key={q.id} className={`p-4 rounded-lg border-2 ${isCorrect ? 'border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-950' : 'border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950'}`}>
                   <div className="flex items-start gap-3">
                     {isCorrect ? (
-                      <CheckCircle className="h-5 w-5 text-success flex-shrink-0 mt-1" />
+                      <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400 flex-shrink-0 mt-1" />
                     ) : (
-                      <XCircle className="h-5 w-5 text-destructive flex-shrink-0 mt-1" />
+                      <XCircle className="h-5 w-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-1" />
                     )}
                     <div className="flex-1">
                       <p className="font-medium mb-2">{index + 1}. {q.question_text}</p>
                       <p className="text-sm text-muted-foreground mb-1">
-                        Sua resposta: <span className={isCorrect ? 'text-success' : 'text-destructive'}>{userAnswer || "Não respondida"}</span>
+                        Sua resposta: <span className={isCorrect ? 'text-green-600 dark:text-green-400 font-semibold' : 'text-red-600 dark:text-red-400 font-semibold'}>{userAnswer || "Não respondida"}</span>
                       </p>
                       {!isCorrect && (
                         <>
-                          <p className="text-sm text-success mb-2">
+                          <p className="text-sm text-green-600 dark:text-green-400 mb-2 font-semibold">
                             Resposta correta: {q.correct_option}
                           </p>
-                          <p className="text-sm text-muted-foreground">
+                          <p className="text-sm text-muted-foreground italic">
                             {q.explanation}
                           </p>
                         </>
@@ -285,97 +305,243 @@ export const SimuladosView = () => {
                 </div>
               )
             })}
-          </div>
-        </div>
-      </div>
+          </CardContent>
+        </Card>
+      </motion.div>
     )
   }
 
   // View: Quiz in Progress
   if (view === "quiz" && questions.length > 0) {
     const currentQ = questions[currentQuestion]
-    const progress = ((currentQuestion + 1) / questions.length) * 100
+    const answeredCount = Object.keys(userAnswers).length
+    const progress = Math.round(((currentQuestion + 1) / questions.length) * 100)
+
+    const cardVariants = {
+      enter: { opacity: 0, y: 8 },
+      center: { opacity: 1, y: 0 },
+      exit: { opacity: 0, y: -8 },
+    }
 
     return (
-      <div className="space-y-6">
-        <div className="flex items-center justify-between bg-card border border-border rounded-xl p-4">
-          <div>
-            <p className="text-sm text-muted-foreground">Questão</p>
-            <p className="text-xl font-bold">{currentQuestion + 1} / {questions.length}</p>
-          </div>
-          <div className="flex items-center gap-2 text-primary">
-            <Clock className="h-5 w-5" />
-            <span className="text-xl font-mono font-bold">{formatTime(timeLeft)}</span>
+      <div className="min-h-screen bg-background p-4 md:p-6">
+        <div className="w-full max-w-6xl mx-auto">
+          {/* Header com timer e progresso */}
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-6"
+          >
+            <Card className="shadow-md border-2">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <div>
+                    <div className="text-sm text-muted-foreground">Questão</div>
+                    <div className="text-2xl font-bold text-foreground">
+                      {currentQuestion + 1}/{questions.length}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2 text-foreground">
+                      <Clock size={20} />
+                      <span className="text-xl font-mono font-bold">{formatTime(timeLeft)}</span>
+                    </div>
+                  </div>
+                </div>
+                <div className="h-2 w-full bg-green-100 dark:bg-green-950 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-green-500 rounded-full transition-all duration-300"
+                    style={{ width: `${progress}%` }}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Questão e alternativas */}
+            <div className="lg:col-span-2">
+              <Card className="shadow-lg border-2">
+                <CardContent className="p-6">
+                  <AnimatePresence mode="wait">
+                    <motion.div
+                      key={currentQuestion}
+                      variants={cardVariants}
+                      initial="enter"
+                      animate="center"
+                      exit="exit"
+                      transition={{ duration: 0.2 }}
+                    >
+                      <h3 className="text-lg font-semibold text-foreground mb-6">
+                        {currentQ.question_text}
+                      </h3>
+
+                      <div className="space-y-3">
+                        {['A', 'B', 'C', 'D'].map((option) => {
+                          const isSelected = selectedAnswer === option
+                          const optionText = currentQ[`option_${option.toLowerCase()}` as keyof QuizQuestion] as string
+                          
+                          return (
+                            <button
+                              key={option}
+                              onClick={() => handleAnswerSelect(option)}
+                              className={`w-full text-left rounded-lg border-2 px-4 py-3 flex items-center justify-between transition-all ${
+                                isSelected
+                                  ? "bg-green-50 dark:bg-green-950 border-green-300 dark:border-green-700 shadow-md"
+                                  : "bg-background border-border hover:shadow-md hover:border-primary/50"
+                              }`}
+                            >
+                              <div className="flex items-center gap-3">
+                                <div className={`w-10 h-10 flex items-center justify-center rounded-full border-2 ${isSelected ? 'border-green-500 bg-green-100 dark:bg-green-900' : 'border-border'}`}>
+                                  <span className="font-bold text-sm">{option}</span>
+                                </div>
+                                <div className="text-sm text-foreground">{optionText}</div>
+                              </div>
+                              {isSelected && (
+                                <div className="flex items-center gap-2 text-green-600 dark:text-green-400 font-medium">
+                                  <CheckCircle size={18} />
+                                  <span className="hidden sm:inline">Selecionada</span>
+                                </div>
+                              )}
+                            </button>
+                          )
+                        })}
+                      </div>
+
+                      {/* Navegação */}
+                      <div className="mt-6 flex items-center gap-3">
+                        <Button
+                          onClick={handlePrevious}
+                          disabled={currentQuestion === 0}
+                          variant="outline"
+                          size="lg"
+                        >
+                          <ArrowLeft size={16} className="mr-2" /> Anterior
+                        </Button>
+
+                        <Button
+                          onClick={() => setShowConfirmFinish(true)}
+                          variant="outline"
+                          size="lg"
+                          className="ml-auto text-red-600 border-red-200 hover:bg-red-50 dark:hover:bg-red-950"
+                        >
+                          Finalizar
+                        </Button>
+
+                        <Button
+                          onClick={handleNext}
+                          size="lg"
+                          className="bg-green-500 hover:bg-green-600"
+                        >
+                          Próxima <ArrowRight size={16} className="ml-2" />
+                        </Button>
+                      </div>
+                    </motion.div>
+                  </AnimatePresence>
+                </CardContent>
+              </Card>
+
+              <div className="mt-4 text-sm text-muted-foreground">
+                💡 Dica: Selecione a alternativa e navegue usando os botões ou o grid à direita
+              </div>
+            </div>
+
+            {/* Grid de navegação */}
+            <aside className="lg:sticky lg:top-6 h-fit">
+              <Card className="shadow-lg border-2">
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="text-sm text-muted-foreground">Progresso</div>
+                    <div className="text-sm font-semibold text-foreground">
+                      {answeredCount}/{questions.length}
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-5 gap-2">
+                    {questions.map((_, idx) => {
+                      const status = userAnswers[idx]
+                        ? "answered"
+                        : idx === currentQuestion
+                        ? "current"
+                        : "unanswered"
+
+                      const classes = {
+                        answered: "bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 border-2 border-green-300 dark:border-green-700",
+                        current: "bg-background text-primary border-2 border-primary shadow-md",
+                        unanswered: "bg-muted text-muted-foreground border-2 border-border",
+                      }
+
+                      return (
+                        <button
+                          key={idx}
+                          onClick={() => jumpTo(idx)}
+                          className={`h-12 rounded-lg text-sm font-semibold transition-all hover:scale-105 ${classes[status]}`}
+                        >
+                          {idx + 1}
+                        </button>
+                      )
+                    })}
+                  </div>
+
+                  <Button
+                    onClick={() => jumpTo(0)}
+                    variant="outline"
+                    className="w-full mt-4"
+                    size="sm"
+                  >
+                    Ir para primeira
+                  </Button>
+                </CardContent>
+              </Card>
+            </aside>
           </div>
         </div>
 
-        <Progress value={progress} className="h-2" />
-
-        <div className="bg-card border border-border rounded-xl p-6">
-          <p className="text-lg font-medium mb-6">{currentQ.question_text}</p>
-
-          <div className="space-y-3">
-            {['A', 'B', 'C', 'D'].map((option) => (
-              <button
-                key={option}
-                onClick={() => handleAnswerSelect(option)}
-                className={`w-full text-left p-4 rounded-lg border-2 transition-all ${
-                  selectedAnswer === option
-                    ? 'border-primary bg-primary/10'
-                    : 'border-border hover:border-primary/50'
-                }`}
-              >
-                <span className="font-bold mr-3">{option})</span>
-                {currentQ[`option_${option.toLowerCase()}` as keyof QuizQuestion]}
-              </button>
-            ))}
-          </div>
-
-          <div className="flex gap-3 mt-6">
-            <button
-              onClick={handlePrevious}
-              disabled={currentQuestion === 0}
-              className="px-4 py-2 border border-border rounded-lg hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed"
+        {/* Modal de confirmação */}
+        <AnimatePresence>
+          {showConfirmFinish && (
+            <motion.div
+              className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowConfirmFinish(false)}
             >
-              Anterior
-            </button>
-            
-            {currentQuestion < questions.length - 1 ? (
-              <button
-                onClick={handleNext}
-                className="flex-1 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90"
+              <motion.div
+                className="max-w-md w-full"
+                initial={{ scale: 0.95, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.95, opacity: 0 }}
+                onClick={(e) => e.stopPropagation()}
               >
-                Próxima
-              </button>
-            ) : (
-              <button
-                onClick={finishQuiz}
-                className="flex-1 px-4 py-2 bg-success text-success-foreground rounded-lg hover:bg-success/90"
-              >
-                Finalizar Simulado
-              </button>
-            )}
-          </div>
-        </div>
+                <Card className="shadow-2xl border-2">
+                  <CardContent className="p-6">
+                    <h4 className="text-xl font-bold text-foreground mb-2">Finalizar simulado?</h4>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      Você respondeu {answeredCount} de {questions.length} questões. Tem certeza que deseja enviar suas respostas e finalizar o simulado?
+                    </p>
 
-        <div className="grid grid-cols-10 gap-2">
-          {questions.map((_, index) => (
-            <button
-              key={index}
-              onClick={() => {
-                setCurrentQuestion(index)
-                setSelectedAnswer(userAnswers[index] || "")
-              }}
-              className={`aspect-square rounded-lg text-sm font-medium transition-colors ${
-                userAnswers[index]
-                  ? 'bg-primary text-primary-foreground'
-                  : 'bg-muted text-muted-foreground'
-              } ${currentQuestion === index ? 'ring-2 ring-primary ring-offset-2' : ''}`}
-            >
-              {index + 1}
-            </button>
-          ))}
-        </div>
+                    <div className="flex gap-3">
+                      <Button
+                        onClick={() => setShowConfirmFinish(false)}
+                        variant="outline"
+                        className="flex-1"
+                      >
+                        Voltar
+                      </Button>
+                      <Button
+                        onClick={finishQuiz}
+                        className="flex-1 bg-green-500 hover:bg-green-600 flex items-center justify-center gap-2"
+                      >
+                        <CheckCircle size={16} /> Enviar e finalizar
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     )
   }
@@ -383,168 +549,163 @@ export const SimuladosView = () => {
   // View: History
   if (view === "history") {
     return (
-      <div className="space-y-6">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="space-y-6"
+      >
         <div className="flex items-center justify-between">
           <h2 className="text-2xl font-bold">Histórico de Simulados</h2>
-          <button
-            onClick={() => setView("menu")}
-            className="px-4 py-2 border border-border rounded-lg hover:bg-muted"
-          >
+          <Button onClick={() => setView("menu")} variant="outline">
+            <ArrowLeft className="mr-2 h-4 w-4" />
             Voltar
-          </button>
+          </Button>
         </div>
 
         <div className="space-y-3">
           {attemptHistory.map((attempt) => (
-            <div key={attempt.id} className="bg-card border border-border rounded-xl p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-medium">
-                    {attempt.quiz_type === "official" ? "Simulado Oficial" : "Simulado de Prática"}
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    {new Date(attempt.completed_at).toLocaleDateString('pt-BR')} às{' '}
-                    {new Date(attempt.completed_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
-                  </p>
+            <Card key={attempt.id} className="shadow-md hover:shadow-lg transition-shadow">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-semibold">
+                      {attempt.quiz_type === "official" ? "🏆 Simulado Oficial" : "📝 Simulado de Prática"}
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      {new Date(attempt.completed_at).toLocaleDateString('pt-BR')} às{' '}
+                      {new Date(attempt.completed_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className={`text-3xl font-bold ${attempt.score_percentage >= 70 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                      {attempt.score_percentage}%
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      {attempt.correct_answers}/{attempt.total_questions} acertos
+                    </p>
+                  </div>
                 </div>
-                <div className="text-right">
-                  <p className={`text-2xl font-bold ${attempt.score_percentage >= 70 ? 'text-success' : 'text-destructive'}`}>
-                    {attempt.score_percentage}%
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    {attempt.correct_answers}/{attempt.total_questions} acertos
-                  </p>
-                </div>
-              </div>
-            </div>
+              </CardContent>
+            </Card>
           ))}
 
           {attemptHistory.length === 0 && (
-            <div className="text-center py-8">
-              <p className="text-muted-foreground">Nenhum simulado realizado ainda</p>
-            </div>
+            <Card className="shadow-md">
+              <CardContent className="p-8 text-center">
+                <p className="text-muted-foreground">Nenhum simulado realizado ainda</p>
+              </CardContent>
+            </Card>
           )}
         </div>
-      </div>
+      </motion.div>
     )
   }
 
   // View: Main Menu
   return (
-    <div className="space-y-6">
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="space-y-6"
+    >
       <div>
-        <h2 className="text-2xl font-bold text-foreground">Simulados</h2>
+        <h2 className="text-3xl font-bold text-foreground">Simulados</h2>
         <p className="text-muted-foreground mt-1">
-          Teste seus conhecimentos com simulados fiéis ao exame oficial
+          Teste seus conhecimentos com simulados fiéis ao exame oficial do DETRAN
         </p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="bg-card border border-border rounded-xl p-6 hover:shadow-lg transition-all">
-          <div className="flex items-start gap-4 mb-4">
-            <div className="p-3 bg-primary/10 rounded-lg">
-              <Trophy className="h-6 w-6 text-primary" />
+        <Card className="shadow-lg hover:shadow-xl transition-all border-2 hover:border-primary/50">
+          <CardContent className="p-6">
+            <div className="flex items-start gap-4 mb-4">
+              <div className="p-3 bg-primary/10 rounded-xl">
+                <Trophy className="h-7 w-7 text-primary" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-xl font-bold text-foreground mb-1">Simulado Oficial</h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  30 questões • 40 minutos • Idêntico ao exame do DETRAN
+                </p>
+                <Button
+                  onClick={() => startQuiz("official")}
+                  className="w-full bg-primary hover:bg-primary/90"
+                  size="lg"
+                >
+                  <Play className="mr-2 h-5 w-5" />
+                  Iniciar Simulado Oficial
+                </Button>
+              </div>
             </div>
-            <div className="flex-1">
-              <h3 className="font-semibold text-foreground mb-1">Simulado Oficial</h3>
-              <p className="text-sm text-muted-foreground mb-4">
-                30 questões • 40 minutos • Idêntico ao exame do DETRAN
-              </p>
-              <button
-                onClick={() => startQuiz("official")}
-                className="w-full py-2 px-4 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors font-medium flex items-center justify-center gap-2"
-              >
-                <Play className="h-4 w-4" />
-                Iniciar Simulado Oficial
-              </button>
-            </div>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
 
-        <div className="bg-card border border-border rounded-xl p-6 hover:shadow-lg transition-all">
-          <div className="flex items-start gap-4 mb-4">
-            <div className="p-3 bg-secondary/10 rounded-lg">
-              <Play className="h-6 w-6 text-secondary" />
+        <Card className="shadow-lg hover:shadow-xl transition-all border-2 hover:border-secondary/50">
+          <CardContent className="p-6">
+            <div className="flex items-start gap-4 mb-4">
+              <div className="p-3 bg-secondary/10 rounded-xl">
+                <Play className="h-7 w-7 text-secondary" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-xl font-bold text-foreground mb-1">Simulado de Prática</h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  15 questões • 20 minutos • Prática rápida
+                </p>
+                <Button
+                  onClick={() => startQuiz("practice")}
+                  className="w-full"
+                  variant="secondary"
+                  size="lg"
+                >
+                  <Play className="mr-2 h-5 w-5" />
+                  Iniciar Prática Rápida
+                </Button>
+              </div>
             </div>
-            <div className="flex-1">
-              <h3 className="font-semibold text-foreground mb-1">Simulado de Prática</h3>
-              <p className="text-sm text-muted-foreground mb-4">
-                15 questões • 20 minutos • Prática rápida
-              </p>
-              <button
-                onClick={() => startQuiz("practice")}
-                className="w-full py-2 px-4 bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary/90 transition-colors font-medium flex items-center justify-center gap-2"
-              >
-                <Play className="h-4 w-4" />
-                Iniciar Prática Rápida
-              </button>
-            </div>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
       </div>
 
-      <div className="bg-card border border-border rounded-xl p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold">Histórico Recente</h3>
-          <button
-            onClick={() => setView("history")}
-            className="text-primary hover:underline flex items-center gap-2"
-          >
-            <History className="h-4 w-4" />
-            Ver Tudo
-          </button>
-        </div>
-
-        {attemptHistory.slice(0, 3).map((attempt) => (
-          <div key={attempt.id} className="flex items-center justify-between py-3 border-b border-border last:border-0">
-            <div>
-              <p className="font-medium">
-                {attempt.quiz_type === "official" ? "Simulado Oficial" : "Prática"}
-              </p>
-              <p className="text-sm text-muted-foreground">
-                {new Date(attempt.completed_at).toLocaleDateString('pt-BR')}
-              </p>
-            </div>
-            <div className="text-right">
-              <p className={`text-xl font-bold ${attempt.score_percentage >= 70 ? 'text-success' : 'text-destructive'}`}>
-                {attempt.score_percentage}%
-              </p>
-              <p className="text-xs text-muted-foreground">
-                {attempt.correct_answers}/{attempt.total_questions}
-              </p>
-            </div>
+      <Card className="shadow-lg border-2">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <h3 className="text-xl font-bold">Histórico Recente</h3>
+            <Button
+              onClick={() => setView("history")}
+              variant="ghost"
+              size="sm"
+            >
+              <History className="mr-2 h-4 w-4" />
+              Ver tudo
+            </Button>
           </div>
-        ))}
+        </CardHeader>
+        <CardContent>
+          {attemptHistory.slice(0, 3).map((attempt) => (
+            <div key={attempt.id} className="flex items-center justify-between py-3 border-b border-border last:border-0">
+              <div>
+                <p className="font-medium text-sm">
+                  {attempt.quiz_type === "official" ? "Simulado Oficial" : "Prática"}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {new Date(attempt.completed_at).toLocaleDateString('pt-BR')}
+                </p>
+              </div>
+              <div className="text-right">
+                <p className={`text-xl font-bold ${attempt.score_percentage >= 70 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                  {attempt.score_percentage}%
+                </p>
+              </div>
+            </div>
+          ))}
 
-        {attemptHistory.length === 0 && (
-          <p className="text-center text-muted-foreground py-4">
-            Faça seu primeiro simulado para começar!
-          </p>
-        )}
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-card border border-border rounded-lg p-4">
-          <h4 className="font-medium text-foreground mb-2">Total de Simulados</h4>
-          <p className="text-2xl font-bold text-primary">{attemptHistory.length}</p>
-        </div>
-        <div className="bg-card border border-border rounded-lg p-4">
-          <h4 className="font-medium text-foreground mb-2">Média Geral</h4>
-          <p className="text-2xl font-bold text-success">
-            {attemptHistory.length > 0
-              ? Math.round(attemptHistory.reduce((acc, a) => acc + a.score_percentage, 0) / attemptHistory.length)
-              : 0}%
-          </p>
-        </div>
-        <div className="bg-card border border-border rounded-lg p-4">
-          <h4 className="font-medium text-foreground mb-2">Melhor Resultado</h4>
-          <p className="text-2xl font-bold text-secondary">
-            {attemptHistory.length > 0
-              ? Math.max(...attemptHistory.map(a => a.score_percentage))
-              : 0}%
-          </p>
-        </div>
-      </div>
-    </div>
+          {attemptHistory.length === 0 && (
+            <p className="text-center py-4 text-muted-foreground text-sm">
+              Nenhum simulado realizado ainda. Comece agora!
+            </p>
+          )}
+        </CardContent>
+      </Card>
+    </motion.div>
   )
 }
