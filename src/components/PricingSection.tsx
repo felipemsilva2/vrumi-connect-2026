@@ -121,7 +121,13 @@ const PricingSection = () => {
               </ul>
 
               <button
-                onClick={() => navigate("/auth")}
+                onClick={() => {
+                  if (plan.passType) {
+                    navigate(`/checkout?pass=${plan.passType}`)
+                  } else {
+                    navigate("/auth")
+                  }
+                }}
                 className={`w-full py-3 px-6 rounded-lg font-medium transition-colors ${
                   plan.popular
                     ? "bg-primary text-primary-foreground hover:bg-primary/90"
