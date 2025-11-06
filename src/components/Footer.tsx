@@ -11,9 +11,7 @@ const Footer = () => {
               <Car className="w-8 h-8" style={{
               color: "#10b981"
             }} />
-              <span className="text-xl font-black text-foreground">Zutobi
-
-            </span>
+              <span className="text-xl font-black text-foreground">Vrumi</span>
             </div>
             <p className="text-muted-foreground mb-4">
               A plataforma #1 para conquistar sua CNH com facilidade e confiança.
