@@ -6,46 +6,49 @@ const PricingSection = () => {
 
   const plans = [
     {
-      name: "Plano Gratuito",
+      name: "Acesso Gratuito",
       price: "R$ 0",
-      period: "para sempre",
+      period: "sempre",
       features: [
-        "50 flashcards",
-        "2 simulados",
-        "Materiais básicos",
-        "Estatísticas simples"
+        "Todos os materiais de estudo",
+        "Flashcards ilimitados",
+        "Estatísticas de progresso",
+        "Acesso limitado aos simulados"
       ],
       buttonText: "Começar Grátis",
-      popular: false
+      popular: false,
+      badge: "Explore a plataforma"
     },
     {
-      name: "Plano Premium",
+      name: "Passaporte 30 Dias",
+      price: "R$ 29,90",
+      period: "pagamento único",
+      features: [
+        "Tudo do Acesso Gratuito",
+        "Simulados DETRAN ilimitados",
+        "30 dias de acesso total",
+        "Ideal para quem já marcou a prova",
+        "Sprint final de estudos"
+      ],
+      buttonText: "Comprar Agora",
+      popular: false,
+      badge: "O Apressado"
+    },
+    {
+      name: "Passaporte 90 Dias",
       price: "R$ 49,90",
-      period: "por mês",
+      period: "pagamento único",
       features: [
-        "Flashcards ilimitados",
-        "Simulados ilimitados",
-        "Todos os materiais",
-        "Estatísticas avançadas",
-        "Sistema de conquistas",
-        "Suporte prioritário"
+        "Tudo do Acesso Gratuito",
+        "Simulados DETRAN ilimitados",
+        "90 dias de acesso total",
+        "Estude no seu ritmo, sem pressão",
+        "Cobre todo processo até a prova",
+        "Melhor custo-benefício"
       ],
-      buttonText: "Assinar Agora",
-      popular: true
-    },
-    {
-      name: "Plano Anual",
-      price: "R$ 399,90",
-      period: "por ano",
-      features: [
-        "Tudo do Premium",
-        "2 meses grátis",
-        "Certificado de conclusão",
-        "Aulas ao vivo mensais",
-        "Grupo exclusivo VIP"
-      ],
-      buttonText: "Melhor Oferta",
-      popular: false
+      buttonText: "Garantir Acesso",
+      popular: true,
+      badge: "O Garantido"
     }
   ]
 
@@ -54,10 +57,10 @@ const PricingSection = () => {
       <div className="container mx-auto max-w-7xl">
         <div className="text-center mb-16">
           <h2 className="text-4xl md:text-5xl font-bold text-foreground mb-4">
-            Escolha o melhor plano para você
+            Passaportes de Acesso
           </h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Comece grátis ou acelere sua aprovação com nossos planos premium
+            Não é assinatura. É tempo de acesso. Você compra, você sabe exatamente quanto tempo tem.
           </p>
         </div>
 
@@ -71,10 +74,14 @@ const PricingSection = () => {
                   : "border-border"
               }`}
             >
-              {plan.popular && (
+              {(plan.popular || plan.badge) && (
                 <div className="absolute -top-4 left-1/2 -translate-x-1/2">
-                  <span className="bg-primary text-primary-foreground px-4 py-1 rounded-full text-sm font-medium">
-                    Mais Popular
+                  <span className={`px-4 py-1 rounded-full text-sm font-medium ${
+                    plan.popular 
+                      ? "bg-primary text-primary-foreground" 
+                      : "bg-muted text-muted-foreground border border-border"
+                  }`}>
+                    {plan.popular ? "Mais Popular" : plan.badge}
                   </span>
                 </div>
               )}
@@ -117,7 +124,7 @@ const PricingSection = () => {
         </div>
 
         <p className="text-center text-muted-foreground mt-12 text-sm">
-          Todos os planos incluem 7 dias de garantia. Cancele quando quiser.
+          💡 Reprovar faz parte do processo! Se precisar, basta comprar um novo passaporte quando estiver pronto novamente.
         </p>
       </div>
     </section>

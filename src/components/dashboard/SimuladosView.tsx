@@ -1,11 +1,13 @@
 import { useState, useEffect, useRef } from "react"
-import { Clock, Play, History, Trophy, CheckCircle, XCircle, ArrowLeft, ArrowRight } from "lucide-react"
+import { Clock, Play, History, Trophy, CheckCircle, XCircle, ArrowLeft, ArrowRight, Lock, Calendar } from "lucide-react"
 import { supabase } from "@/integrations/supabase/client"
 import { useToast } from "@/hooks/use-toast"
 import { Button } from "@/components/ui/button"
 import { Card, CardHeader, CardContent } from "@/components/ui/card"
 import { motion, AnimatePresence } from "framer-motion"
 import { ImageWithFallback } from "@/components/ImageWithFallback"
+import { useActivePass } from "@/hooks/useActivePass"
+import { useNavigate } from "react-router-dom"
 
 interface QuizQuestion {
   id: string
@@ -40,8 +42,19 @@ export const SimuladosView = () => {
   const [quizStarted, setQuizStarted] = useState(false)
   const [attemptHistory, setAttemptHistory] = useState<QuizAttempt[]>([])
   const [showConfirmFinish, setShowConfirmFinish] = useState(false)
+  const [userId, setUserId] = useState<string>()
   const timerRef = useRef<number | null>(null)
   const { toast } = useToast()
+  const navigate = useNavigate()
+  const { hasActivePass, activePass, isLoading, daysRemaining } = useActivePass(userId)
+
+  useEffect(() => {
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) setUserId(user.id)
+    }
+    getUser()
+  }, [])
 
   useEffect(() => {
     fetchAttemptHistory()
@@ -614,6 +627,83 @@ export const SimuladosView = () => {
     )
   }
 
+  // View: Locked (No Active Pass)
+  if (!isLoading && !hasActivePass) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="space-y-6"
+      >
+        <div>
+          <h2 className="text-3xl font-bold text-foreground">Simulados</h2>
+          <p className="text-muted-foreground mt-1">
+            Adquira um Passaporte de Acesso para desbloquear os simulados
+          </p>
+        </div>
+
+        <Card className="shadow-lg border-2 border-primary/20 bg-muted/30">
+          <CardContent className="p-8 text-center">
+            <div className="w-20 h-20 mx-auto rounded-full bg-primary/10 flex items-center justify-center mb-6">
+              <Lock className="h-10 w-10 text-primary" />
+            </div>
+            
+            <h3 className="text-2xl font-bold mb-3">Simulados Bloqueados</h3>
+            <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+              Os simulados oficiais e de prática estão disponíveis apenas para usuários com um Passaporte de Acesso ativo.
+            </p>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 max-w-2xl mx-auto">
+              <Card className="bg-card border-2 hover:border-primary/50 transition-all">
+                <CardContent className="p-4">
+                  <div className="text-primary font-semibold mb-2">Passaporte 30 Dias</div>
+                  <div className="text-2xl font-bold mb-1">R$ 29,90</div>
+                  <div className="text-sm text-muted-foreground">O Apressado</div>
+                </CardContent>
+              </Card>
+              
+              <Card className="bg-card border-2 border-primary shadow-md">
+                <CardContent className="p-4">
+                  <div className="text-primary font-semibold mb-2">Passaporte 90 Dias</div>
+                  <div className="text-2xl font-bold mb-1">R$ 49,90</div>
+                  <div className="text-sm text-muted-foreground">O Garantido ⭐</div>
+                </CardContent>
+              </Card>
+            </div>
+
+            <Button 
+              onClick={() => navigate("/#preço")}
+              size="lg"
+              className="bg-primary hover:bg-primary/90"
+            >
+              Ver Passaportes
+            </Button>
+          </CardContent>
+        </Card>
+
+        <Card className="shadow-md">
+          <CardContent className="p-6">
+            <h4 className="font-semibold mb-3">O que está incluído:</h4>
+            <ul className="space-y-2 text-sm text-muted-foreground">
+              <li className="flex items-start gap-2">
+                <Trophy className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                <span>Simulados Oficiais ilimitados (30 questões, 40 minutos)</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <Play className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                <span>Simulados de Prática ilimitados (15 questões, 20 minutos)</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <History className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                <span>Histórico completo de desempenho e evolução</span>
+              </li>
+            </ul>
+          </CardContent>
+        </Card>
+      </motion.div>
+    )
+  }
+
   // View: Main Menu
   return (
     <motion.div
@@ -626,6 +716,14 @@ export const SimuladosView = () => {
         <p className="text-muted-foreground mt-1">
           Teste seus conhecimentos com simulados fiéis ao exame oficial do DETRAN
         </p>
+        {hasActivePass && activePass && (
+          <div className="mt-3 inline-flex items-center gap-2 px-3 py-1.5 bg-primary/10 text-primary rounded-full text-sm font-medium">
+            <Calendar className="h-4 w-4" />
+            <span>
+              {daysRemaining} {daysRemaining === 1 ? 'dia restante' : 'dias restantes'} no seu passaporte
+            </span>
+          </div>
+        )}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

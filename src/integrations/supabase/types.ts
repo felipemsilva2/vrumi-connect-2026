@@ -291,6 +291,42 @@ export type Database = {
           },
         ]
       }
+      user_passes: {
+        Row: {
+          created_at: string
+          expires_at: string
+          id: string
+          pass_type: Database["public"]["Enums"]["pass_type"]
+          payment_status: string
+          price: number
+          purchased_at: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at: string
+          id?: string
+          pass_type: Database["public"]["Enums"]["pass_type"]
+          payment_status?: string
+          price: number
+          purchased_at?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          pass_type?: Database["public"]["Enums"]["pass_type"]
+          payment_status?: string
+          price?: number
+          purchased_at?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_progress: {
         Row: {
           completed: boolean | null
@@ -440,10 +476,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_active_pass: { Args: { user_id: string }; Returns: boolean }
     }
     Enums: {
-      [_ in never]: never
+      pass_type: "30_days" | "90_days"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -570,6 +606,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      pass_type: ["30_days", "90_days"],
+    },
   },
 } as const
