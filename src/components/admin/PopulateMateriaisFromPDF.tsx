@@ -42,30 +42,54 @@ export const PopulateMateriaisFromPDF = () => {
 
     setParsing(true);
     try {
-      const formData = new FormData();
-      formData.append('file', file);
+      // Simple approach: read as text (works for text-based PDFs)
+      const text = await file.text();
+      
+      if (text.length < 100) {
+        throw new Error("Arquivo muito pequeno ou não é um PDF válido. Por favor, use o botão 'Usar PDF do Servidor' ou cole o conteúdo manualmente.");
+      }
 
+      setPdfContent(text);
       toast({
-        title: "Parseando PDF...",
-        description: "Extraindo conteúdo do documento (pode levar alguns minutos)",
-      });
-
-      const { data, error } = await supabase.functions.invoke('parse-pdf', {
-        body: formData
-      });
-
-      if (error) throw error;
-
-      setPdfContent(data.content);
-      toast({
-        title: "PDF parseado com sucesso!",
-        description: `${data.pages} páginas extraídas`,
+        title: "Arquivo carregado!",
+        description: `${(text.length / 1024).toFixed(0)} KB de conteúdo carregado`,
       });
     } catch (error) {
-      console.error('Error parsing PDF:', error);
+      console.error('Error loading file:', error);
       toast({
-        title: "Erro ao parsear PDF",
-        description: error instanceof Error ? error.message : "Erro desconhecido",
+        title: "Erro ao carregar arquivo",
+        description: "Use o botão 'Usar PDF do Servidor' ou cole o texto manualmente.",
+        variant: "destructive"
+      });
+    } finally {
+      setParsing(false);
+    }
+  };
+
+  const handleUseServerPDF = async () => {
+    setParsing(true);
+    try {
+      toast({
+        title: "Carregando PDF do servidor...",
+        description: "Buscando conteúdo do manual",
+      });
+
+      const response = await fetch('/materiais/MANUAL-OBTENCAO_2025.pdf');
+      if (!response.ok) throw new Error("PDF não encontrado no servidor");
+
+      const blob = await response.blob();
+      const text = await blob.text();
+      
+      setPdfContent(text);
+      toast({
+        title: "PDF do servidor carregado!",
+        description: `${(text.length / 1024).toFixed(0)} KB de conteúdo`,
+      });
+    } catch (error) {
+      console.error('Error loading server PDF:', error);
+      toast({
+        title: "Erro ao carregar PDF do servidor",
+        description: "Por favor, faça upload manual ou cole o texto.",
         variant: "destructive"
       });
     } finally {
@@ -287,23 +311,57 @@ export const PopulateMateriaisFromPDF = () => {
       <CardContent className="space-y-6">
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium mb-2">Upload do PDF (221 páginas)</label>
-            <div className="flex gap-2">
-              <Input
-                ref={fileInputRef}
-                type="file"
-                accept=".pdf"
-                onChange={handleFileUpload}
-                disabled={parsing || processing || isBatchProcessing}
-                className="flex-1"
-              />
-              {parsing && <Loader2 className="h-5 w-5 animate-spin" />}
+            <label className="block text-sm font-medium mb-2">Conteúdo do PDF</label>
+            <div className="space-y-2">
+              <div className="flex gap-2">
+                <Button
+                  onClick={handleUseServerPDF}
+                  disabled={parsing || processing || isBatchProcessing}
+                  variant="outline"
+                  className="flex-1"
+                >
+                  {parsing ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Carregando...
+                    </>
+                  ) : (
+                    <>
+                      📄 Usar PDF do Servidor
+                    </>
+                  )}
+                </Button>
+                
+                <div className="flex-1">
+                  <Input
+                    ref={fileInputRef}
+                    type="file"
+                    accept=".pdf,.txt"
+                    onChange={handleFileUpload}
+                    disabled={parsing || processing || isBatchProcessing}
+                  />
+                </div>
+              </div>
+              
+              {pdfContent && (
+                <p className="text-sm text-green-600">
+                  ✓ Conteúdo carregado: {(pdfContent.length / 1024).toFixed(0)} KB
+                </p>
+              )}
+              
+              <details className="text-xs text-muted-foreground">
+                <summary className="cursor-pointer hover:text-foreground">
+                  Opção alternativa: colar texto manualmente
+                </summary>
+                <textarea
+                  className="w-full h-32 mt-2 p-2 border rounded text-xs"
+                  placeholder="Cole o conteúdo do PDF aqui se os métodos acima não funcionarem..."
+                  value={pdfContent}
+                  onChange={(e) => setPdfContent(e.target.value)}
+                  disabled={processing || isBatchProcessing}
+                />
+              </details>
             </div>
-            {pdfContent && (
-              <p className="text-sm text-green-600 mt-2">
-                ✓ PDF carregado ({(pdfContent.length / 1024).toFixed(0)} KB de conteúdo)
-              </p>
-            )}
           </div>
           
           <div>
@@ -492,8 +550,14 @@ export const PopulateMateriaisFromPDF = () => {
 
         <div className="p-4 bg-blue-500/10 border border-blue-500/20 rounded-lg">
           <p className="text-sm text-blue-700 dark:text-blue-300">
-            <strong>ℹ️ Como usar:</strong> Faça upload do PDF completo. Use "Processar 1 Capítulo" para testar ou "Processar Todos os 23 Capítulos" para popular tudo de uma vez (3-4 minutos).
+            <strong>ℹ️ Como usar:</strong>
           </p>
+          <ul className="text-sm text-blue-700 dark:text-blue-300 mt-2 space-y-1 ml-4">
+            <li>• <strong>Opção 1:</strong> Clique em "Usar PDF do Servidor" para usar o PDF já carregado</li>
+            <li>• <strong>Opção 2:</strong> Faça upload de um arquivo PDF ou TXT</li>
+            <li>• <strong>Opção 3:</strong> Cole o conteúdo manualmente no campo de texto</li>
+            <li>• Depois escolha processar 1 capítulo (teste) ou todos os 23 capítulos (~3-4 min)</li>
+          </ul>
         </div>
       </CardContent>
     </Card>

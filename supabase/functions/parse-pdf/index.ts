@@ -20,20 +20,27 @@ serve(async (req) => {
 
     console.log(`Parsing PDF: ${file.name}, size: ${file.size} bytes`);
 
-    // Convert file to ArrayBuffer
+    // Convert file to base64
     const arrayBuffer = await file.arrayBuffer();
-    const uint8Array = new Uint8Array(arrayBuffer);
+    const bytes = new Uint8Array(arrayBuffer);
+    const base64 = btoa(String.fromCharCode(...bytes));
 
-    // Call Lovable's document parsing API
-    const parseResponse = await fetch('https://document-parser.lovable.app/parse', {
+    // Use Lovable's document parser API with correct endpoint
+    const parseResponse = await fetch('https://document-parser.lovable.app/v1/parse', {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/pdf',
+        'Content-Type': 'application/json',
       },
-      body: uint8Array,
+      body: JSON.stringify({
+        file: base64,
+        filename: file.name,
+        type: 'pdf'
+      }),
     });
 
     if (!parseResponse.ok) {
+      const errorText = await parseResponse.text();
+      console.error(`Document parser failed: ${parseResponse.status} - ${errorText}`);
       throw new Error(`Document parser failed: ${parseResponse.status}`);
     }
 
