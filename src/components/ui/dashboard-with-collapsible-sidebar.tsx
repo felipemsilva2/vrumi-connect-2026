@@ -273,7 +273,7 @@ const ToggleClose = ({ open, setOpen }: any) => {
 
 import { FlashcardsView } from "@/components/dashboard/FlashcardsView";
 import { SimuladosView } from "@/components/dashboard/SimuladosView";
-import { MateriaisView } from "@/components/dashboard/MateriaisView";
+import MateriaisView from "@/components/dashboard/MateriaisView";
 import { EstatisticasView } from "@/components/dashboard/EstatisticasView";
 import { ConquistasView } from "@/components/dashboard/ConquistasView";
 import { PerfilView } from "@/components/dashboard/PerfilView";

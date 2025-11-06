@@ -68,6 +68,47 @@ export type Database = {
           },
         ]
       }
+      lesson_contents: {
+        Row: {
+          content_data: Json
+          content_type: string
+          created_at: string | null
+          id: string
+          lesson_id: string
+          metadata: Json | null
+          order_position: number
+          updated_at: string | null
+        }
+        Insert: {
+          content_data: Json
+          content_type: string
+          created_at?: string | null
+          id?: string
+          lesson_id: string
+          metadata?: Json | null
+          order_position: number
+          updated_at?: string | null
+        }
+        Update: {
+          content_data?: Json
+          content_type?: string
+          created_at?: string | null
+          id?: string
+          lesson_id?: string
+          metadata?: Json | null
+          order_position?: number
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lesson_contents_lesson_id_fkey"
+            columns: ["lesson_id"]
+            isOneToOne: false
+            referencedRelation: "study_lessons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -167,6 +208,7 @@ export type Database = {
           estimated_time: string | null
           icon: string | null
           id: string
+          module_id: string | null
           order_number: number
           title: string
           updated_at: string | null
@@ -177,6 +219,7 @@ export type Database = {
           estimated_time?: string | null
           icon?: string | null
           id?: string
+          module_id?: string | null
           order_number: number
           title: string
           updated_at?: string | null
@@ -187,42 +230,45 @@ export type Database = {
           estimated_time?: string | null
           icon?: string | null
           id?: string
+          module_id?: string | null
           order_number?: number
           title?: string
           updated_at?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "study_chapters_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "study_modules"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       study_lessons: {
         Row: {
           chapter_id: string
-          content: string
           created_at: string | null
           estimated_time: string | null
           id: string
-          images: Json | null
           order_number: number
           title: string
           updated_at: string | null
         }
         Insert: {
           chapter_id: string
-          content: string
           created_at?: string | null
           estimated_time?: string | null
           id?: string
-          images?: Json | null
           order_number: number
           title: string
           updated_at?: string | null
         }
         Update: {
           chapter_id?: string
-          content?: string
           created_at?: string | null
           estimated_time?: string | null
           id?: string
-          images?: Json | null
           order_number?: number
           title?: string
           updated_at?: string | null
@@ -236,6 +282,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      study_modules: {
+        Row: {
+          code: string
+          created_at: string | null
+          description: string | null
+          estimated_hours: number | null
+          icon: string | null
+          id: string
+          order_number: number
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          code: string
+          created_at?: string | null
+          description?: string | null
+          estimated_hours?: number | null
+          icon?: string | null
+          id?: string
+          order_number: number
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          code?: string
+          created_at?: string | null
+          description?: string | null
+          estimated_hours?: number | null
+          icon?: string | null
+          id?: string
+          order_number?: number
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       user_flashcard_stats: {
         Row: {

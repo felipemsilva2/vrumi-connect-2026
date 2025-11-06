@@ -1,519 +1,304 @@
-import { useEffect, useState } from "react"
-import { BookOpen, Clock, CheckCircle2, Play, ArrowLeft, List } from "lucide-react"
+import { useState, useEffect } from "react"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { ChevronRight, BookOpen, Clock, ChevronLeft, CheckCircle2 } from "lucide-react"
+import { useMateriaisHierarchy, type ModuleWithChapters, type ChapterWithLessons } from "@/hooks/useMateriaisHierarchy"
+import { useLessonContents } from "@/hooks/useLessonContents"
+import type { Lesson } from "@/types/materiais"
+import { ContentBlock } from "@/components/materiais/ContentBlock"
 import { supabase } from "@/integrations/supabase/client"
 import { useToast } from "@/hooks/use-toast"
 import { Progress } from "@/components/ui/progress"
-import { Card, CardHeader, CardContent } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
-import { ImageWithFallback } from "@/components/ImageWithFallback"
-import { motion } from "framer-motion"
+import { Skeleton } from "@/components/ui/skeleton"
 
-interface Chapter {
-  id: string
-  title: string
-  description: string
-  order_number: number
-  icon: string
-  estimated_time: string
-}
+type ViewMode = 'modules' | 'chapters' | 'lessons' | 'content';
 
-interface LessonImage {
-  url: string
-  caption: string
-  section: string
-  position: number
-}
+const MateriaisView = () => {
+  const [viewMode, setViewMode] = useState<ViewMode>('modules');
+  const [selectedModule, setSelectedModule] = useState<ModuleWithChapters | null>(null);
+  const [selectedChapter, setSelectedChapter] = useState<ChapterWithLessons | null>(null);
+  const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
 
-interface Lesson {
-  id: string
-  chapter_id: string
-  title: string
-  content: string
-  order_number: number
-  estimated_time: string
-  images?: LessonImage[]
-}
+  const { data: hierarchy, isLoading: isLoadingHierarchy } = useMateriaisHierarchy();
+  const { data: lessonContents, isLoading: isLoadingContents } = useLessonContents(selectedLesson?.id || null);
+  const { toast } = useToast();
 
-interface UserProgress {
-  lesson_id: string
-  completed: boolean
-}
-
-export const MateriaisView = () => {
-  const [chapters, setChapters] = useState<Chapter[]>([])
-  const [selectedChapter, setSelectedChapter] = useState<Chapter | null>(null)
-  const [lessons, setLessons] = useState<Lesson[]>([])
-  const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null)
-  const [userProgress, setUserProgress] = useState<UserProgress[]>([])
-  const [loading, setLoading] = useState(true)
-  const [zoomedImage, setZoomedImage] = useState<string | null>(null)
-  const { toast } = useToast()
-
+  // Get current user
   useEffect(() => {
-    fetchChapters()
-    fetchUserProgress()
-  }, [])
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user) setUserId(user.id);
+    });
+  }, []);
 
-  // Listener para zoom de imagens inline
-  useEffect(() => {
-    const handleImageZoom = (e: any) => {
-      setZoomedImage(e.detail);
-    };
-    document.addEventListener('image-zoom', handleImageZoom);
-    return () => document.removeEventListener('image-zoom', handleImageZoom);
-  }, [])
+  const handleModuleClick = (module: ModuleWithChapters) => {
+    setSelectedModule(module);
+    setViewMode('chapters');
+  };
 
-  const fetchChapters = async () => {
-    try {
-      const { data, error } = await supabase
-        .from("study_chapters")
-        .select("*")
-        .order("order_number")
-
-      if (error) throw error
-      setChapters(data || [])
-    } catch (error) {
-      console.error("Error fetching chapters:", error)
-      toast({
-        title: "Erro ao carregar capítulos",
-        description: "Tente novamente mais tarde",
-        variant: "destructive",
-      })
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const fetchUserProgress = async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
-
-      const { data, error } = await supabase
-        .from("user_progress")
-        .select("lesson_id, completed")
-        .eq("user_id", user.id)
-
-      if (error) throw error
-      setUserProgress(data || [])
-    } catch (error) {
-      console.error("Error fetching progress:", error)
-    }
-  }
-
-  const fetchLessons = async (chapterId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from("study_lessons")
-        .select("*")
-        .eq("chapter_id", chapterId)
-        .order("order_number")
-
-      if (error) throw error
-      
-      // Transform the data to match our Lesson interface
-      const transformedLessons: Lesson[] = (data || []).map(lesson => ({
-        ...lesson,
-        images: lesson.images ? (lesson.images as unknown as LessonImage[]) : undefined
-      }))
-      
-      setLessons(transformedLessons)
-    } catch (error) {
-      console.error("Error fetching lessons:", error)
-      toast({
-        title: "Erro ao carregar lições",
-        description: "Tente novamente mais tarde",
-        variant: "destructive",
-      })
-    }
-  }
-
-  const handleChapterClick = (chapter: Chapter) => {
-    setSelectedChapter(chapter)
-    setSelectedLesson(null)
-    fetchLessons(chapter.id)
-  }
+  const handleChapterClick = (chapter: ChapterWithLessons) => {
+    setSelectedChapter(chapter);
+    setViewMode('lessons');
+  };
 
   const handleLessonClick = (lesson: Lesson) => {
-    setSelectedLesson(lesson)
-  }
+    setSelectedLesson(lesson);
+    setViewMode('content');
+  };
 
-  const handleBackToChapters = () => {
-    setSelectedChapter(null)
-    setLessons([])
-    setSelectedLesson(null)
-  }
-
-  const handleBackToLessons = () => {
-    setSelectedLesson(null)
-  }
-
-  const markLessonComplete = async () => {
-    if (!selectedLesson) return
+  const handleCompleteLesson = async () => {
+    if (!userId || !selectedLesson) return;
 
     try {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
-
       const { error } = await supabase
-        .from("user_progress")
+        .from('user_progress')
         .upsert({
-          user_id: user.id,
+          user_id: userId,
           lesson_id: selectedLesson.id,
           completed: true,
-          completion_date: new Date().toISOString(),
-        })
+          completion_date: new Date().toISOString()
+        });
 
-      if (error) throw error
+      if (error) throw error;
 
       toast({
-        title: "Lição concluída!",
-        description: "Seu progresso foi salvo",
-      })
-
-      fetchUserProgress()
+        title: "Lição concluída! ✅",
+        description: "Seu progresso foi salvo com sucesso."
+      });
     } catch (error) {
-      console.error("Error marking lesson complete:", error)
+      console.error('Error saving progress:', error);
       toast({
         title: "Erro ao salvar progresso",
-        description: "Tente novamente mais tarde",
-        variant: "destructive",
-      })
+        description: "Tente novamente mais tarde.",
+        variant: "destructive"
+      });
     }
-  }
+  };
 
-  const getChapterProgress = (chapterId: string) => {
-    const chapterLessons = lessons.filter(l => l.chapter_id === chapterId)
-    if (chapterLessons.length === 0) return 0
-    const completed = chapterLessons.filter(l => 
-      userProgress.some(p => p.lesson_id === l.id && p.completed)
-    ).length
-    return Math.round((completed / chapterLessons.length) * 100)
-  }
-
-  const isLessonCompleted = (lessonId: string) => {
-    return userProgress.some(p => p.lesson_id === lessonId && p.completed)
-  }
-
-  if (loading) {
-    return <div className="text-center py-8">Carregando...</div>
-  }
-
-  // View: Lesson Content
-  if (selectedLesson) {
-    // Processa o conteúdo markdown para HTML estruturado
-    const processContent = (content: string) => {
-      const sections: { title: string; content: string; images: LessonImage[] }[] = []
-      const lines = content.split('\n')
-      let currentSection: { title: string; content: string; images: LessonImage[] } | null = null
-
-      lines.forEach(line => {
-        if (line.startsWith('# ')) {
-          // Título principal - ignorar, já está no header
-          return
-        } else if (line.startsWith('## ')) {
-          // Nova seção
-          if (currentSection) {
-            sections.push(currentSection)
-          }
-          const sectionTitle = line.replace('## ', '').trim()
-          currentSection = {
-            title: sectionTitle,
-            content: '',
-            images: selectedLesson.images?.filter(img => 
-              img.section.toLowerCase().includes(sectionTitle.toLowerCase()) ||
-              sectionTitle.toLowerCase().includes(img.section.toLowerCase())
-            ) || []
-          }
-        } else if (currentSection) {
-          // Adiciona conteúdo à seção atual
-          currentSection.content += line + '\n'
-        }
-      })
-
-      if (currentSection) {
-        sections.push(currentSection)
-      }
-
-      return sections
+  const handleBack = () => {
+    if (viewMode === 'content') {
+      setViewMode('lessons');
+      setSelectedLesson(null);
+    } else if (viewMode === 'lessons') {
+      setViewMode('chapters');
+      setSelectedChapter(null);
+    } else if (viewMode === 'chapters') {
+      setViewMode('modules');
+      setSelectedModule(null);
     }
+  };
 
-    const sections = processContent(selectedLesson.content)
+  const getBreadcrumb = () => {
+    const parts = ['Materiais'];
+    if (selectedModule) parts.push(selectedModule.title);
+    if (selectedChapter) parts.push(selectedChapter.title);
+    if (selectedLesson) parts.push(selectedLesson.title);
+    return parts.join(' > ');
+  };
 
+  if (isLoadingHierarchy) {
     return (
-      <div className="min-h-screen bg-background flex flex-col items-center py-6 px-4">
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="w-full max-w-4xl mb-6"
-        >
-          <Button
-            variant="ghost"
-            onClick={handleBackToLessons}
-            className="mb-4 hover:bg-accent"
-          >
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Voltar para lições
-          </Button>
-
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
-            <div className="flex items-start gap-4">
-              <div className="p-3 bg-primary/10 rounded-xl">
-                <BookOpen className="text-primary h-7 w-7" />
-              </div>
-              <div>
-                <h1 className="text-3xl font-bold text-foreground">
-                  {selectedLesson.title}
-                </h1>
-                <div className="flex items-center text-sm text-muted-foreground mt-2">
-                  <Clock size={16} className="mr-1" /> 
-                  {selectedLesson.estimated_time}
-                </div>
-              </div>
-            </div>
-
-            {!isLessonCompleted(selectedLesson.id) ? (
-              <Button
-                onClick={markLessonComplete}
-                className="bg-green-500 hover:bg-green-600 text-white flex items-center gap-2 shadow-md"
-              >
-                <CheckCircle2 size={18} /> 
-                Marcar como Concluído
-              </Button>
-            ) : (
-              <div className="flex items-center gap-2 px-4 py-2 bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800 rounded-lg">
-                <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-400" />
-                <span className="font-medium text-green-600 dark:text-green-400">Concluído</span>
-              </div>
-            )}
-          </div>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="w-full max-w-4xl space-y-6"
-        >
-          {sections.map((section, index) => (
-            <motion.div
-              key={index}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 + index * 0.05 }}
-            >
-              <Card className="shadow-lg rounded-2xl border-2 border-border/50 hover:shadow-xl transition-shadow">
-                <CardHeader className="pb-4">
-                  <h2 className="text-xl font-semibold text-foreground flex items-center gap-2">
-                    <List size={20} className="text-primary" /> 
-                    {section.title}
-                  </h2>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <div 
-                    className="space-y-6
-                      [&_h3]:text-xl [&_h3]:font-bold [&_h3]:text-foreground [&_h3]:mb-4 [&_h3]:mt-6 [&_h3]:pb-2 [&_h3]:border-b-2 [&_h3]:border-primary/20
-                      [&_h4]:text-lg [&_h4]:font-semibold [&_h4]:text-primary [&_h4]:mb-3 [&_h4]:mt-5
-                      [&_p]:text-base [&_p]:text-muted-foreground [&_p]:leading-relaxed [&_p]:mb-4
-                      [&_strong]:font-semibold [&_strong]:text-foreground [&_strong]:bg-primary/10 [&_strong]:px-1.5 [&_strong]:py-0.5 [&_strong]:rounded [&_strong]:text-sm
-                      [&_ul]:space-y-3 [&_ul]:my-5 [&_ul]:pl-0
-                      [&_li]:flex [&_li]:items-start [&_li]:gap-3 [&_li]:text-muted-foreground [&_li]:leading-relaxed [&_li]:bg-card [&_li]:p-3 [&_li]:rounded-lg [&_li]:border [&_li]:border-border/50
-                      [&_li]:before:content-['•'] [&_li]:before:text-primary [&_li]:before:text-xl [&_li]:before:font-bold [&_li]:before:flex-shrink-0
-                      [&_img]:rounded-xl [&_img]:shadow-lg [&_img]:max-w-md [&_img]:mx-auto [&_img]:my-8 [&_img]:cursor-pointer [&_img]:hover:shadow-2xl [&_img]:transition-all [&_img]:hover:scale-105 [&_img]:border-4 [&_img]:border-border"
-                    dangerouslySetInnerHTML={{ 
-                      __html: section.content
-                        // Processa imagens markdown com figure
-                        .replace(/!\[(.*?)\]\((.*?)\)/g, (match, alt, src) => {
-                          return `<figure class="my-8 flex flex-col items-center">
-                            <img src="${src}" alt="${alt}" onclick="document.dispatchEvent(new CustomEvent('image-zoom', {detail: '${src}'}))" />
-                            <figcaption class="text-center text-sm text-muted-foreground mt-3 italic">${alt}</figcaption>
-                          </figure>`
-                        })
-                        // Headers
-                        .replace(/^### (.*?)$/gm, '<h3>$1</h3>')
-                        .replace(/^#### (.*?)$/gm, '<h4>$1</h4>')
-                        // Texto em negrito
-                        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                        // Listas
-                        .replace(/^- (.+?)$/gm, '<li>$1</li>')
-                        .replace(/(<li>.*?<\/li>\n?)+/g, '<ul>$&</ul>')
-                        // Parágrafos
-                        .replace(/\n\n/g, '</p><p>')
-                        .replace(/^(?!<[hulf]|<figure)(.*?)$/gm, '<p>$1</p>')
-                        .replace(/<p><\/p>/g, '')
-                        .replace(/<p>(<[hulf])/g, '$1')
-                        .replace(/(<\/[hulf][^>]*>)<\/p>/g, '$1')
-                    }}
-                  />
-                  
-                  {section.images && section.images.length > 0 && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-                      {section.images.sort((a, b) => a.position - b.position).map((image, imgIdx) => (
-                        <div key={imgIdx} className="flex flex-col items-center space-y-2">
-                          <ImageWithFallback
-                            src={image.url}
-                            alt={image.caption}
-                            className="max-w-full h-auto rounded-lg shadow-md cursor-pointer hover:shadow-xl transition-shadow border-2 border-border/50"
-                            fallbackClassName="h-64 w-full"
-                            onClick={() => setZoomedImage(image.url)}
-                          />
-                          <p className="text-sm text-muted-foreground text-center italic">
-                            {image.caption}
-                          </p>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </motion.div>
+      <div className="space-y-4">
+        <Skeleton className="h-12 w-full" />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {[1, 2, 3, 4, 5].map((i) => (
+            <Skeleton key={i} className="h-40" />
           ))}
-        </motion.div>
-
-        {/* Modal de Zoom para Imagens */}
-        <Dialog open={!!zoomedImage} onOpenChange={() => setZoomedImage(null)}>
-          <DialogContent className="max-w-4xl">
-            <DialogHeader>
-              <DialogTitle>Visualização Ampliada</DialogTitle>
-            </DialogHeader>
-            <img 
-              src={zoomedImage || ''} 
-              alt="Imagem ampliada" 
-              className="w-full h-auto rounded-lg"
-            />
-            <DialogDescription className="text-center text-sm text-muted-foreground mt-2">
-              Clique fora da imagem ou pressione ESC para fechar
-            </DialogDescription>
-          </DialogContent>
-        </Dialog>
-      </div>
-    )
-  }
-
-  // View: Lessons List
-  if (selectedChapter) {
-    const progress = getChapterProgress(selectedChapter.id)
-    
-    return (
-      <div className="space-y-6">
-        <button
-          onClick={handleBackToChapters}
-          className="text-primary hover:underline flex items-center gap-2"
-        >
-          ← Voltar para capítulos
-        </button>
-
-        <div className="bg-card border border-border rounded-xl p-6">
-          <h2 className="text-2xl font-bold text-foreground mb-2">{selectedChapter.title}</h2>
-          <p className="text-muted-foreground mb-4">{selectedChapter.description}</p>
-          
-          <div className="mb-6">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm text-muted-foreground">Progresso do Capítulo</span>
-              <span className="text-sm font-medium">{progress}%</span>
-            </div>
-            <Progress value={progress} className="h-2" />
-          </div>
-
-          <div className="space-y-3">
-            {lessons.map((lesson, index) => (
-              <div
-                key={lesson.id}
-                onClick={() => handleLessonClick(lesson)}
-                className="bg-background border border-border rounded-lg p-4 hover:shadow-md transition-all cursor-pointer group"
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4 flex-1">
-                    <div className="flex items-center justify-center w-10 h-10 rounded-full bg-primary/10 text-primary font-bold group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
-                      {index + 1}
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors">
-                        {lesson.title}
-                      </h3>
-                      <p className="text-sm text-muted-foreground flex items-center gap-2 mt-1">
-                        <Clock className="h-3 w-3" />
-                        {lesson.estimated_time}
-                      </p>
-                    </div>
-                  </div>
-                  {isLessonCompleted(lesson.id) ? (
-                    <CheckCircle2 className="h-6 w-6 text-success" />
-                  ) : (
-                    <Play className="h-6 w-6 text-muted-foreground group-hover:text-primary transition-colors" />
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
         </div>
       </div>
-    )
+    );
   }
 
-  // View: Chapters List
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold text-foreground">Materiais de Estudo</h2>
-          <p className="text-muted-foreground mt-1">
-            Conteúdo oficial do Senado Federal para sua habilitação
-          </p>
-        </div>
+      {/* Breadcrumb */}
+      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+        {viewMode !== 'modules' && (
+          <Button variant="ghost" size="sm" onClick={handleBack}>
+            <ChevronLeft className="h-4 w-4 mr-1" />
+            Voltar
+          </Button>
+        )}
+        <span>{getBreadcrumb()}</span>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {chapters.map((chapter) => (
-          <div
-            key={chapter.id}
-            onClick={() => handleChapterClick(chapter)}
-            className="bg-card border border-border rounded-xl p-6 hover:shadow-card transition-all cursor-pointer group"
-          >
-            <div className="flex items-start gap-4 mb-4">
-              <div className="p-3 bg-primary/10 rounded-lg group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
-                <BookOpen className="h-6 w-6 text-primary group-hover:text-primary-foreground" />
+      {/* Header */}
+      <div>
+        <h2 className="text-3xl font-bold text-foreground mb-2">
+          {viewMode === 'modules' && 'Materiais de Estudo'}
+          {viewMode === 'chapters' && selectedModule?.title}
+          {viewMode === 'lessons' && selectedChapter?.title}
+          {viewMode === 'content' && selectedLesson?.title}
+        </h2>
+        <p className="text-muted-foreground">
+          {viewMode === 'modules' && 'Escolha um módulo para começar seus estudos'}
+          {viewMode === 'chapters' && selectedModule?.description}
+          {viewMode === 'lessons' && selectedChapter?.description}
+          {viewMode === 'content' && `Tempo estimado: ${selectedLesson?.estimated_time || 'N/A'}`}
+        </p>
+      </div>
+
+      {/* Modules View */}
+      {viewMode === 'modules' && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {hierarchy?.map((module) => (
+            <Card
+              key={module.id}
+              className="cursor-pointer hover:shadow-card transition-all border-border hover:border-primary/50"
+              onClick={() => handleModuleClick(module)}
+            >
+              <CardHeader>
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <CardTitle className="text-xl mb-2 flex items-center gap-2">
+                      <span className="text-3xl">{module.icon}</span>
+                      {module.title}
+                    </CardTitle>
+                    <CardDescription>{module.description}</CardDescription>
+                  </div>
+                  <ChevronRight className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                    <div className="flex items-center gap-1">
+                      <BookOpen className="h-4 w-4" />
+                      <span>{module.chapters.length} capítulos</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Clock className="h-4 w-4" />
+                      <span>{module.estimated_hours}h</span>
+                    </div>
+                  </div>
+                  <div className="space-y-1">
+                    <div className="flex justify-between text-xs text-muted-foreground">
+                      <span>Progresso</span>
+                      <span>0%</span>
+                    </div>
+                    <Progress value={0} className="h-2" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+
+      {/* Chapters View */}
+      {viewMode === 'chapters' && selectedModule && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {selectedModule.chapters.map((chapter) => (
+            <Card
+              key={chapter.id}
+              className="cursor-pointer hover:shadow-card transition-all border-border hover:border-primary/50"
+              onClick={() => handleChapterClick(chapter)}
+            >
+              <CardHeader>
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <CardTitle className="flex items-center gap-2 mb-2">
+                      <span className="text-2xl">{chapter.icon}</span>
+                      {chapter.title}
+                    </CardTitle>
+                    <CardDescription>{chapter.description}</CardDescription>
+                  </div>
+                  <ChevronRight className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                  <div className="flex items-center gap-1">
+                    <BookOpen className="h-4 w-4" />
+                    <span>{chapter.lessons.length} lições</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Clock className="h-4 w-4" />
+                    <span>{chapter.estimated_time}</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+
+      {/* Lessons View */}
+      {viewMode === 'lessons' && selectedChapter && (
+        <div className="space-y-3">
+          {selectedChapter.lessons.map((lesson, index) => (
+            <Card
+              key={lesson.id}
+              className="cursor-pointer hover:shadow-card transition-all border-border hover:border-primary/50"
+              onClick={() => handleLessonClick(lesson)}
+            >
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary font-semibold">
+                      {index + 1}
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-foreground">{lesson.title}</h3>
+                      {lesson.estimated_time && (
+                        <p className="text-sm text-muted-foreground flex items-center gap-1 mt-1">
+                          <Clock className="h-3 w-3" />
+                          {lesson.estimated_time}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+
+      {/* Content View */}
+      {viewMode === 'content' && selectedLesson && (
+        <Card>
+          <CardContent className="p-6 md:p-8">
+            {isLoadingContents ? (
+              <div className="space-y-4">
+                <Skeleton className="h-8 w-3/4" />
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-2/3" />
               </div>
-              <div className="flex-1">
-                <span className="text-xs font-medium px-2 py-1 bg-secondary/10 text-secondary rounded-full">
-                  Capítulo {chapter.order_number}
-                </span>
+            ) : lessonContents && lessonContents.length > 0 ? (
+              <div className="prose prose-slate dark:prose-invert max-w-none">
+                {lessonContents.map((content) => (
+                  <ContentBlock key={content.id} content={content} />
+                ))}
               </div>
-            </div>
+            ) : (
+              <div className="text-center py-12">
+                <BookOpen className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                <p className="text-muted-foreground">
+                  Conteúdo em desenvolvimento. Em breve disponível!
+                </p>
+              </div>
+            )}
 
-            <h3 className="font-semibold text-foreground mb-2 line-clamp-2 group-hover:text-primary transition-colors">
-              {chapter.title}
-            </h3>
-
-            <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
-              {chapter.description}
-            </p>
-
-            <div className="flex items-center justify-between text-sm text-muted-foreground">
-              <span className="flex items-center gap-1">
-                <Clock className="h-4 w-4" />
-                {chapter.estimated_time}
-              </span>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">
-        <div className="bg-card border border-border rounded-lg p-4">
-          <h4 className="font-medium text-foreground mb-2">Total de Capítulos</h4>
-          <p className="text-2xl font-bold text-primary">{chapters.length}</p>
-        </div>
-        <div className="bg-card border border-border rounded-lg p-4">
-          <h4 className="font-medium text-foreground mb-2">Lições Concluídas</h4>
-          <p className="text-2xl font-bold text-success">{userProgress.filter(p => p.completed).length}</p>
-        </div>
-        <div className="bg-card border border-border rounded-lg p-4">
-          <h4 className="font-medium text-foreground mb-2">Horas de Conteúdo</h4>
-          <p className="text-2xl font-bold text-secondary">21h</p>
-        </div>
-      </div>
+            {lessonContents && lessonContents.length > 0 && (
+              <div className="mt-8 pt-6 border-t border-border flex justify-between items-center">
+                <Button variant="outline" onClick={handleBack}>
+                  <ChevronLeft className="h-4 w-4 mr-2" />
+                  Voltar às lições
+                </Button>
+                <Button onClick={handleCompleteLesson}>
+                  <CheckCircle2 className="h-4 w-4 mr-2" />
+                  Marcar como concluída
+                </Button>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
     </div>
   )
 }
+
+export default MateriaisView
