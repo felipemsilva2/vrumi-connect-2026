@@ -5,7 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useMateriaisHierarchy } from "@/hooks/useMateriaisHierarchy";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, FileText, CheckCircle, AlertCircle, Upload } from "lucide-react";
+import { Loader2, FileText, CheckCircle, AlertCircle, Sparkles } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { Input } from "@/components/ui/input";
 
@@ -19,8 +19,19 @@ export const PopulateMateriaisFromPDF = () => {
   const [processing, setProcessing] = useState(false);
   const [parsing, setParsing] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [results, setResults] = useState<Array<{ lesson: string; success: boolean; blocks: number }>>([]);
+  const [results, setResults] = useState<Array<{ lesson: string; success: boolean; blocks: number; error?: string }>>([]);
   const [pdfContent, setPdfContent] = useState<string>("");
+
+  // Batch processing states
+  const [isBatchProcessing, setIsBatchProcessing] = useState(false);
+  const [batchProgress, setBatchProgress] = useState({
+    totalLessons: 0,
+    processedLessons: 0,
+    currentChapter: "",
+    processedChapters: 0,
+    totalChapters: 0,
+    startTime: 0,
+  });
 
   const selectedModuleData = hierarchy?.find(m => m.id === selectedModule);
   const selectedChapterData = selectedModuleData?.chapters.find(c => c.id === selectedChapter);
@@ -39,7 +50,6 @@ export const PopulateMateriaisFromPDF = () => {
         description: "Extraindo conteúdo do documento (pode levar alguns minutos)",
       });
 
-      // Parse PDF usando edge function
       const { data, error } = await supabase.functions.invoke('parse-pdf', {
         body: formData
       });
@@ -61,6 +71,51 @@ export const PopulateMateriaisFromPDF = () => {
     } finally {
       setParsing(false);
     }
+  };
+
+  const processLessonWithRetry = async (
+    lesson: any,
+    chapterContext: any,
+    maxRetries = 3
+  ): Promise<{ lesson: string; success: boolean; blocks: number; error?: string }> => {
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        const { data, error } = await supabase.functions.invoke('populate-materiais-from-pdf', {
+          body: {
+            lessonId: lesson.id,
+            pdfContent: pdfContent,
+            chapterContext: chapterContext,
+          }
+        });
+
+        if (error) throw error;
+
+        return {
+          lesson: lesson.title,
+          success: true,
+          blocks: data.blocksCreated
+        };
+      } catch (err) {
+        if (attempt < maxRetries) {
+          console.log(`⚠️ Tentativa ${attempt} falhou para ${lesson.title}, tentando novamente em 2s...`);
+          await new Promise(resolve => setTimeout(resolve, 2000));
+        } else {
+          return {
+            lesson: lesson.title,
+            success: false,
+            blocks: 0,
+            error: err instanceof Error ? err.message : "Erro desconhecido"
+          };
+        }
+      }
+    }
+    
+    return {
+      lesson: lesson.title,
+      success: false,
+      blocks: 0,
+      error: "Falhou após múltiplas tentativas"
+    };
   };
 
   const handlePopulate = async () => {
@@ -88,61 +143,128 @@ export const PopulateMateriaisFromPDF = () => {
 
     const lessons = selectedChapterData.lessons;
     const total = lessons.length;
+    const chapterContext = {
+      module: selectedModuleData?.title,
+      chapter: selectedChapterData.title,
+    };
+
+    toast({
+      title: "Iniciando Processamento",
+      description: `Processando ${total} lições com IA...`,
+    });
 
     for (let i = 0; i < lessons.length; i++) {
       const lesson = lessons[i];
+      const result = await processLessonWithRetry(lesson, chapterContext);
       
-      try {
-        console.log(`Processing lesson ${i + 1}/${total}: ${lesson.title}`);
-        
-        const { data, error } = await supabase.functions.invoke('populate-materiais-from-pdf', {
-          body: {
-            lessonId: lesson.id,
-            pdfContent: pdfContent,
-            chapterContext: {
-              module: selectedModuleData?.title,
-              chapter: selectedChapterData.title,
-            }
-          }
-        });
+      setResults(prev => [...prev, result]);
+      setProgress(((i + 1) / total) * 100);
 
-        if (error) throw error;
-
-        setResults(prev => [...prev, {
-          lesson: lesson.title,
-          success: true,
-          blocks: data.blocksCreated
-        }]);
-
+      if (result.success) {
         toast({
           title: "Lição processada",
-          description: `${lesson.title}: ${data.blocksCreated} blocos criados`,
-        });
-
-      } catch (error) {
-        console.error(`Error processing lesson ${lesson.title}:`, error);
-        
-        setResults(prev => [...prev, {
-          lesson: lesson.title,
-          success: false,
-          blocks: 0
-        }]);
-
-        toast({
-          title: "Erro ao processar lição",
-          description: lesson.title,
-          variant: "destructive"
+          description: `${lesson.title}: ${result.blocks} blocos criados`,
         });
       }
-
-      setProgress(((i + 1) / total) * 100);
     }
 
     setProcessing(false);
     
+    const successCount = results.filter(r => r.success).length;
+    const failCount = results.filter(r => !r.success).length;
+
     toast({
-      title: "Processo concluído!",
-      description: `${results.filter(r => r.success).length}/${total} lições processadas com sucesso`,
+      title: successCount === total ? "✅ Sucesso!" : "⚠️ Processamento Concluído",
+      description: `${successCount} lições processadas${failCount > 0 ? `, ${failCount} falharam` : ""}`,
+      variant: successCount === total ? "default" : "destructive",
+    });
+  };
+
+  const handlePopulateAll = async () => {
+    if (!pdfContent) {
+      toast({
+        title: "Erro",
+        description: "Faça upload do PDF primeiro",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const allChapters = hierarchy?.flatMap(m => m.chapters) || [];
+    const allLessons = allChapters.flatMap(c => c.lessons);
+
+    if (allLessons.length === 0) {
+      toast({
+        title: "Erro",
+        description: "Nenhuma lição encontrada",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsBatchProcessing(true);
+    setResults([]);
+    setBatchProgress({
+      totalLessons: allLessons.length,
+      processedLessons: 0,
+      currentChapter: "",
+      processedChapters: 0,
+      totalChapters: allChapters.length,
+      startTime: Date.now(),
+    });
+
+    toast({
+      title: "🚀 Processamento em Batch Iniciado",
+      description: `Processando ${allLessons.length} lições em ${allChapters.length} capítulos...`,
+    });
+
+    const allResults: { lesson: string; success: boolean; blocks: number; error?: string }[] = [];
+    const BATCH_SIZE = 5;
+
+    for (let chapterIndex = 0; chapterIndex < allChapters.length; chapterIndex++) {
+      const chapter = allChapters[chapterIndex];
+      const lessons = chapter.lessons;
+      
+      setBatchProgress(prev => ({
+        ...prev,
+        currentChapter: chapter.title,
+        processedChapters: chapterIndex,
+      }));
+
+      const moduleData = hierarchy?.find(m => m.chapters.some(c => c.id === chapter.id));
+      const chapterContext = {
+        module: moduleData?.title,
+        chapter: chapter.title,
+      };
+
+      // Process lessons in batches of 5
+      for (let i = 0; i < lessons.length; i += BATCH_SIZE) {
+        const batch = lessons.slice(i, i + BATCH_SIZE);
+        
+        const batchResults = await Promise.all(
+          batch.map(lesson => processLessonWithRetry(lesson, chapterContext))
+        );
+
+        allResults.push(...batchResults);
+
+        setBatchProgress(prev => ({
+          ...prev,
+          processedLessons: allResults.length,
+        }));
+      }
+    }
+
+    setResults(allResults);
+    setIsBatchProcessing(false);
+
+    const successCount = allResults.filter(r => r.success).length;
+    const failCount = allResults.filter(r => !r.success).length;
+    const totalTime = Math.round((Date.now() - batchProgress.startTime) / 1000);
+
+    toast({
+      title: "🎉 Processamento Completo!",
+      description: `✅ ${successCount} lições | ❌ ${failCount} falhas | ⏱️ ${Math.floor(totalTime / 60)}m ${totalTime % 60}s`,
+      variant: failCount === 0 ? "default" : "destructive",
     });
   };
 
@@ -172,7 +294,7 @@ export const PopulateMateriaisFromPDF = () => {
                 type="file"
                 accept=".pdf"
                 onChange={handleFileUpload}
-                disabled={parsing}
+                disabled={parsing || processing || isBatchProcessing}
                 className="flex-1"
               />
               {parsing && <Loader2 className="h-5 w-5 animate-spin" />}
@@ -183,9 +305,10 @@ export const PopulateMateriaisFromPDF = () => {
               </p>
             )}
           </div>
+          
           <div>
-            <label className="block text-sm font-medium mb-2">Módulo</label>
-            <Select value={selectedModule} onValueChange={setSelectedModule}>
+            <label className="block text-sm font-medium mb-2">Módulo (para processar 1 capítulo)</label>
+            <Select value={selectedModule} onValueChange={setSelectedModule} disabled={processing || isBatchProcessing}>
               <SelectTrigger>
                 <SelectValue placeholder="Selecione um módulo" />
               </SelectTrigger>
@@ -204,7 +327,7 @@ export const PopulateMateriaisFromPDF = () => {
             <Select 
               value={selectedChapter} 
               onValueChange={setSelectedChapter}
-              disabled={!selectedModule}
+              disabled={!selectedModule || processing || isBatchProcessing}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Selecione um capítulo" />
@@ -224,7 +347,7 @@ export const PopulateMateriaisFromPDF = () => {
               <p className="text-sm text-muted-foreground">
                 <strong>{selectedChapterData.lessons.length} lições</strong> serão processadas:
               </p>
-              <ul className="mt-2 space-y-1 text-sm">
+              <ul className="mt-2 space-y-1 text-sm max-h-32 overflow-y-auto">
                 {selectedChapterData.lessons.map(lesson => (
                   <li key={lesson.id} className="ml-4">• {lesson.title}</li>
                 ))}
@@ -233,54 +356,134 @@ export const PopulateMateriaisFromPDF = () => {
           )}
         </div>
 
-        <Button 
-          onClick={handlePopulate}
-          disabled={!selectedChapter || processing || !pdfContent}
-          className="w-full"
-          size="lg"
-        >
-          {processing ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Processando... {Math.round(progress)}%
-            </>
-          ) : (
-            <>
-              <FileText className="mr-2 h-4 w-4" />
-              Iniciar População Automática
-            </>
-          )}
-        </Button>
+        <div className="space-y-3">
+          <Button
+            onClick={handlePopulate}
+            disabled={!selectedChapter || !pdfContent || processing || isBatchProcessing}
+            className="w-full"
+            size="lg"
+          >
+            {processing ? (
+              <>
+                <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                Processando... {Math.round(progress)}%
+              </>
+            ) : (
+              <>
+                <Sparkles className="mr-2 h-5 w-5" />
+                Processar 1 Capítulo
+              </>
+            )}
+          </Button>
 
-        {processing && (
-          <div className="space-y-2">
-            <Progress value={progress} />
-            <p className="text-sm text-center text-muted-foreground">
-              {Math.round(progress)}% concluído
-            </p>
+          <Button
+            onClick={handlePopulateAll}
+            disabled={!pdfContent || processing || isBatchProcessing}
+            className="w-full"
+            size="lg"
+            variant="default"
+          >
+            {isBatchProcessing ? (
+              <>
+                <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                Processando Todos...
+              </>
+            ) : (
+              <>
+                <Sparkles className="mr-2 h-5 w-5" />
+                🚀 Processar Todos os 23 Capítulos
+              </>
+            )}
+          </Button>
+        </div>
+
+        {(processing || isBatchProcessing) && (
+          <div className="space-y-4 p-4 bg-muted/50 rounded-lg border">
+            {isBatchProcessing && (
+              <>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="font-medium">Progresso Global</span>
+                    <span className="text-muted-foreground">
+                      {batchProgress.processedLessons}/{batchProgress.totalLessons} lições ({Math.round((batchProgress.processedLessons / batchProgress.totalLessons) * 100)}%)
+                    </span>
+                  </div>
+                  <Progress 
+                    value={(batchProgress.processedLessons / batchProgress.totalLessons) * 100} 
+                    className="h-3"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div className="space-y-1">
+                    <div className="text-muted-foreground">Capítulos Processados</div>
+                    <div className="font-medium">
+                      {batchProgress.processedChapters}/{batchProgress.totalChapters}
+                    </div>
+                  </div>
+                  <div className="space-y-1">
+                    <div className="text-muted-foreground">Tempo Estimado</div>
+                    <div className="font-medium">
+                      ~{Math.max(1, Math.ceil(((batchProgress.totalLessons - batchProgress.processedLessons) * 8) / 60))} min
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <div className="text-sm text-muted-foreground">Processando agora:</div>
+                  <div className="font-medium text-sm">{batchProgress.currentChapter}</div>
+                </div>
+              </>
+            )}
+
+            {processing && !isBatchProcessing && (
+              <>
+                <Progress value={progress} />
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span>Processando capítulo com IA Gemini 2.5 Flash... {Math.round(progress)}%</span>
+                </div>
+              </>
+            )}
           </div>
         )}
 
         {results.length > 0 && (
-          <div className="space-y-2">
-            <h3 className="font-semibold">Resultados:</h3>
-            <div className="space-y-1 max-h-60 overflow-y-auto">
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="font-semibold">Resultados do Processamento</h3>
+              <div className="text-sm text-muted-foreground">
+                ✅ {results.filter(r => r.success).length} sucesso | 
+                ❌ {results.filter(r => !r.success).length} falhas
+              </div>
+            </div>
+
+            <div className="max-h-96 overflow-y-auto space-y-1 pr-2">
               {results.map((result, index) => (
-                <div 
+                <div
                   key={index}
-                  className="flex items-center gap-2 p-2 rounded bg-muted/50 text-sm"
+                  className={`text-sm p-3 rounded-lg flex items-start gap-3 border ${
+                    result.success
+                      ? "bg-green-500/5 border-green-500/20"
+                      : "bg-red-500/5 border-red-500/20"
+                  }`}
                 >
                   {result.success ? (
-                    <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
+                    <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0 mt-0.5" />
                   ) : (
-                    <AlertCircle className="h-4 w-4 text-destructive flex-shrink-0" />
+                    <AlertCircle className="h-4 w-4 text-destructive flex-shrink-0 mt-0.5" />
                   )}
-                  <span className="flex-1">{result.lesson}</span>
-                  {result.success && (
-                    <span className="text-muted-foreground">
-                      {result.blocks} blocos
-                    </span>
-                  )}
+                  <div className="flex-1 min-w-0">
+                    <div className="font-medium truncate">{result.lesson}</div>
+                    {result.success && (
+                      <div className="text-xs text-muted-foreground mt-1">
+                        {result.blocks} blocos criados
+                      </div>
+                    )}
+                    {result.error && (
+                      <div className="text-xs opacity-75 mt-1">{result.error}</div>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
@@ -289,7 +492,7 @@ export const PopulateMateriaisFromPDF = () => {
 
         <div className="p-4 bg-blue-500/10 border border-blue-500/20 rounded-lg">
           <p className="text-sm text-blue-700 dark:text-blue-300">
-            <strong>ℹ️ Como usar:</strong> Faça upload do PDF completo de 221 páginas. O sistema irá extrair automaticamente todo o conteúdo e processá-lo com IA para popular as lições.
+            <strong>ℹ️ Como usar:</strong> Faça upload do PDF completo. Use "Processar 1 Capítulo" para testar ou "Processar Todos os 23 Capítulos" para popular tudo de uma vez (3-4 minutos).
           </p>
         </div>
       </CardContent>

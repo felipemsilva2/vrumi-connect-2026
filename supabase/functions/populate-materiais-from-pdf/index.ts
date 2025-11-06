@@ -7,6 +7,8 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
+  const startTime = Date.now();
+  
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -135,13 +137,16 @@ Retorne um array JSON onde cada objeto tem:
       throw insertError;
     }
 
-    console.log(`Successfully inserted ${blocks.length} blocks for lesson ${lessonId}`);
+    const processingTime = Date.now() - startTime;
+    
+    console.log(`✅ Successfully processed lesson: ${lesson.title} in ${processingTime}ms - ${blocks.length} blocks created`);
 
     return new Response(
       JSON.stringify({ 
         success: true, 
         blocksCreated: blocks.length,
-        lessonTitle: lesson.title 
+        lessonTitle: lesson.title,
+        processingTimeMs: processingTime
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
