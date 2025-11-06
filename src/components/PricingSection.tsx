@@ -13,42 +13,47 @@ const PricingSection = () => {
         "Todos os materiais de estudo",
         "Flashcards ilimitados",
         "Estatísticas de progresso",
-        "Acesso limitado aos simulados"
+        "Acesso às lições completas"
       ],
-      buttonText: "Começar Grátis",
+      buttonText: "Criar Conta Grátis",
       popular: false,
-      badge: "Explore a plataforma"
+      description: "Estude no seu ritmo com todo o conteúdo",
+      passType: null
     },
     {
       name: "Passaporte 30 Dias",
+      subtitle: "O Apressado",
       price: "R$ 29,90",
       period: "pagamento único",
       features: [
         "Tudo do Acesso Gratuito",
-        "Simulados DETRAN ilimitados",
-        "30 dias de acesso total",
-        "Ideal para quem já marcou a prova",
-        "Sprint final de estudos"
+        "Simulados oficiais ilimitados",
+        "Simulados de prática",
+        "Histórico completo de tentativas",
+        "30 dias de acesso total"
       ],
-      buttonText: "Comprar Agora",
+      buttonText: "Comprar Passaporte",
       popular: false,
-      badge: "O Apressado"
+      description: "Ideal para quem já marcou a prova e quer um sprint final de estudos",
+      passType: "30_days"
     },
     {
       name: "Passaporte 90 Dias",
+      subtitle: "O Garantido",
       price: "R$ 49,90",
       period: "pagamento único",
       features: [
         "Tudo do Acesso Gratuito",
-        "Simulados DETRAN ilimitados",
+        "Simulados oficiais ilimitados",
+        "Simulados de prática",
+        "Histórico completo de tentativas",
         "90 dias de acesso total",
-        "Estude no seu ritmo, sem pressão",
-        "Cobre todo processo até a prova",
         "Melhor custo-benefício"
       ],
-      buttonText: "Garantir Acesso",
+      buttonText: "Comprar Passaporte",
       popular: true,
-      badge: "O Garantido"
+      description: "Estude no seu ritmo, sem pressão. Cobre todo o seu processo, da primeira aula ao dia da prova",
+      passType: "90_days"
     }
   ]
 
@@ -60,7 +65,7 @@ const PricingSection = () => {
             Passaportes de Acesso
           </h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Não é assinatura. É tempo de acesso. Você compra, você sabe exatamente quanto tempo tem.
+            Não é assinatura, é tempo de acesso. Compre uma vez, estude até passar.
           </p>
         </div>
 
@@ -74,14 +79,10 @@ const PricingSection = () => {
                   : "border-border"
               }`}
             >
-              {(plan.popular || plan.badge) && (
+              {plan.popular && (
                 <div className="absolute -top-4 left-1/2 -translate-x-1/2">
-                  <span className={`px-4 py-1 rounded-full text-sm font-medium ${
-                    plan.popular 
-                      ? "bg-primary text-primary-foreground" 
-                      : "bg-muted text-muted-foreground border border-border"
-                  }`}>
-                    {plan.popular ? "Mais Popular" : plan.badge}
+                  <span className="bg-primary text-primary-foreground px-4 py-1 rounded-full text-sm font-medium">
+                    Mais Popular
                   </span>
                 </div>
               )}
@@ -90,12 +91,22 @@ const PricingSection = () => {
                 <h3 className="text-2xl font-bold text-foreground mb-2">
                   {plan.name}
                 </h3>
-                <div className="flex items-baseline justify-center gap-1">
+                {plan.subtitle && (
+                  <p className="text-sm text-muted-foreground font-medium mb-3">
+                    {plan.subtitle}
+                  </p>
+                )}
+                <div className="flex items-baseline justify-center gap-1 mb-2">
                   <span className="text-4xl font-bold text-foreground">
                     {plan.price}
                   </span>
-                  <span className="text-muted-foreground">/{plan.period}</span>
                 </div>
+                <span className="text-sm text-muted-foreground">{plan.period}</span>
+                {plan.description && (
+                  <p className="text-sm text-muted-foreground mt-4 italic">
+                    "{plan.description}"
+                  </p>
+                )}
               </div>
 
               <ul className="space-y-3 mb-8">
@@ -123,9 +134,14 @@ const PricingSection = () => {
           ))}
         </div>
 
-        <p className="text-center text-muted-foreground mt-12 text-sm">
-          💡 Reprovar faz parte do processo! Se precisar, basta comprar um novo passaporte quando estiver pronto novamente.
-        </p>
+        <div className="text-center mt-12 space-y-2">
+          <p className="text-muted-foreground text-sm">
+            💡 <strong>Honestidade Total:</strong> Você sabe exatamente o que está comprando. Sem renovação automática.
+          </p>
+          <p className="text-muted-foreground text-sm">
+            ✅ Reprovou? Simples! Compre um novo passaporte e continue estudando.
+          </p>
+        </div>
       </div>
     </section>
   )
