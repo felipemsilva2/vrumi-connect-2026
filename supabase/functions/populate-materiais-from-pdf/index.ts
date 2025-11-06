@@ -6,62 +6,6 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Function to extract relevant content from PDF based on lesson topic
-function extractRelevantContent(pdfContent: string, lessonTitle: string, chapterTitle: string): string {
-  const maxChars = 150000; // ~30k tokens (safe limit below 1M)
-  
-  // Keywords to search for relevant sections
-  const keywords = [
-    lessonTitle.toLowerCase(),
-    chapterTitle.toLowerCase(),
-    ...lessonTitle.toLowerCase().split(' ').filter(w => w.length > 4),
-    ...chapterTitle.toLowerCase().split(' ').filter(w => w.length > 4)
-  ];
-
-  // Split content into paragraphs
-  const paragraphs = pdfContent.split('\n\n');
-  const relevantParagraphs: { text: string; score: number }[] = [];
-
-  // Score each paragraph based on keyword matches
-  for (const para of paragraphs) {
-    if (para.trim().length < 20) continue;
-    
-    const lowerPara = para.toLowerCase();
-    let score = 0;
-    
-    for (const keyword of keywords) {
-      const matches = (lowerPara.match(new RegExp(keyword, 'g')) || []).length;
-      score += matches;
-    }
-    
-    if (score > 0) {
-      relevantParagraphs.push({ text: para, score });
-    }
-  }
-
-  // Sort by score and take top paragraphs
-  relevantParagraphs.sort((a, b) => b.score - a.score);
-  
-  let result = `# ${chapterTitle}\n\n## ${lessonTitle}\n\n`;
-  let currentLength = result.length;
-
-  for (const para of relevantParagraphs) {
-    if (currentLength + para.text.length > maxChars) break;
-    result += para.text + '\n\n';
-    currentLength += para.text.length + 2;
-  }
-
-  // If we found relevant content, return it
-  if (relevantParagraphs.length > 0) {
-    console.log(`Found ${relevantParagraphs.length} relevant paragraphs for ${lessonTitle}`);
-    return result;
-  }
-
-  // Fallback: take first N chars if no specific matches found
-  console.log(`No specific matches found, using first ${maxChars} chars`);
-  return pdfContent.substring(0, maxChars);
-}
-
 serve(async (req) => {
   const startTime = Date.now();
   
@@ -93,14 +37,6 @@ serve(async (req) => {
 
     if (lessonError) throw lessonError;
 
-    console.log(`Lesson: ${lesson.title}`);
-
-    // Extract relevant content from PDF based on lesson title
-    // This prevents sending 5M+ tokens to the API
-    const relevantContent = extractRelevantContent(pdfContent, lesson.title, lesson.study_chapters.title);
-    
-    console.log(`Original PDF size: ${pdfContent.length} chars, Filtered size: ${relevantContent.length} chars`);
-
     // Prepare AI prompt
     const systemPrompt = `Você é um especialista em estruturar conteúdo educacional sobre legislação de trânsito brasileira. 
 Sua tarefa é extrair e estruturar conteúdo do PDF em blocos granulares e didáticos.
@@ -128,10 +64,10 @@ Módulo: ${lesson.study_chapters.study_modules.title}
 Capítulo: ${lesson.study_chapters.title}
 Lição: ${lesson.title}
 
-CONTEÚDO RELEVANTE DO MANUAL:
-${relevantContent}
+CONTEÚDO DO PDF:
+${pdfContent}
 
-Extraia e estruture o conteúdo relevante para esta lição em blocos granulares e didáticos.
+Extraia e estruture o conteúdo relevante para esta lição em blocos granulares.
 Retorne um array JSON onde cada objeto tem:
 {
   "content_type": "tipo",
