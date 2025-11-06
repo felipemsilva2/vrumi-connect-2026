@@ -2,3 +2,6 @@ project_id = "owtylihsslimxdiovxia"
 
 [functions.populate-materiais-from-pdf]
 verify_jwt = false
+
+[functions.parse-pdf]
+verify_jwt = false

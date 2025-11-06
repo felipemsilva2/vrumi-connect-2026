@@ -1,86 +1,82 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useMateriaisHierarchy } from "@/hooks/useMateriaisHierarchy";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, FileText, CheckCircle, AlertCircle } from "lucide-react";
+import { Loader2, FileText, CheckCircle, AlertCircle, Upload } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
-
-// Conteúdo do PDF extraído (simulado - você deve substituir pelo conteúdo real)
-const PDF_CONTENT = `
-[AQUI VOCÊ DEVE COLAR O CONTEÚDO COMPLETO DO PDF PARSEADO]
-
-LEGISLAÇÃO DE TRÂNSITO BRASILEIRA - 2025
-
-MÓDULO: PREVENÇÃO E MEIO AMBIENTE E CIDADANIA (PMAC)
-
-Capítulo 1: Poluição Ambiental no Trânsito
-- Poluição atmosférica causada por veículos automotores
-- Emissão de gases poluentes e seus efeitos na saúde
-- Normas de controle de emissões (PROCONVE)
-- Inspeção veicular obrigatória
-
-Capítulo 2: Poluição Sonora
-- Ruído de veículos e seus limites legais
-- Artigo 227 do CTB: proibição de buzinas em locais proibidos
-- Dispositivos de escape e silenciadores
-- Penalidades por poluição sonora
-
-Capítulo 3: Poluição Visual
-- Excesso de propaganda em veículos
-- Limpeza e conservação de vias públicas
-- Descarte inadequado de resíduos
-
-Capítulo 4: Sustentabilidade e Mobilidade
-- Transporte coletivo e carona solidária
-- Uso de bicicletas e modos alternativos
-- Redução da pegada de carbono
-- Veículos elétricos e híbridos
-
-MÓDULO: DIREÇÃO DEFENSIVA (DD)
-
-Capítulo 1: Conceito e Definição
-- O que é direção defensiva
-- Princípios fundamentais
-- Atitudes preventivas e corretivas
-- Responsabilidade do condutor
-
-Capítulo 2: Elementos da Direção Defensiva
-- Conhecimento das normas de trânsito
-- Atenção e concentração
-- Previsão e antecipação de perigos
-- Habilidade e perícia na condução
-- Ação adequada em situações de risco
-
-Capítulo 3: Importância da Direção Defensiva
-- Prevenção de acidentes
-- Redução de custos e prejuízos
-- Preservação de vidas
-- Fluidez do trânsito
-
-[... CONTINUA COM TODO O CONTEÚDO DO PDF DE 221 PÁGINAS ...]
-`;
+import { Input } from "@/components/ui/input";
 
 export const PopulateMateriaisFromPDF = () => {
   const { data: hierarchy, isLoading } = useMateriaisHierarchy();
   const { toast } = useToast();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   const [selectedModule, setSelectedModule] = useState<string>("");
   const [selectedChapter, setSelectedChapter] = useState<string>("");
   const [processing, setProcessing] = useState(false);
+  const [parsing, setParsing] = useState(false);
   const [progress, setProgress] = useState(0);
   const [results, setResults] = useState<Array<{ lesson: string; success: boolean; blocks: number }>>([]);
+  const [pdfContent, setPdfContent] = useState<string>("");
 
   const selectedModuleData = hierarchy?.find(m => m.id === selectedModule);
   const selectedChapterData = selectedModuleData?.chapters.find(c => c.id === selectedChapter);
+
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setParsing(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      toast({
+        title: "Parseando PDF...",
+        description: "Extraindo conteúdo do documento (pode levar alguns minutos)",
+      });
+
+      // Parse PDF usando edge function
+      const { data, error } = await supabase.functions.invoke('parse-pdf', {
+        body: formData
+      });
+
+      if (error) throw error;
+
+      setPdfContent(data.content);
+      toast({
+        title: "PDF parseado com sucesso!",
+        description: `${data.pages} páginas extraídas`,
+      });
+    } catch (error) {
+      console.error('Error parsing PDF:', error);
+      toast({
+        title: "Erro ao parsear PDF",
+        description: error instanceof Error ? error.message : "Erro desconhecido",
+        variant: "destructive"
+      });
+    } finally {
+      setParsing(false);
+    }
+  };
 
   const handlePopulate = async () => {
     if (!selectedChapter || !selectedChapterData) {
       toast({
         title: "Erro",
         description: "Selecione um capítulo primeiro",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (!pdfContent) {
+      toast({
+        title: "Erro",
+        description: "Faça upload do PDF primeiro",
         variant: "destructive"
       });
       return;
@@ -102,7 +98,7 @@ export const PopulateMateriaisFromPDF = () => {
         const { data, error } = await supabase.functions.invoke('populate-materiais-from-pdf', {
           body: {
             lessonId: lesson.id,
-            pdfContent: PDF_CONTENT,
+            pdfContent: pdfContent,
             chapterContext: {
               module: selectedModuleData?.title,
               chapter: selectedChapterData.title,
@@ -169,6 +165,25 @@ export const PopulateMateriaisFromPDF = () => {
       <CardContent className="space-y-6">
         <div className="space-y-4">
           <div>
+            <label className="block text-sm font-medium mb-2">Upload do PDF (221 páginas)</label>
+            <div className="flex gap-2">
+              <Input
+                ref={fileInputRef}
+                type="file"
+                accept=".pdf"
+                onChange={handleFileUpload}
+                disabled={parsing}
+                className="flex-1"
+              />
+              {parsing && <Loader2 className="h-5 w-5 animate-spin" />}
+            </div>
+            {pdfContent && (
+              <p className="text-sm text-green-600 mt-2">
+                ✓ PDF carregado ({(pdfContent.length / 1024).toFixed(0)} KB de conteúdo)
+              </p>
+            )}
+          </div>
+          <div>
             <label className="block text-sm font-medium mb-2">Módulo</label>
             <Select value={selectedModule} onValueChange={setSelectedModule}>
               <SelectTrigger>
@@ -220,7 +235,7 @@ export const PopulateMateriaisFromPDF = () => {
 
         <Button 
           onClick={handlePopulate}
-          disabled={!selectedChapter || processing}
+          disabled={!selectedChapter || processing || !pdfContent}
           className="w-full"
           size="lg"
         >
@@ -272,9 +287,9 @@ export const PopulateMateriaisFromPDF = () => {
           </div>
         )}
 
-        <div className="p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
-          <p className="text-sm text-yellow-700 dark:text-yellow-300">
-            <strong>⚠️ Importante:</strong> Substitua o conteúdo de PDF_CONTENT no código com o texto completo do PDF parseado de 221 páginas para melhores resultados.
+        <div className="p-4 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+          <p className="text-sm text-blue-700 dark:text-blue-300">
+            <strong>ℹ️ Como usar:</strong> Faça upload do PDF completo de 221 páginas. O sistema irá extrair automaticamente todo o conteúdo e processá-lo com IA para popular as lições.
           </p>
         </div>
       </CardContent>
