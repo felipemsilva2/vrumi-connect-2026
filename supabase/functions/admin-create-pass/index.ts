@@ -69,6 +69,24 @@ serve(async (req) => {
 
     if (passError) throw passError;
 
+    // Log the admin action
+    await supabase.rpc('log_admin_action', {
+      p_user_id: user.id,
+      p_action_type: 'CREATE',
+      p_entity_type: 'pass',
+      p_entity_id: pass.id,
+      p_old_values: null,
+      p_new_values: {
+        user_id: targetUser.id,
+        pass_type,
+        price,
+        expires_at,
+        payment_status: 'completed',
+      },
+      p_ip_address: null,
+      p_user_agent: req.headers.get('user-agent'),
+    });
+
     console.log('Pass created successfully:', pass.id);
 
     return new Response(

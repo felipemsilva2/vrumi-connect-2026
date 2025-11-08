@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Shield, ShieldOff } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useAuditLog } from "@/hooks/useAuditLog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -29,6 +30,7 @@ const AdminRoles = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [alertOpen, setAlertOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<{ userId: string; action: "add" | "remove" } | null>(null);
+  const { logAction } = useAuditLog();
 
   useEffect(() => {
     fetchUserRoles();
@@ -87,11 +89,21 @@ const AdminRoles = () => {
     try {
       if (selectedUser.action === "add") {
         // Adicionar role de admin
-        const { error } = await supabase
+        const { data, error } = await supabase
           .from("user_roles")
-          .insert({ user_id: selectedUser.userId, role: "admin" });
+          .insert({ user_id: selectedUser.userId, role: "admin" })
+          .select()
+          .single();
 
         if (error) throw error;
+
+        await logAction({
+          actionType: "CREATE",
+          entityType: "role",
+          entityId: data.id,
+          newValues: { user_id: selectedUser.userId, role: "admin" },
+        });
+
         toast.success("Usuário promovido a admin com sucesso");
       } else {
         // Remover role de admin
@@ -102,6 +114,14 @@ const AdminRoles = () => {
           .eq("role", "admin");
 
         if (error) throw error;
+
+        await logAction({
+          actionType: "DELETE",
+          entityType: "role",
+          entityId: selectedUser.userId,
+          oldValues: { user_id: selectedUser.userId, role: "admin" },
+        });
+
         toast.success("Permissões de admin removidas com sucesso");
       }
 

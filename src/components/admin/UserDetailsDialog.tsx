@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuditLog } from "@/hooks/useAuditLog";
 
 interface UserDetailsDialogProps {
   open: boolean;
@@ -27,6 +28,7 @@ interface UserDetailsDialogProps {
 export const UserDetailsDialog = ({ open, onOpenChange, user, onUpdate }: UserDetailsDialogProps) => {
   const [fullName, setFullName] = useState(user?.full_name || "");
   const [isLoading, setIsLoading] = useState(false);
+  const { logAction } = useAuditLog();
 
   const handleSave = async () => {
     if (!user) return;
@@ -39,6 +41,14 @@ export const UserDetailsDialog = ({ open, onOpenChange, user, onUpdate }: UserDe
         .eq("id", user.id);
 
       if (error) throw error;
+
+      await logAction({
+        actionType: "UPDATE",
+        entityType: "user",
+        entityId: user.id,
+        oldValues: { full_name: user.full_name },
+        newValues: { full_name: fullName },
+      });
 
       toast.success("Usuário atualizado com sucesso");
       onUpdate();

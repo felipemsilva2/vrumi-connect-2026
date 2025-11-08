@@ -14,6 +14,7 @@ import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminUsers from "./pages/admin/AdminUsers";
 import AdminSubscriptions from "./pages/admin/AdminSubscriptions";
 import AdminRoles from "./pages/admin/AdminRoles";
+import AdminAuditLogs from "./pages/admin/AdminAuditLogs";
 import NotFound from "./pages/NotFound";
 import { ProtectedAdminRoute } from "./components/admin/ProtectedAdminRoute";
 
@@ -48,6 +49,11 @@ const App = () => (
           <Route path="/admin/roles" element={
             <ProtectedAdminRoute>
               <AdminRoles />
+            </ProtectedAdminRoute>
+          } />
+          <Route path="/admin/audit-logs" element={
+            <ProtectedAdminRoute>
+              <AdminAuditLogs />
             </ProtectedAdminRoute>
           } />
           <Route path="/admin/populate" element={
