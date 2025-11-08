@@ -10,6 +10,10 @@ import Checkout from "./pages/Checkout";
 import AdminPopulate from "./pages/AdminPopulate";
 import AdminFlashcards from "./pages/AdminFlashcards";
 import AdminQuestions from "./pages/AdminQuestions";
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminUsers from "./pages/admin/AdminUsers";
+import AdminSubscriptions from "./pages/admin/AdminSubscriptions";
+import AdminRoles from "./pages/admin/AdminRoles";
 import NotFound from "./pages/NotFound";
 import { ProtectedAdminRoute } from "./components/admin/ProtectedAdminRoute";
 
@@ -26,6 +30,26 @@ const App = () => (
           <Route path="/auth" element={<Auth />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/checkout" element={<Checkout />} />
+          <Route path="/admin/dashboard" element={
+            <ProtectedAdminRoute>
+              <AdminDashboard />
+            </ProtectedAdminRoute>
+          } />
+          <Route path="/admin/users" element={
+            <ProtectedAdminRoute>
+              <AdminUsers />
+            </ProtectedAdminRoute>
+          } />
+          <Route path="/admin/subscriptions" element={
+            <ProtectedAdminRoute>
+              <AdminSubscriptions />
+            </ProtectedAdminRoute>
+          } />
+          <Route path="/admin/roles" element={
+            <ProtectedAdminRoute>
+              <AdminRoles />
+            </ProtectedAdminRoute>
+          } />
           <Route path="/admin/populate" element={
             <ProtectedAdminRoute>
               <AdminPopulate />

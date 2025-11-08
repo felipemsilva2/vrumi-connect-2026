@@ -18,11 +18,13 @@ import {
   Brain,
   Award,
   Calendar,
+  Shield,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Car } from "lucide-react";
+import { useIsAdmin } from "@/hooks/useIsAdmin";
 
 interface DashboardProps {
   user: any;
@@ -67,6 +69,7 @@ const Sidebar = ({ user, selected, setSelected }: SidebarProps) => {
   const [open, setOpen] = useState(true);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { isAdmin } = useIsAdmin(user?.id);
 
   const handleSignOut = async () => {
     try {
@@ -85,6 +88,10 @@ const Sidebar = ({ user, selected, setSelected }: SidebarProps) => {
         variant: "destructive",
       });
     }
+  };
+
+  const handleAdminAccess = () => {
+    navigate("/admin/dashboard");
   };
 
   return (
@@ -141,6 +148,23 @@ const Sidebar = ({ user, selected, setSelected }: SidebarProps) => {
           notifs={1}
         />
       </div>
+
+      {isAdmin && open && (
+        <div className="border-t border-gray-200 dark:border-gray-800 pt-4 space-y-1 mb-4">
+          <div className="px-3 py-2 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+            Administração
+          </div>
+          <button
+            onClick={handleAdminAccess}
+            className="relative flex h-11 w-full items-center rounded-md transition-all duration-200 text-gray-600 dark:text-gray-400 hover:bg-primary/10 dark:hover:bg-primary/20 hover:text-primary dark:hover:text-primary"
+          >
+            <div className="grid h-full w-12 place-content-center">
+              <Shield className="h-4 w-4" />
+            </div>
+            <span className="text-sm font-medium">Área Admin</span>
+          </button>
+        </div>
+      )}
 
       {open && (
         <div className="border-t border-gray-200 dark:border-gray-800 pt-4 space-y-1">
