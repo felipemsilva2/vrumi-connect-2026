@@ -11,6 +11,7 @@ import AdminPopulate from "./pages/AdminPopulate";
 import AdminFlashcards from "./pages/AdminFlashcards";
 import AdminQuestions from "./pages/AdminQuestions";
 import NotFound from "./pages/NotFound";
+import { ProtectedAdminRoute } from "./components/admin/ProtectedAdminRoute";
 
 const queryClient = new QueryClient();
 
@@ -25,9 +26,21 @@ const App = () => (
           <Route path="/auth" element={<Auth />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/checkout" element={<Checkout />} />
-          <Route path="/admin/populate" element={<AdminPopulate />} />
-          <Route path="/admin/flashcards" element={<AdminFlashcards />} />
-          <Route path="/admin/questions" element={<AdminQuestions />} />
+          <Route path="/admin/populate" element={
+            <ProtectedAdminRoute>
+              <AdminPopulate />
+            </ProtectedAdminRoute>
+          } />
+          <Route path="/admin/flashcards" element={
+            <ProtectedAdminRoute>
+              <AdminFlashcards />
+            </ProtectedAdminRoute>
+          } />
+          <Route path="/admin/questions" element={
+            <ProtectedAdminRoute>
+              <AdminQuestions />
+            </ProtectedAdminRoute>
+          } />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

@@ -553,14 +553,40 @@ export type Database = {
           },
         ]
       }
+      user_roles: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
       has_active_pass: { Args: { user_id: string }; Returns: boolean }
+      is_admin: { Args: { user_id?: string }; Returns: boolean }
     }
     Enums: {
+      app_role: "admin" | "user"
       pass_type: "30_days" | "90_days"
     }
     CompositeTypes: {
@@ -689,6 +715,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      app_role: ["admin", "user"],
       pass_type: ["30_days", "90_days"],
     },
   },
