@@ -26,24 +26,7 @@ serve(async (req) => {
       throw new Error("Variáveis de ambiente não configuradas");
     }
 
-    // Primeiro, parse o PDF
-    console.log("Parsing PDF...");
-    const parseResponse = await fetch("https://document.parser.lovable.app/parse-document", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        document: pdfBase64,
-        include_page_screenshots: false,
-      }),
-    });
-
-    if (!parseResponse.ok) {
-      throw new Error(`Document parser failed: ${parseResponse.status}`);
-    }
-
-    const parseData = await parseResponse.json();
-    const pdfContent = parseData.pages.map((p: any) => p.text).join("\n\n");
-    console.log(`PDF parsed: ${pdfContent.length} characters`);
+    console.log("Processing PDF with AI...");
 
     // Usar IA para gerar flashcards
     const systemPrompt = `Você é um especialista em criar flashcards educacionais para estudantes de habilitação de trânsito no Brasil.
@@ -69,9 +52,9 @@ REGRAS:
 6. Foque em conceitos importantes e que aparecem em provas
 7. Retorne APENAS o JSON, sem texto adicional`;
 
-    const userPrompt = `Baseado neste conteúdo do Manual de Obtenção da CNH, gere 50 flashcards educacionais:
+    const userPrompt = `Analise este PDF do Manual de Obtenção da CNH e gere 50 flashcards educacionais com perguntas e respostas sobre o conteúdo.
 
-${pdfContent.slice(0, 150000)}`;
+PDF em base64: ${pdfBase64.slice(0, 100000)}`;
 
     console.log("Calling Lovable AI...");
     const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
