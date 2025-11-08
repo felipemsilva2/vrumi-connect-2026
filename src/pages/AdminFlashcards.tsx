@@ -5,7 +5,7 @@ import { Progress } from "@/components/ui/progress";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Upload, FileText, Sparkles } from "lucide-react";
-import Navbar from "@/components/Navbar";
+import { Navbar } from "@/components/Navbar";
 
 export default function AdminFlashcards() {
   const [isProcessing, setIsProcessing] = useState(false);
