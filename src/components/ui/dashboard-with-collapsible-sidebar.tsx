@@ -125,6 +125,7 @@ const Sidebar = ({ user, selected, setSelected }: SidebarProps) => {
           open={open}
           notifs={2}
         />
+        {/* TEMPORARIAMENTE OCULTO - Lançamento futuro
         <Option
           Icon={FileText}
           title="Materiais"
@@ -132,6 +133,7 @@ const Sidebar = ({ user, selected, setSelected }: SidebarProps) => {
           setSelected={setSelected}
           open={open}
         />
+        */}
         <Option
           Icon={BarChart3}
           title="Estatísticas"

@@ -16,11 +16,15 @@ export const ProtectedAdminRoute = ({ children }: ProtectedAdminRouteProps) => {
 
   useEffect(() => {
     const getUser = async () => {
+      console.log('[ProtectedAdminRoute] Getting user...');
       const { data: { user } } = await supabase.auth.getUser();
+      console.log('[ProtectedAdminRoute] User:', user?.id, user?.email);
       if (!user) {
+        console.log('[ProtectedAdminRoute] No user found, redirecting to /auth');
         navigate("/auth");
         return;
       }
+      console.log('[ProtectedAdminRoute] Setting userId:', user.id);
       setUserId(user.id);
     };
 
@@ -28,7 +32,9 @@ export const ProtectedAdminRoute = ({ children }: ProtectedAdminRouteProps) => {
   }, [navigate]);
 
   useEffect(() => {
+    console.log('[ProtectedAdminRoute] Access check - isLoading:', isLoading, 'userId:', userId, 'isAdmin:', isAdmin);
     if (!isLoading && userId && !isAdmin) {
+      console.log('[ProtectedAdminRoute] Access denied, redirecting to /dashboard');
       toast.error("Acesso negado", {
         description: "Você não tem permissão para acessar esta área."
       });

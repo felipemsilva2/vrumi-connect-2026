@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 interface ActivePass {
   id: string;
-  pass_type: "30_days" | "90_days";
+  pass_type: "30_days" | "90_days" | "family_90_days";
   expires_at: string;
   purchased_at: string;
 }

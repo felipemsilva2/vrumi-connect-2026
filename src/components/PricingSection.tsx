@@ -6,19 +6,22 @@ const PricingSection = () => {
 
   const plans = [
     {
-      name: "Acesso Gratuito",
-      price: "R$ 0",
-      period: "sempre",
+      name: "Passaporte Família",
+      subtitle: "Para 2 Pessoas",
+      price: "R$ 84,90",
+      period: "pagamento único",
       features: [
-        "Todos os materiais de estudo",
-        "Flashcards ilimitados",
-        "Estatísticas de progresso",
-        "Acesso às lições completas"
+        "2 contas individuais incluídas",
+        "90 dias de acesso total por pessoa",
+        "Simulados oficiais ilimitados",
+        "Flashcards e estatísticas completas",
+        "Progresso individual para cada um",
+        "Economia de R$ 14,90"
       ],
-      buttonText: "Criar Conta Grátis",
+      buttonText: "Comprar para Família",
       popular: false,
-      description: "Estude no seu ritmo com todo o conteúdo",
-      passType: null
+      description: "Perfeito para irmãos, casais ou amigos que vão tirar a CNH juntos",
+      passType: "family_90_days"
     },
     {
       name: "Passaporte 30 Dias",

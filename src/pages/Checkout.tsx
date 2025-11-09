@@ -25,7 +25,8 @@ type CheckoutForm = z.infer<typeof checkoutSchema>
 
 const Checkout = () => {
   const [searchParams] = useSearchParams()
-  const passType = searchParams.get("pass") as "30_days" | "90_days" | null
+  const passType = searchParams.get("pass") as "30_days" | "90_days" | "family_90_days" | null
+  const [secondUserEmail, setSecondUserEmail] = useState("")
   const navigate = useNavigate()
   const { toast } = useToast()
   const [user, setUser] = useState<User | null>(null)
@@ -66,6 +67,20 @@ const Checkout = () => {
         "Histórico completo",
         "90 dias de acesso total",
         "Melhor custo-benefício"
+      ]
+    },
+    "family_90_days": {
+      name: "Passaporte Família",
+      subtitle: "Para 2 Pessoas",
+      price: 84.90,
+      days: 90,
+      features: [
+        "2 contas individuais incluídas",
+        "90 dias de acesso total por pessoa",
+        "Simulados oficiais ilimitados",
+        "Flashcards e estatísticas completas",
+        "Progresso individual para cada um",
+        "Economia de R$ 14,90"
       ]
     }
   }
@@ -186,24 +201,54 @@ const Checkout = () => {
       const expiresAt = new Date()
       expiresAt.setDate(expiresAt.getDate() + selectedPass.days)
 
-      // In production, this would integrate with a payment gateway
-      // For now, we'll create a pending pass
-      const { error } = await supabase
-        .from("user_passes")
-        .insert({
-          user_id: user.id,
-          pass_type: passType,
-          price: selectedPass.price,
-          expires_at: expiresAt.toISOString(),
-          payment_status: "completed", // In production: 'pending' until payment confirmed
+      // Check if it's a family plan
+      if (passType === "family_90_days") {
+        // Validate second user email
+        if (!secondUserEmail || !secondUserEmail.includes("@")) {
+          toast({
+            title: "Email inválido",
+            description: "Por favor, informe o email do segundo usuário.",
+            variant: "destructive",
+          })
+          return
+        }
+
+        // Call edge function to create family pass
+        const { data, error } = await supabase.functions.invoke('admin-create-pass', {
+          body: {
+            user_email: user.email,
+            second_user_email: secondUserEmail,
+            pass_type: passType,
+            expires_at: expiresAt.toISOString(),
+            price: selectedPass.price
+          }
         })
 
-      if (error) throw error
+        if (error) throw error
 
-      toast({
-        title: "Pagamento processado!",
-        description: `Seu ${selectedPass.name} foi ativado com sucesso.`,
-      })
+        toast({
+          title: "Pagamento processado!",
+          description: `Passaporte Família ativado! 2 contas foram criadas com sucesso.`,
+        })
+      } else {
+        // Regular pass creation
+        const { error } = await supabase
+          .from("user_passes")
+          .insert({
+            user_id: user.id,
+            pass_type: passType,
+            price: selectedPass.price,
+            expires_at: expiresAt.toISOString(),
+            payment_status: "completed",
+          })
+
+        if (error) throw error
+
+        toast({
+          title: "Pagamento processado!",
+          description: `Seu ${selectedPass.name} foi ativado com sucesso.`,
+        })
+      }
 
       navigate("/dashboard")
     } catch (error) {
@@ -300,12 +345,39 @@ const Checkout = () => {
                     </div>
                   </div>
 
+                  {passType === "family_90_days" && (
+                    <>
+                      <Separator />
+                      <div>
+                        <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                          <div className="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center text-sm font-bold">2</div>
+                          Segundo Usuário
+                        </h3>
+                        <div>
+                          <Label htmlFor="secondUserEmail">Email do Segundo Usuário</Label>
+                          <Input
+                            id="secondUserEmail"
+                            type="email"
+                            value={secondUserEmail}
+                            onChange={(e) => setSecondUserEmail(e.target.value)}
+                            placeholder="email@exemplo.com"
+                          />
+                          <p className="text-xs text-muted-foreground mt-2">
+                            Digite o email da pessoa que vai estudar junto com você. Um passaporte será criado para cada um.
+                          </p>
+                        </div>
+                      </div>
+                    </>
+                  )}
+
                   <Separator />
 
                   {/* Payment Info */}
                   <div>
                     <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                      <div className="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center text-sm font-bold">2</div>
+                      <div className="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center text-sm font-bold">
+                        {passType === "family_90_days" ? "3" : "2"}
+                      </div>
                       Pagamento
                     </h3>
                     <div className="space-y-4">

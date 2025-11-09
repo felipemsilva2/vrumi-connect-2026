@@ -38,9 +38,11 @@ serve(async (req) => {
     }
 
     // Obter dados da requisição
-    const { user_email, pass_type, expires_at, price } = await req.json();
+    const { user_email, second_user_email, pass_type, expires_at, price } = await req.json();
 
-    console.log('Creating pass for:', { user_email, pass_type, expires_at, price });
+    console.log('Creating pass for:', { user_email, second_user_email, pass_type, expires_at, price });
+
+    const isFamilyPlan = pass_type === 'family_90_days';
 
     // Buscar user_id pelo email
     const { data: { users }, error: listError } = await supabase.auth.admin.listUsers();
@@ -53,19 +55,39 @@ serve(async (req) => {
       throw new Error('Usuário não encontrado');
     }
 
-    // Criar o passe
-    const { data: pass, error: passError } = await supabase
-      .from('user_passes')
-      .insert({
-        user_id: targetUser.id,
+    // Array para armazenar os passes a serem criados
+    const passesToCreate = [{
+      user_id: targetUser.id,
+      pass_type,
+      price: isFamilyPlan ? price / 2 : price,
+      expires_at,
+      payment_status: 'completed',
+      purchased_at: new Date().toISOString(),
+    }];
+
+    // Se for plano família, criar passe para o segundo usuário
+    if (isFamilyPlan && second_user_email) {
+      const secondUser = users.find(u => u.email === second_user_email);
+      
+      if (!secondUser) {
+        throw new Error('Segundo usuário não encontrado');
+      }
+
+      passesToCreate.push({
+        user_id: secondUser.id,
         pass_type,
-        price,
+        price: price / 2,
         expires_at,
         payment_status: 'completed',
         purchased_at: new Date().toISOString(),
-      })
-      .select()
-      .single();
+      });
+    }
+
+    // Criar o(s) passe(s)
+    const { data: passes, error: passError } = await supabase
+      .from('user_passes')
+      .insert(passesToCreate)
+      .select();
 
     if (passError) throw passError;
 
@@ -74,23 +96,25 @@ serve(async (req) => {
       p_user_id: user.id,
       p_action_type: 'CREATE',
       p_entity_type: 'pass',
-      p_entity_id: pass.id,
+      p_entity_id: passes[0].id,
       p_old_values: null,
       p_new_values: {
-        user_id: targetUser.id,
+        user_email,
+        second_user_email: isFamilyPlan ? second_user_email : null,
         pass_type,
         price,
         expires_at,
         payment_status: 'completed',
+        passes_created: passes.length,
       },
       p_ip_address: null,
       p_user_agent: req.headers.get('user-agent'),
     });
 
-    console.log('Pass created successfully:', pass.id);
+    console.log('Pass(es) created successfully:', passes.map(p => p.id));
 
     return new Response(
-      JSON.stringify({ success: true, pass }),
+      JSON.stringify({ success: true, passes }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200 

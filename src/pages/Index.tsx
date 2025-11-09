@@ -12,6 +12,8 @@ const Index = () => {
   const navigate = useNavigate();
   return <main className="min-h-screen pt-20">
       <Navbar />
+      
+      {/* 1. Hero */}
       <section id="inicio">
         <MinimalModernHero logo={<div className="flex items-center gap-2">
             
@@ -36,6 +38,13 @@ const Index = () => {
         label: "Avaliação"
       }]} accentColor="#10b981" />
       </section>
+      
+      {/* 2. Social Proof - Depoimentos */}
+      <section id="depoimentos">
+        <Testimonials />
+      </section>
+      
+      {/* 3. Recursos */}
       <section id="recursos" className="py-20 px-4 bg-background">
         <div className="container mx-auto max-w-7xl">
           <div className="text-center mb-16">
@@ -47,15 +56,22 @@ const Index = () => {
           <FeaturesSectionWithHoverEffects />
         </div>
       </section>
-      <PricingSection />
-      <FlashcardSection />
-      <section id="depoimentos">
-        <Testimonials />
-      </section>
+      
+      {/* 4. Apoio Governamental */}
       <GovernmentSupport />
+      
+      {/* 5. Preview - Flashcards */}
+      <FlashcardSection />
+      
+      {/* 6. Pricing */}
+      <PricingSection />
+      
+      {/* 7. FAQ */}
       <section id="faq">
         <FAQ />
       </section>
+      
+      {/* 8. Footer */}
       <Footer />
     </main>;
 };
