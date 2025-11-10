@@ -25,7 +25,7 @@ type CheckoutForm = z.infer<typeof checkoutSchema>
 
 const Checkout = () => {
   const [searchParams] = useSearchParams()
-  const passType = searchParams.get("pass") as "30_days" | "90_days" | "family_90_days" | null
+  const passType = searchParams.get("pass") as "individual_30_days" | "individual_90_days" | "family_90_days" | null
   const [secondUserEmail, setSecondUserEmail] = useState("")
   const navigate = useNavigate()
   const { toast } = useToast()
@@ -44,7 +44,7 @@ const Checkout = () => {
   })
 
   const passDetails = {
-    "30_days": {
+    "individual_30_days": {
       name: "Passaporte 30 Dias",
       subtitle: "O Apressado",
       price: 29.90,
@@ -56,10 +56,10 @@ const Checkout = () => {
         "30 dias de acesso total"
       ]
     },
-    "90_days": {
+    "individual_90_days": {
       name: "Passaporte 90 Dias",
       subtitle: "O Garantido",
-      price: 49.90,
+      price: 79.90,
       days: 90,
       features: [
         "Simulados oficiais ilimitados",
@@ -173,15 +173,6 @@ const Checkout = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    if (!validateForm()) {
-      toast({
-        title: "Erro no formulário",
-        description: "Por favor, corrija os campos destacados",
-        variant: "destructive",
-      })
-      return
-    }
-
     if (!user) {
       toast({
         title: "Faça login primeiro",
@@ -194,71 +185,45 @@ const Checkout = () => {
 
     if (!selectedPass || !passType) return
 
+    // Validar email do segundo usuário se for plano família
+    if (passType === "family_90_days") {
+      if (!secondUserEmail || !secondUserEmail.includes("@")) {
+        toast({
+          title: "Email inválido",
+          description: "Por favor, informe o email do segundo usuário.",
+          variant: "destructive",
+        })
+        setLoading(false)
+        return
+      }
+    }
+
     setLoading(true)
 
     try {
-      // Calculate expiry date
-      const expiresAt = new Date()
-      expiresAt.setDate(expiresAt.getDate() + selectedPass.days)
+      // Criar sessão de checkout no Stripe
+      const { data, error } = await supabase.functions.invoke('create-checkout', {
+        body: {
+          passType: passType,
+          secondUserEmail: passType === 'family_90_days' ? secondUserEmail : null,
+        },
+      })
 
-      // Check if it's a family plan
-      if (passType === "family_90_days") {
-        // Validate second user email
-        if (!secondUserEmail || !secondUserEmail.includes("@")) {
-          toast({
-            title: "Email inválido",
-            description: "Por favor, informe o email do segundo usuário.",
-            variant: "destructive",
-          })
-          return
-        }
+      if (error) throw error
 
-        // Call edge function to create family pass
-        const { data, error } = await supabase.functions.invoke('admin-create-pass', {
-          body: {
-            user_email: user.email,
-            second_user_email: secondUserEmail,
-            pass_type: passType,
-            expires_at: expiresAt.toISOString(),
-            price: selectedPass.price
-          }
-        })
-
-        if (error) throw error
-
-        toast({
-          title: "Pagamento processado!",
-          description: `Passaporte Família ativado! 2 contas foram criadas com sucesso.`,
-        })
-      } else {
-        // Regular pass creation
-        const { error } = await supabase
-          .from("user_passes")
-          .insert({
-            user_id: user.id,
-            pass_type: passType,
-            price: selectedPass.price,
-            expires_at: expiresAt.toISOString(),
-            payment_status: "completed",
-          })
-
-        if (error) throw error
-
-        toast({
-          title: "Pagamento processado!",
-          description: `Seu ${selectedPass.name} foi ativado com sucesso.`,
-        })
+      if (!data?.url) {
+        throw new Error('URL de checkout não recebida')
       }
 
-      navigate("/dashboard")
+      // Redirecionar para o Stripe Checkout
+      window.location.href = data.url
     } catch (error) {
-      console.error("Error processing payment:", error)
+      console.error('Erro ao criar checkout:', error)
       toast({
         title: "Erro ao processar pagamento",
-        description: "Tente novamente ou entre em contato com o suporte",
+        description: "Ocorreu um erro ao iniciar o pagamento. Tente novamente.",
         variant: "destructive",
       })
-    } finally {
       setLoading(false)
     }
   }

@@ -3,20 +3,22 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Index from "./pages/Index";
-import Auth from "./pages/Auth";
-import Dashboard from "./pages/Dashboard";
-import Checkout from "./pages/Checkout";
-import AdminPopulate from "./pages/AdminPopulate";
-import AdminFlashcards from "./pages/AdminFlashcards";
-import AdminQuestions from "./pages/AdminQuestions";
-import AdminDashboard from "./pages/admin/AdminDashboard";
-import AdminUsers from "./pages/admin/AdminUsers";
-import AdminSubscriptions from "./pages/admin/AdminSubscriptions";
-import AdminRoles from "./pages/admin/AdminRoles";
-import AdminAuditLogs from "./pages/admin/AdminAuditLogs";
-import NotFound from "./pages/NotFound";
-import { ProtectedAdminRoute } from "./components/admin/ProtectedAdminRoute";
+import Index from "@/pages/Index";
+import Auth from "@/pages/Auth";
+import Dashboard from "@/pages/Dashboard";
+import AdminDashboard from "@/pages/admin/AdminDashboard";
+import AdminUsers from "@/pages/admin/AdminUsers";
+import AdminRoles from "@/pages/admin/AdminRoles";
+import AdminSubscriptions from "@/pages/admin/AdminSubscriptions";
+import AdminAuditLogs from "@/pages/admin/AdminAuditLogs";
+import AdminQuestions from "@/pages/AdminQuestions";
+import AdminFlashcards from "@/pages/AdminFlashcards";
+import AdminPopulate from "@/pages/AdminPopulate";
+import Checkout from "@/pages/Checkout";
+import CheckoutSuccess from "@/pages/CheckoutSuccess";
+import CheckoutCancel from "@/pages/CheckoutCancel";
+import NotFound from "@/pages/NotFound";
+import { ProtectedAdminRoute } from "@/components/admin/ProtectedAdminRoute";
 
 const queryClient = new QueryClient();
 
@@ -31,6 +33,8 @@ const App = () => (
           <Route path="/auth" element={<Auth />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/checkout" element={<Checkout />} />
+          <Route path="/checkout/success" element={<CheckoutSuccess />} />
+          <Route path="/checkout/cancel" element={<CheckoutCancel />} />
           <Route path="/admin/dashboard" element={
             <ProtectedAdminRoute>
               <AdminDashboard />

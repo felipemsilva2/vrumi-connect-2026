@@ -38,12 +38,12 @@ const PricingSection = () => {
       buttonText: "Comprar Passaporte",
       popular: false,
       description: "Ideal para quem já marcou a prova e quer um sprint final de estudos",
-      passType: "30_days"
+      passType: "individual_30_days"
     },
     {
       name: "Passaporte 90 Dias",
       subtitle: "O Garantido",
-      price: "R$ 49,90",
+      price: "R$ 79,90",
       period: "pagamento único",
       features: [
         "Tudo do Acesso Gratuito",
@@ -56,7 +56,7 @@ const PricingSection = () => {
       buttonText: "Comprar Passaporte",
       popular: true,
       description: "Estude no seu ritmo, sem pressão. Cobre todo o seu processo, da primeira aula ao dia da prova",
-      passType: "90_days"
+      passType: "individual_90_days"
     }
   ]
 
