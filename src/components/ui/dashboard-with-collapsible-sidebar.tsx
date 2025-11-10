@@ -69,7 +69,14 @@ const Sidebar = ({ user, selected, setSelected }: SidebarProps) => {
   const [open, setOpen] = useState(true);
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { isAdmin } = useIsAdmin(user?.id);
+  const { isAdmin, isLoading } = useIsAdmin(user?.id);
+  
+  console.log('[Sidebar] Rendering with:', {
+    userId: user?.id,
+    userEmail: user?.email,
+    isAdmin,
+    isLoading
+  });
 
   const handleSignOut = async () => {
     try {
