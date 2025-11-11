@@ -31,7 +31,7 @@ const FeaturesSection = () => {
         {/* Header */}
         <div className="text-center mb-16">
           <h2 className="text-4xl md:text-5xl font-bold text-foreground mb-4">
-            Por que escolher nossa plataforma?
+            Por que escolher o Vrumi?
           </h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
             Recursos inteligentes desenvolvidos para maximizar sua aprovação

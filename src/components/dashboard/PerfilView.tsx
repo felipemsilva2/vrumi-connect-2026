@@ -32,8 +32,11 @@ export const PerfilView = ({ user, profile }: PerfilViewProps) => {
               <p className="text-sm text-muted-foreground mb-4">
                 Plano Gratuito
               </p>
-              <button className="w-full py-2 px-4 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors font-medium">
-                Fazer Upgrade
+              <button 
+                onClick={() => window.location.href = "/#preço"}
+                className="w-full py-2 px-4 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors font-medium"
+              >
+                Ver Planos
               </button>
             </div>
 

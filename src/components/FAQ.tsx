@@ -9,9 +9,9 @@ import {
 const FAQ = () => {
   const faqs = [
     {
-      question: "Como funciona a plataforma CNH Fácil?",
+      question: "Como funciona o Vrumi?",
       answer:
-        "Nossa plataforma oferece flashcards inteligentes e materiais teóricos completos para você estudar para o exame de CNH. Você pode acessar todo o conteúdo online, no seu ritmo.",
+        "O Vrumi oferece flashcards inteligentes e materiais teóricos completos para você estudar para o exame de CNH. Você pode acessar todo o conteúdo online, no seu ritmo.",
     },
     {
       question: "Quanto tempo preciso estudar para passar?",
@@ -54,7 +54,7 @@ const FAQ = () => {
             Perguntas Frequentes
           </h2>
           <p className="text-lg text-muted-foreground">
-            Tire suas dúvidas sobre nossa plataforma
+            Tire suas dúvidas sobre o Vrumi
           </p>
         </motion.div>
 

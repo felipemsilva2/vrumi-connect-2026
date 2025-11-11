@@ -4,9 +4,19 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { CreatePassDialog } from "@/components/admin/CreatePassDialog";
-import { Plus } from "lucide-react";
+import { Plus, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface Subscription {
   id: string;
@@ -23,6 +33,8 @@ const AdminSubscriptions = () => {
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [passToDelete, setPassToDelete] = useState<string | null>(null);
 
   useEffect(() => {
     fetchSubscriptions();
@@ -62,7 +74,32 @@ const AdminSubscriptions = () => {
   };
 
   const formatPassType = (type: string) => {
-    return type === "30_days" ? "30 Dias" : "90 Dias";
+    if (type === "30_days" || type === "individual_30_days") return "30 Dias";
+    if (type === "90_days" || type === "individual_90_days") return "90 Dias";
+    if (type === "family_90_days") return "Família 90 Dias";
+    return type;
+  };
+
+  const handleDeletePass = async () => {
+    if (!passToDelete) return;
+
+    try {
+      const { error } = await supabase
+        .from("user_passes")
+        .delete()
+        .eq("id", passToDelete);
+
+      if (error) throw error;
+
+      toast.success("Assinatura removida com sucesso");
+      fetchSubscriptions();
+    } catch (error) {
+      console.error("Error deleting pass:", error);
+      toast.error("Erro ao remover assinatura");
+    } finally {
+      setDeleteDialogOpen(false);
+      setPassToDelete(null);
+    }
   };
 
   if (isLoading) {
@@ -113,6 +150,7 @@ const AdminSubscriptions = () => {
                 <TableHead>Expira em</TableHead>
                 <TableHead>Status Pagamento</TableHead>
                 <TableHead>Status</TableHead>
+                <TableHead className="text-right">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -155,6 +193,19 @@ const AdminSubscriptions = () => {
                         : "Expirado"}
                     </Badge>
                   </TableCell>
+                  <TableCell className="text-right">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setPassToDelete(sub.id);
+                        setDeleteDialogOpen(true);
+                      }}
+                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -167,6 +218,26 @@ const AdminSubscriptions = () => {
         onOpenChange={setCreateDialogOpen}
         onSuccess={fetchSubscriptions}
       />
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja remover esta assinatura? Esta ação não pode ser desfeita e o usuário perderá o acesso imediatamente.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeletePass}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              Remover
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </AdminLayout>
   );
 };

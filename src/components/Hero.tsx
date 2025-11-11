@@ -21,7 +21,7 @@ const Hero = () => {
           {/* Badge */}
           <div className="inline-flex items-center gap-2 bg-card/10 backdrop-blur-sm border border-card/20 rounded-full px-6 py-3 text-card-foreground">
             <Award className="w-5 h-5 text-secondary" />
-            <span className="text-sm font-medium">Plataforma #1 de Preparação</span>
+            <span className="text-sm font-medium">Vrumi - Plataforma #1 de Preparação</span>
           </div>
 
           {/* Main Heading */}

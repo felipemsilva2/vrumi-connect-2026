@@ -1,8 +1,54 @@
 import { Check } from "lucide-react"
 import { useNavigate } from "react-router-dom"
+import { useState } from "react"
+import { supabase } from "@/integrations/supabase/client"
+import { useToast } from "@/hooks/use-toast"
 
 const PricingSection = () => {
   const navigate = useNavigate()
+  const [loading, setLoading] = useState<string | null>(null)
+  const { toast } = useToast()
+
+  const handlePurchase = async (passType: string) => {
+    setLoading(passType)
+    
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      
+      if (!session) {
+        toast({
+          title: "Faça login primeiro",
+          description: "Você precisa estar logado para comprar um passaporte",
+        })
+        navigate("/auth")
+        return
+      }
+
+      const { data, error } = await supabase.functions.invoke('create-checkout', {
+        body: {
+          passType: passType,
+          secondUserEmail: null,
+        },
+      })
+
+      if (error) throw error
+
+      if (!data?.url) {
+        throw new Error('URL de checkout não recebida')
+      }
+
+      window.open(data.url, '_blank')
+    } catch (error) {
+      console.error('Erro ao criar checkout:', error)
+      toast({
+        title: "Erro ao processar pagamento",
+        description: "Ocorreu um erro ao iniciar o pagamento. Tente novamente.",
+        variant: "destructive",
+      })
+    } finally {
+      setLoading(null)
+    }
+  }
 
   const plans = [
     {
@@ -124,20 +170,15 @@ const PricingSection = () => {
               </ul>
 
               <button
-                onClick={() => {
-                  if (plan.passType) {
-                    navigate(`/checkout?pass=${plan.passType}`)
-                  } else {
-                    navigate("/auth")
-                  }
-                }}
+                onClick={() => plan.passType && handlePurchase(plan.passType)}
+                disabled={loading === plan.passType}
                 className={`w-full py-3 px-6 rounded-lg font-medium transition-colors ${
                   plan.popular
                     ? "bg-primary text-primary-foreground hover:bg-primary/90"
                     : "bg-card border border-border text-foreground hover:bg-muted"
-                }`}
+                } ${loading === plan.passType ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
-                {plan.buttonText}
+                {loading === plan.passType ? "Processando..." : plan.buttonText}
               </button>
             </div>
           ))}
