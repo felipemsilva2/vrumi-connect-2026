@@ -653,7 +653,7 @@ export const SimuladosView = () => {
               Os simulados oficiais e de prática estão disponíveis apenas para usuários com um Passaporte de Acesso ativo.
             </p>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 max-w-2xl mx-auto">
+            <div className="grid grid-cols-3 gap-4 mb-6">
               <Card className="bg-card border-2 hover:border-primary/50 transition-all">
                 <CardContent className="p-4">
                   <div className="text-primary font-semibold mb-2">Passaporte 30 Dias</div>
@@ -661,22 +661,28 @@ export const SimuladosView = () => {
                   <div className="text-sm text-muted-foreground">O Apressado</div>
                 </CardContent>
               </Card>
-              
               <Card className="bg-card border-2 border-primary shadow-md">
                 <CardContent className="p-4">
                   <div className="text-primary font-semibold mb-2">Passaporte 90 Dias</div>
-                  <div className="text-2xl font-bold mb-1">R$ 49,90</div>
+                  <div className="text-2xl font-bold mb-1">R$ 79,90</div>
                   <div className="text-sm text-muted-foreground">O Garantido ⭐</div>
+                </CardContent>
+              </Card>
+              <Card className="bg-card border-2 hover:border-primary/50 transition-all">
+                <CardContent className="p-4">
+                  <div className="text-primary font-semibold mb-2">Passaporte Família</div>
+                  <div className="text-2xl font-bold mb-1">R$ 84,90</div>
+                  <div className="text-sm text-muted-foreground">Para 2 Pessoas</div>
                 </CardContent>
               </Card>
             </div>
 
             <Button 
-              onClick={() => navigate("/#preço")}
+              onClick={() => window.location.href = '/#preço'}
               size="lg"
               className="bg-primary hover:bg-primary/90"
             >
-              Ver Passaportes
+              Ver Planos
             </Button>
           </CardContent>
         </Card>
