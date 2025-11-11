@@ -18,7 +18,7 @@ const Index = () => {
       <section id="inicio">
         <MinimalModernHero
           logo={<div className="flex items-center gap-2"></div>}
-          badge="A LEI MUDOU: O CURSO TEÓRICO NA AUTOESCOLA (CFC) NÃO É MAIS OBRIGATÓRIO."
+          badge="A LEI MUDOU: O CURSO TEÓRICO NA AUTOESCOLA NÃO É MAIS OBRIGATÓRIO."
           title="O novo jeito de tirar sua CNH."
           subtitle="Troque as 45h de sala de aula por um app inteligente e economize 80% do valor da sua habilitação."
           description="Para que gastar R$1.000+ com o curso teórico se você pode ter o mesmo conteúdo oficial de forma rápida e interativa? O Vrumi transforma as apostilas do governo em simulados, flashcards e lições que realmente aprovam."
