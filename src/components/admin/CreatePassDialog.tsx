@@ -20,10 +20,19 @@ interface CreatePassDialogProps {
 
 export const CreatePassDialog = ({ open, onOpenChange, onSuccess }: CreatePassDialogProps) => {
   const [userEmail, setUserEmail] = useState("");
-  const [passType, setPassType] = useState<"30_days" | "90_days">("30_days");
+  const [passType, setPassType] = useState<"30_days" | "90_days" | "family_90_days">("30_days");
   const [expiresAt, setExpiresAt] = useState<Date>();
   const [price, setPrice] = useState("0");
   const [isLoading, setIsLoading] = useState(false);
+  const [secondUserEmail, setSecondUserEmail] = useState("");
+
+  // Atualizar preço automaticamente quando o tipo de pass mudar
+  const handlePassTypeChange = (value: "30_days" | "90_days" | "family_90_days") => {
+    setPassType(value);
+    if (value === "30_days") setPrice("29.90");
+    else if (value === "90_days") setPrice("79.90");
+    else if (value === "family_90_days") setPrice("84.90");
+  };
 
   const handleCreate = async () => {
     if (!userEmail || !expiresAt) {
@@ -31,24 +40,21 @@ export const CreatePassDialog = ({ open, onOpenChange, onSuccess }: CreatePassDi
       return;
     }
 
+    if (passType === "family_90_days" && !secondUserEmail) {
+      toast.error("Para o plano família, informe o email do segundo usuário");
+      return;
+    }
+
     setIsLoading(true);
     try {
-      // Buscar o user_id pelo email
-      const { data: userData, error: userError } = await supabase
-        .from("profiles")
-        .select("id")
-        .eq("id", userEmail)
-        .single();
-
-      if (userError) {
-        // Tentar buscar pelo auth.users se não encontrar no profiles
-        const { data: authData } = await supabase.auth.admin.listUsers();
-        const user = authData?.users?.find((u: any) => u.email === userEmail);
-        
-        if (!user) {
-          toast.error("Usuário não encontrado");
-          return;
-        }
+      // Buscar o usuário pelo email usando auth.admin
+      const { data: authData } = await supabase.auth.admin.listUsers();
+      const user = authData?.users?.find((u: any) => u.email?.toLowerCase() === userEmail.toLowerCase());
+      
+      if (!user) {
+        toast.error("Usuário não encontrado com este email");
+        setIsLoading(false);
+        return;
       }
 
       const { error } = await supabase.functions.invoke("admin-create-pass", {
@@ -57,6 +63,7 @@ export const CreatePassDialog = ({ open, onOpenChange, onSuccess }: CreatePassDi
           pass_type: passType,
           expires_at: expiresAt.toISOString(),
           price: parseFloat(price),
+          second_user_email: passType === "family_90_days" ? secondUserEmail : null,
         },
       });
 
@@ -68,6 +75,7 @@ export const CreatePassDialog = ({ open, onOpenChange, onSuccess }: CreatePassDi
       
       // Reset form
       setUserEmail("");
+      setSecondUserEmail("");
       setPassType("30_days");
       setExpiresAt(undefined);
       setPrice("0");
@@ -100,16 +108,33 @@ export const CreatePassDialog = ({ open, onOpenChange, onSuccess }: CreatePassDi
 
           <div className="space-y-2">
             <Label htmlFor="passType">Tipo de Assinatura *</Label>
-            <Select value={passType} onValueChange={(value: "30_days" | "90_days") => setPassType(value)}>
+            <Select value={passType} onValueChange={handlePassTypeChange}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="30_days">30 Dias</SelectItem>
-                <SelectItem value="90_days">90 Dias</SelectItem>
+                <SelectItem value="30_days">Passaporte 30 Dias - R$ 29,90</SelectItem>
+                <SelectItem value="90_days">Passaporte 90 Dias - R$ 79,90</SelectItem>
+                <SelectItem value="family_90_days">Passaporte Família 90 Dias - R$ 84,90 (2 pessoas)</SelectItem>
               </SelectContent>
             </Select>
           </div>
+
+          {passType === "family_90_days" && (
+            <div className="space-y-2">
+              <Label htmlFor="secondEmail">Email do Segundo Usuário *</Label>
+              <Input
+                id="secondEmail"
+                type="email"
+                placeholder="segundo@exemplo.com"
+                value={secondUserEmail}
+                onChange={(e) => setSecondUserEmail(e.target.value)}
+              />
+              <p className="text-xs text-muted-foreground">
+                Para plano família, informe o email da segunda pessoa
+              </p>
+            </div>
+          )}
 
           <div className="space-y-2">
             <Label>Data de Expiração *</Label>
