@@ -366,9 +366,71 @@ const MainContent = ({ isDark, setIsDark, user, profile, selected }: any) => {
 }
 
 const DashboardHome = ({ user, profile }: any) => {
+  const [recentActivities, setRecentActivities] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
   const successRate = profile?.total_questions_answered 
     ? Math.round((profile.correct_answers / profile.total_questions_answered) * 100)
     : 0
+
+  useEffect(() => {
+    fetchRecentActivities()
+  }, [user])
+
+  const fetchRecentActivities = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("user_activities")
+        .select("*")
+        .eq("user_id", user?.id)
+        .order("created_at", { ascending: false })
+        .limit(5)
+
+      if (error) throw error
+      setRecentActivities(data || [])
+    } catch (error) {
+      console.error("Error fetching activities:", error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const getActivityIcon = (type: string) => {
+    switch (type) {
+      case "flashcard_studied": return BookOpen
+      case "quiz_completed": return CheckCircle2
+      case "achievement_unlocked": return Trophy
+      case "category_started": return Brain
+      case "personal_record": return Award
+      default: return Calendar
+    }
+  }
+
+  const getActivityColor = (type: string) => {
+    switch (type) {
+      case "flashcard_studied": return "blue"
+      case "quiz_completed": return "green"
+      case "achievement_unlocked": return "purple"
+      case "category_started": return "orange"
+      case "personal_record": return "green"
+      default: return "blue"
+    }
+  }
+
+  const formatActivityTime = (timestamp: string) => {
+    const now = new Date()
+    const activityDate = new Date(timestamp)
+    const diffMs = now.getTime() - activityDate.getTime()
+    const diffMins = Math.floor(diffMs / 60000)
+    const diffHours = Math.floor(diffMins / 60)
+    const diffDays = Math.floor(diffHours / 24)
+
+    if (diffMins < 1) return "Agora"
+    if (diffMins < 60) return `${diffMins} min atrás`
+    if (diffHours < 24) return `${diffHours}h atrás`
+    if (diffDays === 0) return "Hoje"
+    if (diffDays === 1) return "Ontem"
+    return `${diffDays} dias atrás`
+  }
 
   return (
     <>
@@ -441,42 +503,50 @@ const DashboardHome = ({ user, profile }: any) => {
               </button>
             </div>
             <div className="space-y-4">
-              {[
-                { icon: BookOpen, title: "Flashcards estudados", desc: "15 cards de Legislação de Trânsito", time: "2 min atrás", color: "blue" },
-                { icon: CheckCircle2, title: "Simulado concluído", desc: "85% de aproveitamento", time: "1 hora atrás", color: "green" },
-                { icon: Trophy, title: "Conquista desbloqueada", desc: "Estudante dedicado - 7 dias seguidos", time: "Hoje", color: "purple" },
-                { icon: Brain, title: "Nova categoria iniciada", desc: "Primeiros Socorros", time: "Ontem", color: "orange" },
-                { icon: Award, title: "Recorde pessoal", desc: "Melhor taxa de acerto: 95%", time: "2 dias atrás", color: "green" },
-              ].map((activity, i) => (
-                <div key={i} className="flex items-center space-x-4 p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer">
-                  <div className={`p-2 rounded-lg ${
-                    activity.color === 'green' ? 'bg-success/10 dark:bg-success/20' :
-                    activity.color === 'blue' ? 'bg-primary/10 dark:bg-primary/20' :
-                    activity.color === 'purple' ? 'bg-accent/10 dark:bg-accent/20' :
-                    activity.color === 'orange' ? 'bg-secondary/10 dark:bg-secondary/20' :
-                    'bg-red-50 dark:bg-red-900/20'
-                  }`}>
-                    <activity.icon className={`h-4 w-4 ${
-                      activity.color === 'green' ? 'text-success' :
-                      activity.color === 'blue' ? 'text-primary' :
-                      activity.color === 'purple' ? 'text-accent' :
-                      activity.color === 'orange' ? 'text-secondary' :
-                      'text-red-600 dark:text-red-400'
-                    }`} />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
-                      {activity.title}
-                    </p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
-                      {activity.desc}
-                    </p>
-                  </div>
-                  <div className="text-xs text-gray-400 dark:text-gray-500">
-                    {activity.time}
-                  </div>
+              {loading ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  Carregando atividades...
                 </div>
-              ))}
+              ) : recentActivities.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  Nenhuma atividade registrada ainda. Comece a estudar!
+                </div>
+              ) : (
+                recentActivities.map((activity, i) => {
+                  const Icon = getActivityIcon(activity.activity_type)
+                  const color = getActivityColor(activity.activity_type)
+                  return (
+                    <div key={i} className="flex items-center space-x-4 p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer">
+                      <div className={`p-2 rounded-lg ${
+                        color === 'green' ? 'bg-success/10 dark:bg-success/20' :
+                        color === 'blue' ? 'bg-primary/10 dark:bg-primary/20' :
+                        color === 'purple' ? 'bg-accent/10 dark:bg-accent/20' :
+                        color === 'orange' ? 'bg-secondary/10 dark:bg-secondary/20' :
+                        'bg-red-50 dark:bg-red-900/20'
+                      }`}>
+                        <Icon className={`h-4 w-4 ${
+                          color === 'green' ? 'text-success' :
+                          color === 'blue' ? 'text-primary' :
+                          color === 'purple' ? 'text-accent' :
+                          color === 'orange' ? 'text-secondary' :
+                          'text-red-600 dark:text-red-400'
+                        }`} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+                          {activity.metadata?.title || activity.activity_type.replace(/_/g, ' ')}
+                        </p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400 truncate">
+                          {activity.metadata?.description || ''}
+                        </p>
+                      </div>
+                      <span className="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">
+                        {formatActivityTime(activity.created_at)}
+                      </span>
+                    </div>
+                  )
+                })
+              )}
             </div>
           </div>
         </div>
