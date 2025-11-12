@@ -1,0 +1,56 @@
+{
+  "tech_stack": [
+    "TypeScript",
+    "React",
+    "Vite",
+    "TailwindCSS",
+    "Supabase",
+    "Deno",
+    "Stripe",
+    "PostgreSQL"
+  ],
+  "features": [
+    {
+      "name": "Geração de Questões",
+      "description": "Gera questões de múltipla escolha a partir de PDF usando IA.",
+      "files": ["supabase/functions/generate-questions/index.ts"],
+      "api_doc": {}
+    },
+    {
+      "name": "Geração de Flashcards",
+      "description": "Gera flashcards educacionais a partir de PDF usando IA.",
+      "files": ["supabase/functions/generate-flashcards/index.ts"],
+      "api_doc": {}
+    },
+    {
+      "name": "População de Materiais do PDF",
+      "description": "Extrai e estrutura conteúdo didático do PDF para o sistema.",
+      "files": ["supabase/functions/populate-materiais-from-pdf/index.ts"],
+      "api_doc": {}
+    },
+    {
+      "name": "Checkout e Pagamento",
+      "description": "Integração com Stripe para checkout e verificação de pagamento.",
+      "files": ["supabase/functions/create-checkout/index.ts", "supabase/functions/verify-payment/index.ts"],
+      "api_doc": {}
+    },
+    {
+      "name": "Parse de PDF",
+      "description": "Faz o parse de arquivos PDF para extração de conteúdo.",
+      "files": ["supabase/functions/parse-pdf/index.ts"],
+      "api_doc": {}
+    },
+    {
+      "name": "Dashboard do Usuário",
+      "description": "Dashboard com estatísticas, progresso e simulados.",
+      "files": ["src/components/dashboard/SimuladosView.tsx", "src/components/ui/dashboard-with-collapsible-sidebar.tsx"],
+      "api_doc": {}
+    },
+    {
+      "name": "Administração",
+      "description": "Painéis administrativos para gestão de usuários, questões, flashcards e logs.",
+      "files": ["src/pages/AdminQuestions.tsx", "src/pages/AdminFlashcards.tsx", "src/pages/admin/AdminDashboard.tsx", "src/pages/admin/AdminAuditLogs.tsx", "src/pages/admin/AdminRoles.tsx"],
+      "api_doc": {}
+    }
+  ]
+}

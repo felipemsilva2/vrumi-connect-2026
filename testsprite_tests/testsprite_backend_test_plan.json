@@ -1,0 +1,52 @@
+[
+  {
+    "id": "TC001",
+    "title": "generate-multiple-choice-questions-from-pdf",
+    "description": "Test the API endpoint for generating multiple choice questions from PDF using AI. Verify that the questions are correctly generated based on the PDF content and returned in the expected format."
+  },
+  {
+    "id": "TC002",
+    "title": "generate-educational-flashcards-from-pdf",
+    "description": "Test the API endpoint for generating educational flashcards from PDF using AI. Ensure flashcards are created with correct front and back content derived from the PDF."
+  },
+  {
+    "id": "TC003",
+    "title": "populate-educational-materials-from-pdf",
+    "description": "Test the API endpoint that extracts and structures educational content from PDF files. Verify that the materials are correctly parsed and stored in the system."
+  },
+  {
+    "id": "TC004",
+    "title": "stripe-checkout-session-creation",
+    "description": "Test the API endpoint for creating a Stripe checkout session. Validate that the session is created successfully with correct subscription plan details and user information."
+  },
+  {
+    "id": "TC005",
+    "title": "verify-stripe-payment-status",
+    "description": "Test the API endpoint for verifying Stripe payment status. Confirm that payment verification returns accurate status and triggers confirmation emails upon successful payment."
+  },
+  {
+    "id": "TC006",
+    "title": "parse-pdf-content-for-extraction",
+    "description": "Test the API endpoint responsible for parsing PDF files to extract content. Ensure the parsing is accurate and the extracted data matches the PDF content."
+  },
+  {
+    "id": "TC007",
+    "title": "user-dashboard-simulated-exams-view",
+    "description": "Test the dashboard API or component that displays simulated exams and user progress. Verify that simulated exams are shown correctly with scores and feedback."
+  },
+  {
+    "id": "TC008",
+    "title": "admin-questions-management",
+    "description": "Test the administrative API or interface for managing questions. Verify CRUD operations on questions and ensure data integrity."
+  },
+  {
+    "id": "TC009",
+    "title": "admin-flashcards-management",
+    "description": "Test the administrative API or interface for managing flashcards. Validate creation, update, deletion, and listing of flashcards."
+  },
+  {
+    "id": "TC010",
+    "title": "admin-audit-logs-access-and-filtering",
+    "description": "Test the administrative API or interface for accessing and filtering audit logs. Ensure logs are correctly recorded and can be filtered by date, user, and action."
+  }
+]

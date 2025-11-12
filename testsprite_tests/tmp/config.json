@@ -1,0 +1,20 @@
+{
+  "status": "commited",
+  "type": "backend",
+  "scope": "codebase",
+  "localEndpoint": "http://localhost:8080",
+  "backendAuthType": "basic token",
+  "backendUsername": "felipemsilva93@gmail.com",
+  "backendPassword": "H05twglg",
+  "executionArgs": {
+    "projectName": "roadwiz-guide-64894",
+    "projectPath": "c:\\Users\\felipe\\Vrumi\\roadwiz-guide-64894",
+    "testIds": [
+      "Autenticação/Login"
+    ],
+    "additionalInstruction": "Execute apenas os testes do grupo 'Autenticação/Login'.",
+    "envs": {
+      "API_KEY": "sk-user-6OstyE_TSOok8bUEdg71BE0ENDZB6tlPT0n61z4gm4KGLV64G5NGHkCX7tn085NC_tDz8yB9rKdY2aSCJrYOYskW4MStvNMhniMGQAfz4vQ_R3iN_k-aTBf2nh78MV6eXHo"
+    }
+  }
+}

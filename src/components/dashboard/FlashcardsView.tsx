@@ -33,17 +33,27 @@ export const FlashcardsView = () => {
     fetchFlashcards()
   }, [])
 
+  // Embaralhamento Fisher-Yates
+  const shuffleArray = <T,>(arr: T[]): T[] => {
+    const a = [...arr]
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1))
+      ;[a[i], a[j]] = [a[j], a[i]]
+    }
+    return a
+  }
+
   const fetchFlashcards = async () => {
     try {
       const { data, error } = await supabase
         .from("flashcards")
         .select("*")
-        .order("created_at")
 
       if (error) throw error
-      setFlashcards(data || [])
-      if (data && data.length > 0) {
-        fetchCardStats(data[0].id)
+      const shuffled = shuffleArray(data || [])
+      setFlashcards(shuffled)
+      if (shuffled && shuffled.length > 0) {
+        fetchCardStats(shuffled[0].id)
       }
     } catch (error) {
       console.error("Error fetching flashcards:", error)
@@ -105,6 +115,44 @@ export const FlashcardsView = () => {
         })
 
       if (error) throw error
+
+      // Atualiza totais no perfil do usuário (para Dashboard/Estatísticas)
+      const { data: profileData, error: profileError } = await supabase
+        .from("profiles")
+        .select("total_flashcards_studied,total_questions_answered,correct_answers")
+        .eq("id", user.id)
+        .maybeSingle()
+
+      if (!profileError && profileData) {
+        const prevFlash = profileData.total_flashcards_studied || 0
+        const prevQuestions = profileData.total_questions_answered || 0
+        const prevCorrect = profileData.correct_answers || 0
+        await supabase
+          .from("profiles")
+          .update({
+            total_flashcards_studied: prevFlash + 1,
+            total_questions_answered: prevQuestions + 1,
+            correct_answers: prevCorrect + (isCorrect ? 1 : 0),
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", user.id)
+      }
+
+      // Registra atividade para aparecer em "Atividades Recentes"
+      await supabase
+        .from("user_activities")
+        .insert({
+          user_id: user.id,
+          activity_type: "flashcard_studied",
+          metadata: {
+            title: "Flashcard estudado",
+            description: isCorrect ? "Você acertou um flashcard" : "Você errou um flashcard",
+            category: currentFlashcard.category,
+            flashcard_id: currentFlashcard.id,
+            correct: isCorrect,
+          },
+          created_at: new Date().toISOString(),
+        })
     } catch (error) {
       console.error("Error updating card stats:", error)
     }
@@ -139,9 +187,13 @@ export const FlashcardsView = () => {
   }
 
   const handleReset = () => {
+    const shuffled = shuffleArray(flashcards)
+    setFlashcards(shuffled)
     setCurrentCard(0)
     setIsFlipped(false)
-    fetchCardStats(flashcards[0].id)
+    if (shuffled.length > 0) {
+      fetchCardStats(shuffled[0].id)
+    }
   }
 
   if (loading) {

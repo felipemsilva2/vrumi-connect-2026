@@ -197,6 +197,43 @@ export const SimuladosView = () => {
         if (answersError) throw answersError
       }
 
+      // Atualiza agregados no perfil para refletir no Dashboard/Estatísticas
+      const { data: profileData, error: profileError } = await supabase
+        .from("profiles")
+        .select("total_questions_answered,correct_answers")
+        .eq("id", user.id)
+        .maybeSingle()
+
+      if (!profileError && profileData) {
+        const prevQuestions = profileData.total_questions_answered || 0
+        const prevCorrect = profileData.correct_answers || 0
+        await supabase
+          .from("profiles")
+          .update({
+            total_questions_answered: prevQuestions + questions.length,
+            correct_answers: prevCorrect + correctCount,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", user.id)
+      }
+
+      // Registra atividade para aparecer em "Atividades Recentes"
+      await supabase
+        .from("user_activities")
+        .insert({
+          user_id: user.id,
+          activity_type: "quiz_completed",
+          metadata: {
+            title: "Simulado concluído",
+            description: `Pontuação: ${scorePercentage}% (${correctCount}/${questions.length})`,
+            quiz_type: questions.length === 30 ? "official" : "practice",
+            total_questions: questions.length,
+            correct_answers: correctCount,
+            score_percentage: scorePercentage,
+          },
+          created_at: new Date().toISOString(),
+        })
+
       setQuizStarted(false)
       setShowConfirmFinish(false)
       setView("results")

@@ -1,4 +1,6 @@
 import { BarChart3, TrendingUp, Calendar, Award } from "lucide-react"
+import { useEffect, useMemo, useState } from "react"
+import { supabase } from "@/integrations/supabase/client"
 
 export const EstatisticasView = () => {
   const weekData = [
@@ -20,7 +22,46 @@ export const EstatisticasView = () => {
     { name: "Meio Ambiente", progress: 82, color: "primary" }
   ]
 
+  const [totalFlashcards, setTotalFlashcards] = useState(0)
+  // Métricas básicas do perfil
+  const [profileStats, setProfileStats] = useState<{ total_flashcards_studied: number; total_questions_answered: number; correct_answers: number; study_progress: number } | null>(null)
+  const correctRate = useMemo(() => {
+    const total = profileStats?.total_questions_answered || 0
+    const correct = profileStats?.correct_answers || 0
+    return total > 0 ? Math.round((correct / total) * 100) : 0
+  }, [profileStats])
   const maxHours = Math.max(...weekData.map(d => d.hours))
+
+  // Removido: efeito e estados de métricas SRS (due_date, ease_factor)
+  useEffect(() => {
+    const loadStats = async () => {
+      try {
+        // Total de flashcards (sem métricas SRS)
+        const { data: flashcards, error: flashError } = await supabase
+          .from("flashcards")
+          .select("id")
+        if (flashError) throw flashError
+        setTotalFlashcards((flashcards || []).length)
+
+        // Estatísticas básicas do perfil
+        const { data: { user } } = await supabase.auth.getUser()
+        if (user?.id) {
+          const { data: profileRow, error: profileError } = await supabase
+            .from("profiles")
+            .select("total_flashcards_studied,total_questions_answered,correct_answers,study_progress")
+            .eq("id", user.id)
+            .maybeSingle()
+          if (profileError) throw profileError
+          if (profileRow) {
+            setProfileStats(profileRow as any)
+          }
+        }
+      } catch (e) {
+        console.error("Erro ao carregar estatísticas básicas:", e)
+      }
+    }
+    loadStats()
+  }, [])
 
   return (
     <div className="space-y-6">
@@ -32,6 +73,51 @@ export const EstatisticasView = () => {
           </p>
         </div>
       </div>
+
+      {/* Métricas Básicas */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="bg-card border border-border rounded-xl p-6">
+          <div className="flex items-center justify-between mb-2">
+            <Calendar className="h-5 w-5 text-primary" />
+            <TrendingUp className="h-4 w-4 text-success" />
+          </div>
+          <p className="text-sm text-muted-foreground">Total de Cartões</p>
+          <p className="text-2xl font-bold text-foreground">{totalFlashcards}</p>
+          <p className="text-xs text-success mt-1">Dados atuais</p>
+        </div>
+
+        <div className="bg-card border border-border rounded-xl p-6">
+          <div className="flex items-center justify-between mb-2">
+            <BarChart3 className="h-5 w-5 text-success" />
+            <TrendingUp className="h-4 w-4 text-success" />
+          </div>
+          <p className="text-sm text-muted-foreground">Flashcards Estudados</p>
+          <p className="text-2xl font-bold text-foreground">{profileStats?.total_flashcards_studied || 0}</p>
+          <p className="text-xs text-success mt-1">Com base no seu perfil</p>
+        </div>
+
+        <div className="bg-card border border-border rounded-xl p-6">
+          <div className="flex items-center justify-between mb-2">
+            <Award className="h-5 w-5 text-secondary" />
+            <TrendingUp className="h-4 w-4 text-success" />
+          </div>
+          <p className="text-sm text-muted-foreground">Taxa de Acerto</p>
+          <p className="text-2xl font-bold text-foreground">{`${correctRate}%`}</p>
+          <p className="text-xs text-success mt-1">Com base em acertos/erros</p>
+        </div>
+
+        <div className="bg-card border border-border rounded-xl p-6">
+          <div className="flex items-center justify-between mb-2">
+            <TrendingUp className="h-5 w-5 text-accent" />
+            <TrendingUp className="h-4 w-4 text-success" />
+          </div>
+          <p className="text-sm text-muted-foreground">Progresso de Estudo</p>
+          <p className="text-2xl font-bold text-foreground">{profileStats?.study_progress !== undefined && profileStats?.study_progress !== null ? `${profileStats?.study_progress}%` : "–"}</p>
+          <p className="text-xs text-success mt-1">Meta de conclusão</p>
+        </div>
+      </div>
+
+      {/* Progresso por Categoria */}
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="bg-card border border-border rounded-xl p-6">

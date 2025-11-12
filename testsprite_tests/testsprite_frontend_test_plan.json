@@ -1,0 +1,55 @@
+[
+  {
+    "requirement": "Autenticação/Login",
+    "test_cases": [
+      "Usuário pode acessar a tela de login",
+      "Usuário pode realizar login com credenciais válidas",
+      "Usuário recebe mensagem de erro ao tentar login com credenciais inválidas",
+      "Usuário pode realizar logout"
+    ]
+  },
+  {
+    "requirement": "Navegação",
+    "test_cases": [
+      "Usuário pode navegar entre as páginas principais",
+      "Links do menu levam para as páginas corretas",
+      "Página de erro é exibida para rotas inexistentes"
+    ]
+  },
+  {
+    "requirement": "Dashboard do Usuário",
+    "test_cases": [
+      "Usuário visualiza informações do dashboard após login",
+      "Dashboard exibe dados atualizados do usuário"
+    ]
+  },
+  {
+    "requirement": "Checkout/Pagamento",
+    "test_cases": [
+      "Usuário pode acessar a página de checkout",
+      "Processo de pagamento é concluído com sucesso",
+      "Usuário recebe confirmação após pagamento"
+    ]
+  },
+  {
+    "requirement": "Geração de Questões/Flashcards",
+    "test_cases": [
+      "Usuário pode gerar questões a partir do material PDF",
+      "Usuário pode gerar flashcards a partir das questões"
+    ]
+  },
+  {
+    "requirement": "Administração",
+    "test_cases": [
+      "Administrador pode acessar painel administrativo",
+      "Administrador pode criar e editar conteúdos"
+    ]
+  },
+  {
+    "requirement": "Responsividade",
+    "test_cases": [
+      "Layout se adapta corretamente em dispositivos móveis",
+      "Funcionalidades principais funcionam em telas pequenas"
+    ]
+  }
+]

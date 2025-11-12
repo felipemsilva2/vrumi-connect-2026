@@ -15,10 +15,10 @@ import {
   Trophy,
   Clock,
   CheckCircle2,
-  Brain,
   Award,
   Calendar,
   Shield,
+  Info, // <--- Corrigido: garantir importação do Info
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -116,6 +116,7 @@ const Sidebar = ({ user, selected, setSelected }: SidebarProps) => {
           selected={selected}
           setSelected={setSelected}
           open={open}
+          tooltip="Página inicial do dashboard"
         />
         <Option
           Icon={BookOpen}
@@ -123,6 +124,7 @@ const Sidebar = ({ user, selected, setSelected }: SidebarProps) => {
           selected={selected}
           setSelected={setSelected}
           open={open}
+          tooltip="Estude com flashcards"
         />
         <Option
           Icon={Target}
@@ -131,6 +133,7 @@ const Sidebar = ({ user, selected, setSelected }: SidebarProps) => {
           setSelected={setSelected}
           open={open}
           notifs={2}
+          tooltip="Teste seus conhecimentos com simulados"
         />
         {/* TEMPORARIAMENTE OCULTO - Lançamento futuro
         <Option
@@ -139,6 +142,7 @@ const Sidebar = ({ user, selected, setSelected }: SidebarProps) => {
           selected={selected}
           setSelected={setSelected}
           open={open}
+          tooltip="Materiais de estudo (em breve)"
         />
         */}
         <Option
@@ -147,6 +151,7 @@ const Sidebar = ({ user, selected, setSelected }: SidebarProps) => {
           selected={selected}
           setSelected={setSelected}
           open={open}
+          tooltip="Veja seu desempenho"
         />
         <Option
           Icon={Trophy}
@@ -155,6 +160,7 @@ const Sidebar = ({ user, selected, setSelected }: SidebarProps) => {
           setSelected={setSelected}
           open={open}
           notifs={1}
+          tooltip="Suas conquistas"
         />
       </div>
 
@@ -204,9 +210,8 @@ const Sidebar = ({ user, selected, setSelected }: SidebarProps) => {
   );
 };
 
-const Option = ({ Icon, title, selected, setSelected, open, notifs }: any) => {
+const Option = ({ Icon, title, selected, setSelected, open, notifs, tooltip }: any) => {
   const isSelected = selected === title;
-  
   return (
     <button
       onClick={() => setSelected(title)}
@@ -215,11 +220,12 @@ const Option = ({ Icon, title, selected, setSelected, open, notifs }: any) => {
           ? "bg-primary/10 dark:bg-primary/20 text-primary shadow-sm border-l-2 border-primary" 
           : "text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-200"
       }`}
+      aria-label={title}
+      title={tooltip}
     >
       <div className="grid h-full w-12 place-content-center">
         <Icon className="h-4 w-4" />
       </div>
-      
       {open && (
         <span
           className={`text-sm font-medium transition-opacity duration-200 ${
@@ -229,7 +235,6 @@ const Option = ({ Icon, title, selected, setSelected, open, notifs }: any) => {
           {title}
         </span>
       )}
-
       {notifs && open && (
         <span className="absolute right-3 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-xs text-primary-foreground font-medium">
           {notifs}
@@ -281,6 +286,8 @@ const ToggleClose = ({ open, setOpen }: any) => {
     <button
       onClick={() => setOpen(!open)}
       className="absolute bottom-0 left-0 right-0 border-t border-gray-200 dark:border-gray-800 transition-colors hover:bg-gray-50 dark:hover:bg-gray-800"
+      aria-label={open ? "Ocultar sidebar" : "Mostrar sidebar"}
+      title={open ? "Ocultar menu lateral" : "Mostrar menu lateral"}
     >
       <div className="flex items-center p-3">
         <div className="grid size-10 place-content-center">
@@ -312,6 +319,7 @@ import { ConquistasView } from "@/components/dashboard/ConquistasView";
 import { PerfilView } from "@/components/dashboard/PerfilView";
 
 const MainContent = ({ isDark, setIsDark, user, profile, selected }: any) => {
+  const [hideOnboarding, setHideOnboarding] = useState(false);
   const successRate = profile?.total_questions_answered 
     ? Math.round((profile.correct_answers / profile.total_questions_answered) * 100)
     : 0;
@@ -344,11 +352,29 @@ const MainContent = ({ isDark, setIsDark, user, profile, selected }: any) => {
             <p className="text-gray-600 dark:text-gray-400 mt-1">
               Olá, {profile?.full_name || user?.email?.split('@')[0]}! Continue estudando para sua CNH
             </p>
+            {!hideOnboarding && (
+              <div className="mt-2 p-3 rounded-lg bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-200 text-sm max-w-lg flex items-start gap-2 relative">
+                <Info className="h-4 w-4 text-primary mt-0.5" />
+                <span>
+                  Bem-vindo ao RoadWiz! Aqui você acompanha seu progresso, atividades recentes e próximos objetivos. Use o menu lateral para navegar entre flashcards, simulados e estatísticas. Dúvidas? Clique nos ícones para saber mais.
+                </span>
+                <button
+                  className="absolute top-2 right-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                  aria-label="Fechar dica de onboarding"
+                  title="Fechar"
+                  onClick={() => setHideOnboarding(true)}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+              </div>
+            )}
           </div>
           <div className="flex items-center gap-4">
             <button
               onClick={() => setIsDark(!isDark)}
               className="flex h-10 w-10 items-center justify-center rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
+              aria-label={isDark ? "Ativar modo claro" : "Ativar modo escuro"}
+              title={isDark ? "Modo claro" : "Modo escuro"}
             >
               {isDark ? (
                 <Sun className="h-4 w-4" />
@@ -368,13 +394,15 @@ const MainContent = ({ isDark, setIsDark, user, profile, selected }: any) => {
 const DashboardHome = ({ user, profile }: any) => {
   const [recentActivities, setRecentActivities] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
-  const successRate = profile?.total_questions_answered 
-    ? Math.round((profile.correct_answers / profile.total_questions_answered) * 100)
+  const [refreshKey, setRefreshKey] = useState(0)
+  const [aggregates, setAggregates] = useState<any>(profile || {})
+  const successRate = aggregates?.total_questions_answered 
+    ? Math.round((aggregates.correct_answers / aggregates.total_questions_answered) * 100)
     : 0
 
   useEffect(() => {
     fetchRecentActivities()
-  }, [user])
+  }, [user, refreshKey])
 
   const fetchRecentActivities = async () => {
     try {
@@ -394,12 +422,66 @@ const DashboardHome = ({ user, profile }: any) => {
     }
   }
 
+  // Atualiza agregados do perfil ao montar (garante sincronização visual)
+  useEffect(() => {
+    const fetchProfileAggregates = async () => {
+      try {
+        if (!user?.id) return
+        const { data, error } = await supabase
+          .from("profiles")
+          .select("total_flashcards_studied,total_questions_answered,correct_answers,study_progress")
+          .eq("id", user.id)
+          .maybeSingle()
+        if (!error && data) {
+          setAggregates(data)
+          // Forçamos re-render de atividades após ações em outras telas.
+          setRefreshKey((k) => k + 1)
+        }
+      } catch (e) {
+        console.error("Error fetching profile aggregates:", e)
+      }
+    }
+    fetchProfileAggregates()
+  }, [user])
+
+  // Assinaturas Realtime para atualizar imediatamente quando houver mudanças
+  useEffect(() => {
+    if (!user?.id) return
+
+    const activitiesChannel = supabase
+      .channel(`user-activities-${user.id}`)
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'user_activities', filter: `user_id=eq.${user.id}` },
+        (payload) => {
+          setRecentActivities((prev) => [payload.new as any, ...(prev || [])].slice(0, 5))
+          setLoading(false)
+        }
+      )
+      .subscribe()
+
+    const profileChannel = supabase
+      .channel(`profile-aggregates-${user.id}`)
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'profiles', filter: `id=eq.${user.id}` },
+        (payload) => {
+          setAggregates(payload.new as any)
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(activitiesChannel)
+      supabase.removeChannel(profileChannel)
+    }
+  }, [user?.id])
   const getActivityIcon = (type: string) => {
     switch (type) {
       case "flashcard_studied": return BookOpen
       case "quiz_completed": return CheckCircle2
       case "achievement_unlocked": return Trophy
-      case "category_started": return Brain
+      case "category_started": return Target
       case "personal_record": return Award
       default: return Calendar
     }
@@ -445,7 +527,7 @@ const DashboardHome = ({ user, profile }: any) => {
           </div>
           <h3 className="font-medium text-gray-600 dark:text-gray-400 mb-1">Flashcards Estudados</h3>
           <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-            {profile?.total_flashcards_studied || 0}
+            {aggregates?.total_flashcards_studied || 0}
           </p>
           <p className="text-sm text-success mt-1">Continue estudando!</p>
         </div>
@@ -471,7 +553,7 @@ const DashboardHome = ({ user, profile }: any) => {
           </div>
           <h3 className="font-medium text-gray-600 dark:text-gray-400 mb-1">Questões Respondidas</h3>
           <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-            {profile?.total_questions_answered || 0}
+            {aggregates?.total_questions_answered || 0}
           </p>
           <p className="text-sm text-success mt-1">Meta: 500 questões</p>
         </div>
@@ -485,119 +567,9 @@ const DashboardHome = ({ user, profile }: any) => {
           </div>
           <h3 className="font-medium text-gray-600 dark:text-gray-400 mb-1">Progresso Geral</h3>
           <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-            {profile?.study_progress || 0}%
+            {aggregates?.study_progress || 0}%
           </p>
           <p className="text-sm text-success mt-1">Continue assim!</p>
-        </div>
-      </div>
-      
-      {/* Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Recent Activity */}
-        <div className="lg:col-span-2">
-          <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-6 shadow-sm">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Atividades Recentes</h3>
-              <button className="text-sm text-primary hover:text-primary/80 font-medium">
-                Ver tudo
-              </button>
-            </div>
-            <div className="space-y-4">
-              {loading ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  Carregando atividades...
-                </div>
-              ) : recentActivities.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  Nenhuma atividade registrada ainda. Comece a estudar!
-                </div>
-              ) : (
-                recentActivities.map((activity, i) => {
-                  const Icon = getActivityIcon(activity.activity_type)
-                  const color = getActivityColor(activity.activity_type)
-                  return (
-                    <div key={i} className="flex items-center space-x-4 p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer">
-                      <div className={`p-2 rounded-lg ${
-                        color === 'green' ? 'bg-success/10 dark:bg-success/20' :
-                        color === 'blue' ? 'bg-primary/10 dark:bg-primary/20' :
-                        color === 'purple' ? 'bg-accent/10 dark:bg-accent/20' :
-                        color === 'orange' ? 'bg-secondary/10 dark:bg-secondary/20' :
-                        'bg-red-50 dark:bg-red-900/20'
-                      }`}>
-                        <Icon className={`h-4 w-4 ${
-                          color === 'green' ? 'text-success' :
-                          color === 'blue' ? 'text-primary' :
-                          color === 'purple' ? 'text-accent' :
-                          color === 'orange' ? 'text-secondary' :
-                          'text-red-600 dark:text-red-400'
-                        }`} />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
-                          {activity.metadata?.title || activity.activity_type.replace(/_/g, ' ')}
-                        </p>
-                        <p className="text-sm text-gray-500 dark:text-gray-400 truncate">
-                          {activity.metadata?.description || ''}
-                        </p>
-                      </div>
-                      <span className="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">
-                        {formatActivityTime(activity.created_at)}
-                      </span>
-                    </div>
-                  )
-                })
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Quick Stats */}
-        <div className="space-y-6">
-          <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-6 shadow-sm">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Progresso por Categoria</h3>
-            <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600 dark:text-gray-400">Legislação</span>
-                <span className="text-sm font-medium text-gray-900 dark:text-gray-100">78%</span>
-              </div>
-              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                <div className="bg-primary h-2 rounded-full" style={{ width: '78%' }}></div>
-              </div>
-              
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600 dark:text-gray-400">Sinalização</span>
-                <span className="text-sm font-medium text-gray-900 dark:text-gray-100">65%</span>
-              </div>
-              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                <div className="bg-success h-2 rounded-full" style={{ width: '65%' }}></div>
-              </div>
-              
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600 dark:text-gray-400">Direção Defensiva</span>
-                <span className="text-sm font-medium text-gray-900 dark:text-gray-100">42%</span>
-              </div>
-              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                <div className="bg-secondary h-2 rounded-full" style={{ width: '42%' }}></div>
-              </div>
-            </div>
-          </div>
-
-          <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-6 shadow-sm">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Próximos Objetivos</h3>
-            <div className="space-y-3">
-              {[
-                'Completar 50 flashcards de Mecânica',
-                'Fazer 3 simulados esta semana',
-                'Revisar sinais de trânsito',
-                'Estudar primeiros socorros'
-              ].map((goal, i) => (
-                <div key={i} className="flex items-center gap-3 py-2">
-                  <div className="h-2 w-2 rounded-full bg-primary"></div>
-                  <span className="text-sm text-gray-600 dark:text-gray-400">{goal}</span>
-                </div>
-              ))}
-            </div>
-          </div>
         </div>
       </div>
     </>
