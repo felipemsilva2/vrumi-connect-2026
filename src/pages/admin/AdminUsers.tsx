@@ -5,7 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { UserDetailsDialog } from "@/components/admin/UserDetailsDialog";
-import { Search, Eye } from "lucide-react";
+import { CreatePassDialog } from "@/components/admin/CreatePassDialog";
+import { Search, Eye, Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -28,6 +29,8 @@ const AdminUsers = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [createPassDialogOpen, setCreatePassDialogOpen] = useState(false);
+  const [selectedUserEmail, setSelectedUserEmail] = useState("");
 
   useEffect(() => {
     fetchUsers();
@@ -95,6 +98,11 @@ const AdminUsers = () => {
     setDialogOpen(true);
   };
 
+  const handleAddSubscription = (user: User) => {
+    setSelectedUserEmail(user.email);
+    setCreatePassDialogOpen(true);
+  };
+
   if (isLoading) {
     return (
       <AdminLayout>
@@ -159,14 +167,24 @@ const AdminUsers = () => {
                   </TableCell>
                   <TableCell>{user.study_progress}%</TableCell>
                   <TableCell className="text-right">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleViewDetails(user)}
-                    >
-                      <Eye className="h-4 w-4 mr-2" />
-                      Ver Detalhes
-                    </Button>
+                    <div className="flex gap-2 justify-end">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleAddSubscription(user)}
+                      >
+                        <Plus className="h-4 w-4 mr-2" />
+                        Assinatura
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleViewDetails(user)}
+                      >
+                        <Eye className="h-4 w-4 mr-2" />
+                        Detalhes
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
@@ -180,6 +198,13 @@ const AdminUsers = () => {
         onOpenChange={setDialogOpen}
         user={selectedUser}
         onUpdate={fetchUsers}
+      />
+
+      <CreatePassDialog
+        open={createPassDialogOpen}
+        onOpenChange={setCreatePassDialogOpen}
+        onSuccess={fetchUsers}
+        prefilledEmail={selectedUserEmail}
       />
     </AdminLayout>
   );

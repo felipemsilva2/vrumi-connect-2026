@@ -44,15 +44,24 @@ serve(async (req) => {
 
     const isFamilyPlan = pass_type === 'family_90_days';
 
-    // Buscar user_id pelo email
+    // Buscar user_id pelo email (case-insensitive)
     const { data: { users }, error: listError } = await supabase.auth.admin.listUsers();
     
-    if (listError) throw listError;
+    if (listError) {
+      console.error('Error listing users:', listError);
+      throw listError;
+    }
 
-    const targetUser = users.find(u => u.email === user_email);
+    console.log('Total users found:', users.length);
+
+    // Busca case-insensitive
+    const normalizedEmail = user_email.toLowerCase().trim();
+    const targetUser = users.find(u => u.email?.toLowerCase().trim() === normalizedEmail);
+    
+    console.log('Target user search:', { normalizedEmail, found: !!targetUser });
     
     if (!targetUser) {
-      throw new Error('Usuário não encontrado');
+      throw new Error(`Usuário não encontrado com o email: ${user_email}`);
     }
 
     // Array para armazenar os passes a serem criados
@@ -67,10 +76,13 @@ serve(async (req) => {
 
     // Se for plano família, criar passe para o segundo usuário
     if (isFamilyPlan && second_user_email) {
-      const secondUser = users.find(u => u.email === second_user_email);
+      const normalizedSecondEmail = second_user_email.toLowerCase().trim();
+      const secondUser = users.find(u => u.email?.toLowerCase().trim() === normalizedSecondEmail);
+      
+      console.log('Second user search:', { normalizedSecondEmail, found: !!secondUser });
       
       if (!secondUser) {
-        throw new Error('Segundo usuário não encontrado');
+        throw new Error(`Segundo usuário não encontrado com o email: ${second_user_email}`);
       }
 
       passesToCreate.push({

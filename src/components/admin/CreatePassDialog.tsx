@@ -16,15 +16,23 @@ interface CreatePassDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess: () => void;
+  prefilledEmail?: string;
 }
 
-export const CreatePassDialog = ({ open, onOpenChange, onSuccess }: CreatePassDialogProps) => {
-  const [userEmail, setUserEmail] = useState("");
+export const CreatePassDialog = ({ open, onOpenChange, onSuccess, prefilledEmail }: CreatePassDialogProps) => {
+  const [userEmail, setUserEmail] = useState(prefilledEmail || "");
   const [passType, setPassType] = useState<"30_days" | "90_days" | "family_90_days">("30_days");
   const [expiresAt, setExpiresAt] = useState<Date>();
-  const [price, setPrice] = useState("0");
+  const [price, setPrice] = useState("29.90");
   const [isLoading, setIsLoading] = useState(false);
   const [secondUserEmail, setSecondUserEmail] = useState("");
+
+  // Atualizar email quando prefilledEmail mudar
+  useState(() => {
+    if (prefilledEmail) {
+      setUserEmail(prefilledEmail);
+    }
+  });
 
   // Atualizar preço automaticamente quando o tipo de pass mudar
   const handlePassTypeChange = (value: "30_days" | "90_days" | "family_90_days") => {
@@ -47,17 +55,9 @@ export const CreatePassDialog = ({ open, onOpenChange, onSuccess }: CreatePassDi
 
     setIsLoading(true);
     try {
-      // Buscar o usuário pelo email usando auth.admin
-      const { data: authData } = await supabase.auth.admin.listUsers();
-      const user = authData?.users?.find((u: any) => u.email?.toLowerCase() === userEmail.toLowerCase());
+      console.log('Creating pass with data:', { userEmail, passType, expiresAt, price });
       
-      if (!user) {
-        toast.error("Usuário não encontrado com este email");
-        setIsLoading(false);
-        return;
-      }
-
-      const { error } = await supabase.functions.invoke("admin-create-pass", {
+      const { data, error } = await supabase.functions.invoke("admin-create-pass", {
         body: {
           user_email: userEmail,
           pass_type: passType,
@@ -67,8 +67,12 @@ export const CreatePassDialog = ({ open, onOpenChange, onSuccess }: CreatePassDi
         },
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error from edge function:', error);
+        throw error;
+      }
 
+      console.log('Pass created successfully:', data);
       toast.success("Assinatura criada com sucesso");
       onSuccess();
       onOpenChange(false);
@@ -78,10 +82,11 @@ export const CreatePassDialog = ({ open, onOpenChange, onSuccess }: CreatePassDi
       setSecondUserEmail("");
       setPassType("30_days");
       setExpiresAt(undefined);
-      setPrice("0");
-    } catch (error) {
+      setPrice("29.90");
+    } catch (error: any) {
       console.error("Error creating pass:", error);
-      toast.error("Erro ao criar assinatura");
+      const errorMessage = error?.message || "Erro ao criar assinatura";
+      toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }
