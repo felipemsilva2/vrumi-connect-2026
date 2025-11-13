@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
+import { PDFViewer } from "@/components/study-room/PDFViewer";
 
 interface Message {
   id: string;
@@ -51,9 +52,7 @@ export default function StudyRoom() {
   return (
     <div className="flex h-[calc(100vh-4rem)] w-full">
       {/* Lado Esquerdo - Visualizador de PDF */}
-      <div className="w-1/2 border-r border-border bg-muted/10 flex items-center justify-center">
-        <p className="text-muted-foreground text-lg">Área do PDF</p>
-      </div>
+      <PDFViewer className="w-1/2 border-r border-border" />
 
       {/* Lado Direito - Chat com IA */}
       <div className="w-1/2 flex flex-col bg-background">
