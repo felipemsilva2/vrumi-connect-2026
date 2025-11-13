@@ -155,3 +155,30 @@ All colors MUST be HSL.
   opacity: 0;
   animation: fadeIn 0.5s ease-out forwards, glow-wave 8s ease-in-out infinite;
 }
+
+/* Custom scrollbar for study room */
+.study-room-scrollbar::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.study-room-scrollbar::-webkit-scrollbar-track {
+  background: hsl(var(--muted) / 0.3);
+  border-radius: 4px;
+}
+
+.study-room-scrollbar::-webkit-scrollbar-thumb {
+  background: hsl(var(--primary) / 0.5);
+  border-radius: 4px;
+  transition: background 0.2s ease;
+}
+
+.study-room-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--primary) / 0.7);
+}
+
+/* Firefox scrollbar */
+.study-room-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: hsl(var(--primary) / 0.5) hsl(var(--muted) / 0.3);
+}

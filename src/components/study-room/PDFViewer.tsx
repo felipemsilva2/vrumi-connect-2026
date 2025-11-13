@@ -46,7 +46,7 @@ export function PDFViewer({ className }: PDFViewerProps) {
   const handleNextPage = () => setPageNumber((prev) => Math.min(prev + 1, numPages));
 
   return (
-    <div className={cn("flex flex-col h-full bg-muted/10", className)}>
+    <div className={cn("flex flex-col h-full bg-background", className)}>
       {/* Barra de ferramentas */}
       <div className="flex items-center justify-between gap-2 p-3 border-b border-border bg-background/95 backdrop-blur">
         <div className="flex items-center gap-2">
@@ -109,7 +109,7 @@ export function PDFViewer({ className }: PDFViewerProps) {
       </div>
 
       {/* Área de visualização do PDF */}
-      <div className="flex-1 overflow-auto flex items-start justify-center p-4 bg-muted/5">
+      <div className="flex-1 overflow-auto flex items-start justify-center p-4 bg-muted/5 study-room-scrollbar">
         {file ? (
           <Document
             file={file}
