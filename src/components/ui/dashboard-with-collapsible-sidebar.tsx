@@ -135,6 +135,16 @@ const Sidebar = ({ user, selected, setSelected }: SidebarProps) => {
           notifs={2}
           tooltip="Teste seus conhecimentos com simulados"
         />
+        <Option
+          Icon={FileText}
+          title="Sala de Estudos"
+          selected={selected}
+          setSelected={setSelected}
+          open={open}
+          tooltip="Estude com IA e visualize materiais"
+          isExternalLink
+          externalPath="/study-room"
+        />
         {/* TEMPORARIAMENTE OCULTO - Lançamento futuro
         <Option
           Icon={FileText}
@@ -210,11 +220,21 @@ const Sidebar = ({ user, selected, setSelected }: SidebarProps) => {
   );
 };
 
-const Option = ({ Icon, title, selected, setSelected, open, notifs, tooltip }: any) => {
+const Option = ({ Icon, title, selected, setSelected, open, notifs, tooltip, isExternalLink, externalPath }: any) => {
+  const navigate = useNavigate();
   const isSelected = selected === title;
+  
+  const handleClick = () => {
+    if (isExternalLink && externalPath) {
+      navigate(externalPath);
+    } else {
+      setSelected(title);
+    }
+  };
+  
   return (
     <button
-      onClick={() => setSelected(title)}
+      onClick={handleClick}
       className={`relative flex h-11 w-full items-center rounded-md transition-all duration-200 ${
         isSelected 
           ? "bg-primary/10 dark:bg-primary/20 text-primary shadow-sm border-l-2 border-primary" 

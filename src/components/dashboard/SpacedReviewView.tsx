@@ -183,7 +183,7 @@ export const SpacedReviewView = () => {
     if (!cardsDueToday.length) return
     const card = cardsDueToday[currentIndex] || cardsDueToday[0]
     if (!feedback) {
-      toast({ title: "Avalie a resposta", description: "Clique em Enviar Resposta antes de continuar.", variant: "warning" })
+      toast({ title: "Avalie a resposta", description: "Clique em Enviar Resposta antes de continuar.", variant: "destructive" })
       return
     }
 
