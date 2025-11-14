@@ -1,10 +1,12 @@
 import { useState } from "react";
-import { Send } from "lucide-react";
+import { Send, Car } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { PDFViewer } from "@/components/study-room/PDFViewer";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { useNavigate } from "react-router-dom";
 
 interface Message {
   id: string;
@@ -16,6 +18,8 @@ interface Message {
 export default function StudyRoom() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState("");
+  const isMobile = useIsMobile();
+  const navigate = useNavigate();
 
   const handleSendMessage = () => {
     if (!inputValue.trim()) return;
@@ -50,20 +54,48 @@ export default function StudyRoom() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F8F8F8] py-6 px-5">
-      <div className="mx-auto max-w-[1200px] w-full">
-        <div className="flex gap-5 min-h-[600px] h-[calc(100vh-100px)] rounded-lg shadow-[0_4px_20px_rgba(0,0,0,0.08)] overflow-hidden bg-background">
+    <div className="min-h-screen bg-muted/30">
+      {/* Header com Logo */}
+      <header className="bg-background border-b border-border sticky top-0 z-10 shadow-sm">
+        <div className="mx-auto max-w-[1400px] w-full px-4 sm:px-6 lg:px-8 py-3 sm:py-4">
+          <div className="flex items-center justify-between">
+            <div 
+              className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
+              onClick={() => navigate("/")}
+            >
+              <Car className="w-6 h-6 sm:w-8 sm:h-8 text-primary" />
+              <span className="text-lg sm:text-xl font-black text-foreground">Vrumi</span>
+            </div>
+            <h1 className="text-sm sm:text-lg font-semibold text-foreground">
+              Sala de Estudos
+            </h1>
+          </div>
+        </div>
+      </header>
+
+      {/* Conteúdo Principal */}
+      <div className="mx-auto max-w-[1400px] w-full px-3 sm:px-4 lg:px-6 py-4 sm:py-6">
+        <div className={cn(
+          "rounded-lg shadow-elegant overflow-hidden bg-background border border-border",
+          isMobile ? "flex flex-col min-h-[calc(100vh-140px)]" : "flex gap-4 min-h-[600px] h-[calc(100vh-140px)]"
+        )}>
           {/* Lado Esquerdo - Visualizador de PDF */}
-          <PDFViewer className="w-1/2 study-room-scrollbar" />
+          <PDFViewer className={cn(
+            "study-room-scrollbar",
+            isMobile ? "w-full h-[50vh] border-b" : "w-1/2 border-r"
+          )} />
 
           {/* Lado Direito - Chat com IA */}
-          <div className="w-1/2 flex flex-col bg-background border-l border-border">
+          <div className={cn(
+            "flex flex-col bg-background",
+            isMobile ? "w-full flex-1" : "w-1/2"
+          )}>
             {/* Área de mensagens */}
-            <ScrollArea className="flex-1 p-4 study-room-scrollbar">
-              <div className="space-y-4">
+            <ScrollArea className="flex-1 p-3 sm:p-4 study-room-scrollbar">
+              <div className="space-y-3 sm:space-y-4">
                 {messages.length === 0 ? (
                   <div className="flex items-center justify-center h-full text-muted-foreground">
-                    <p>Faça uma pergunta para começar</p>
+                    <p className="text-sm sm:text-base">Faça uma pergunta para começar</p>
                   </div>
                 ) : (
                   messages.map((message) => (
@@ -76,14 +108,16 @@ export default function StudyRoom() {
                     >
                       <div
                         className={cn(
-                          "max-w-[80%] rounded-lg px-4 py-2",
+                          "max-w-[85%] sm:max-w-[80%] rounded-lg px-3 sm:px-4 py-2",
                           message.role === "user"
                             ? "bg-primary text-primary-foreground"
                             : "bg-muted text-foreground"
                         )}
                       >
-                        <p className="text-sm whitespace-pre-wrap">{message.content}</p>
-                        <p className="text-xs opacity-70 mt-1">
+                        <p className="text-xs sm:text-sm whitespace-pre-wrap break-words">
+                          {message.content}
+                        </p>
+                        <p className="text-[10px] sm:text-xs opacity-70 mt-1">
                           {message.timestamp.toLocaleTimeString("pt-BR", {
                             hour: "2-digit",
                             minute: "2-digit",
@@ -97,21 +131,22 @@ export default function StudyRoom() {
             </ScrollArea>
 
             {/* Barra de input fixada na parte inferior */}
-            <div className="border-t border-border p-4">
+            <div className="border-t border-border p-3 sm:p-4 bg-background">
               <div className="flex gap-2">
                 <Input
                   value={inputValue}
                   onChange={(e) => setInputValue(e.target.value)}
                   onKeyPress={handleKeyPress}
                   placeholder="Digite sua pergunta..."
-                  className="flex-1"
+                  className="flex-1 text-sm sm:text-base"
                 />
                 <Button
                   onClick={handleSendMessage}
                   disabled={!inputValue.trim()}
-                  className="bg-primary hover:bg-primary/90"
+                  size={isMobile ? "sm" : "default"}
+                  className="bg-primary hover:bg-primary/90 shrink-0"
                 >
-                  <Send className="h-4 w-4" />
+                  <Send className="h-3 w-3 sm:h-4 sm:w-4" />
                 </Button>
               </div>
             </div>
