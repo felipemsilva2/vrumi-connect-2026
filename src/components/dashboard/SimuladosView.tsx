@@ -432,7 +432,7 @@ export const SimuladosView = () => {
                         <div className="mb-6 flex justify-center">
                           <ImageWithFallback
                             src={currentQ.image_url}
-                            alt="Imagem da questão"
+                            alt={`Ilustração para questão: ${currentQ.question_text.substring(0, 50)}${currentQ.question_text.length > 50 ? '...' : ''}`}
                             className="max-w-md w-full rounded-lg shadow-md"
                             fallbackClassName="h-64"
                           />

@@ -25,6 +25,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Car } from "lucide-react";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
+import { SmartBreadcrumb } from "@/components/SmartBreadcrumb";
 
 interface DashboardProps {
   user: any;
@@ -125,6 +126,7 @@ const Sidebar = ({ user, selected, setSelected }: SidebarProps) => {
           setSelected={setSelected}
           open={open}
           tooltip="Estude com flashcards"
+          dataTutorial="flashcards"
         />
         <Option
           Icon={Target}
@@ -134,6 +136,7 @@ const Sidebar = ({ user, selected, setSelected }: SidebarProps) => {
           open={open}
           notifs={2}
           tooltip="Teste seus conhecimentos com simulados"
+          dataTutorial="simulados"
         />
         <Option
           Icon={FileText}
@@ -220,7 +223,7 @@ const Sidebar = ({ user, selected, setSelected }: SidebarProps) => {
   );
 };
 
-const Option = ({ Icon, title, selected, setSelected, open, notifs, tooltip, isExternalLink, externalPath }: any) => {
+const Option = ({ Icon, title, selected, setSelected, open, notifs, tooltip, isExternalLink, externalPath, dataTutorial }: any) => {
   const navigate = useNavigate();
   const isSelected = selected === title;
   
@@ -242,6 +245,7 @@ const Option = ({ Icon, title, selected, setSelected, open, notifs, tooltip, isE
       }`}
       aria-label={title}
       title={tooltip}
+      data-tutorial={dataTutorial}
     >
       <div className="grid h-full w-12 place-content-center">
         <Icon className="h-4 w-4" />
@@ -365,6 +369,7 @@ const MainContent = ({ isDark, setIsDark, user, profile, selected }: any) => {
 
   return (
     <div className="flex-1 bg-gray-50 dark:bg-gray-950 p-6 overflow-auto">
+      <SmartBreadcrumb />
       {selected === "Dashboard" && (
         <div className="flex items-center justify-between mb-8">
           <div>
@@ -537,7 +542,7 @@ const DashboardHome = ({ user, profile }: any) => {
   return (
     <>
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8" data-tutorial="dashboard">
         <div className="p-6 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm hover:shadow-md transition-shadow">
           <div className="flex items-center justify-between mb-4">
             <div className="p-2 bg-primary/10 dark:bg-primary/20 rounded-lg">

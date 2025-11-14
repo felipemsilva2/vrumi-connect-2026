@@ -10,6 +10,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { pdfjs } from "react-pdf";
+import { SmartBreadcrumb } from "@/components/SmartBreadcrumb";
 
 interface Message {
   id: string;
@@ -139,6 +140,11 @@ export default function StudyRoom() {
           </div>
         </div>
       </header>
+
+      {/* Breadcrumb */}
+      <div className="mx-auto max-w-[1400px] w-full px-3 sm:px-4 lg:px-6 py-3">
+        <SmartBreadcrumb />
+      </div>
 
       {/* Conteúdo Principal */}
       <div className="mx-auto max-w-[1400px] w-full px-3 sm:px-4 lg:px-6 py-4 sm:py-6">

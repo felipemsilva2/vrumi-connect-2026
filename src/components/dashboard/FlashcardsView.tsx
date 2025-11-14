@@ -266,7 +266,7 @@ export const FlashcardsView = () => {
                   <div className="mb-4 flex justify-center">
                     <ImageWithFallback
                       src={card.image_url}
-                      alt="Imagem do flashcard"
+                      alt={`Imagem ilustrativa sobre ${card.category}`}
                       className="max-w-xs w-full rounded-lg shadow-md"
                       fallbackClassName="h-48"
                     />

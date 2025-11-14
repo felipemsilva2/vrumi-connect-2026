@@ -146,7 +146,7 @@ export default function MinimalModernHero({
           }} transition={{
             duration: 0.8,
             delay: 0.3
-          }} className="text-6xl md:text-7xl lg:text-8xl font-black leading-tight mb-6" style={{
+          }} className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-black leading-tight mb-6" style={{
             fontFamily: "Inter, sans-serif",
             color: "#000000",
             letterSpacing: "-0.04em"
@@ -168,7 +168,7 @@ export default function MinimalModernHero({
           }} transition={{
             duration: 0.6,
             delay: 0.5
-          }} className="text-2xl md:text-3xl font-semibold mb-6" style={{
+          }} className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-semibold mb-6" style={{
             fontFamily: "Inter, sans-serif",
             color: "#666666"
           }}>
@@ -190,7 +190,7 @@ export default function MinimalModernHero({
             color: "#555555",
             lineHeight: "1.6",
             maxWidth: "700px"
-          }} className="text-xl mb-12 md:text-xl">
+          }} className="text-sm sm:text-base md:text-lg lg:text-xl mb-8 sm:mb-12">
               {description}
             </motion.p>
 
@@ -210,7 +210,7 @@ export default function MinimalModernHero({
               boxShadow: `0 20px 50px ${accentColor}40`
             }} whileTap={{
               scale: 0.95
-            }} onClick={primaryButton.onClick} className="px-10 py-5 rounded-2xl font-bold text-lg" style={{
+            }} onClick={primaryButton.onClick} className="px-6 sm:px-8 py-3 sm:py-4 rounded-xl sm:rounded-2xl font-bold text-sm sm:text-base lg:text-lg" style={{
               background: accentColor,
               color: "#000000",
               fontFamily: "Inter, sans-serif"
@@ -223,7 +223,7 @@ export default function MinimalModernHero({
               background: "#F5F5F5"
             }} whileTap={{
               scale: 0.95
-            }} onClick={secondaryButton.onClick} className="px-10 py-5 rounded-2xl font-bold text-lg" style={{
+            }} onClick={secondaryButton.onClick} className="px-6 sm:px-8 py-3 sm:py-4 rounded-xl sm:rounded-2xl font-bold text-sm sm:text-base lg:text-lg" style={{
               background: "transparent",
               color: "#000000",
               fontFamily: "Inter, sans-serif",
@@ -243,7 +243,7 @@ export default function MinimalModernHero({
           }} transition={{
             duration: 0.6,
             delay: 1.1
-          }} className="grid grid-cols-2 md:grid-cols-4 gap-8">
+          }} className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-8">
                 {stats.map((stat, index) => <motion.div key={index} whileHover={{
               y: -5
             }} className="relative">
@@ -251,13 +251,13 @@ export default function MinimalModernHero({
                 background: accentColor
               }} />
                     <div className="pt-4">
-                      <div className="text-4xl md:text-5xl font-black mb-2" style={{
+                      <div className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black mb-2" style={{
                   fontFamily: "Inter, sans-serif",
                   color: "#000000"
                 }}>
                         {stat.value}
                       </div>
-                      <div className="text-sm font-semibold uppercase tracking-wide" style={{
+                      <div className="text-xs sm:text-sm font-semibold uppercase tracking-wide" style={{
                   fontFamily: "Inter, sans-serif",
                   color: "#888888"
                 }}>

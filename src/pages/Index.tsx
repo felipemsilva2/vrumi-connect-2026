@@ -8,6 +8,7 @@ import Footer from "@/components/Footer";
 import { Navbar } from "@/components/Navbar";
 import PricingSection from "@/components/PricingSection";
 import { useNavigate } from "react-router-dom";
+import { Display, Lead, Heading2, BodyLarge } from "@/components/ui/typography";
 const Index = () => {
   const navigate = useNavigate();
   return (
@@ -24,11 +25,11 @@ const Index = () => {
           description="Para que gastar R$1.000+ com o curso teórico se você pode ter o mesmo conteúdo oficial de forma rápida e interativa? O Vrumi transforma as apostilas do governo em simulados, flashcards e lições que realmente aprovam."
           primaryButton={{
             label: "Começar Agora",
-            onClick: () => navigate("/auth"),
+            onClick: () => navigate("/auth?mode=register"),
           }}
           secondaryButton={{
             label: "Já tenho conta",
-            onClick: () => navigate("/auth"),
+            onClick: () => navigate("/auth?mode=login"),
           }}
           stats={[
             {
