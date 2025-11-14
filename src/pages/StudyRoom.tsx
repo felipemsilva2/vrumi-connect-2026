@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { PDFViewer } from "@/components/study-room/PDFViewer";
+import { QuickActions } from "@/components/study-room/QuickActions";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -121,6 +122,18 @@ export default function StudyRoom() {
     }
   };
 
+  const handleQuickAction = async (prompt: string) => {
+    // Set the input value and send the message
+    setInputValue(prompt);
+    
+    // Use setTimeout to ensure the input value is set before sending
+    setTimeout(() => {
+      // Create a synthetic event to trigger handleSendMessage
+      const syntheticEvent = { preventDefault: () => {} } as React.FormEvent;
+      handleSendMessage();
+    }, 0);
+  };
+
   return (
     <div className="min-h-screen bg-muted/30">
       {/* Header com Logo */}
@@ -166,6 +179,12 @@ export default function StudyRoom() {
             "flex flex-col bg-background",
             isMobile ? "w-full flex-1" : "w-1/2"
           )}>
+            {/* Ações Rápidas - Acima da área de mensagens */}
+            <QuickActions 
+              onQuickAction={handleQuickAction} 
+              className="border-b border-border"
+            />
+            
             {/* Área de mensagens */}
             <ScrollArea className="flex-1 p-3 sm:p-4 study-room-scrollbar">
               <div className="space-y-3 sm:space-y-4">
