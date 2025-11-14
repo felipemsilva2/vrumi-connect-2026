@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Send, Car } from "lucide-react";
+import { useState, useRef } from "react";
+import { Send, Car, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -7,6 +7,9 @@ import { cn } from "@/lib/utils";
 import { PDFViewer } from "@/components/study-room/PDFViewer";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { pdfjs } from "react-pdf";
 
 interface Message {
   id: string;
@@ -18,32 +21,96 @@ interface Message {
 export default function StudyRoom() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [pdfText, setPdfText] = useState<string>("");
   const isMobile = useIsMobile();
   const navigate = useNavigate();
+  const pdfViewerRef = useRef<{ getCurrentFile: () => string | null; getCurrentPage: () => number }>(null);
 
-  const handleSendMessage = () => {
-    if (!inputValue.trim()) return;
+  const extractPdfContext = async (file: string, currentPage: number): Promise<string> => {
+    try {
+      const pdf = await pdfjs.getDocument(file).promise;
+      const numPages = pdf.numPages;
+      
+      // Extrair contexto: página atual + 2 anteriores + 2 posteriores
+      const startPage = Math.max(1, currentPage - 2);
+      const endPage = Math.min(numPages, currentPage + 2);
+      
+      let context = "";
+      for (let i = startPage; i <= endPage; i++) {
+        const page = await pdf.getPage(i);
+        const textContent = await page.getTextContent();
+        const pageText = textContent.items
+          .map((item: any) => item.str)
+          .join(" ");
+        context += `\n[Página ${i}]\n${pageText}\n`;
+      }
+      
+      return context.substring(0, 8000); // Limitar contexto
+    } catch (error) {
+      console.error("Erro ao extrair texto do PDF:", error);
+      return "";
+    }
+  };
 
-    const newMessage: Message = {
+  const handleSendMessage = async () => {
+    if (!inputValue.trim() || isLoading) return;
+
+    const userMessage: Message = {
       id: Date.now().toString(),
       role: "user",
       content: inputValue,
       timestamp: new Date(),
     };
 
-    setMessages((prev) => [...prev, newMessage]);
+    setMessages((prev) => [...prev, userMessage]);
     setInputValue("");
+    setIsLoading(true);
 
-    // Placeholder: Simular resposta da IA
-    setTimeout(() => {
+    try {
+      // Extrair contexto do PDF atual
+      const currentFile = pdfViewerRef.current?.getCurrentFile();
+      const currentPage = pdfViewerRef.current?.getCurrentPage() || 1;
+      
+      let pdfContext = "";
+      if (currentFile) {
+        pdfContext = await extractPdfContext(currentFile, currentPage);
+      }
+
+      // Chamar edge function
+      const { data, error } = await supabase.functions.invoke("study-chat", {
+        body: {
+          message: inputValue,
+          pdfContext: pdfContext || "Nenhum PDF carregado.",
+        },
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      if (data.error) {
+        throw new Error(data.error);
+      }
+
       const aiResponse: Message = {
         id: (Date.now() + 1).toString(),
         role: "assistant",
-        content: "Esta é uma resposta de exemplo. A IA será implementada em breve.",
+        content: data.message,
         timestamp: new Date(),
       };
+
       setMessages((prev) => [...prev, aiResponse]);
-    }, 1000);
+    } catch (error) {
+      console.error("Erro ao enviar mensagem:", error);
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Erro ao se comunicar com a IA. Tente novamente."
+      );
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -80,10 +147,13 @@ export default function StudyRoom() {
           isMobile ? "flex flex-col min-h-[calc(100vh-140px)]" : "flex gap-4 min-h-[600px] h-[calc(100vh-140px)]"
         )}>
           {/* Lado Esquerdo - Visualizador de PDF */}
-          <PDFViewer className={cn(
-            "study-room-scrollbar",
-            isMobile ? "w-full h-[50vh] border-b" : "w-1/2 border-r"
-          )} />
+          <PDFViewer 
+            ref={pdfViewerRef}
+            className={cn(
+              "study-room-scrollbar",
+              isMobile ? "w-full h-[50vh] border-b" : "w-1/2 border-r"
+            )} 
+          />
 
           {/* Lado Direito - Chat com IA */}
           <div className={cn(
@@ -142,11 +212,15 @@ export default function StudyRoom() {
                 />
                 <Button
                   onClick={handleSendMessage}
-                  disabled={!inputValue.trim()}
+                  disabled={!inputValue.trim() || isLoading}
                   size={isMobile ? "sm" : "default"}
                   className="bg-primary hover:bg-primary/90 shrink-0"
                 >
-                  <Send className="h-3 w-3 sm:h-4 sm:w-4" />
+                  {isLoading ? (
+                    <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 animate-spin" />
+                  ) : (
+                    <Send className="h-3 w-3 sm:h-4 sm:w-4" />
+                  )}
                 </Button>
               </div>
             </div>
