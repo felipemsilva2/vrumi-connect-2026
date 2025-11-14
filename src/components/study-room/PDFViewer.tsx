@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, forwardRef, useImperativeHandle } from "react";
 import { Document, Page, pdfjs } from "react-pdf";
 import { Button } from "@/components/ui/button";
 import { ZoomIn, ZoomOut, ChevronLeft, ChevronRight, Upload, FileText } from "lucide-react";
@@ -15,7 +15,12 @@ interface PDFViewerProps {
   className?: string;
 }
 
-export function PDFViewer({ className }: PDFViewerProps) {
+export interface PDFViewerHandle {
+  getCurrentFile: () => string | null;
+  getCurrentPage: () => number;
+}
+
+export const PDFViewer = forwardRef<PDFViewerHandle, PDFViewerProps>(({ className }, ref) => {
   const [file, setFile] = useState<string | null>("/materiais/MANUAL-OBTENCAO_2025.pdf");
   const [numPages, setNumPages] = useState<number>(0);
   const [pageNumber, setPageNumber] = useState<number>(1);
@@ -46,6 +51,11 @@ export function PDFViewer({ className }: PDFViewerProps) {
   const handleZoomOut = () => setScale((prev) => Math.max(prev - 0.2, 0.5));
   const handlePreviousPage = () => setPageNumber((prev) => Math.max(prev - 1, 1));
   const handleNextPage = () => setPageNumber((prev) => Math.min(prev + 1, numPages));
+
+  useImperativeHandle(ref, () => ({
+    getCurrentFile: () => file,
+    getCurrentPage: () => pageNumber,
+  }));
 
   return (
     <div className={cn("flex flex-col h-full bg-background", className)}>
@@ -150,4 +160,4 @@ export function PDFViewer({ className }: PDFViewerProps) {
       </div>
     </div>
   );
-}
+});
