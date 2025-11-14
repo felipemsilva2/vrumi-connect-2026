@@ -6,17 +6,25 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
+  console.log('study-chat function called');
+  
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
+    console.log('Processing request...');
     const { message, pdfContext } = await req.json();
+    console.log('Message received:', message);
+    
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     
     if (!LOVABLE_API_KEY) {
+      console.error('LOVABLE_API_KEY is not configured');
       throw new Error('LOVABLE_API_KEY is not configured');
     }
+
+    console.log('API key found, preparing request to AI...');
 
     const systemPrompt = `Você é um instrutor especialista em legislação de trânsito brasileira (CONTRAN/CTB). Suas respostas devem ser didáticas, curtas e focadas em ajudar o aluno a passar na prova teórica. Use **negrito** para destacar prazos e regras importantes.
 
@@ -24,6 +32,8 @@ CONTEXTO DO MATERIAL DE ESTUDO:
 ${pdfContext}
 
 Baseie suas respostas no contexto acima quando relevante. Se a pergunta não tiver relação com o conteúdo, responda de forma educada e direcione o aluno para o material correto.`;
+
+    console.log('Calling AI gateway...');
 
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
@@ -60,6 +70,8 @@ Baseie suas respostas no contexto acima quando relevante. Se a pergunta não tiv
 
     const data = await response.json();
     const aiMessage = data.choices[0].message.content;
+
+    console.log('AI response received successfully');
 
     return new Response(
       JSON.stringify({ message: aiMessage }),
