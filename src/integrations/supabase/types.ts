@@ -65,12 +65,6 @@ export type Database = {
           lesson_id: string | null
           question: string
           updated_at: string | null
-          ease_factor: number
-          interval_days: number
-          repetitions: number
-          due_date: string
-          last_reviewed: string | null
-          lapses: number
         }
         Insert: {
           answer: string
@@ -83,12 +77,6 @@ export type Database = {
           lesson_id?: string | null
           question: string
           updated_at?: string | null
-          ease_factor?: number
-          interval_days?: number
-          repetitions?: number
-          due_date?: string
-          last_reviewed?: string | null
-          lapses?: number
         }
         Update: {
           answer?: string
@@ -101,12 +89,6 @@ export type Database = {
           lesson_id?: string | null
           question?: string
           updated_at?: string | null
-          ease_factor?: number
-          interval_days?: number
-          repetitions?: number
-          due_date?: string
-          last_reviewed?: string | null
-          lapses?: number
         }
         Relationships: [
           {
