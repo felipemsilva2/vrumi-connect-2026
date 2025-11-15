@@ -1,23 +1,28 @@
-import { useState, useRef } from "react";
-import { Send, Car, Loader2 } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
+import { Send, Car, Loader2, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { PDFViewer } from "@/components/study-room/PDFViewer";
 import { QuickActions } from "@/components/study-room/QuickActions";
+import { TextSelectionTooltip } from "@/components/study-room/TextSelectionTooltip";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useContextualNavigation } from "@/utils/navigation";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { pdfjs } from "react-pdf";
 import { SmartBreadcrumb } from "@/components/SmartBreadcrumb";
+import { getErrorMessage } from "@/utils/errorMessages";
 
 interface Message {
   id: string;
   role: "user" | "assistant";
   content: string;
   timestamp: Date;
+  session_id?: string;
+  user_id?: string;
 }
 
 export default function StudyRoom() {
@@ -25,8 +30,12 @@ export default function StudyRoom() {
   const [inputValue, setInputValue] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [pdfText, setPdfText] = useState<string>("");
+  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(true);
   const isMobile = useIsMobile();
   const navigate = useNavigate();
+  const homeRoute = useContextualNavigation();
   const pdfViewerRef = useRef<{ getCurrentFile: () => string | null; getCurrentPage: () => number }>(null);
 
   const extractPdfContext = async (file: string, currentPage: number): Promise<string> => {
@@ -43,17 +52,46 @@ export default function StudyRoom() {
         const page = await pdf.getPage(i);
         const textContent = await page.getTextContent();
         const pageText = textContent.items
-          .map((item: any) => item.str)
+          .map((item) => item.str)
           .join(" ");
         context += `\n[Página ${i}]\n${pageText}\n`;
       }
       
       return context.substring(0, 8000); // Limitar contexto
     } catch (error) {
+      const errorInfo = getErrorMessage(error, 'file', 'pdf_extract');
+      
+      toast.error(errorInfo.message, {
+        description: errorInfo.action,
+        duration: 5000,
+      });
+      
       console.error("Erro ao extrair texto do PDF:", error);
       return "";
     }
   };
+
+  // Load chat history and get user on component mount
+  useEffect(() => {
+    const initializeChat = async () => {
+      try {
+        // Get current user
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          setUserId(user.id);
+          // Load chat history
+          await loadChatHistory();
+        } else {
+          setIsLoadingHistory(false);
+        }
+      } catch (error) {
+        console.error('Error initializing chat:', error);
+        setIsLoadingHistory(false);
+      }
+    };
+
+    initializeChat();
+  }, []);
 
   const handleSendMessage = async () => {
     if (!inputValue.trim() || isLoading) return;
@@ -69,6 +107,9 @@ export default function StudyRoom() {
     setInputValue("");
     setIsLoading(true);
 
+    // Save user message to database
+    await saveMessage(userMessage);
+
     try {
       // Extrair contexto do PDF atual
       const currentFile = pdfViewerRef.current?.getCurrentFile();
@@ -82,7 +123,7 @@ export default function StudyRoom() {
       // Chamar edge function
       const { data, error } = await supabase.functions.invoke("study-chat", {
         body: {
-          message: inputValue,
+          message: userMessage.content,
           pdfContext: pdfContext || "Nenhum PDF carregado.",
         },
       });
@@ -103,13 +144,18 @@ export default function StudyRoom() {
       };
 
       setMessages((prev) => [...prev, aiResponse]);
+      
+      // Save AI response to database
+      await saveMessage(aiResponse);
     } catch (error) {
+      const errorInfo = getErrorMessage(error, 'network', 'ai_request');
+      
+      toast.error(errorInfo.title, {
+        description: errorInfo.message,
+        duration: 5000,
+      });
+      
       console.error("Erro ao enviar mensagem:", error);
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : "Erro ao se comunicar com a IA. Tente novamente."
-      );
     } finally {
       setIsLoading(false);
     }
@@ -134,6 +180,141 @@ export default function StudyRoom() {
     }, 0);
   };
 
+  const handleTextExplanation = async (selectedText: string) => {
+    const explanationPrompt = `Me explique este trecho da lei: ${selectedText}`;
+    
+    // Set the input value and send the message
+    setInputValue(explanationPrompt);
+    
+    // Use setTimeout to ensure the input value is set before sending
+    setTimeout(() => {
+      handleSendMessage();
+    }, 0);
+  };
+
+  // Function to create or get current chat session
+  const getOrCreateSession = async (): Promise<string> => {
+    if (!userId) throw new Error('User not authenticated');
+    
+    if (sessionId) return sessionId;
+    
+    // Create a new session
+    const { data, error } = await supabase
+      .from('chat_sessions')
+      .insert({
+        user_id: userId,
+        title: 'Sessão de Estudo'
+      })
+      .select()
+      .single();
+    
+    if (error) throw error;
+    
+    setSessionId(data.id);
+    return data.id;
+  };
+
+  // Function to save message to database
+  const saveMessage = async (message: Message): Promise<void> => {
+    if (!userId) return;
+    
+    try {
+      const session_id = await getOrCreateSession();
+      
+      const { error } = await supabase
+        .from('chat_messages')
+        .insert({
+          session_id,
+          user_id: userId,
+          role: message.role,
+          content: message.content,
+          timestamp: message.timestamp
+        });
+      
+      if (error) throw error;
+    } catch (error) {
+      console.error('Error saving message:', error);
+      // Don't show error to user - chat should work even if saving fails
+    }
+  };
+
+  // Function to load chat history
+  const loadChatHistory = async (): Promise<void> => {
+    if (!userId) {
+      setIsLoadingHistory(false);
+      return;
+    }
+    
+    try {
+      // Get the most recent session
+      const { data: sessionData, error: sessionError } = await supabase
+        .from('chat_sessions')
+        .select('id')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      
+      if (sessionError) throw sessionError;
+      
+      if (sessionData) {
+        setSessionId(sessionData.id);
+        
+        // Load messages from this session
+        const { data: messagesData, error: messagesError } = await supabase
+          .from('chat_messages')
+          .select('*')
+          .eq('session_id', sessionData.id)
+          .order('timestamp', { ascending: true });
+        
+        if (messagesError) throw messagesError;
+        
+        if (messagesData && messagesData.length > 0) {
+          const loadedMessages: Message[] = messagesData.map(msg => ({
+            id: msg.id,
+            role: msg.role as 'user' | 'assistant',
+            content: msg.content,
+            timestamp: new Date(msg.timestamp),
+            session_id: msg.session_id,
+            user_id: msg.user_id
+          }));
+          
+          setMessages(loadedMessages);
+        }
+      }
+    } catch (error) {
+      console.error('Error loading chat history:', error);
+      // Don't show error to user - start fresh chat if loading fails
+    } finally {
+      setIsLoadingHistory(false);
+    }
+  };
+
+  // Function to clear chat history
+  const clearChatHistory = async (): Promise<void> => {
+    if (!userId || !sessionId) return;
+    
+    try {
+      // Delete all messages from current session
+      const { error } = await supabase
+        .from('chat_messages')
+        .delete()
+        .eq('session_id', sessionId);
+      
+      if (error) throw error;
+      
+      // Clear local messages
+      setMessages([]);
+      
+      toast.success('Histórico de chat limpo com sucesso!');
+    } catch (error) {
+      const errorInfo = getErrorMessage(error, 'database', 'delete');
+      toast.error(errorInfo.title, {
+        description: errorInfo.message
+      });
+    }
+  };
+
   return (
     <div className="min-h-screen bg-muted/30">
       {/* Header com Logo */}
@@ -142,7 +323,7 @@ export default function StudyRoom() {
           <div className="flex items-center justify-between">
             <div 
               className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
-              onClick={() => navigate("/")}
+              onClick={() => navigate(homeRoute)}
             >
               <Car className="w-6 h-6 sm:w-8 sm:h-8 text-primary" />
               <span className="text-lg sm:text-xl font-black text-foreground">Vrumi</span>
@@ -179,16 +360,40 @@ export default function StudyRoom() {
             "flex flex-col bg-background",
             isMobile ? "w-full flex-1" : "w-1/2"
           )}>
-            {/* Ações Rápidas - Acima da área de mensagens */}
-            <QuickActions 
-              onQuickAction={handleQuickAction} 
-              className="border-b border-border"
-            />
+            {/* Header do Chat com Ações Rápidas e Botão Limpar */}
+            <div className="border-b border-border">
+              <div className="flex items-center justify-between p-3 sm:p-4">
+                <h3 className="text-sm font-semibold text-muted-foreground">Chat com IA</h3>
+                {messages.length > 0 && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={clearChatHistory}
+                    className="h-8 px-2 text-muted-foreground hover:text-foreground"
+                    title="Limpar histórico do chat"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
+              {/* Ações Rápidas */}
+              <QuickActions 
+                onQuickAction={handleQuickAction} 
+                className="border-t border-border"
+              />
+            </div>
             
             {/* Área de mensagens */}
             <ScrollArea className="flex-1 p-3 sm:p-4 study-room-scrollbar">
               <div className="space-y-3 sm:space-y-4">
-                {messages.length === 0 ? (
+                {isLoadingHistory ? (
+                  <div className="flex items-center justify-center h-full text-muted-foreground">
+                    <div className="text-center">
+                      <Loader2 className="h-6 w-6 animate-spin mx-auto mb-2" />
+                      <p className="text-sm">Carregando histórico...</p>
+                    </div>
+                  </div>
+                ) : messages.length === 0 ? (
                   <div className="flex items-center justify-center h-full text-muted-foreground">
                     <p className="text-sm sm:text-base">Faça uma pergunta para começar</p>
                   </div>
@@ -252,6 +457,9 @@ export default function StudyRoom() {
           </div>
         </div>
       </div>
+      
+      {/* Tooltip de seleção de texto */}
+      <TextSelectionTooltip onExplain={handleTextExplanation} />
     </div>
   );
 }

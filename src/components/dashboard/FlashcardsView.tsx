@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react"
 import { BookOpen, ArrowRight, ArrowLeft, RotateCcw, CheckCircle, XCircle } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
-import { supabase } from "@/integrations/supabase/client"
+import { supabase, isSupabaseConfigured } from "@/integrations/supabase/client"
 import { useToast } from "@/hooks/use-toast"
 import { ImageWithFallback } from "@/components/ImageWithFallback"
 
@@ -44,6 +44,10 @@ export const FlashcardsView = () => {
   }
 
   const fetchFlashcards = async () => {
+    if (!isSupabaseConfigured || !navigator.onLine) {
+      setLoading(false)
+      return
+    }
     try {
       const { data, error } = await supabase
         .from("flashcards")

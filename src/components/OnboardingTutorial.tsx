@@ -59,9 +59,10 @@ interface OnboardingTutorialProps {
   isOpen: boolean;
   onClose: () => void;
   onComplete?: () => void;
+  userId?: string;
 }
 
-export function OnboardingTutorial({ isOpen, onClose, onComplete }: OnboardingTutorialProps) {
+export function OnboardingTutorial({ isOpen, onClose, onComplete, userId }: OnboardingTutorialProps) {
   const [currentStep, setCurrentStep] = useState(0);
   const [highlightedElement, setHighlightedElement] = useState<HTMLElement | null>(null);
 
@@ -114,12 +115,20 @@ export function OnboardingTutorial({ isOpen, onClose, onComplete }: OnboardingTu
   };
 
   const handleComplete = () => {
+    // Save that user has seen the onboarding
+    if (userId) {
+      localStorage.setItem(`onboarding_seen_${userId}`, 'true');
+    }
     onComplete?.();
     onClose();
     setCurrentStep(0);
   };
 
   const handleSkip = () => {
+    // Save that user has seen the onboarding (even if skipped)
+    if (userId) {
+      localStorage.setItem(`onboarding_seen_${userId}`, 'true');
+    }
     onClose();
     setCurrentStep(0);
   };

@@ -1,11 +1,14 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase, isSupabaseConfigured } from "@/integrations/supabase/client";
 import { Car } from "lucide-react";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 import { DashboardWithSidebar } from "@/components/ui/dashboard-with-collapsible-sidebar";
 import { DashboardSkeleton } from "@/components/ui/skeleton-loaders";
 import { OnboardingTutorial } from "@/components/OnboardingTutorial";
+import { useToast } from "@/hooks/use-toast";
+import { getErrorMessage } from "@/utils/errorMessages";
+import { notificationScheduler } from "@/services/NotificationSchedulerService";
 
 interface Profile {
   full_name: string | null;
@@ -21,24 +24,38 @@ const Dashboard = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   useEffect(() => {
     checkUser();
+    
+    // Iniciar o agendador de notificações
+    notificationScheduler.start();
     
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         if (event === "SIGNED_OUT" || !session) {
           navigate("/auth");
+          // Parar o agendador ao fazer logout
+          notificationScheduler.stop();
         } else {
           setUser(session.user);
         }
       }
     );
 
-    return () => subscription.unsubscribe();
+    return () => {
+      subscription.unsubscribe();
+      // Parar o agendador ao desmontar o componente
+      notificationScheduler.stop();
+    };
   }, [navigate]);
 
   const checkUser = async () => {
+    if (!isSupabaseConfigured || !navigator.onLine) {
+      setIsLoading(false);
+      return;
+    }
     try {
       const { data: { session } } = await supabase.auth.getSession();
       
@@ -50,6 +67,15 @@ const Dashboard = () => {
       setUser(session.user);
       await fetchProfile(session.user.id);
     } catch (error) {
+      const errorInfo = getErrorMessage(error, 'auth', 'session_check');
+      
+      toast({
+        title: errorInfo.title,
+        description: errorInfo.message,
+        variant: "destructive",
+        duration: 5000,
+      });
+      
       console.error("Error checking user:", error);
       navigate("/auth");
     } finally {
@@ -58,6 +84,7 @@ const Dashboard = () => {
   };
 
   const fetchProfile = async (userId: string) => {
+    if (!isSupabaseConfigured || !navigator.onLine) return;
     try {
       const { data, error } = await supabase
         .from("profiles")
@@ -68,11 +95,23 @@ const Dashboard = () => {
       if (error) throw error;
       setProfile(data);
       
-      // Show onboarding for new users (no study progress)
-      if (data && (!data.study_progress || data.study_progress === 0)) {
+      // Check if user has already seen onboarding
+      const hasSeenOnboarding = localStorage.getItem(`onboarding_seen_${userId}`);
+      
+      // Show onboarding for new users (no study progress) who haven't seen it yet
+      if (data && (!data.study_progress || data.study_progress === 0) && !hasSeenOnboarding) {
         setTimeout(() => setShowOnboarding(true), 1000); // Delay to show after page load
       }
     } catch (error) {
+      const errorInfo = getErrorMessage(error, 'database', 'profile_fetch');
+      
+      toast({
+        title: errorInfo.title,
+        description: errorInfo.message,
+        variant: "destructive",
+        duration: 5000,
+      });
+      
       console.error("Error fetching profile:", error);
     }
   };
@@ -88,6 +127,7 @@ const Dashboard = () => {
         isOpen={showOnboarding}
         onClose={() => setShowOnboarding(false)}
         onComplete={() => console.log("Onboarding completed")}
+        userId={user?.id}
       />
     </>
   );

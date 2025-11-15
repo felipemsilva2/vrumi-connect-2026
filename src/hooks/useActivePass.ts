@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase, isSupabaseConfigured } from "@/integrations/supabase/client";
 
 interface ActivePass {
   id: string;
@@ -14,7 +14,7 @@ export const useActivePass = (userId: string | undefined) => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    if (!userId) {
+    if (!userId || !isSupabaseConfigured || !navigator.onLine) {
       setIsLoading(false);
       return;
     }
@@ -44,7 +44,7 @@ export const useActivePass = (userId: string | undefined) => {
   }, [userId]);
 
   const checkActivePass = async () => {
-    if (!userId) return;
+    if (!userId || !isSupabaseConfigured || !navigator.onLine) return;
 
     try {
       const { data, error } = await supabase

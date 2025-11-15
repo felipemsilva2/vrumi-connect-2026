@@ -18,14 +18,21 @@ import {
   Award,
   Calendar,
   Shield,
-  Info, // <--- Corrigido: garantir importação do Info
+  TrafficCone,
+  PieChart,
+  Bell,
+  Settings,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useContextualNavigation } from "@/utils/navigation";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Car } from "lucide-react";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
+import { useActivePass } from "@/hooks/useActivePass";
 import { SmartBreadcrumb } from "@/components/SmartBreadcrumb";
+import NotificationSystem from "@/components/notifications/NotificationSystem";
+import NotificationSettings from "@/components/notifications/NotificationSettings";
 
 interface DashboardProps {
   user: any;
@@ -69,8 +76,10 @@ interface SidebarProps {
 const Sidebar = ({ user, selected, setSelected }: SidebarProps) => {
   const [open, setOpen] = useState(true);
   const navigate = useNavigate();
+  const homeRoute = useContextualNavigation();
   const { toast } = useToast();
   const { isAdmin, isLoading } = useIsAdmin(user?.id);
+  const { hasActivePass, activePass, isLoading: isLoadingPass } = useActivePass(user?.id);
   
   console.log('[Sidebar] Rendering with:', {
     userId: user?.id,
@@ -88,7 +97,7 @@ const Sidebar = ({ user, selected, setSelected }: SidebarProps) => {
         title: "Logout realizado",
         description: "Até logo!",
       });
-      navigate("/");
+      navigate(homeRoute);
     } catch (error: any) {
       toast({
         title: "Erro ao fazer logout",
@@ -108,7 +117,7 @@ const Sidebar = ({ user, selected, setSelected }: SidebarProps) => {
         open ? 'w-64' : 'w-16'
       } border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-2 shadow-sm`}
     >
-      <TitleSection open={open} user={user} />
+      <TitleSection open={open} user={user} hasActivePass={hasActivePass} activePass={activePass} />
 
       <div className="space-y-1 mb-8">
         <Option
@@ -148,6 +157,7 @@ const Sidebar = ({ user, selected, setSelected }: SidebarProps) => {
           isExternalLink
           externalPath="/study-room"
         />
+        
         {/* TEMPORARIAMENTE OCULTO - Lançamento futuro
         <Option
           Icon={FileText}
@@ -165,6 +175,14 @@ const Sidebar = ({ user, selected, setSelected }: SidebarProps) => {
           setSelected={setSelected}
           open={open}
           tooltip="Veja seu desempenho"
+        />
+        <Option
+          Icon={Bell}
+          title="Notificações"
+          selected={selected}
+          setSelected={setSelected}
+          open={open}
+          tooltip="Configure suas notificações de estudo"
         />
         <Option
           Icon={Trophy}
@@ -268,7 +286,17 @@ const Option = ({ Icon, title, selected, setSelected, open, notifs, tooltip, isE
   );
 };
 
-const TitleSection = ({ open, user }: any) => {
+const TitleSection = ({ open, user, hasActivePass, activePass }: any) => {
+  const getPlanDisplay = () => {
+    if (hasActivePass && activePass) {
+      const daysRemaining = Math.ceil((new Date(activePass.expires_at).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
+      const planType = activePass.pass_type === 'family_90_days' ? 'Família' : 
+                      activePass.pass_type === '90_days' ? 'Premium 90 dias' : 'Premium 30 dias';
+      return `${planType} (${daysRemaining}d restantes)`;
+    }
+    return 'Plano Gratuito';
+  };
+
   return (
     <div className="mb-6 border-b border-gray-200 dark:border-gray-800 pb-4">
       <div className="flex cursor-pointer items-center justify-between rounded-md p-2 transition-colors hover:bg-gray-50 dark:hover:bg-gray-800">
@@ -281,8 +309,8 @@ const TitleSection = ({ open, user }: any) => {
                   <span className="block text-sm font-semibold text-gray-900 dark:text-gray-100">
                     {user?.email?.split('@')[0] || 'Estudante'}
                   </span>
-                  <span className="block text-xs text-gray-500 dark:text-gray-400">
-                    Plano Gratuito
+                  <span className={`block text-xs ${hasActivePass ? 'text-green-600 dark:text-green-400' : 'text-gray-500 dark:text-gray-400'}`}>
+                    {getPlanDisplay()}
                   </span>
                 </div>
               </div>
@@ -343,10 +371,43 @@ import { ConquistasView } from "@/components/dashboard/ConquistasView";
 import { PerfilView } from "@/components/dashboard/PerfilView";
 
 const MainContent = ({ isDark, setIsDark, user, profile, selected }: any) => {
-  const [hideOnboarding, setHideOnboarding] = useState(false);
   const successRate = profile?.total_questions_answered 
     ? Math.round((profile.correct_answers / profile.total_questions_answered) * 100)
     : 0;
+
+  // Helper function to format user name
+  const formatUserName = (fullName: string | null, email: string | null): string => {
+    if (fullName) {
+      // Convert to title case and take only first name if name is too long
+      const names = fullName.toLowerCase().split(' ');
+      const firstName = names[0].charAt(0).toUpperCase() + names[0].slice(1);
+      
+      // If name is too long (>15 chars) or has many parts, use just first name
+      if (fullName.length > 15 || names.length > 3) {
+        return firstName;
+      }
+      
+      // Otherwise, return first name or first + last if reasonable
+      if (names.length === 1) {
+        return firstName;
+      } else {
+        const lastName = names[names.length - 1].charAt(0).toUpperCase() + names[names.length - 1].slice(1);
+        return `${firstName} ${lastName}`;
+      }
+    }
+    
+    // Fallback to email username
+    if (email) {
+      const username = email.split('@')[0];
+      return username.length > 12 ? username.substring(0, 12) + '...' : username;
+    }
+    
+    return 'Estudante';
+  };
+
+  const userName = formatUserName(profile?.full_name, user?.email);
+  const greetingTime = new Date().getHours();
+  const greeting = greetingTime < 12 ? 'Bom dia' : greetingTime < 18 ? 'Boa tarde' : 'Boa noite';
 
   const renderContent = () => {
     switch (selected) {
@@ -358,6 +419,8 @@ const MainContent = ({ isDark, setIsDark, user, profile, selected }: any) => {
         return <MateriaisView />
       case "Estatísticas":
         return <EstatisticasView />
+      case "Notificações":
+        return <NotificationSettings />
       case "Conquistas":
         return <ConquistasView />
       case "Meu Perfil":
@@ -377,24 +440,9 @@ const MainContent = ({ isDark, setIsDark, user, profile, selected }: any) => {
             <p className="text-gray-600 dark:text-gray-400 mt-1">
               Olá, {profile?.full_name || user?.email?.split('@')[0]}! Continue estudando para sua CNH
             </p>
-            {!hideOnboarding && (
-              <div className="mt-2 p-3 rounded-lg bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-200 text-sm max-w-lg flex items-start gap-2 relative">
-                <Info className="h-4 w-4 text-primary mt-0.5" />
-                <span>
-                  Bem-vindo ao RoadWiz! Aqui você acompanha seu progresso, atividades recentes e próximos objetivos. Use o menu lateral para navegar entre flashcards, simulados e estatísticas. Dúvidas? Clique nos ícones para saber mais.
-                </span>
-                <button
-                  className="absolute top-2 right-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-                  aria-label="Fechar dica de onboarding"
-                  title="Fechar"
-                  onClick={() => setHideOnboarding(true)}
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-                </button>
-              </div>
-            )}
           </div>
           <div className="flex items-center gap-4">
+            <NotificationSystem />
             <button
               onClick={() => setIsDark(!isDark)}
               className="flex h-10 w-10 items-center justify-center rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"

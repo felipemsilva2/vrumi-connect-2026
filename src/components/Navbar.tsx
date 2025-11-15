@@ -3,9 +3,11 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X, Car } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useContextualNavigation } from "@/utils/navigation";
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const navigate = useNavigate();
+  const homeRoute = useContextualNavigation();
   const toggleMenu = () => setIsOpen(!isOpen);
   const scrollToSection = (id: string) => {
     const element = document.getElementById(id);

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react"
-import { Clock, Play, History, Trophy, CheckCircle, XCircle, ArrowLeft, ArrowRight, Lock, Calendar } from "lucide-react"
+import { Clock, Play, History, Trophy, CheckCircle, XCircle, ArrowLeft, ArrowRight, Lock, Calendar, TrafficCone, FileText, Brain, Award, Users } from "lucide-react"
 import { supabase } from "@/integrations/supabase/client"
 import { useToast } from "@/hooks/use-toast"
 import { Button } from "@/components/ui/button"
@@ -8,6 +8,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import { ImageWithFallback } from "@/components/ImageWithFallback"
 import { useActivePass } from "@/hooks/useActivePass"
 import { useNavigate } from "react-router-dom"
+ 
 
 interface QuizQuestion {
   id: string
@@ -664,6 +665,20 @@ export const SimuladosView = () => {
     )
   }
 
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
   // View: Locked (No Active Pass)
   if (!isLoading && !hasActivePass) {
     return (
@@ -818,6 +833,12 @@ export const SimuladosView = () => {
             </div>
           </CardContent>
         </Card>
+      </div>
+
+      
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        
       </div>
 
       <Card className="shadow-lg border-2">

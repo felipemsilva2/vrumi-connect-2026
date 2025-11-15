@@ -71,3 +71,6 @@ Yes, you can!
 To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
 
 Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+## Removed Features
+
+Traffic signs features (creation, editing, viewing, deletion, and related integrations) have been removed. Core functionality like dashboard, flashcards, simulados, notifications, and admin remain unaffected.

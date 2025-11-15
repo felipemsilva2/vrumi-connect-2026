@@ -100,7 +100,7 @@ const errorMessages: Record<string, ErrorMessage> = {
   }
 };
 
-export function getErrorMessage(error: any, context?: ErrorContext): ErrorMessage {
+export function getErrorMessage(error: unknown, context?: ErrorContext): ErrorMessage {
   // Extract error code from different error formats
   let errorCode = 'generic/unknown';
   

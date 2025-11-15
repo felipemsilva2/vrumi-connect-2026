@@ -3,7 +3,7 @@ import { AdminLayout } from "@/components/admin/AdminLayout";
 import { StatsCard } from "@/components/admin/StatsCard";
 import { Users, CreditCard, DollarSign, TrendingUp, FileText, MessageSquare } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase, isSupabaseConfigured } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 interface Stats {
@@ -27,10 +27,17 @@ const AdminDashboard = () => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    if (!isSupabaseConfigured || !navigator.onLine) {
+      setIsLoading(false);
+      return;
+    }
     fetchStats();
   }, []);
 
   const fetchStats = async () => {
+    if (!isSupabaseConfigured || !navigator.onLine) {
+      return;
+    }
     try {
       // Total de usuários
       const { count: usersCount } = await supabase

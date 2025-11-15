@@ -12,6 +12,8 @@ const routeLabels: Record<string, string> = {
   "/auth": "Autenticação",
   "/dashboard": "Dashboard",
   "/study-room": "Sala de Estudo",
+  "/traffic-signs": "Placas de Trânsito",
+  "/traffic-signs-stats": "Estatísticas de Placas",
   "/checkout": "Checkout",
   "/checkout/success": "Sucesso",
   "/checkout/cancel": "Cancelado",
@@ -65,23 +67,30 @@ export function useBreadcrumbs(): BreadcrumbItem[] {
         // Handle admin routes
         if (currentPath.startsWith('/admin')) {
           const adminRoute = currentPath as keyof typeof routeLabels;
-          breadcrumbs.push({
-            label: routeLabels[adminRoute] || capitalizeWords(name),
-            href: isLast ? undefined : currentPath,
-            isCurrent: isLast
-          });
+          const label = routeLabels[adminRoute] || capitalizeWords(name);
+          if (label && label !== 'undefined') {
+            breadcrumbs.push({
+              label: label,
+              href: isLast ? undefined : currentPath,
+              isCurrent: isLast
+            });
+          }
         } else {
           // Handle regular routes
           const route = currentPath as keyof typeof routeLabels;
-          breadcrumbs.push({
-            label: routeLabels[route] || capitalizeWords(name),
-            href: isLast ? undefined : currentPath,
-            isCurrent: isLast
-          });
+          const label = routeLabels[route] || capitalizeWords(name);
+          if (label && label !== 'undefined') {
+            breadcrumbs.push({
+              label: label,
+              href: isLast ? undefined : currentPath,
+              isCurrent: isLast
+            });
+          }
         }
       }
     });
 
-    return breadcrumbs;
+    // Filter out any breadcrumbs with undefined or empty labels
+    return breadcrumbs.filter(crumb => crumb.label && crumb.label !== 'undefined' && crumb.label.trim() !== '');
   }, [location.pathname, params]);
 }

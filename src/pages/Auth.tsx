@@ -7,6 +7,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useFormValidation } from "@/hooks/useValidation";
+import { getErrorMessage } from "@/utils/errorMessages";
 import { Car, Mail, Eye, EyeOff, AlertCircle, CheckCircle2 } from "lucide-react";
 
 const Auth = () => {
@@ -81,17 +82,13 @@ const Auth = () => {
         });
 
         if (error) {
-          let errorMessage = "Erro ao fazer login";
-          if (error.message.includes("Invalid login credentials")) {
-            errorMessage = "Email ou senha incorretos";
-          } else if (error.message.includes("Email not confirmed")) {
-            errorMessage = "Email não confirmado. Verifique sua caixa de entrada";
-          }
+          const errorInfo = getErrorMessage(error, 'auth', 'login');
           
           toast({
-            title: "Erro no login",
-            description: errorMessage,
+            title: errorInfo.title,
+            description: errorInfo.message,
             variant: "destructive",
+            duration: 5000,
           });
           return;
         }
@@ -113,15 +110,13 @@ const Auth = () => {
         });
 
         if (error) {
-          let errorMessage = "Erro ao criar conta";
-          if (error.message.includes("User already registered")) {
-            errorMessage = "Este email já está cadastrado";
-          }
+          const errorInfo = getErrorMessage(error, 'auth', 'register');
           
           toast({
-            title: "Erro ao criar conta",
-            description: errorMessage,
+            title: errorInfo.title,
+            description: errorInfo.message,
             variant: "destructive",
+            duration: 5000,
           });
           return;
         }
@@ -132,11 +127,14 @@ const Auth = () => {
         });
         resetForm();
       }
-    } catch (error: any) {
+    } catch (error) {
+      const errorInfo = getErrorMessage(error, 'network', 'request');
+      
       toast({
-        title: "Erro",
-        description: "Ocorreu um erro inesperado. Tente novamente.",
+        title: errorInfo.title,
+        description: errorInfo.message,
         variant: "destructive",
+        duration: 5000,
       });
     } finally {
       setLoading(false);
@@ -153,11 +151,14 @@ const Auth = () => {
       });
 
       if (error) throw error;
-    } catch (error: any) {
+    } catch (error) {
+      const errorInfo = getErrorMessage(error, 'auth', 'oauth');
+      
       toast({
-        title: "Erro no login com Google",
-        description: "Não foi possível conectar com o Google. Tente novamente.",
+        title: errorInfo.title,
+        description: errorInfo.message,
         variant: "destructive",
+        duration: 5000,
       });
     }
   };
@@ -194,11 +195,14 @@ const Auth = () => {
         description: "Verifique sua caixa de entrada para redefinir sua senha.",
       });
       setShowResetPassword(false);
-    } catch (error: any) {
+    } catch (error) {
+      const errorInfo = getErrorMessage(error, 'auth', 'password_reset');
+      
       toast({
-        title: "Erro",
-        description: "Não foi possível enviar o email. Verifique se o email está correto.",
+        title: errorInfo.title,
+        description: errorInfo.message,
         variant: "destructive",
+        duration: 5000,
       });
     } finally {
       setLoading(false);

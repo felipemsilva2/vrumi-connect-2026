@@ -1,4 +1,5 @@
 import { User, Mail, Calendar, Trophy, BookOpen, Target } from "lucide-react"
+import { useActivePass } from "@/hooks/useActivePass"
 
 interface PerfilViewProps {
   user: any
@@ -6,9 +7,21 @@ interface PerfilViewProps {
 }
 
 export const PerfilView = ({ user, profile }: PerfilViewProps) => {
+  const { hasActivePass, activePass } = useActivePass(user?.id)
+  
   const successRate = profile?.total_questions_answered 
     ? Math.round((profile.correct_answers / profile.total_questions_answered) * 100)
     : 0
+
+  const getPlanDisplay = () => {
+    if (hasActivePass && activePass) {
+      const daysRemaining = Math.ceil((new Date(activePass.expires_at).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))
+      const planType = activePass.pass_type === 'family_90_days' ? 'Família' : 
+                      activePass.pass_type === '90_days' ? 'Premium 90 dias' : 'Premium 30 dias'
+      return `${planType} (${daysRemaining}d restantes)`
+    }
+    return 'Plano Gratuito'
+  }
 
   return (
     <div className="space-y-6">
