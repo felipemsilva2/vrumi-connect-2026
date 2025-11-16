@@ -3,7 +3,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { Trophy, Clock, Play, RotateCcw, Target, Zap, Star } from 'lucide-react';
+import { Trophy, Clock, Play, RotateCcw, Target, Zap, Star, X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
@@ -261,10 +261,9 @@ export default function TimedChallenge({ signs, category, onClose }: TimedChalle
           .rpc('save_challenge_result', {
             p_user_id: user.id,
             p_category: category,
-            p_score: score,
-            p_correct_answers: correctAnswers,
             p_total_questions: questionIndex,
-            p_time_remaining: timeRemaining
+            p_correct_answers: correctAnswers,
+            p_time_seconds: GAME_DURATION - timeRemaining
           });
 
         if (error) {
@@ -276,8 +275,8 @@ export default function TimedChallenge({ signs, category, onClose }: TimedChalle
             totalQuestions: questionIndex,
             accuracy,
             timeRemaining,
-            isPersonalBest: resultData?.is_personal_best || false,
-            rankingPosition: resultData?.ranking_position || 0
+            isPersonalBest: (resultData as any)?.is_personal_best || false,
+            rankingPosition: (resultData as any)?.ranking_position || 0
           });
         }
       }

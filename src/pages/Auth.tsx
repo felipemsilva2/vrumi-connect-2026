@@ -82,7 +82,7 @@ const Auth = () => {
         });
 
         if (error) {
-          const errorInfo = getErrorMessage(error, 'auth', 'login');
+          const errorInfo = getErrorMessage(error);
           
           toast({
             title: errorInfo.title,
