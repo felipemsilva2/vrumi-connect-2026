@@ -144,11 +144,11 @@ export default function FlashcardMode({ signs, initialIndex = 0, onClose, catego
         return;
       }
 
-      const { data, error } = await supabase
+      const { error } = await supabase
         .rpc('update_user_sign_progress', {
           p_user_id: user.id,
           p_sign_id: currentSign.id,
-          p_difficulty_response: response
+          p_correct: response === 'easy'
         });
 
       if (error) {
