@@ -21,6 +21,7 @@ import CheckoutCancel from "@/pages/CheckoutCancel";
 import NotFound from "@/pages/NotFound";
 import { ProtectedAdminRoute } from "@/components/admin/ProtectedAdminRoute";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import TrafficSignsLibrary from "@/pages/TrafficSignsLibrary";
 
 const queryClient = new QueryClient();
 
@@ -36,6 +37,7 @@ const App = () => (
           <Route path="/auth" element={<Auth />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/study-room" element={<StudyRoom />} />
+          <Route path="/traffic-signs-library" element={<TrafficSignsLibrary />} />
 
           <Route path="/checkout" element={<Checkout />} />
           <Route path="/checkout/success" element={<CheckoutSuccess />} />

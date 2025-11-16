@@ -22,6 +22,7 @@ import {
   PieChart,
   Bell,
   Settings,
+  TrafficCone as TrafficSign,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useContextualNavigation } from "@/utils/navigation";
@@ -183,6 +184,16 @@ const Sidebar = ({ user, selected, setSelected }: SidebarProps) => {
           setSelected={setSelected}
           open={open}
           tooltip="Configure suas notificações de estudo"
+        />
+        <Option
+          Icon={TrafficSign}
+          title="Biblioteca de Placas"
+          selected={selected}
+          setSelected={setSelected}
+          open={open}
+          tooltip="Consulte a biblioteca de placas de trânsito"
+          isExternalLink
+          externalPath="/traffic-signs-library"
         />
         <Option
           Icon={Trophy}
