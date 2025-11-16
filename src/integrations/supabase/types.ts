@@ -53,6 +53,47 @@ export type Database = {
         }
         Relationships: []
       }
+      challenge_results: {
+        Row: {
+          category: string | null
+          correct_answers: number
+          created_at: string | null
+          id: string
+          score_percentage: number
+          time_seconds: number
+          total_questions: number
+          user_id: string
+        }
+        Insert: {
+          category?: string | null
+          correct_answers: number
+          created_at?: string | null
+          id?: string
+          score_percentage: number
+          time_seconds: number
+          total_questions: number
+          user_id: string
+        }
+        Update: {
+          category?: string | null
+          correct_answers?: number
+          created_at?: string | null
+          id?: string
+          score_percentage?: number
+          time_seconds?: number
+          total_questions?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "challenge_results_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       flashcards: {
         Row: {
           answer: string
@@ -60,10 +101,16 @@ export type Database = {
           chapter_id: string
           created_at: string | null
           difficulty: string | null
+          due_date: string | null
+          ease_factor: number | null
           id: string
           image_url: string | null
+          interval_days: number | null
+          lapses: number | null
+          last_reviewed: string | null
           lesson_id: string | null
           question: string
+          repetitions: number | null
           updated_at: string | null
         }
         Insert: {
@@ -72,10 +119,16 @@ export type Database = {
           chapter_id: string
           created_at?: string | null
           difficulty?: string | null
+          due_date?: string | null
+          ease_factor?: number | null
           id?: string
           image_url?: string | null
+          interval_days?: number | null
+          lapses?: number | null
+          last_reviewed?: string | null
           lesson_id?: string | null
           question: string
+          repetitions?: number | null
           updated_at?: string | null
         }
         Update: {
@@ -84,10 +137,16 @@ export type Database = {
           chapter_id?: string
           created_at?: string | null
           difficulty?: string | null
+          due_date?: string | null
+          ease_factor?: number | null
           id?: string
           image_url?: string | null
+          interval_days?: number | null
+          lapses?: number | null
+          last_reviewed?: string | null
           lesson_id?: string | null
           question?: string
+          repetitions?: number | null
           updated_at?: string | null
         }
         Relationships: [
@@ -144,6 +203,50 @@ export type Database = {
             columns: ["lesson_id"]
             isOneToOne: false
             referencedRelation: "study_lessons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notifications: {
+        Row: {
+          created_at: string | null
+          data: Json | null
+          id: string
+          message: string
+          read: boolean | null
+          read_at: string | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          data?: Json | null
+          id?: string
+          message: string
+          read?: boolean | null
+          read_at?: string | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          data?: Json | null
+          id?: string
+          message?: string
+          read?: boolean | null
+          read_at?: string | null
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -358,6 +461,48 @@ export type Database = {
         }
         Relationships: []
       }
+      traffic_signs: {
+        Row: {
+          category: string
+          code: string
+          created_at: string | null
+          description: string | null
+          id: string
+          image_url: string
+          is_active: boolean | null
+          meaning: string | null
+          name: string
+          tags: string[] | null
+          updated_at: string | null
+        }
+        Insert: {
+          category: string
+          code: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          image_url: string
+          is_active?: boolean | null
+          meaning?: string | null
+          name: string
+          tags?: string[] | null
+          updated_at?: string | null
+        }
+        Update: {
+          category?: string
+          code?: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          image_url?: string
+          is_active?: boolean | null
+          meaning?: string | null
+          name?: string
+          tags?: string[] | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       user_activities: {
         Row: {
           activity_type: string
@@ -471,6 +616,38 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      user_preferences: {
+        Row: {
+          created_at: string | null
+          id: string
+          notification_settings: Json | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          notification_settings?: Json | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          notification_settings?: Json | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_preferences_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_progress: {
         Row: {
@@ -640,11 +817,74 @@ export type Database = {
         }
         Relationships: []
       }
+      user_sign_progress: {
+        Row: {
+          confidence_level: number | null
+          created_at: string | null
+          id: string
+          last_reviewed: string | null
+          sign_id: string
+          times_correct: number | null
+          times_incorrect: number | null
+          times_reviewed: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          confidence_level?: number | null
+          created_at?: string | null
+          id?: string
+          last_reviewed?: string | null
+          sign_id: string
+          times_correct?: number | null
+          times_incorrect?: number | null
+          times_reviewed?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          confidence_level?: number | null
+          created_at?: string | null
+          id?: string
+          last_reviewed?: string | null
+          sign_id?: string
+          times_correct?: number | null
+          times_incorrect?: number | null
+          times_reviewed?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_sign_progress_sign_id_fkey"
+            columns: ["sign_id"]
+            isOneToOne: false
+            referencedRelation: "traffic_signs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_sign_progress_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      get_category_progress: {
+        Args: { p_category: string; p_user_id: string }
+        Returns: {
+          average_confidence: number
+          mastered_signs: number
+          reviewed_signs: number
+          total_signs: number
+        }[]
+      }
       has_active_pass: { Args: { user_id: string }; Returns: boolean }
       is_admin: { Args: { user_id?: string }; Returns: boolean }
       log_admin_action: {
@@ -659,6 +899,20 @@ export type Database = {
           p_user_id: string
         }
         Returns: string
+      }
+      save_challenge_result: {
+        Args: {
+          p_category: string
+          p_correct_answers: number
+          p_time_seconds: number
+          p_total_questions: number
+          p_user_id: string
+        }
+        Returns: Json
+      }
+      update_user_sign_progress: {
+        Args: { p_correct: boolean; p_sign_id: string; p_user_id: string }
+        Returns: undefined
       }
     }
     Enums: {
