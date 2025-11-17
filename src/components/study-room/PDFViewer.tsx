@@ -66,7 +66,7 @@ export const PDFViewer = forwardRef<PDFViewerHandle, PDFViewerProps>(({ classNam
       )}>
         <div className="flex items-center gap-1 sm:gap-2">
           <label htmlFor="pdf-upload">
-            <Button variant="outline" size={isMobile ? "sm" : "sm"} asChild>
+            <Button variant="outline" size={isMobile ? "sm" : "sm"} className={isMobile ? "h-12" : ""} asChild>
               <span className="cursor-pointer">
                 <Upload className="h-3 w-3 sm:h-4 sm:w-4" />
                 {!isMobile && <span className="ml-2">Upload</span>}
@@ -91,6 +91,7 @@ export const PDFViewer = forwardRef<PDFViewerHandle, PDFViewerProps>(({ classNam
                 size="sm"
                 onClick={handlePreviousPage}
                 disabled={pageNumber <= 1}
+                className={isMobile ? "h-12 w-12" : ""}
               >
                 <ChevronLeft className="h-3 w-3 sm:h-4 sm:w-4" />
               </Button>
@@ -102,6 +103,7 @@ export const PDFViewer = forwardRef<PDFViewerHandle, PDFViewerProps>(({ classNam
                 size="sm"
                 onClick={handleNextPage}
                 disabled={pageNumber >= numPages}
+                className={isMobile ? "h-12 w-12" : ""}
               >
                 <ChevronRight className="h-3 w-3 sm:h-4 sm:w-4" />
               </Button>
@@ -109,13 +111,13 @@ export const PDFViewer = forwardRef<PDFViewerHandle, PDFViewerProps>(({ classNam
 
             {/* Controles de zoom */}
             <div className="flex items-center gap-1 sm:gap-2">
-              <Button variant="outline" size="sm" onClick={handleZoomOut} disabled={scale <= 0.5}>
+              <Button variant="outline" size="sm" onClick={handleZoomOut} disabled={scale <= 0.5} className={isMobile ? "h-12 w-12" : ""}>
                 <ZoomOut className="h-3 w-3 sm:h-4 sm:w-4" />
               </Button>
               <span className="text-xs sm:text-sm font-medium min-w-[45px] sm:min-w-[60px] text-center">
                 {Math.round(scale * 100)}%
               </span>
-              <Button variant="outline" size="sm" onClick={handleZoomIn} disabled={scale >= 3.0}>
+              <Button variant="outline" size="sm" onClick={handleZoomIn} disabled={scale >= 3.0} className={isMobile ? "h-12 w-12" : ""}>
                 <ZoomIn className="h-3 w-3 sm:h-4 sm:w-4" />
               </Button>
             </div>

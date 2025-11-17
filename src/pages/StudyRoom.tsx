@@ -439,7 +439,7 @@ export default function StudyRoom() {
             </ScrollArea>
 
             {/* Barra de input fixada na parte inferior */}
-            <div className="border-t border-border p-3 sm:p-4 bg-background">
+            <div className="border-t border-border p-3 sm:p-4 bg-background pb-safe">
               <div className="flex gap-2">
                 <Input
                   value={inputValue}

@@ -37,14 +37,14 @@ export function QuickActions({ onQuickAction, className }: QuickActionsProps) {
 
   return (
     <div className={cn("p-4 bg-gradient-to-r from-gray-50 to-blue-50 dark:from-gray-800 dark:to-blue-900/20 border-b border-border", className)}>
-      <div className="flex gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         {actions.map((action, index) => (
           <Button
             key={index}
             onClick={() => onQuickAction(action.prompt)}
             variant="ghost"
             className={cn(
-              "flex-1 flex flex-col items-center gap-2 p-4 h-auto rounded-xl",
+              "flex flex-col items-center gap-2 p-4 h-auto rounded-xl",
               "border border-gray-200 dark:border-gray-700",
               "transition-all duration-200 hover:scale-105 hover:shadow-md",
               action.bgColor,

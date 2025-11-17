@@ -117,9 +117,9 @@ export function TextSelectionTooltip({ onExplain, className }: TextSelectionTool
         onClick={handleExplainClick}
         size="sm"
         variant="ghost"
-        className="h-8 px-3 text-xs font-medium hover:bg-accent hover:text-accent-foreground"
+        className="h-10 sm:h-8 px-3 text-xs font-medium hover:bg-accent hover:text-accent-foreground"
       >
-        <MessageCircle className="h-3 w-3 mr-1" />
+        <MessageCircle className="h-4 w-4 mr-1" />
         Explicar isso
       </Button>
       
