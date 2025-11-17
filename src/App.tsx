@@ -15,6 +15,7 @@ import AdminAuditLogs from "@/pages/admin/AdminAuditLogs";
 import AdminQuestions from "@/pages/AdminQuestions";
 import AdminFlashcards from "@/pages/AdminFlashcards";
 import AdminPopulate from "@/pages/AdminPopulate";
+import AdminTrafficSignsImport from "@/pages/admin/AdminTrafficSignsImport";
 import Checkout from "@/pages/Checkout";
 import CheckoutSuccess from "@/pages/CheckoutSuccess";
 import CheckoutCancel from "@/pages/CheckoutCancel";
@@ -81,6 +82,11 @@ const App = () => (
           <Route path="/admin/questions" element={
             <ProtectedAdminRoute>
               <AdminQuestions />
+            </ProtectedAdminRoute>
+          } />
+          <Route path="/admin/traffic-signs" element={
+            <ProtectedAdminRoute>
+              <AdminTrafficSignsImport />
             </ProtectedAdminRoute>
           } />
 
