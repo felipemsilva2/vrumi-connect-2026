@@ -11,6 +11,9 @@ const Hero = () => {
           src={heroBg} 
           alt="Driving preparation" 
           className="w-full h-full object-cover"
+          decoding="async"
+          fetchpriority="high"
+          sizes="100vw"
         />
         <div className="absolute inset-0 bg-gradient-to-br from-primary/90 via-primary/70 to-accent/80" />
       </div>
@@ -37,28 +40,28 @@ const Hero = () => {
 
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-4">
-            <Button variant="hero" size="lg" className="text-lg">
+            <Button variant="hero" size="lg" className="text-lg h-12">
               <Car className="w-5 h-5" />
               Começar Agora
             </Button>
-            <Button variant="outline" size="lg" className="text-lg bg-card/10 backdrop-blur-sm border-2 text-primary-foreground hover:bg-card/20">
+            <Button variant="outline" size="lg" className="text-lg h-12 bg-card/10 backdrop-blur-sm border-2 text-primary-foreground hover:bg-card/20">
               <BookOpen className="w-5 h-5" />
               Ver Conteúdo
             </Button>
           </div>
 
           {/* Stats */}
-          <div className="grid grid-cols-3 gap-8 pt-12 max-w-3xl mx-auto">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-6 sm:gap-8 pt-10 sm:pt-12 max-w-3xl mx-auto">
             {[
               { value: "10K+", label: "Alunos Aprovados" },
               { value: "95%", label: "Taxa de Aprovação" },
               { value: "500+", label: "Questões" },
             ].map((stat, index) => (
               <div key={index} className="text-center">
-                <div className="text-3xl md:text-4xl font-bold text-secondary mb-2">
+                <div className="text-2xl sm:text-3xl md:text-4xl font-bold text-secondary mb-2">
                   {stat.value}
                 </div>
-                <div className="text-sm md:text-base text-primary-foreground/80">
+                <div className="text-xs sm:text-sm md:text-base text-primary-foreground/80">
                   {stat.label}
                 </div>
               </div>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import {
   Home,
   BookOpen,
@@ -34,6 +34,8 @@ import { useActivePass } from "@/hooks/useActivePass";
 import { SmartBreadcrumb } from "@/components/SmartBreadcrumb";
 import NotificationSystem from "@/components/notifications/NotificationSystem";
 import NotificationSettings from "@/components/notifications/NotificationSettings";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface DashboardProps {
   user: any;
@@ -43,6 +45,8 @@ interface DashboardProps {
 export const DashboardWithSidebar = ({ user, profile }: DashboardProps) => {
   const [isDark, setIsDark] = useState(false);
   const [selected, setSelected] = useState("Dashboard");
+  const isMobile = useIsMobile();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     if (isDark) {
@@ -55,13 +59,24 @@ export const DashboardWithSidebar = ({ user, profile }: DashboardProps) => {
   return (
     <div className={`flex min-h-screen w-full ${isDark ? 'dark' : ''}`}>
       <div className="flex w-full bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100">
-        <Sidebar user={user} selected={selected} setSelected={setSelected} />
+        {!isMobile && (
+          <Sidebar user={user} selected={selected} setSelected={setSelected} />
+        )}
+        {isMobile && (
+          <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+            <SheetContent side="left" className="p-0 w-3/4 sm:max-w-sm bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100">
+              <Sidebar user={user} selected={selected} setSelected={(v: string) => { setSelected(v); setMobileMenuOpen(false); }} />
+            </SheetContent>
+          </Sheet>
+        )}
         <MainContent 
           isDark={isDark} 
           setIsDark={setIsDark} 
           user={user} 
           profile={profile}
           selected={selected}
+          isMobile={isMobile}
+          openMobileMenu={() => setMobileMenuOpen(true)}
         />
       </div>
     </div>
@@ -213,7 +228,7 @@ const Sidebar = ({ user, selected, setSelected }: SidebarProps) => {
           </div>
           <button
             onClick={handleAdminAccess}
-            className="relative flex h-11 w-full items-center rounded-md transition-all duration-200 text-gray-600 dark:text-gray-400 hover:bg-primary/10 dark:hover:bg-primary/20 hover:text-primary dark:hover:text-primary"
+            className="relative flex h-12 w-full items-center rounded-md transition-all duration-200 text-gray-600 dark:text-gray-400 hover:bg-primary/10 dark:hover:bg-primary/20 hover:text-primary dark:hover:text-primary"
           >
             <div className="grid h-full w-12 place-content-center">
               <Shield className="h-4 w-4" />
@@ -237,7 +252,7 @@ const Sidebar = ({ user, selected, setSelected }: SidebarProps) => {
           />
           <button
             onClick={handleSignOut}
-            className="relative flex h-11 w-full items-center rounded-md transition-all duration-200 text-gray-600 dark:text-gray-400 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-400"
+            className="relative flex h-12 w-full items-center rounded-md transition-all duration-200 text-gray-600 dark:text-gray-400 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-400"
           >
             <div className="grid h-full w-12 place-content-center">
               <LogOut className="h-4 w-4" />
@@ -267,7 +282,7 @@ const Option = ({ Icon, title, selected, setSelected, open, notifs, tooltip, isE
   return (
     <button
       onClick={handleClick}
-      className={`relative flex h-11 w-full items-center rounded-md transition-all duration-200 ${
+      className={`relative flex h-12 w-full items-center rounded-md transition-all duration-200 ${
         isSelected 
           ? "bg-primary/10 dark:bg-primary/20 text-primary shadow-sm border-l-2 border-primary" 
           : "text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-200"
@@ -277,7 +292,7 @@ const Option = ({ Icon, title, selected, setSelected, open, notifs, tooltip, isE
       data-tutorial={dataTutorial}
     >
       <div className="grid h-full w-12 place-content-center">
-        <Icon className="h-4 w-4" />
+        <Icon className="h-5 w-5" />
       </div>
       {open && (
         <span
@@ -352,10 +367,10 @@ const ToggleClose = ({ open, setOpen }: any) => {
       aria-label={open ? "Ocultar sidebar" : "Mostrar sidebar"}
       title={open ? "Ocultar menu lateral" : "Mostrar menu lateral"}
     >
-      <div className="flex items-center p-3">
-        <div className="grid size-10 place-content-center">
+      <div className="flex items-center p-4">
+        <div className="grid size-12 place-content-center">
           <ChevronsRight
-            className={`h-4 w-4 transition-transform duration-300 text-gray-500 dark:text-gray-400 ${
+            className={`h-5 w-5 transition-transform duration-300 text-gray-500 dark:text-gray-400 ${
               open ? "rotate-180" : ""
             }`}
           />
@@ -374,14 +389,14 @@ const ToggleClose = ({ open, setOpen }: any) => {
   );
 };
 
-import { FlashcardsView } from "@/components/dashboard/FlashcardsView";
-import { SimuladosView } from "@/components/dashboard/SimuladosView";
-import MateriaisView from "@/components/dashboard/MateriaisView";
-import { EstatisticasView } from "@/components/dashboard/EstatisticasView";
-import { ConquistasView } from "@/components/dashboard/ConquistasView";
-import { PerfilView } from "@/components/dashboard/PerfilView";
+const LazyFlashcardsView = React.lazy(() => import("@/components/dashboard/FlashcardsView").then(m => ({ default: m.FlashcardsView })));
+const LazySimuladosView = React.lazy(() => import("@/components/dashboard/SimuladosView").then(m => ({ default: m.SimuladosView })));
+const LazyMateriaisView = React.lazy(() => import("@/components/dashboard/MateriaisView").then(m => ({ default: m.default })));
+const LazyEstatisticasView = React.lazy(() => import("@/components/dashboard/EstatisticasView").then(m => ({ default: m.EstatisticasView })));
+const LazyConquistasView = React.lazy(() => import("@/components/dashboard/ConquistasView").then(m => ({ default: m.ConquistasView })));
+const LazyPerfilView = React.lazy(() => import("@/components/dashboard/PerfilView").then(m => ({ default: m.PerfilView })));
 
-const MainContent = ({ isDark, setIsDark, user, profile, selected }: any) => {
+const MainContent = ({ isDark, setIsDark, user, profile, selected, isMobile, openMobileMenu }: any) => {
   const successRate = profile?.total_questions_answered 
     ? Math.round((profile.correct_answers / profile.total_questions_answered) * 100)
     : 0;
@@ -423,54 +438,66 @@ const MainContent = ({ isDark, setIsDark, user, profile, selected }: any) => {
   const renderContent = () => {
     switch (selected) {
       case "Flashcards":
-        return <FlashcardsView />
+        return <LazyFlashcardsView />
       case "Simulados":
-        return <SimuladosView />
+        return <LazySimuladosView />
       case "Materiais":
-        return <MateriaisView />
+        return <LazyMateriaisView />
       case "Estatísticas":
-        return <EstatisticasView />
+        return <LazyEstatisticasView />
       case "Notificações":
         return <NotificationSettings />
       case "Conquistas":
-        return <ConquistasView />
+        return <LazyConquistasView />
       case "Meu Perfil":
-        return <PerfilView user={user} profile={profile} />
+        return <LazyPerfilView user={user} profile={profile} />
       default:
         return <DashboardHome user={user} profile={profile} />
     }
   }
 
   return (
-    <div className="flex-1 bg-gray-50 dark:bg-gray-950 p-6 overflow-auto">
+    <div className="flex-1 bg-gray-50 dark:bg-gray-950 p-4 sm:p-6 overflow-auto overscroll-y-contain">
       <SmartBreadcrumb />
       {selected === "Dashboard" && (
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center justify-between mb-6 sm:mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Dashboard</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100">Dashboard</h1>
             <p className="text-gray-600 dark:text-gray-400 mt-1">
               Olá, {profile?.full_name || user?.email?.split('@')[0]}! Continue estudando para sua CNH
             </p>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3 sm:gap-4">
+            {isMobile && (
+              <button
+                onClick={openMobileMenu}
+                className="flex h-12 w-12 items-center justify-center rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
+                aria-label="Abrir menu"
+                title="Menu"
+              >
+                <ChevronDown className="h-5 w-5" />
+              </button>
+            )}
             <NotificationSystem />
             <button
               onClick={() => setIsDark(!isDark)}
-              className="flex h-10 w-10 items-center justify-center rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
+              className="flex h-12 w-12 items-center justify-center rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
               aria-label={isDark ? "Ativar modo claro" : "Ativar modo escuro"}
               title={isDark ? "Modo claro" : "Modo escuro"}
             >
               {isDark ? (
-                <Sun className="h-4 w-4" />
+                <Sun className="h-5 w-5" />
               ) : (
-                <Moon className="h-4 w-4" />
+                <Moon className="h-5 w-5" />
               )}
             </button>
           </div>
         </div>
       )}
       
-      {renderContent()}
+      <Suspense fallback={<div className="p-4 text-sm text-gray-500">Carregando…</div>}>
+        {renderContent()}
+      </Suspense>
     </div>
   )
 }
@@ -600,9 +627,8 @@ const DashboardHome = ({ user, profile }: any) => {
 
   return (
     <>
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8" data-tutorial="dashboard">
-        <div className="p-6 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm hover:shadow-md transition-shadow">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 mb-6 lg:mb-8" data-tutorial="dashboard">
+        <div className="p-4 sm:p-6 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm hover:shadow-md transition-shadow">
           <div className="flex items-center justify-between mb-4">
             <div className="p-2 bg-primary/10 dark:bg-primary/20 rounded-lg">
               <BookOpen className="h-5 w-5 text-primary" />
@@ -615,8 +641,7 @@ const DashboardHome = ({ user, profile }: any) => {
           </p>
           <p className="text-sm text-success mt-1">Continue estudando!</p>
         </div>
-        
-        <div className="p-6 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm hover:shadow-md transition-shadow">
+        <div className="p-4 sm:p-6 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm hover:shadow-md transition-shadow">
           <div className="flex items-center justify-between mb-4">
             <div className="p-2 bg-success/10 dark:bg-success/20 rounded-lg">
               <Trophy className="h-5 w-5 text-success" />
@@ -627,8 +652,7 @@ const DashboardHome = ({ user, profile }: any) => {
           <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{successRate}%</p>
           <p className="text-sm text-success mt-1">Excelente desempenho!</p>
         </div>
-        
-        <div className="p-6 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm hover:shadow-md transition-shadow">
+        <div className="p-4 sm:p-6 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm hover:shadow-md transition-shadow">
           <div className="flex items-center justify-between mb-4">
             <div className="p-2 bg-accent/10 dark:bg-accent/20 rounded-lg">
               <Target className="h-5 w-5 text-accent" />
@@ -642,7 +666,7 @@ const DashboardHome = ({ user, profile }: any) => {
           <p className="text-sm text-success mt-1">Meta: 500 questões</p>
         </div>
 
-        <div className="p-6 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm hover:shadow-md transition-shadow">
+        <div className="p-4 sm:p-6 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm hover:shadow-md transition-shadow">
           <div className="flex items-center justify-between mb-4">
             <div className="p-2 bg-secondary/10 dark:bg-secondary/20 rounded-lg">
               <BarChart3 className="h-5 w-5 text-secondary" />

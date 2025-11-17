@@ -26,11 +26,11 @@ const features = [
 
 const FeaturesSection = () => {
   return (
-    <section className="py-20 px-4 bg-muted/30">
+    <section className="py-16 sm:py-20 px-4 bg-muted/30">
       <div className="container mx-auto max-w-7xl">
         {/* Header */}
-        <div className="text-center mb-16">
-          <h2 className="text-4xl md:text-5xl font-bold text-foreground mb-4">
+        <div className="text-center mb-12 sm:mb-16">
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-foreground mb-4">
             Por que escolher o Vrumi?
           </h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
@@ -39,11 +39,11 @@ const FeaturesSection = () => {
         </div>
 
         {/* Features Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8">
           {features.map((feature, index) => (
             <Card
               key={index}
-              className="p-8 text-center hover:shadow-elegant transition-all duration-300 hover:-translate-y-2 bg-card border-border/50"
+              className="p-6 sm:p-8 text-center hover:shadow-elegant transition-all duration-300 hover:-translate-y-2 bg-card border-border/50"
               style={{
                 animationDelay: `${index * 100}ms`,
                 animation: "fade-in 0.5s ease-out forwards",

@@ -237,7 +237,7 @@ export const EstatisticasView = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-foreground">Estatísticas de Estudo</h2>
+          <h2 className="text-xl sm:text-2xl font-bold text-foreground">Estatísticas de Estudo</h2>
           <p className="text-muted-foreground mt-1">
             Acompanhe seu desempenho e evolução
           </p>
@@ -246,8 +246,8 @@ export const EstatisticasView = () => {
       </div>
 
       {/* Métricas Básicas */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-card border border-border rounded-xl p-6">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-3 sm:gap-4">
+        <div className="bg-card border border-border rounded-xl p-4 sm:p-6">
           <div className="flex items-center justify-between mb-2">
             <Calendar className="h-5 w-5 text-primary" />
             <TrendingUp className="h-4 w-4 text-success" />
@@ -257,7 +257,7 @@ export const EstatisticasView = () => {
           <p className="text-xs text-success mt-1">Dados atuais</p>
         </div>
 
-        <div className="bg-card border border-border rounded-xl p-6">
+        <div className="bg-card border border-border rounded-xl p-4 sm:p-6">
           <div className="flex items-center justify-between mb-2">
             <BarChart3 className="h-5 w-5 text-success" />
             <TrendingUp className="h-4 w-4 text-success" />
@@ -267,7 +267,7 @@ export const EstatisticasView = () => {
           <p className="text-xs text-success mt-1">Com base no seu perfil</p>
         </div>
 
-        <div className="bg-card border border-border rounded-xl p-6">
+        <div className="bg-card border border-border rounded-xl p-4 sm:p-6">
           <div className="flex items-center justify-between mb-2">
             <Award className="h-5 w-5 text-secondary" />
             <TrendingUp className="h-4 w-4 text-success" />
@@ -277,7 +277,7 @@ export const EstatisticasView = () => {
           <p className="text-xs text-success mt-1">Com base em acertos/erros</p>
         </div>
 
-        <div className="bg-card border border-border rounded-xl p-6">
+        <div className="bg-card border border-border rounded-xl p-4 sm:p-6">
           <div className="flex items-center justify-between mb-2">
             <TrendingUp className="h-5 w-5 text-accent" />
             <TrendingUp className="h-4 w-4 text-success" />
@@ -290,8 +290,8 @@ export const EstatisticasView = () => {
 
       {/* Progresso por Categoria */}
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-card border border-border rounded-xl p-6">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-3 sm:gap-4">
+        <div className="bg-card border border-border rounded-xl p-4 sm:p-6">
           <div className="flex items-center justify-between mb-2">
             <Calendar className="h-5 w-5 text-primary" />
             <TrendingUp className="h-4 w-4 text-success" />
@@ -301,7 +301,7 @@ export const EstatisticasView = () => {
           <p className="text-xs text-success mt-1">{totalStudyDays > 0 ? `${totalStudyDays} dias únicos` : "Comece a estudar!"}</p>
         </div>
 
-        <div className="bg-card border border-border rounded-xl p-6">
+        <div className="bg-card border border-border rounded-xl p-4 sm:p-6">
           <div className="flex items-center justify-between mb-2">
             <BarChart3 className="h-5 w-5 text-success" />
             <TrendingUp className="h-4 w-4 text-success" />
@@ -311,7 +311,7 @@ export const EstatisticasView = () => {
           <p className="text-xs text-success mt-1">Esta semana</p>
         </div>
 
-        <div className="bg-card border border-border rounded-xl p-6">
+        <div className="bg-card border border-border rounded-xl p-4 sm:p-6">
           <div className="flex items-center justify-between mb-2">
             <Award className="h-5 w-5 text-secondary" />
             <TrendingUp className="h-4 w-4 text-success" />
@@ -321,7 +321,7 @@ export const EstatisticasView = () => {
           <p className="text-xs text-success mt-1">Geral</p>
         </div>
 
-        <div className="bg-card border border-border rounded-xl p-6">
+        <div className="bg-card border border-border rounded-xl p-4 sm:p-6">
           <div className="flex items-center justify-between mb-2">
             <TrendingUp className="h-5 w-5 text-accent" />
             <TrendingUp className="h-4 w-4 text-success" />
@@ -332,10 +332,10 @@ export const EstatisticasView = () => {
         </div>
       </div>
 
-      <div className="bg-card border border-border rounded-xl p-6">
+      <div className="bg-card border border-border rounded-xl p-4 sm:p-6">
         <h3 className="text-lg font-semibold text-foreground mb-6">Atividade desta Semana</h3>
         <div className="space-y-4">
-          <div className="flex items-end gap-2 h-48">
+          <div className="flex items-end gap-2 h-40 sm:h-48">
             {weekData.map((data, i) => (
               <div key={i} className="flex-1 flex flex-col items-center gap-2">
                 <div className="relative w-full bg-muted rounded-t-lg overflow-hidden" style={{ height: '100%' }}>
@@ -352,7 +352,7 @@ export const EstatisticasView = () => {
         </div>
       </div>
 
-      <div className="bg-card border border-border rounded-xl p-6">
+      <div className="bg-card border border-border rounded-xl p-4 sm:p-6">
         <h3 className="text-lg font-semibold text-foreground mb-6">Progresso por Categoria</h3>
         <div className="space-y-4">
           {isLoading ? (

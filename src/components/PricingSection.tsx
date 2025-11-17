@@ -107,10 +107,10 @@ const PricingSection = () => {
   ]
 
   return (
-    <section id="preço" className="py-20 px-4 bg-muted">
+    <section id="preço" className="py-16 sm:py-20 px-4 bg-muted">
       <div className="container mx-auto max-w-7xl">
-        <div className="text-center mb-16">
-          <h2 className="text-4xl md:text-5xl font-bold text-foreground mb-4">
+        <div className="text-center mb-12 sm:mb-16">
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-foreground mb-4">
             Passaportes de Acesso
           </h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
@@ -118,11 +118,11 @@ const PricingSection = () => {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8 max-w-6xl mx-auto">
           {plans.map((plan, index) => (
             <div
               key={index}
-              className={`relative bg-card border rounded-2xl p-8 transition-all hover:shadow-elegant ${
+              className={`relative bg-card border rounded-2xl p-6 sm:p-8 transition-all hover:shadow-elegant ${
                 plan.popular
                   ? "border-primary shadow-card scale-105"
                   : "border-border"
@@ -137,7 +137,7 @@ const PricingSection = () => {
               )}
 
               <div className="text-center mb-6">
-                <h3 className="text-2xl font-bold text-foreground mb-2">
+                <h3 className="text-xl sm:text-2xl font-bold text-foreground mb-2">
                   {plan.name}
                 </h3>
                 {plan.subtitle && (
@@ -146,7 +146,7 @@ const PricingSection = () => {
                   </p>
                 )}
                 <div className="flex items-baseline justify-center gap-1 mb-2">
-                  <span className="text-4xl font-bold text-foreground">
+                  <span className="text-3xl sm:text-4xl font-bold text-foreground">
                     {plan.price}
                   </span>
                 </div>
@@ -172,7 +172,7 @@ const PricingSection = () => {
               <button
                 onClick={() => plan.passType && handlePurchase(plan.passType)}
                 disabled={loading === plan.passType}
-                className={`w-full py-3 px-6 rounded-lg font-medium transition-colors ${
+                className={`w-full h-12 px-6 rounded-lg font-medium transition-colors ${
                   plan.popular
                     ? "bg-primary text-primary-foreground hover:bg-primary/90"
                     : "bg-card border border-border text-foreground hover:bg-muted"

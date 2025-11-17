@@ -82,7 +82,7 @@ const Navbar = () => {
         </motion.div>
 
         {/* Mobile Menu Button */}
-        <motion.button className="md:hidden flex items-center" onClick={toggleMenu} whileTap={{
+        <motion.button className="md:hidden flex items-center justify-center h-12 w-12" onClick={toggleMenu} whileTap={{
         scale: 0.9
       }}>
           <Menu className="h-6 w-6 text-foreground" />

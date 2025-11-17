@@ -1,12 +1,13 @@
 import MinimalModernHero from "@/components/ui/minimal";
-import { FeaturesSectionWithHoverEffects } from "@/components/ui/feature-section-with-hover-effects";
-import FlashcardSection from "@/components/FlashcardSection";
-import FAQ from "@/components/FAQ";
-import Testimonials from "@/components/Testimonials";
-import GovernmentSupport from "@/components/GovernmentSupport";
-import Footer from "@/components/Footer";
+import React, { Suspense } from "react";
+const LazyFeatures = React.lazy(() => import("@/components/ui/feature-section-with-hover-effects").then(m => ({ default: m.FeaturesSectionWithHoverEffects })));
+const LazyFlashcardSection = React.lazy(() => import("@/components/FlashcardSection"));
+const LazyFAQ = React.lazy(() => import("@/components/FAQ"));
+const LazyTestimonials = React.lazy(() => import("@/components/Testimonials"));
+const LazyGovernmentSupport = React.lazy(() => import("@/components/GovernmentSupport"));
+const LazyFooter = React.lazy(() => import("@/components/Footer"));
 import { Navbar } from "@/components/Navbar";
-import PricingSection from "@/components/PricingSection";
+const LazyPricingSection = React.lazy(() => import("@/components/PricingSection"));
 import { useNavigate } from "react-router-dom";
 import { Display, Lead, Heading2, BodyLarge } from "@/components/ui/typography";
 const Index = () => {
@@ -55,32 +56,38 @@ const Index = () => {
 
       {/* 2. Social Proof - Depoimentos */}
       <section id="depoimentos">
-        <Testimonials />
+        <Suspense fallback={<div className="p-4 text-sm text-muted-foreground">Carregando depoimentos…</div>}>
+          <LazyTestimonials />
+        </Suspense>
       </section>
 
       {/* 3. Recursos */}
-      <section id="recursos" className="py-20 px-4 bg-background">
+      <section id="recursos" className="py-16 sm:py-20 px-4 bg-background">
         <div className="container mx-auto max-w-7xl">
           <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold text-foreground mb-4">
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-foreground mb-4">
               Diga adeus à sala de aula. Estude do seu jeito.
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
               O Vrumi é a ponte entre o material denso do governo e a sua aprovação.
             </p>
           </div>
-          <FeaturesSectionWithHoverEffects />
+          <Suspense fallback={<div className="p-4 text-sm text-muted-foreground">Carregando recursos…</div>}>
+            <LazyFeatures />
+          </Suspense>
         </div>
       </section>
 
       {/* 4. Apoio Governamental */}
-      <GovernmentSupport />
+      <Suspense fallback={<div className="p-4 text-sm text-muted-foreground">Carregando informações oficiais…</div>}>
+        <LazyGovernmentSupport />
+      </Suspense>
 
       {/* 4.5 Biblioteca de Placas */}
-      <section className="py-20 px-4 bg-background">
+      <section className="py-16 sm:py-20 px-4 bg-background">
         <div className="container mx-auto max-w-7xl">
           <div className="text-center mb-12">
-            <h2 className="text-4xl md:text-5xl font-bold text-foreground mb-4">
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-foreground mb-4">
               136 Placas de Trânsito na Palma da sua Mão
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto mb-8">
@@ -89,13 +96,13 @@ const Index = () => {
             <div className="flex flex-wrap justify-center gap-4">
               <button
                 onClick={() => navigate("/traffic-signs-library")}
-                className="inline-flex items-center justify-center px-8 py-4 text-lg text-primary-foreground bg-primary rounded-full hover:bg-primary/90 transition-colors font-semibold shadow-lg hover:shadow-xl"
+                className="inline-flex items-center justify-center px-8 h-12 text-lg text-primary-foreground bg-primary rounded-full hover:bg-primary/90 transition-colors font-semibold shadow-lg hover:shadow-xl"
               >
                 Explorar Biblioteca de Placas
               </button>
               <button
                 onClick={() => navigate("/auth?mode=register")}
-                className="inline-flex items-center justify-center px-8 py-4 text-lg text-foreground bg-muted rounded-full hover:bg-muted/80 transition-colors font-semibold"
+                className="inline-flex items-center justify-center px-8 h-12 text-lg text-foreground bg-muted rounded-full hover:bg-muted/80 transition-colors font-semibold"
               >
                 Criar Conta Grátis
               </button>
@@ -120,18 +127,26 @@ const Index = () => {
       </section>
 
       {/* 5. Preview - Flashcards */}
-      <FlashcardSection />
+      <Suspense fallback={<div className="p-4 text-sm text-muted-foreground">Carregando preview…</div>}>
+        <LazyFlashcardSection />
+      </Suspense>
 
       {/* 6. Pricing */}
-      <PricingSection />
+      <Suspense fallback={<div className="p-4 text-sm text-muted-foreground">Carregando planos…</div>}>
+        <LazyPricingSection />
+      </Suspense>
 
       {/* 7. FAQ */}
       <section id="faq">
-        <FAQ />
+        <Suspense fallback={<div className="p-4 text-sm text-muted-foreground">Carregando FAQ…</div>}>
+          <LazyFAQ />
+        </Suspense>
       </section>
 
       {/* 8. Footer */}
-      <Footer />
+      <Suspense fallback={<div />}> 
+        <LazyFooter />
+      </Suspense>
     </main>
   );
 };
