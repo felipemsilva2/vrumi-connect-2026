@@ -233,8 +233,7 @@ export default function StudyRoom() {
           session_id,
           user_id: userId,
           role: message.role,
-          content: message.content,
-          timestamp: message.timestamp
+          content: message.content
         });
       
       if (error) throw error;

@@ -28,18 +28,7 @@ export class NotificationSystemFallback {
       if (!this.userId) return [];
     }
 
-    // Tentar usar o banco primeiro
-    try {
-      const { data, error } = await supabase
-        .rpc('get_user_unread_notifications', { user_uuid: this.userId });
-
-      if (!error && data) {
-        return data;
-      }
-    } catch (error) {
-      console.warn('Função RPC não disponível, usando fallback local');
-    }
-
+    // Use local storage fallback
     const raw = localStorage.getItem(`notifications:${this.userId}`);
     return raw ? JSON.parse(raw) : [];
   }

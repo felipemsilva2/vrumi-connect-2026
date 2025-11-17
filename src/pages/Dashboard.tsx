@@ -67,7 +67,7 @@ const Dashboard = () => {
       setUser(session.user);
       await fetchProfile(session.user.id);
     } catch (error) {
-      const errorInfo = getErrorMessage(error, 'auth', 'session_check');
+      const errorInfo = getErrorMessage(error);
       
       toast({
         title: errorInfo.title,
@@ -103,7 +103,7 @@ const Dashboard = () => {
         setTimeout(() => setShowOnboarding(true), 1000); // Delay to show after page load
       }
     } catch (error) {
-      const errorInfo = getErrorMessage(error, 'database', 'profile_fetch');
+      const errorInfo = getErrorMessage(error);
       
       toast({
         title: errorInfo.title,

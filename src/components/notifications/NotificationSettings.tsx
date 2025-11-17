@@ -55,7 +55,7 @@ export default function NotificationSettings() {
         .single();
 
       if (data?.notification_settings) {
-        setSettings(data.notification_settings);
+        setSettings(data.notification_settings as any);
       }
     } catch (error) {
       console.error('Erro ao carregar configurações:', error);
@@ -75,10 +75,8 @@ export default function NotificationSettings() {
         .from('user_preferences')
         .upsert({
           user_id: user.id,
-          notification_settings: settings,
+          notification_settings: settings as any,
           updated_at: new Date().toISOString()
-        }, {
-          onConflict: 'user_id'
         });
 
       if (error) {
