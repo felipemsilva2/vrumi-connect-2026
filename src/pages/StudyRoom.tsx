@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { PDFViewer } from "@/components/study-room/PDFViewer";
+import MobilePDFReader, { MobilePDFReaderHandle } from "@/components/study-room/MobilePDFReader";
 import { QuickActions } from "@/components/study-room/QuickActions";
 import { TextSelectionTooltip } from "@/components/study-room/TextSelectionTooltip";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -38,6 +39,7 @@ export default function StudyRoom() {
   const navigate = useNavigate();
   const homeRoute = useContextualNavigation();
   const pdfViewerRef = useRef<{ getCurrentFile: () => string | null; getCurrentPage: () => number }>(null);
+  const mobilePdfRef = useRef<MobilePDFReaderHandle>(null);
 
   const extractPdfContext = async (file: string, currentPage: number): Promise<string> => {
     try {
@@ -116,8 +118,8 @@ export default function StudyRoom() {
 
     try {
       // Extrair contexto do PDF atual
-      const currentFile = pdfViewerRef.current?.getCurrentFile();
-      const currentPage = pdfViewerRef.current?.getCurrentPage() || 1;
+      const currentFile = isMobile ? mobilePdfRef.current?.getCurrentFile() : pdfViewerRef.current?.getCurrentFile();
+      const currentPage = isMobile ? (mobilePdfRef.current?.getCurrentPage() || 1) : (pdfViewerRef.current?.getCurrentPage() || 1);
       
       let pdfContext = "";
       if (currentFile) {
@@ -362,7 +364,7 @@ export default function StudyRoom() {
                 <Button variant={activeTab === 'chat' ? 'default' : 'outline'} className="flex-1 h-12" onClick={() => setActiveTab('chat')}>Chat</Button>
               </div>
               {activeTab === 'pdf' ? (
-                <PDFViewer ref={pdfViewerRef} className={cn("study-room-scrollbar w-full flex-1")} />
+                <MobilePDFReader ref={mobilePdfRef} fileUrl={"/materiais/MANUAL-OBTENCAO_2025.pdf"} className={cn("study-room-scrollbar w-full flex-1")} />
               ) : (
                 <div className="flex flex-col bg-background w-full flex-1">
                   <div className="border-b border-border">
