@@ -29,6 +29,7 @@ export const PDFViewer = forwardRef<PDFViewerHandle, PDFViewerProps>(({ classNam
   const [fitMode, setFitMode] = useState<'scale' | 'fitWidth'>(isMobile ? 'fitWidth' : 'scale');
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerWidth, setContainerWidth] = useState<number>(0);
+  const [zoomFactor, setZoomFactor] = useState<number>(isMobile ? 1.25 : 1.0);
 
   const onDocumentLoadSuccess = useCallback(({ numPages }: { numPages: number }) => {
     setNumPages(numPages);
@@ -139,6 +140,17 @@ export const PDFViewer = forwardRef<PDFViewerHandle, PDFViewerProps>(({ classNam
               <Button variant="outline" size="sm" onClick={handleZoomIn} disabled={scale >= 3.0} className={isMobile ? "h-12 w-12" : ""}>
                 <ZoomIn className="h-3 w-3 sm:h-4 sm:w-4" />
               </Button>
+              {fitMode === 'fitWidth' && (
+                <>
+                  <Button variant="outline" size="sm" className={isMobile ? "h-12" : ""} onClick={() => setZoomFactor((z) => Math.max(1.0, Math.round((z - 0.15) * 100) / 100))}>
+                    A-
+                  </Button>
+                  <span className="text-xs sm:text-sm font-medium min-w-[36px] text-center">{Math.round(zoomFactor * 100)}%</span>
+                  <Button variant="outline" size="sm" className={isMobile ? "h-12" : ""} onClick={() => setZoomFactor((z) => Math.min(2.0, Math.round((z + 0.15) * 100) / 100))}>
+                    A+
+                  </Button>
+                </>
+              )}
               <Button variant="outline" size="sm" className={isMobile ? "h-12" : ""} onClick={() => setFitMode(fitMode === 'fitWidth' ? 'scale' : 'fitWidth')}>
                 {fitMode === 'fitWidth' ? 'Ajustar Largura' : 'Zoom Livre'}
               </Button>
@@ -165,7 +177,7 @@ export const PDFViewer = forwardRef<PDFViewerHandle, PDFViewerProps>(({ classNam
           >
             <Page
               pageNumber={pageNumber}
-              {...(fitMode === 'fitWidth' && containerWidth ? { width: Math.max(containerWidth - 16, 320) } : { scale })}
+              {...(fitMode === 'fitWidth' && containerWidth ? { width: Math.max(Math.floor((containerWidth - 16) * zoomFactor), 320) } : { scale })}
               loading={
                 <div className="flex items-center justify-center p-8 bg-background rounded-lg border border-border">
                   <p className="text-muted-foreground">Carregando página...</p>
