@@ -52,17 +52,20 @@ export default function StudyRoom() {
         const page = await pdf.getPage(i);
         const textContent = await page.getTextContent();
         const pageText = textContent.items
-          .map((item) => item.str)
+          .map((item: any) => ('str' in item ? item.str : ''))
           .join(" ");
         context += `\n[Página ${i}]\n${pageText}\n`;
       }
       
       return context.substring(0, 8000); // Limitar contexto
     } catch (error) {
-      const errorInfo = getErrorMessage(error, 'file', 'pdf_extract');
+      const errorInfo = getErrorMessage(error, {
+        operation: 'extrair PDF',
+        component: 'PDFViewer'
+      });
       
-      toast.error(errorInfo.message, {
-        description: errorInfo.action,
+      toast.error(errorInfo.title, {
+        description: errorInfo.message,
         duration: 5000,
       });
       
@@ -148,7 +151,10 @@ export default function StudyRoom() {
       // Save AI response to database
       await saveMessage(aiResponse);
     } catch (error) {
-      const errorInfo = getErrorMessage(error, 'network', 'ai_request');
+      const errorInfo = getErrorMessage(error, {
+        operation: 'enviar mensagem',
+        component: 'StudyRoom'
+      });
       
       toast.error(errorInfo.title, {
         description: errorInfo.message,
@@ -308,7 +314,10 @@ export default function StudyRoom() {
       
       toast.success('Histórico de chat limpo com sucesso!');
     } catch (error) {
-      const errorInfo = getErrorMessage(error, 'database', 'delete');
+      const errorInfo = getErrorMessage(error, {
+        operation: 'limpar histórico',
+        component: 'StudyRoom'
+      });
       toast.error(errorInfo.title, {
         description: errorInfo.message
       });
