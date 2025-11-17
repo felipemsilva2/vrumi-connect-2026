@@ -1,4 +1,4 @@
-import { useState, useCallback, forwardRef, useImperativeHandle } from "react";
+import { useState, useCallback, forwardRef, useImperativeHandle, useRef, useEffect } from "react";
 import { Document, Page, pdfjs } from "react-pdf";
 import { Button } from "@/components/ui/button";
 import { ZoomIn, ZoomOut, ChevronLeft, ChevronRight, Upload, FileText } from "lucide-react";
@@ -24,8 +24,11 @@ export const PDFViewer = forwardRef<PDFViewerHandle, PDFViewerProps>(({ classNam
   const [file, setFile] = useState<string | null>("/materiais/MANUAL-OBTENCAO_2025.pdf");
   const [numPages, setNumPages] = useState<number>(0);
   const [pageNumber, setPageNumber] = useState<number>(1);
-  const [scale, setScale] = useState<number>(1.0);
   const isMobile = useIsMobile();
+  const [scale, setScale] = useState<number>(isMobile ? 1.2 : 1.0);
+  const [fitMode, setFitMode] = useState<'scale' | 'fitWidth'>(isMobile ? 'fitWidth' : 'scale');
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [containerWidth, setContainerWidth] = useState<number>(0);
 
   const onDocumentLoadSuccess = useCallback(({ numPages }: { numPages: number }) => {
     setNumPages(numPages);
@@ -56,6 +59,22 @@ export const PDFViewer = forwardRef<PDFViewerHandle, PDFViewerProps>(({ classNam
     getCurrentFile: () => file,
     getCurrentPage: () => pageNumber,
   }));
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const width = Math.floor(entry.contentRect.width);
+        setContainerWidth(width);
+      }
+    });
+    ro.observe(el);
+    setContainerWidth(el.clientWidth);
+    return () => {
+      ro.disconnect();
+    };
+  }, []);
 
   return (
     <div className={cn("flex flex-col h-full bg-background pb-safe", className)}>
@@ -120,13 +139,16 @@ export const PDFViewer = forwardRef<PDFViewerHandle, PDFViewerProps>(({ classNam
               <Button variant="outline" size="sm" onClick={handleZoomIn} disabled={scale >= 3.0} className={isMobile ? "h-12 w-12" : ""}>
                 <ZoomIn className="h-3 w-3 sm:h-4 sm:w-4" />
               </Button>
+              <Button variant="outline" size="sm" className={isMobile ? "h-12" : ""} onClick={() => setFitMode(fitMode === 'fitWidth' ? 'scale' : 'fitWidth')}>
+                {fitMode === 'fitWidth' ? 'Ajustar Largura' : 'Zoom Livre'}
+              </Button>
             </div>
           </>
         )}
       </div>
 
       {/* Área de visualização do PDF */}
-      <div className="flex-1 overflow-auto flex items-start justify-center p-4 bg-muted/5 study-room-scrollbar">
+      <div ref={containerRef} className="flex-1 overflow-auto flex items-start justify-center p-4 bg-muted/5 study-room-scrollbar">
         {file ? (
           <Document
             file={file}
@@ -143,7 +165,7 @@ export const PDFViewer = forwardRef<PDFViewerHandle, PDFViewerProps>(({ classNam
           >
             <Page
               pageNumber={pageNumber}
-              scale={scale}
+              {...(fitMode === 'fitWidth' && containerWidth ? { width: Math.max(containerWidth - 16, 320) } : { scale })}
               loading={
                 <div className="flex items-center justify-center p-8 bg-background rounded-lg border border-border">
                   <p className="text-muted-foreground">Carregando página...</p>
