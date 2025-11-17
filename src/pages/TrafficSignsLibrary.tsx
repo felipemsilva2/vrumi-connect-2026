@@ -118,21 +118,15 @@ export default function TrafficSignsLibrary() {
         return;
       }
 
-      // Get signs prioritized by difficulty for the current category
-      const { data, error } = await supabase
-        .rpc('get_signs_for_study', {
-          p_user_id: user.id,
-          p_category: selectedCategory === 'Todas' ? null : selectedCategory,
-          p_limit: 50
-        });
-
-      if (error) {
-        console.error('Erro ao buscar placas prioritárias:', error);
-        startFlashcardMode(); // Fallback to regular mode
-      } else {
-        setFlashcardSigns(data || filteredSigns);
-        setFlashcardMode(true);
+      // Get signs for the current category
+      let signsToUse = filteredSigns;
+      
+      if (selectedCategory !== 'Todas') {
+        signsToUse = filteredSigns.filter(sign => sign.category === selectedCategory);
       }
+      
+      setFlashcardSigns(signsToUse);
+      setFlashcardMode(true);
     } catch (error) {
       console.error('Erro ao iniciar modo inteligente:', error);
       startFlashcardMode(); // Fallback to regular mode
