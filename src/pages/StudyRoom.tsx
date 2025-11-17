@@ -34,6 +34,7 @@ export default function StudyRoom() {
   const [userId, setUserId] = useState<string | null>(null);
   const [isLoadingHistory, setIsLoadingHistory] = useState(true);
   const isMobile = useIsMobile();
+  const [activeTab, setActiveTab] = useState<'pdf' | 'chat'>('pdf');
   const navigate = useNavigate();
   const homeRoute = useContextualNavigation();
   const pdfViewerRef = useRef<{ getCurrentFile: () => string | null; getCurrentPage: () => number }>(null);
@@ -324,7 +325,7 @@ export default function StudyRoom() {
   };
 
   return (
-    <div className="min-h-screen bg-muted/30">
+    <div className="min-h-svh bg-muted/30">
       {/* Header com Logo */}
       <header className="bg-background border-b border-border sticky top-0 z-10 shadow-sm">
         <div className="mx-auto max-w-[1400px] w-full px-4 sm:px-6 lg:px-8 py-3 sm:py-4">
@@ -352,117 +353,112 @@ export default function StudyRoom() {
       <div className="mx-auto max-w-[1400px] w-full px-3 sm:px-4 lg:px-6 py-4 sm:py-6">
         <div className={cn(
           "rounded-lg shadow-elegant overflow-hidden bg-background border border-border",
-          isMobile ? "flex flex-col min-h-[calc(100vh-140px)]" : "flex gap-4 min-h-[600px] h-[calc(100vh-140px)]"
+          isMobile ? "flex flex-col min-h-[calc(100svh-140px)]" : "flex gap-4 min-h-[600px] h-[calc(100vh-140px)]"
         )}>
-          {/* Lado Esquerdo - Visualizador de PDF */}
-          <PDFViewer 
-            ref={pdfViewerRef}
-            className={cn(
-              "study-room-scrollbar",
-              isMobile ? "w-full h-[50vh] border-b" : "w-1/2 border-r"
-            )} 
-          />
-
-          {/* Lado Direito - Chat com IA */}
-          <div className={cn(
-            "flex flex-col bg-background",
-            isMobile ? "w-full flex-1" : "w-1/2"
-          )}>
-            {/* Header do Chat com Ações Rápidas e Botão Limpar */}
-            <div className="border-b border-border">
-              <div className="flex items-center justify-between p-3 sm:p-4">
-                <h3 className="text-sm font-semibold text-muted-foreground">Chat com IA</h3>
-                {messages.length > 0 && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={clearChatHistory}
-                    className="h-8 px-2 text-muted-foreground hover:text-foreground"
-                    title="Limpar histórico do chat"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                )}
+          {isMobile ? (
+            <>
+              <div className="flex gap-2 p-3 border-b">
+                <Button variant={activeTab === 'pdf' ? 'default' : 'outline'} className="flex-1 h-12" onClick={() => setActiveTab('pdf')}>PDF</Button>
+                <Button variant={activeTab === 'chat' ? 'default' : 'outline'} className="flex-1 h-12" onClick={() => setActiveTab('chat')}>Chat</Button>
               </div>
-              {/* Ações Rápidas */}
-              <QuickActions 
-                onQuickAction={handleQuickAction} 
-                className="border-t border-border"
-              />
-            </div>
-            
-            {/* Área de mensagens */}
-            <ScrollArea className="flex-1 p-3 sm:p-4 study-room-scrollbar">
-              <div className="space-y-3 sm:space-y-4">
-                {isLoadingHistory ? (
-                  <div className="flex items-center justify-center h-full text-muted-foreground">
-                    <div className="text-center">
-                      <Loader2 className="h-6 w-6 animate-spin mx-auto mb-2" />
-                      <p className="text-sm">Carregando histórico...</p>
-                    </div>
-                  </div>
-                ) : messages.length === 0 ? (
-                  <div className="flex items-center justify-center h-full text-muted-foreground">
-                    <p className="text-sm sm:text-base">Faça uma pergunta para começar</p>
-                  </div>
-                ) : (
-                  messages.map((message) => (
-                    <div
-                      key={message.id}
-                      className={cn(
-                        "flex",
-                        message.role === "user" ? "justify-end" : "justify-start"
+              {activeTab === 'pdf' ? (
+                <PDFViewer ref={pdfViewerRef} className={cn("study-room-scrollbar w-full flex-1")} />
+              ) : (
+                <div className="flex flex-col bg-background w-full flex-1">
+                  <div className="border-b border-border">
+                    <div className="flex items-center justify-between p-3">
+                      <h3 className="text-sm font-semibold text-muted-foreground">Chat com IA</h3>
+                      {messages.length > 0 && (
+                        <Button variant="ghost" size="sm" onClick={clearChatHistory} className="h-8 px-2 text-muted-foreground hover:text-foreground" title="Limpar histórico do chat">
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
                       )}
-                    >
-                      <div
-                        className={cn(
-                          "max-w-[85%] sm:max-w-[80%] rounded-lg px-3 sm:px-4 py-2",
-                          message.role === "user"
-                            ? "bg-primary text-primary-foreground"
-                            : "bg-muted text-foreground"
-                        )}
-                      >
-                        <p className="text-xs sm:text-sm whitespace-pre-wrap break-words">
-                          {message.content}
-                        </p>
-                        <p className="text-[10px] sm:text-xs opacity-70 mt-1">
-                          {message.timestamp.toLocaleTimeString("pt-BR", {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })}
-                        </p>
-                      </div>
                     </div>
-                  ))
-                )}
+                    <QuickActions onQuickAction={handleQuickAction} className="border-t border-border" />
+                  </div>
+                  <ScrollArea className="flex-1 p-3 study-room-scrollbar">
+                    <div className="space-y-3">
+                      {isLoadingHistory ? (
+                        <div className="flex items-center justify-center h-full text-muted-foreground">
+                          <div className="text-center">
+                            <Loader2 className="h-6 w-6 animate-spin mx-auto mb-2" />
+                            <p className="text-sm">Carregando histórico...</p>
+                          </div>
+                        </div>
+                      ) : messages.length === 0 ? (
+                        <div className="flex items-center justify-center h-full text-muted-foreground">
+                          <p className="text-sm">Faça uma pergunta para começar</p>
+                        </div>
+                      ) : (
+                        messages.map((message) => (
+                          <div key={message.id} className={cn("flex", message.role === "user" ? "justify-end" : "justify-start")}> 
+                            <div className={cn("max-w-[85%] rounded-lg px-3 py-2", message.role === "user" ? "bg-primary text-primary-foreground" : "bg-muted text-foreground")}> 
+                              <p className="text-xs whitespace-pre-wrap break-words">{message.content}</p>
+                              <p className="text-[10px] opacity-70 mt-1">{message.timestamp.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</p>
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </ScrollArea>
+                  <div className="border-t border-border p-3 bg-background pb-safe">
+                    <div className="flex gap-2">
+                      <Input value={inputValue} onChange={(e) => setInputValue(e.target.value)} onKeyPress={handleKeyPress} placeholder="Digite sua pergunta..." className="flex-1 text-sm" />
+                      <Button onClick={handleSendMessage} disabled={!inputValue.trim() || isLoading} className="bg-primary hover:bg-primary/90 shrink-0 h-12">{isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}</Button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </>
+          ) : (
+            <>
+              <PDFViewer ref={pdfViewerRef} className={cn("study-room-scrollbar w-1/2 border-r")} />
+              <div className="flex flex-col bg-background w-1/2">
+                <div className="border-b border-border">
+                  <div className="flex items-center justify-between p-4">
+                    <h3 className="text-sm font-semibold text-muted-foreground">Chat com IA</h3>
+                    {messages.length > 0 && (
+                      <Button variant="ghost" size="sm" onClick={clearChatHistory} className="h-8 px-2 text-muted-foreground hover:text-foreground" title="Limpar histórico do chat">
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
+                  <QuickActions onQuickAction={handleQuickAction} className="border-t border-border" />
+                </div>
+                <ScrollArea className="flex-1 p-4 study-room-scrollbar">
+                  <div className="space-y-4">
+                    {isLoadingHistory ? (
+                      <div className="flex items-center justify-center h-full text-muted-foreground">
+                        <div className="text-center">
+                          <Loader2 className="h-6 w-6 animate-spin mx-auto mb-2" />
+                          <p className="text-sm">Carregando histórico...</p>
+                        </div>
+                      </div>
+                    ) : messages.length === 0 ? (
+                      <div className="flex items-center justify-center h-full text-muted-foreground">
+                        <p className="text-base">Faça uma pergunta para começar</p>
+                      </div>
+                    ) : (
+                      messages.map((message) => (
+                        <div key={message.id} className={cn("flex", message.role === "user" ? "justify-end" : "justify-start")}> 
+                          <div className={cn("max-w-[80%] rounded-lg px-4 py-2", message.role === "user" ? "bg-primary text-primary-foreground" : "bg-muted text-foreground")}> 
+                            <p className="text-sm whitespace-pre-wrap break-words">{message.content}</p>
+                            <p className="text-xs opacity-70 mt-1">{message.timestamp.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</p>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </ScrollArea>
+                <div className="border-t border-border p-4 bg-background">
+                  <div className="flex gap-2">
+                    <Input value={inputValue} onChange={(e) => setInputValue(e.target.value)} onKeyPress={handleKeyPress} placeholder="Digite sua pergunta..." className="flex-1" />
+                    <Button onClick={handleSendMessage} disabled={!inputValue.trim() || isLoading} className="bg-primary hover:bg-primary/90 shrink-0 h-12">{isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}</Button>
+                  </div>
+                </div>
               </div>
-            </ScrollArea>
-
-            {/* Barra de input fixada na parte inferior */}
-            <div className="border-t border-border p-3 sm:p-4 bg-background pb-safe">
-              <div className="flex gap-2">
-                <Input
-                  value={inputValue}
-                  onChange={(e) => setInputValue(e.target.value)}
-                  onKeyPress={handleKeyPress}
-                  placeholder="Digite sua pergunta..."
-                  className="flex-1 text-sm sm:text-base"
-                />
-                <Button
-                  onClick={handleSendMessage}
-                  disabled={!inputValue.trim() || isLoading}
-                  size={isMobile ? "sm" : "default"}
-                  className="bg-primary hover:bg-primary/90 shrink-0"
-                >
-                  {isLoading ? (
-                    <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 animate-spin" />
-                  ) : (
-                    <Send className="h-3 w-3 sm:h-4 sm:w-4" />
-                  )}
-                </Button>
-              </div>
-            </div>
-          </div>
+            </>
+          )}
         </div>
       </div>
       
