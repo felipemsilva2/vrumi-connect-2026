@@ -1,18 +1,14 @@
-import { forwardRef, useImperativeHandle, useRef, useState } from "react";
+import { useState } from "react";
 import { Viewer, SpecialZoomLevel } from "@react-pdf-viewer/core";
 import { zoomPlugin } from "@react-pdf-viewer/zoom";
-import { scrollModePlugin, ScrollMode } from "@react-pdf-viewer/scroll-mode";
 import type { CharacterMap } from "@react-pdf-viewer/core";
 import "@react-pdf-viewer/core/lib/styles/index.css";
-
-export interface MobilePDFReaderHandle {
-  getCurrentFile: () => string | null;
-  getCurrentPage: () => number;
-}
+import "@react-pdf-viewer/zoom/lib/styles/index.css";
 
 interface MobilePDFReaderProps {
   fileUrl: string | null;
   className?: string;
+  onPageChange?: (page: number) => void;
 }
 
 const characterMap: CharacterMap = {
@@ -20,16 +16,10 @@ const characterMap: CharacterMap = {
   url: "https://unpkg.com/pdfjs-dist@3.11.174/cmaps/",
 };
 
-export const MobilePDFReader = forwardRef<MobilePDFReaderHandle, MobilePDFReaderProps>(({ fileUrl, className }, ref) => {
+export const MobilePDFReader = ({ fileUrl, className, onPageChange }: MobilePDFReaderProps) => {
   const [currentPage, setCurrentPage] = useState(0);
   const zoom = zoomPlugin();
-  const scrollMode = scrollModePlugin();
-  const fileRef = useRef<string | null>(fileUrl);
-
-  useImperativeHandle(ref, () => ({
-    getCurrentFile: () => fileRef.current,
-    getCurrentPage: () => currentPage + 1,
-  }));
+  
 
   return (
     <div className={className}>
@@ -38,9 +28,16 @@ export const MobilePDFReader = forwardRef<MobilePDFReaderHandle, MobilePDFReader
           fileUrl={fileUrl}
           defaultScale={SpecialZoomLevel.PageWidth}
           characterMap={characterMap}
-          scrollMode={ScrollMode.Vertical}
-          plugins={[zoom, scrollMode]}
-          onPageChange={(e) => setCurrentPage(e.currentPage)}
+          transformGetDocumentParams={(options) => ({
+            ...options,
+            cMapUrl: characterMap.url,
+            cMapPacked: characterMap.isCompressed,
+          })}
+          plugins={[zoom]}
+          onPageChange={(e) => {
+            setCurrentPage(e.currentPage);
+            onPageChange?.(e.currentPage + 1);
+          }}
           renderLoader={() => (
             <div className="p-8 text-center text-muted-foreground">Carregando PDF…</div>
           )}
@@ -53,6 +50,6 @@ export const MobilePDFReader = forwardRef<MobilePDFReaderHandle, MobilePDFReader
       )}
     </div>
   );
-});
+};
 
 export default MobilePDFReader;

@@ -1,3 +1,4 @@
+import React from "react";
 import { Link } from "react-router-dom";
 import {
   Breadcrumb,
@@ -31,8 +32,8 @@ export function SmartBreadcrumb({ className, separator = <ChevronRight className
           const isLast = index === breadcrumbs.length - 1;
           
           return (
-            <>
-              <BreadcrumbItem>
+            <React.Fragment key={`crumb-${index}-${crumb.href || crumb.label}`}>
+              <BreadcrumbItem key={`item-${index}`}>
                 {isLast || !crumb.href ? (
                   <BreadcrumbPage>{crumb.label}</BreadcrumbPage>
                 ) : (
@@ -42,9 +43,9 @@ export function SmartBreadcrumb({ className, separator = <ChevronRight className
                 )}
               </BreadcrumbItem>
               {!isLast && (
-                <BreadcrumbSeparator>{separator}</BreadcrumbSeparator>
+                <BreadcrumbSeparator key={`sep-${index}`}>{separator}</BreadcrumbSeparator>
               )}
-            </>
+            </React.Fragment>
           );
         })}
       </BreadcrumbList>
