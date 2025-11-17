@@ -4,16 +4,19 @@ import { Bell, X, Clock, CheckCircle, BookOpen, Trophy, Flame, Info } from 'luci
 import { useToast } from '@/hooks/use-toast';
 import { notificationSystemFallback } from '@/services/NotificationSystemFallback';
 
+import { Tables } from '@/integrations/supabase/types';
+
+type DBNotification = Tables<'notifications'>;
+
 interface Notification {
   id: string;
-  type: 'study_reminder' | 'review_reminder' | 'achievement' | 'study_streak' | 'custom';
+  type: string;
   title: string;
   message: string;
   data: Record<string, any>;
-  is_read: boolean;
-  scheduled_for: string | null;
+  read: boolean;
   created_at: string;
-  expires_at: string | null;
+  user_id: string;
 }
 
 const notificationIcons = {
@@ -107,19 +110,28 @@ export default function NotificationSystem() {
         .from('notifications')
         .select('*')
         .eq('user_id', user.id)
-        .eq('is_read', false)
-        .not('scheduled_for', 'is', null)
-        .lte('scheduled_for', new Date().toISOString())
+        .eq('read', false)
         .order('created_at', { ascending: false });
 
       if (data && data.length > 0) {
+        const mappedData: Notification[] = data.map(n => ({
+          id: n.id,
+          type: n.type,
+          title: n.title,
+          message: n.message,
+          data: (n.data || {}) as Record<string, any>,
+          read: n.read || false,
+          created_at: n.created_at || '',
+          user_id: n.user_id
+        }));
+        
         setNotifications(prev => {
-          const newNotifications = data.filter(
-            (newNotif: Notification) => !prev.some(existing => existing.id === newNotif.id)
+          const newNotifications = mappedData.filter(
+            (newNotif) => !prev.some(existing => existing.id === newNotif.id)
           );
           return [...newNotifications, ...prev];
         });
-        setUnreadCount(prev => prev + (data.length));
+        setUnreadCount(prev => prev + (mappedData.length));
       }
     } catch (error) {
       console.error('Erro ao verificar novas notificações:', error);

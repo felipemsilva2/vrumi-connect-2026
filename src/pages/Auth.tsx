@@ -110,7 +110,7 @@ const Auth = () => {
         });
 
         if (error) {
-          const errorInfo = getErrorMessage(error, 'auth', 'register');
+          const errorInfo = getErrorMessage(error);
           
           toast({
             title: errorInfo.title,
@@ -128,7 +128,7 @@ const Auth = () => {
         resetForm();
       }
     } catch (error) {
-      const errorInfo = getErrorMessage(error, 'network', 'request');
+      const errorInfo = getErrorMessage(error);
       
       toast({
         title: errorInfo.title,
@@ -152,7 +152,7 @@ const Auth = () => {
 
       if (error) throw error;
     } catch (error) {
-      const errorInfo = getErrorMessage(error, 'auth', 'oauth');
+      const errorInfo = getErrorMessage(error);
       
       toast({
         title: errorInfo.title,
