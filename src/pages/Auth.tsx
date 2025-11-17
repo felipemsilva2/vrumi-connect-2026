@@ -196,7 +196,7 @@ const Auth = () => {
       });
       setShowResetPassword(false);
     } catch (error) {
-      const errorInfo = getErrorMessage(error, 'auth', 'password_reset');
+      const errorInfo = getErrorMessage(error);
       
       toast({
         title: errorInfo.title,

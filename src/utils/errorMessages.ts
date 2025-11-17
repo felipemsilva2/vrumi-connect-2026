@@ -1,6 +1,15 @@
 export interface ErrorMessage {
   title: string;
   message: string;
+  description?: string;
+  action?: string;
+  technical?: string;
+}
+
+export interface ErrorContext {
+  operation?: string;
+  component?: string;
+  technicalDetails?: string;
 }
 
 const AUTH_ERRORS: Record<string, ErrorMessage> = {
@@ -34,25 +43,45 @@ const AUTH_ERRORS: Record<string, ErrorMessage> = {
   },
 };
 
-export const getErrorMessage = (error: any): ErrorMessage => {
+export const getErrorMessage = (error: any, context?: ErrorContext): ErrorMessage => {
+  const baseMessage: ErrorMessage = { title: '', message: '' };
   if (error?.code) {
     const errorKey = error.code.toLowerCase().replace(/_/g, '');
     const message = AUTH_ERRORS[errorKey as keyof typeof AUTH_ERRORS];
-    if (message) return message;
-  }
-  
-  if (error?.message) {
+    if (message) {
+      baseMessage.title = message.title;
+      baseMessage.message = message.message;
+    }
+  } else if (error?.message) {
     const msgLower = error.message.toLowerCase();
     if (msgLower.includes('invalid') && msgLower.includes('credentials')) {
-      return AUTH_ERRORS.invalid_credentials;
+      baseMessage.title = AUTH_ERRORS.invalid_credentials.title;
+      baseMessage.message = AUTH_ERRORS.invalid_credentials.message;
+    } else if (msgLower.includes('email') && msgLower.includes('use')) {
+      baseMessage.title = AUTH_ERRORS.email_already_in_use.title;
+      baseMessage.message = AUTH_ERRORS.email_already_in_use.message;
+    } else if (msgLower.includes('weak') || msgLower.includes('password')) {
+      baseMessage.title = AUTH_ERRORS.weak_password.title;
+      baseMessage.message = AUTH_ERRORS.weak_password.message;
+    } else {
+      baseMessage.title = AUTH_ERRORS.default.title;
+      baseMessage.message = AUTH_ERRORS.default.message;
     }
-    if (msgLower.includes('email') && msgLower.includes('use')) {
-      return AUTH_ERRORS.email_already_in_use;
+  } else {
+    baseMessage.title = AUTH_ERRORS.default.title;
+    baseMessage.message = AUTH_ERRORS.default.message;
+  }
+  
+  // Add context if provided
+  if (context) {
+    baseMessage.description = baseMessage.message;
+    if (context.operation) {
+      baseMessage.action = `Tente ${context.operation} novamente ou recarregue a página.`;
     }
-    if (msgLower.includes('weak') || msgLower.includes('password')) {
-      return AUTH_ERRORS.weak_password;
+    if (context.technicalDetails) {
+      baseMessage.technical = context.technicalDetails;
     }
   }
   
-  return AUTH_ERRORS.default;
+  return baseMessage;
 };
