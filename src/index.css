@@ -182,3 +182,11 @@ All colors MUST be HSL.
   scrollbar-width: thin;
   scrollbar-color: hsl(var(--primary) / 0.5) hsl(var(--muted) / 0.3);
 }
+
+/* Safe area helpers for iOS Safari bottom bar */
+.pb-safe {
+  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 1rem);
+}
+.mb-safe {
+  margin-bottom: calc(env(safe-area-inset-bottom, 0px) + 1rem);
+}

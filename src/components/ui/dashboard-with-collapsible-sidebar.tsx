@@ -457,7 +457,7 @@ const MainContent = ({ isDark, setIsDark, user, profile, selected, isMobile, ope
   }
 
   return (
-    <div className="flex-1 bg-gray-50 dark:bg-gray-950 p-4 sm:p-6 overflow-auto overscroll-y-contain">
+    <div className="flex-1 bg-gray-50 dark:bg-gray-950 p-4 sm:p-6 overflow-auto overscroll-y-contain pb-safe">
       <SmartBreadcrumb />
       {selected === "Dashboard" && (
         <div className="flex items-center justify-between mb-6 sm:mb-8">

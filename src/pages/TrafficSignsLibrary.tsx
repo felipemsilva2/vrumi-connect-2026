@@ -138,7 +138,7 @@ export default function TrafficSignsLibrary() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-4 sm:p-6 pb-safe">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">

@@ -58,7 +58,7 @@ export const PDFViewer = forwardRef<PDFViewerHandle, PDFViewerProps>(({ classNam
   }));
 
   return (
-    <div className={cn("flex flex-col h-full bg-background", className)}>
+    <div className={cn("flex flex-col h-full bg-background pb-safe", className)}>
       {/* Barra de ferramentas */}
       <div className={cn(
         "flex items-center gap-2 p-2 sm:p-3 border-b border-border bg-background/95 backdrop-blur",

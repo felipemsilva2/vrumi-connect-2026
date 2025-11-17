@@ -377,7 +377,7 @@ export const SimuladosView = () => {
     }
 
     return (
-      <div className="min-h-screen bg-background p-4 md:p-6">
+      <div className="min-h-screen bg-background p-4 md:p-6 pb-safe">
         <div className="w-full max-w-6xl mx-auto">
           {/* Header com timer e progresso */}
           <motion.div
@@ -387,7 +387,7 @@ export const SimuladosView = () => {
           >
             <Card className="shadow-md border-2">
               <CardContent className="p-4">
-                <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
                   <div>
                     <div className="text-sm text-muted-foreground">Questão</div>
                     <div className="text-2xl font-bold text-foreground">
@@ -397,7 +397,7 @@ export const SimuladosView = () => {
                   <div className="flex items-center gap-3">
                     <div className="flex items-center gap-2 text-foreground">
                       <Clock size={20} />
-                      <span className="text-xl font-mono font-bold">{formatTime(timeLeft)}</span>
+                      <span className="text-lg sm:text-xl font-mono font-bold">{formatTime(timeLeft)}</span>
                     </div>
                   </div>
                 </div>
@@ -425,7 +425,7 @@ export const SimuladosView = () => {
                       exit="exit"
                       transition={{ duration: 0.2 }}
                     >
-                      <h3 className="text-lg font-semibold text-foreground mb-6">
+                      <h3 className="text-base sm:text-lg font-semibold text-foreground mb-6">
                         {currentQ.question_text}
                       </h3>
 
@@ -473,12 +473,13 @@ export const SimuladosView = () => {
                       </div>
 
                       {/* Navegação */}
-                      <div className="mt-6 flex items-center gap-3">
+                      <div className="mt-6 flex flex-col sm:flex-row items-stretch gap-3">
                         <Button
                           onClick={handlePrevious}
                           disabled={currentQuestion === 0}
                           variant="outline"
                           size="lg"
+                          className="h-12"
                         >
                           <ArrowLeft size={16} className="mr-2" /> Anterior
                         </Button>
@@ -487,7 +488,7 @@ export const SimuladosView = () => {
                           onClick={() => setShowConfirmFinish(true)}
                           variant="outline"
                           size="lg"
-                          className="ml-auto text-red-600 border-red-200 hover:bg-red-50 dark:hover:bg-red-950"
+                          className="sm:ml-auto text-red-600 border-red-200 hover:bg-red-50 dark:hover:bg-red-950 h-12"
                         >
                           Finalizar
                         </Button>
@@ -495,7 +496,7 @@ export const SimuladosView = () => {
                         <Button
                           onClick={handleNext}
                           size="lg"
-                          className="bg-green-500 hover:bg-green-600"
+                          className="bg-green-500 hover:bg-green-600 h-12"
                         >
                           Próxima <ArrowRight size={16} className="ml-2" />
                         </Button>
@@ -521,7 +522,7 @@ export const SimuladosView = () => {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-5 gap-2">
+                  <div className="grid grid-cols-5 sm:grid-cols-6 md:grid-cols-8 gap-2">
                     {questions.map((_, idx) => {
                       const status = userAnswers[idx]
                         ? "answered"

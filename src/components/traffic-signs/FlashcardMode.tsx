@@ -196,7 +196,7 @@ export default function FlashcardMode({ signs, initialIndex = 0, onClose, catego
   }
 
   return (
-    <div className="max-w-4xl mx-auto p-6">
+    <div className="max-w-4xl mx-auto p-6 pb-safe">
       {/* Header with Progress */}
       <div className="mb-6">
         <div className="flex items-center justify-between mb-4">
@@ -243,7 +243,7 @@ export default function FlashcardMode({ signs, initialIndex = 0, onClose, catego
       </div>
 
       {/* Flashcard Container */}
-      <div className="relative h-96 mb-6">
+      <div className="relative h-[60vh] sm:h-96 mb-6">
         <div 
           className={`relative w-full h-full transition-transform duration-600 preserve-3d cursor-pointer ${
             isFlipped ? 'rotate-y-180' : ''
@@ -328,11 +328,11 @@ export default function FlashcardMode({ signs, initialIndex = 0, onClose, catego
       <div className="space-y-4">
         {/* Assessment Buttons (only show when card is flipped) */}
         {isFlipped && (
-          <div className="flex items-center justify-center gap-3">
+          <div className="flex flex-col sm:flex-row items-stretch justify-center gap-3">
             <Button
               onClick={() => handleDifficultyResponse('hard')}
               disabled={isAnimating}
-              className="flex-1 bg-red-600 hover:bg-red-700 text-white"
+              className="flex-1 bg-red-600 hover:bg-red-700 text-white h-12"
               size="lg"
             >
               <span className="font-semibold">Errei</span>
@@ -342,7 +342,7 @@ export default function FlashcardMode({ signs, initialIndex = 0, onClose, catego
             <Button
               onClick={() => handleDifficultyResponse('medium')}
               disabled={isAnimating}
-              className="flex-1 bg-yellow-600 hover:bg-yellow-700 text-white"
+              className="flex-1 bg-yellow-600 hover:bg-yellow-700 text-white h-12"
               size="lg"
             >
               <span className="font-semibold">Dúvida</span>
@@ -352,7 +352,7 @@ export default function FlashcardMode({ signs, initialIndex = 0, onClose, catego
             <Button
               onClick={() => handleDifficultyResponse('easy')}
               disabled={isAnimating}
-              className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+              className="flex-1 bg-green-600 hover:bg-green-700 text-white h-12"
               size="lg"
             >
               <span className="font-semibold">Acertei</span>
@@ -362,12 +362,12 @@ export default function FlashcardMode({ signs, initialIndex = 0, onClose, catego
         )}
 
         {/* Navigation Buttons */}
-        <div className="flex items-center justify-between gap-4">
+        <div className="flex flex-col sm:flex-row items-stretch justify-between gap-4">
           <Button
             onClick={handlePrevious}
             disabled={isAnimating}
             variant="outline"
-            className="flex items-center gap-2"
+            className="flex items-center gap-2 h-12"
           >
             <ChevronLeft className="w-4 h-4" />
             Anterior
@@ -378,7 +378,7 @@ export default function FlashcardMode({ signs, initialIndex = 0, onClose, catego
               onClick={handleFlip}
               disabled={isAnimating}
               variant="secondary"
-              className="flex items-center gap-2"
+              className="flex items-center gap-2 h-12"
             >
               <RotateCcw className="w-4 h-4" />
               Virar
@@ -400,7 +400,7 @@ export default function FlashcardMode({ signs, initialIndex = 0, onClose, catego
             onClick={handleNext}
             disabled={isAnimating}
             variant="outline"
-            className="flex items-center gap-2"
+            className="flex items-center gap-2 h-12"
           >
             Próximo
             <ChevronRight className="w-4 h-4" />
