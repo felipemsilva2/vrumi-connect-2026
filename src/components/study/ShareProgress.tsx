@@ -150,8 +150,7 @@ export default function ShareProgress({ stats, userName = 'Estudante' }: SharePr
           await navigator.clipboard.writeText(shareText);
           toast({
             title: 'Link copiado!',
-            description: 'Compartilhe seu progresso com seus amigos.',
-            variant: 'success'
+            description: 'Compartilhe seu progresso com seus amigos.'
           });
           break;
           
@@ -165,8 +164,7 @@ export default function ShareProgress({ stats, userName = 'Estudante' }: SharePr
           }
           toast({
             title: 'Imagem baixada!',
-            description: 'Compartilhe sua conquista nas redes sociais.',
-            variant: 'success'
+            description: 'Compartilhe sua conquista nas redes sociais.'
           });
           break;
         }

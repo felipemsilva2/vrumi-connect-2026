@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { Bell, Clock, BookOpen, Flame, Settings, Save, RefreshCw } from 'lucide-react';
+import { Bell, Clock, BookOpen, Flame, Settings, Save, RefreshCw, Trophy } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
@@ -321,7 +321,7 @@ export default function NotificationSettings() {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => testNotification(settingKey)}
+                      onClick={() => testNotification(settingKey as "study_reminders" | "review_reminders" | "achievement_notifications" | "streak_reminders")}
                       className="text-xs"
                     >
                       Testar
