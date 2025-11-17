@@ -8,6 +8,7 @@ import {
   IconTrendingUp,
   IconAward,
   IconSparkles,
+  IconRoad,
 } from "@tabler/icons-react";
 
 export function FeaturesSectionWithHoverEffects() {
@@ -42,9 +43,15 @@ export function FeaturesSectionWithHoverEffects() {
         "Responda provas idênticas à oficial. Mesmo número de questões, mesmo tempo e mesmas matérias. Sem surpresas no dia.",
       icon: <IconTarget />,
     },
+    {
+      title: "136 Placas de Trânsito",
+      description:
+        "Biblioteca completa com todas as placas brasileiras. Estude com flashcards inteligentes e desafios cronometrados para dominar 100% da sinalização.",
+      icon: <IconRoad />,
+    },
   ];
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 relative z-10 py-10 max-w-7xl mx-auto">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 relative z-10 py-10 max-w-7xl mx-auto">
       {features.map((feature, index) => (
         <Feature key={feature.title} {...feature} index={index} />
       ))}
@@ -67,14 +74,14 @@ const Feature = ({
     <div
       className={cn(
         "flex flex-col lg:border-r py-10 relative group/feature border-border/50",
-        (index === 0 || index === 4) && "lg:border-l border-border/50",
-        index < 4 && "lg:border-b border-border/50"
+        (index === 0 || index === 3) && "lg:border-l border-border/50",
+        index < 3 && "lg:border-b border-border/50"
       )}
     >
-      {index < 4 && (
+      {index < 3 && (
         <div className="opacity-0 group-hover/feature:opacity-100 transition duration-200 absolute inset-0 h-full w-full bg-gradient-to-t from-muted/50 to-transparent pointer-events-none" />
       )}
-      {index >= 4 && (
+      {index >= 3 && (
         <div className="opacity-0 group-hover/feature:opacity-100 transition duration-200 absolute inset-0 h-full w-full bg-gradient-to-b from-muted/50 to-transparent pointer-events-none" />
       )}
       <div className="mb-4 relative z-10 px-10 text-primary">

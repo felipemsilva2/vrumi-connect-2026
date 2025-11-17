@@ -76,6 +76,49 @@ const Index = () => {
       {/* 4. Apoio Governamental */}
       <GovernmentSupport />
 
+      {/* 4.5 Biblioteca de Placas */}
+      <section className="py-20 px-4 bg-background">
+        <div className="container mx-auto max-w-7xl">
+          <div className="text-center mb-12">
+            <h2 className="text-4xl md:text-5xl font-bold text-foreground mb-4">
+              136 Placas de Trânsito na Palma da sua Mão
+            </h2>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto mb-8">
+              Biblioteca completa com todas as placas oficiais brasileiras. Estude com flashcards inteligentes e desafios cronometrados.
+            </p>
+            <div className="flex flex-wrap justify-center gap-4">
+              <button
+                onClick={() => navigate("/traffic-signs-library")}
+                className="inline-flex items-center justify-center px-8 py-4 text-lg text-primary-foreground bg-primary rounded-full hover:bg-primary/90 transition-colors font-semibold shadow-lg hover:shadow-xl"
+              >
+                Explorar Biblioteca de Placas
+              </button>
+              <button
+                onClick={() => navigate("/auth?mode=register")}
+                className="inline-flex items-center justify-center px-8 py-4 text-lg text-foreground bg-muted rounded-full hover:bg-muted/80 transition-colors font-semibold"
+              >
+                Criar Conta Grátis
+              </button>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-12">
+            <div className="text-center p-6 bg-card rounded-xl border border-border">
+              <div className="text-4xl font-bold text-primary mb-2">136</div>
+              <p className="text-muted-foreground">Placas Oficiais</p>
+            </div>
+            <div className="text-center p-6 bg-card rounded-xl border border-border">
+              <div className="text-4xl font-bold text-primary mb-2">5</div>
+              <p className="text-muted-foreground">Categorias</p>
+            </div>
+            <div className="text-center p-6 bg-card rounded-xl border border-border">
+              <div className="text-4xl font-bold text-primary mb-2">2</div>
+              <p className="text-muted-foreground">Modos de Estudo</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* 5. Preview - Flashcards */}
       <FlashcardSection />
 
