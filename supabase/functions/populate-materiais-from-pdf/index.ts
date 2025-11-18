@@ -1,20 +1,51 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.78.0";
+import { z } from "https://esm.sh/zod@3.23.8";
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+const getCors = (req: Request) => {
+  const origin = req.headers.get('origin') || '';
+  const allowedList = (Deno.env.get('ALLOWED_ORIGINS') || '').split(',').map(s => s.trim()).filter(Boolean);
+  const allowed = allowedList.length === 0 || allowedList.includes(origin);
+  const headers = {
+    'Access-Control-Allow-Origin': allowed ? origin : '',
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  };
+  return { headers, allowed };
 };
 
 serve(async (req) => {
   const startTime = Date.now();
   
+  const { headers: corsHeaders, allowed } = getCors(req);
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: corsHeaders, status: allowed ? 200 : 403 });
   }
 
   try {
-    const { lessonId, pdfContent, chapterContext } = await req.json();
+    const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
+    const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      return new Response(JSON.stringify({ error: 'Não autenticado' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+    const token = authHeader.replace('Bearer ', '');
+    const { data: { user } } = await supabase.auth.getUser(token);
+    if (!user) {
+      return new Response(JSON.stringify({ error: 'Usuário não autenticado' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+    const { data: isAdminData } = await supabase.rpc('is_admin', { user_id: user.id });
+    if (!isAdminData) {
+      return new Response(JSON.stringify({ error: 'Permissão negada' }), { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+
+    const schema = z.object({
+      lessonId: z.string().min(1),
+      pdfContent: z.string().min(10),
+      chapterContext: z.string().max(200000).optional(),
+    });
+    const { lessonId, pdfContent, chapterContext } = schema.parse(await req.json());
     
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL");

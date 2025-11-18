@@ -16,6 +16,7 @@ import { toast } from "sonner";
 import { pdfjs } from "react-pdf";
 import { SmartBreadcrumb } from "@/components/SmartBreadcrumb";
 import { getErrorMessage } from "@/utils/errorMessages";
+import { SubscriptionGate } from "@/components/auth/SubscriptionGate";
 
 interface Message {
   id: string;
@@ -329,6 +330,7 @@ export default function StudyRoom() {
   };
 
   return (
+    <SubscriptionGate feature="Sala de Estudos">
     <div className="min-h-svh bg-muted/30">
       {/* Header com Logo */}
       <header className="bg-background border-b border-border sticky top-0 z-10 shadow-sm">
@@ -477,6 +479,7 @@ export default function StudyRoom() {
       {/* Tooltip de seleção de texto */}
       <TextSelectionTooltip onExplain={handleTextExplanation} />
     </div>
+    </SubscriptionGate>
   );
 }
 class MobileReaderErrorBoundary extends React.Component<{ onError?: (error: Error) => void; fallback: React.ReactNode; children: React.ReactNode }, { hasError: boolean }> {

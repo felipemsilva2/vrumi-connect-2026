@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import { supabase, isSupabaseConfigured } from "@/integrations/supabase/client"
 import { useToast } from "@/hooks/use-toast"
 import { ImageWithFallback } from "@/components/ImageWithFallback"
+import { SubscriptionGate } from "@/components/auth/SubscriptionGate"
 
 interface Flashcard {
   id: string
@@ -215,6 +216,7 @@ export const FlashcardsView = () => {
   const card = flashcards[currentCard]
 
   return (
+    <SubscriptionGate feature="Flashcards">
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
@@ -353,5 +355,6 @@ export const FlashcardsView = () => {
         </div>
       </div>
     </div>
+    </SubscriptionGate>
   )
 }

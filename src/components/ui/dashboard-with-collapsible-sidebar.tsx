@@ -538,14 +538,23 @@ const DashboardHome = ({ user, profile }: any) => {
     const fetchProfileAggregates = async () => {
       try {
         if (!user?.id) return
-        const { data, error } = await supabase
+        const query = supabase
           .from("profiles")
           .select("total_flashcards_studied,total_questions_answered,correct_answers,study_progress")
           .eq("id", user.id)
-          .maybeSingle()
+        let data: any = null
+        let error: any = null
+        if (typeof (query as any).maybeSingle === 'function') {
+          ({ data, error } = await (query as any).maybeSingle())
+        } else if (typeof (query as any).single === 'function') {
+          try {
+            ({ data, error } = await (query as any).single())
+          } catch {
+            data = null; error = null
+          }
+        }
         if (!error && data) {
           setAggregates(data)
-          // Forçamos re-render de atividades após ações em outras telas.
           setRefreshKey((k) => k + 1)
         }
       } catch (e) {
@@ -559,32 +568,38 @@ const DashboardHome = ({ user, profile }: any) => {
   useEffect(() => {
     if (!user?.id) return
 
-    const activitiesChannel = supabase
-      .channel(`user-activities-${user.id}`)
-      .on(
-        'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'user_activities', filter: `user_id=eq.${user.id}` },
-        (payload) => {
-          setRecentActivities((prev) => [payload.new as any, ...(prev || [])].slice(0, 5))
-          setLoading(false)
-        }
-      )
-      .subscribe()
+    let activitiesChannel: any = null
+    if (typeof (supabase as any).channel === 'function') {
+      activitiesChannel = (supabase as any)
+        .channel(`user-activities-${user.id}`)
+        .on(
+          'postgres_changes',
+          { event: 'INSERT', schema: 'public', table: 'user_activities', filter: `user_id=eq.${user.id}` },
+          (payload) => {
+            setRecentActivities((prev) => [payload.new as any, ...(prev || [])].slice(0, 5))
+            setLoading(false)
+          }
+        )
+        .subscribe()
+    }
 
-    const profileChannel = supabase
-      .channel(`profile-aggregates-${user.id}`)
-      .on(
-        'postgres_changes',
-        { event: 'UPDATE', schema: 'public', table: 'profiles', filter: `id=eq.${user.id}` },
-        (payload) => {
-          setAggregates(payload.new as any)
-        }
-      )
-      .subscribe()
+    let profileChannel: any = null
+    if (typeof (supabase as any).channel === 'function') {
+      profileChannel = (supabase as any)
+        .channel(`profile-aggregates-${user.id}`)
+        .on(
+          'postgres_changes',
+          { event: 'UPDATE', schema: 'public', table: 'profiles', filter: `id=eq.${user.id}` },
+          (payload) => {
+            setAggregates(payload.new as any)
+          }
+        )
+        .subscribe()
+    }
 
     return () => {
-      supabase.removeChannel(activitiesChannel)
-      supabase.removeChannel(profileChannel)
+      if (activitiesChannel) (supabase as any).removeChannel(activitiesChannel)
+      if (profileChannel) (supabase as any).removeChannel(profileChannel)
     }
   }, [user?.id])
   const getActivityIcon = (type: string) => {

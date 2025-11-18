@@ -147,6 +147,7 @@ const Index = () => {
       <Suspense fallback={<div />}> 
         <LazyFooter />
       </Suspense>
+
     </main>
   );
 };

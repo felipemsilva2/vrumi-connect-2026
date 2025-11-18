@@ -1,9 +1,16 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { z } from "https://esm.sh/zod@3.23.8";
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+const getCors = (req: Request) => {
+  const origin = req.headers.get('origin') || '';
+  const allowedList = (Deno.env.get('ALLOWED_ORIGINS') || '').split(',').map(s => s.trim()).filter(Boolean);
+  const allowed = allowedList.length === 0 || allowedList.includes(origin);
+  const headers = {
+    'Access-Control-Allow-Origin': allowed ? origin : '',
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  };
+  return { headers, allowed };
 };
 
 interface TrafficSignInput {
@@ -15,12 +22,39 @@ interface TrafficSignInput {
 }
 
 serve(async (req) => {
+  const { headers: corsHeaders, allowed } = getCors(req);
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: corsHeaders, status: allowed ? 200 : 403 });
   }
 
   try {
-    const { signs }: { signs: TrafficSignInput[] } = await req.json();
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      return new Response(JSON.stringify({ error: 'Não autenticado' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+    const token = authHeader.replace('Bearer ', '');
+    const { data: { user } } = await supabase.auth.getUser(token);
+    if (!user) {
+      return new Response(JSON.stringify({ error: 'Usuário não autenticado' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+    const { data: isAdminData } = await supabase.rpc('is_admin', { user_id: user.id });
+    if (!isAdminData) {
+      return new Response(JSON.stringify({ error: 'Permissão negada' }), { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+
+    const signSchema = z.object({
+      code: z.string().min(1),
+      name: z.string().min(1),
+      image_url: z.string().url(),
+      description: z.string().optional().default(''),
+      category: z.string().min(1),
+    });
+    const schema = z.object({ signs: z.array(signSchema).min(1) });
+    const { signs } = schema.parse(await req.json());
     
     console.log(`📦 Iniciando importação de ${signs.length} placas de trânsito`);
     
@@ -43,6 +77,10 @@ serve(async (req) => {
         const imageResponse = await fetch(sign.image_url);
         if (!imageResponse.ok) {
           throw new Error(`Failed to download image: ${imageResponse.statusText}`);
+        }
+        const ct = imageResponse.headers.get('content-type') || '';
+        if (!ct.startsWith('image/')) {
+          throw new Error('URL não contém imagem válida');
         }
         const imageBlob = await imageResponse.blob();
         

@@ -1,4 +1,5 @@
 import { Trophy, Award, Star, Zap, Target, BookOpen, Calendar, TrendingUp } from "lucide-react"
+import { SubscriptionGate } from "@/components/auth/SubscriptionGate"
 
 const conquistas = [
   {
@@ -72,6 +73,7 @@ export const ConquistasView = () => {
   const totalCount = conquistas.length
 
   return (
+    <SubscriptionGate feature="Conquistas">
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
@@ -180,5 +182,6 @@ export const ConquistasView = () => {
         })}
       </div>
     </div>
+    </SubscriptionGate>
   )
 }

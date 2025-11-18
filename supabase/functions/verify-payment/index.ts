@@ -2,9 +2,15 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+const getCors = (req: Request) => {
+  const origin = req.headers.get('origin') || '';
+  const allowedList = (Deno.env.get('ALLOWED_ORIGINS') || '').split(',').map(s => s.trim()).filter(Boolean);
+  const allowed = allowedList.length === 0 || allowedList.includes(origin);
+  const headers = {
+    'Access-Control-Allow-Origin': allowed ? origin : '',
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  };
+  return { headers, allowed };
 };
 
 const logStep = (step: string, details?: any) => {
@@ -13,8 +19,9 @@ const logStep = (step: string, details?: any) => {
 };
 
 serve(async (req) => {
+  const { headers: corsHeaders, allowed } = getCors(req);
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: corsHeaders, status: allowed ? 200 : 403 });
   }
 
   const supabaseClient = createClient(
@@ -60,8 +67,8 @@ serve(async (req) => {
         success: false, 
         message: 'Payment not completed' 
       }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 400,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 400,
       });
     }
 

@@ -1,6 +1,7 @@
 import { BarChart3, TrendingUp, Calendar, Award, Loader2 } from "lucide-react"
 import { useEffect, useMemo, useState } from "react"
 import { supabase } from "@/integrations/supabase/client"
+import { SubscriptionGate } from "@/components/auth/SubscriptionGate"
 
 export const EstatisticasView = () => {
   const [weekData, setWeekData] = useState([
@@ -234,6 +235,7 @@ export const EstatisticasView = () => {
   }, [])
 
   return (
+    <SubscriptionGate feature="Estatísticas">
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
@@ -388,5 +390,6 @@ export const EstatisticasView = () => {
         </div>
       </div>
     </div>
+    </SubscriptionGate>
   )
 }

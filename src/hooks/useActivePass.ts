@@ -21,25 +21,30 @@ export const useActivePass = (userId: string | undefined) => {
 
     checkActivePass();
 
-    // Set up real-time subscription
-    const channel = supabase
-      .channel('user_passes_changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'user_passes',
-          filter: `user_id=eq.${userId}`
-        },
-        () => {
-          checkActivePass();
-        }
-      )
-      .subscribe();
+    // Set up real-time subscription (guard if Realtime not available)
+    let channel: any = null;
+    if (typeof (supabase as any).channel === 'function') {
+      channel = (supabase as any)
+        .channel('user_passes_changes')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'user_passes',
+            filter: `user_id=eq.${userId}`
+          },
+          () => {
+            checkActivePass();
+          }
+        )
+        .subscribe();
+    }
 
     return () => {
-      supabase.removeChannel(channel);
+      if (channel) {
+        (supabase as any).removeChannel(channel);
+      }
     };
   }, [userId]);
 
@@ -47,15 +52,25 @@ export const useActivePass = (userId: string | undefined) => {
     if (!userId || !isSupabaseConfigured || !navigator.onLine) return;
 
     try {
-      const { data, error } = await supabase
+      const query = supabase
         .from('user_passes')
         .select('*')
         .eq('user_id', userId)
         .eq('payment_status', 'completed')
         .gt('expires_at', new Date().toISOString())
         .order('expires_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
+        .limit(1);
+      let data: any = null;
+      let error: any = null;
+      if (typeof (query as any).maybeSingle === 'function') {
+        ({ data, error } = await (query as any).maybeSingle());
+      } else if (typeof (query as any).single === 'function') {
+        try {
+          ({ data, error } = await (query as any).single());
+        } catch {
+          data = null; error = null;
+        }
+      }
 
       if (error) throw error;
 

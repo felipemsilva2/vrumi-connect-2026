@@ -1,420 +1,632 @@
 [
   {
     "id": "TC001",
-    "title": "User Registration with Mandatory Consent",
-    "description": "Verify that user registration requires email, password, and explicit data processing consent checkbox before account creation.",
+    "title": "User Registration via Email",
+    "description": "Verify that a user can register using a valid email address and password, receive a verification email, and successfully verify their account.",
     "category": "functional",
     "priority": "High",
     "steps": [
       {
         "type": "action",
-        "description": "Navigate to the registration page."
+        "description": "Navigate to the registration page"
       },
       {
         "type": "action",
-        "description": "Fill in valid email and password."
+        "description": "Input a valid email address and password"
       },
       {
         "type": "action",
-        "description": "Attempt to register without checking the consent checkbox."
+        "description": "Submit the registration form"
       },
       {
         "type": "assertion",
-        "description": "Verify registration is blocked and a user-friendly error message is displayed requiring consent."
+        "description": "Check that a verification email is sent to the provided email address"
       },
       {
         "type": "action",
-        "description": "Check the mandatory consent checkbox."
-      },
-      {
-        "type": "action",
-        "description": "Submit the registration form."
+        "description": "Simulate clicking the verification link in the email"
       },
       {
         "type": "assertion",
-        "description": "Confirm that registration succeeds and user is redirected to the dashboard or welcome page."
+        "description": "Verify that the user's email is marked as verified and account setup page is shown"
       }
     ]
   },
   {
     "id": "TC002",
-    "title": "Login with Correct Credentials",
-    "description": "Verify that user can log in successfully using valid email and password within 10 seconds.",
+    "title": "User Registration via Google OAuth",
+    "description": "Verify that a user can register and log in using Google OAuth seamlessly with profile setup afterwards.",
     "category": "functional",
     "priority": "High",
     "steps": [
       {
         "type": "action",
-        "description": "Navigate to login page."
+        "description": "Navigate to the login page"
       },
       {
         "type": "action",
-        "description": "Input valid registered email and correct password."
+        "description": "Click the 'Sign in with Google' button"
       },
       {
         "type": "action",
-        "description": "Click login button."
+        "description": "Authenticate using valid Google credentials"
       },
       {
         "type": "assertion",
-        "description": "Check that login is successful and user is directed to the user dashboard within 10 seconds."
+        "description": "Check that the user is logged in and prompted to complete profile setup if first time"
       }
     ]
   },
   {
     "id": "TC003",
-    "title": "Login with Incorrect Credentials",
-    "description": "Verify that login attempt with invalid email or password fails and displays friendly error message.",
-    "category": "error handling",
+    "title": "Login with Correct Credentials",
+    "description": "Verify that a registered user can login successfully with correct email and password.",
+    "category": "functional",
     "priority": "High",
     "steps": [
       {
         "type": "action",
-        "description": "Navigate to login page."
+        "description": "Navigate to the login page"
       },
       {
         "type": "action",
-        "description": "Input invalid email and/or incorrect password."
+        "description": "Enter valid registered email and password"
       },
       {
         "type": "action",
-        "description": "Click login button."
+        "description": "Click the login button"
       },
       {
         "type": "assertion",
-        "description": "Verify login is rejected and user-friendly, non-technical error message is displayed."
+        "description": "Verify login is successful and dashboard is displayed"
       }
     ]
   },
   {
     "id": "TC004",
-    "title": "PDF Upload and AI-Generated Multiple Choice Questions",
-    "description": "Ensure users can upload valid PDFs and the system generates multiple choice questions appropriately.",
-    "category": "functional",
+    "title": "Login Failure with Incorrect Credentials",
+    "description": "Verify that login fails gracefully when user enters incorrect email or password.",
+    "category": "error handling",
     "priority": "High",
     "steps": [
       {
         "type": "action",
-        "description": "Log in as a registered user and navigate to the question generation module."
+        "description": "Navigate to the login page"
       },
       {
         "type": "action",
-        "description": "Upload a PDF document containing driver's license theoretical content."
+        "description": "Enter invalid email or password combination"
+      },
+      {
+        "type": "action",
+        "description": "Click the login button"
       },
       {
         "type": "assertion",
-        "description": "Verify system parses PDF successfully and triggers AI generation of multiple choice questions."
-      },
-      {
-        "type": "assertion",
-        "description": "Confirm generated questions are relevant to PDF content and stored in user-accessible study materials."
+        "description": "Verify that an error message 'Invalid credentials' is displayed and login does not succeed"
       }
     ]
   },
   {
     "id": "TC005",
-    "title": "PDF Upload and AI-Generated Flashcards",
-    "description": "Validate the generation of educational flashcards from uploaded PDFs using AI service.",
+    "title": "Password Recovery via Email",
+    "description": "Verify that users can request a password reset email and reset their password successfully.",
     "category": "functional",
     "priority": "High",
     "steps": [
       {
         "type": "action",
-        "description": "Log in and navigate to the flashcard generation module."
+        "description": "Navigate to the login page"
       },
       {
         "type": "action",
-        "description": "Upload a PDF related to driver's license exam study."
+        "description": "Click on 'Forgot Password' link"
+      },
+      {
+        "type": "action",
+        "description": "Enter a registered email and submit"
       },
       {
         "type": "assertion",
-        "description": "Verify system extracts content and generates flashcards with front and back sides."
+        "description": "Verify that a password reset email is sent"
+      },
+      {
+        "type": "action",
+        "description": "Simulate clicking on password reset link in the email"
+      },
+      {
+        "type": "action",
+        "description": "Enter and confirm new valid password"
       },
       {
         "type": "assertion",
-        "description": "Confirm flashcards are linked to user profile and can be reviewed in flashcard study mode."
+        "description": "Verify that password has been reset and user can log in with new password"
       }
     ]
   },
   {
     "id": "TC006",
-    "title": "Flashcard Interaction and Local Save of Responses",
-    "description": "Verify that users can interact with flashcards (flip front/back) and responses are saved locally for progress tracking.",
+    "title": "Subscribe to Paid Plan via Stripe Checkout",
+    "description": "Verify that a user can subscribe to a paid plan using the Stripe checkout process, including payment success and subscription activation.",
     "category": "functional",
-    "priority": "Medium",
+    "priority": "High",
     "steps": [
       {
         "type": "action",
-        "description": "Access generated flashcards from user dashboard."
+        "description": "Log in as a valid user"
       },
       {
         "type": "action",
-        "description": "Flip flashcards to view both front and back sides."
+        "description": "Navigate to the subscription plans page"
       },
       {
         "type": "action",
-        "description": "Mark flashcards as known or unknown according to user response."
+        "description": "Select a paid subscription plan and proceed to checkout"
+      },
+      {
+        "type": "action",
+        "description": "Complete payment using valid Stripe test card details"
       },
       {
         "type": "assertion",
-        "description": "Verify user responses are saved locally and persist after page reload or logout/login."
+        "description": "Verify that payment is processed successfully"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify that the user's subscription status is updated to active"
       }
     ]
   },
   {
     "id": "TC007",
-    "title": "Simulado Test with Auto-Correction and Scoring",
-    "description": "Validate that users can take full simulados with automatic correction and immediate percentage score display.",
+    "title": "Free Trial Activation and Expiry Handling",
+    "description": "Verify that user activating free trial gets full features during trial period and is restricted once trial expires.",
     "category": "functional",
     "priority": "High",
     "steps": [
       {
         "type": "action",
-        "description": "Navigate to simulados section from dashboard."
+        "description": "Register a new user"
       },
       {
         "type": "action",
-        "description": "Start a new simulated exam."
-      },
-      {
-        "type": "action",
-        "description": "Answer all multiple choice questions."
-      },
-      {
-        "type": "action",
-        "description": "Submit the simulad."
+        "description": "Activate free trial plan"
       },
       {
         "type": "assertion",
-        "description": "Verify the system auto-corrects the answers and displays percentage score immediately."
+        "description": "Verify full platform features are accessible during trial"
+      },
+      {
+        "type": "action",
+        "description": "Simulate trial expiry by moving system date beyond trial period"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify trial features become restricted and user is prompted for subscription"
       }
     ]
   },
   {
     "id": "TC008",
-    "title": "User Progress Dashboard Updates After Module Completion",
-    "description": "Ensure the user progress dashboard automatically updates statistics, study time, and revision suggestions after each study module is finished.",
+    "title": "PDF Reader - Text Selection and Annotation",
+    "description": "Verify that user can open a PDF document in the study room, select text, and add annotations which are saved.",
     "category": "functional",
-    "priority": "High",
+    "priority": "Medium",
     "steps": [
       {
         "type": "action",
-        "description": "Complete a study module, such as a flashcard set or a simulado."
+        "description": "Log in and navigate to study room"
+      },
+      {
+        "type": "action",
+        "description": "Open an uploaded PDF document"
+      },
+      {
+        "type": "action",
+        "description": "Select a portion of text in the PDF"
+      },
+      {
+        "type": "action",
+        "description": "Add an annotation to the selected text"
       },
       {
         "type": "assertion",
-        "description": "Verify that the dashboard reflects updated performance metrics, time spent, and personalized revision advice."
-      },
-      {
-        "type": "assertion",
-        "description": "Check that data is consistent across multiple sessions for the same user."
+        "description": "Verify that annotation is saved and visible on reloading the document"
       }
     ]
   },
   {
     "id": "TC009",
-    "title": "Responsive UI on Multiple Screen Resolutions",
-    "description": "Verify that the user interface adapts properly to at least three screen resolutions including mobile, tablet, and desktop.",
-    "category": "ui",
+    "title": "AI Flashcard Generation from PDF",
+    "description": "Verify that user can select text in PDF and trigger AI-based flashcard generation, receiving relevant flashcards.",
+    "category": "functional",
     "priority": "Medium",
     "steps": [
       {
         "type": "action",
-        "description": "Open the platform on desktop resolution (e.g., 1920x1080)."
-      },
-      {
-        "type": "assertion",
-        "description": "Verify all UI elements are correctly displayed, no overflow or misalignment occurs."
+        "description": "Open PDF reader and highlight text or passage"
       },
       {
         "type": "action",
-        "description": "Resize or access the platform on tablet resolution (e.g., 768x1024)."
+        "description": "Trigger AI flashcard generation from selected text"
       },
       {
         "type": "assertion",
-        "description": "Confirm UI components rearrange accordingly and remain usable without horizontal scrolling."
-      },
-      {
-        "type": "action",
-        "description": "Access the platform on mobile resolution (e.g., 375x667)."
-      },
-      {
-        "type": "assertion",
-        "description": "Verify responsive menu, touch-friendly controls, and consistent content rendering."
+        "description": "Verify relevant flashcards are generated and available for review"
       }
     ]
   },
   {
     "id": "TC010",
-    "title": "Stripe Payment Checkout Process",
-    "description": "Ensure that payment via Stripe proceeds correctly, payment verification occurs, and user receives confirmation email.",
+    "title": "Flashcards - Spaced Repetition and Performance Tracking",
+    "description": "Verify that flashcards support spaced repetition study mode and user performance data is recorded and shown.",
     "category": "functional",
-    "priority": "High",
+    "priority": "Medium",
     "steps": [
       {
         "type": "action",
-        "description": "Select a paid plan and proceed to checkout."
+        "description": "Access flashcards study section"
       },
       {
         "type": "action",
-        "description": "Complete payment using a valid test credit card in Stripe checkout."
-      },
-      {
-        "type": "assertion",
-        "description": "Verify payment is successfully processed and transaction verified by back-end."
-      },
-      {
-        "type": "assertion",
-        "description": "Check that a confirmation email is sent to the user."
+        "description": "Study flashcards using spaced repetition sessions"
       },
       {
         "type": "action",
-        "description": "Attempt payment with invalid card and verify failure."
+        "description": "Mark cards as known or unknown"
       },
       {
         "type": "assertion",
-        "description": "Confirm user-friendly error message is displayed and no payment is processed."
+        "description": "Verify that flashcard review frequency adapts based on user input"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify user performance analytics are updated and displayed"
       }
     ]
   },
   {
     "id": "TC011",
-    "title": "Marketplace Instructor Search and Filter (Planned Feature)",
-    "description": "Validate that the marketplace allows searching and filtering instructors by city, vehicle type, and pricing.",
+    "title": "Quiz System with Timers and Immediate Feedback",
+    "description": "Verify that quizzes function correctly with timed questions, immediate feedback on answers, and analytics by category.",
     "category": "functional",
-    "priority": "Medium",
+    "priority": "High",
     "steps": [
       {
         "type": "action",
-        "description": "Navigate to the instructors marketplace section."
+        "description": "Navigate to quiz section and select a quiz category"
       },
       {
         "type": "action",
-        "description": "Enter search criteria such as city or region."
+        "description": "Start timed quiz"
       },
       {
         "type": "action",
-        "description": "Apply filters for vehicle type and pricing."
+        "description": "Answer multiple-choice questions within time limit"
       },
       {
         "type": "assertion",
-        "description": "Verify that the list updates to show only instructors matching selected parameters."
-      },
-      {
-        "type": "action",
-        "description": "Select an instructor to view profile details."
+        "description": "Verify immediate feedback is shown after each answer"
       },
       {
         "type": "assertion",
-        "description": "Check that all relevant information including certifications, pricing, and reviews are shown."
+        "description": "Verify quiz analytics by category are shown after quiz completion"
       }
     ]
   },
   {
     "id": "TC012",
-    "title": "Admin Panel - User Management",
-    "description": "Check admin can list, search, edit, and disable user accounts appropriately.",
-    "category": "functional",
-    "priority": "High",
-    "steps": [
-      {
-        "type": "action",
-        "description": "Log in as admin and open user management panel."
-      },
-      {
-        "type": "action",
-        "description": "Search for specific users using filters such as email or registration date."
-      },
-      {
-        "type": "assertion",
-        "description": "Verify search results are accurate and relevant."
-      },
-      {
-        "type": "action",
-        "description": "Edit user details like role or status."
-      },
-      {
-        "type": "assertion",
-        "description": "Confirm changes are saved and enforced in the system."
-      },
-      {
-        "type": "action",
-        "description": "Disable a user account and verify access is revoked."
-      }
-    ]
-  },
-  {
-    "id": "TC013",
-    "title": "Admin Panel - Question and Flashcard Management",
-    "description": "Ensure admin can create, edit, and delete multiple choice questions and flashcards.",
+    "title": "Traffic Signs Library - Search and Categorization",
+    "description": "Verify that users can browse the traffic signs library, filter by categories, and search signs by name or type.",
     "category": "functional",
     "priority": "Medium",
     "steps": [
       {
         "type": "action",
-        "description": "Log in as admin and navigate to question management."
+        "description": "Navigate to traffic signs library"
       },
       {
         "type": "action",
-        "description": "Create a new multiple choice question."
+        "description": "Use category filters to browse signs"
+      },
+      {
+        "type": "action",
+        "description": "Perform a search query by sign name or type"
       },
       {
         "type": "assertion",
-        "description": "Confirm question is stored and visible in the list."
+        "description": "Verify relevant signs are displayed according to filters and search terms"
+      }
+    ]
+  },
+  {
+    "id": "TC013",
+    "title": "Traffic Signs Quizzes and Progress Tracking",
+    "description": "Verify that users can take traffic sign quizzes and their progress is tracked and displayed accurately.",
+    "category": "functional",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Access traffic signs quiz section"
       },
       {
         "type": "action",
-        "description": "Edit existing questions and save changes."
+        "description": "Complete a traffic signs quiz"
       },
       {
-        "type": "action",
-        "description": "Delete a question and verify it no longer appears."
+        "type": "assertion",
+        "description": "Verify quiz results and progress indicators update appropriately"
       },
       {
-        "type": "action",
-        "description": "Repeat above steps for flashcards in flashcard management panel."
+        "type": "assertion",
+        "description": "Verify progress persists across sessions"
       }
     ]
   },
   {
     "id": "TC014",
-    "title": "User-Facing Error Messages Are Friendly and Non-Technical",
-    "description": "Verify that all error messages exposed to users are clear, friendly, and avoid technical jargon.",
-    "category": "error handling",
+    "title": "AI Study Chat Assistant Interaction",
+    "description": "Verify that the AI chat assistant responds accurately to study-related queries and provides personalized explanations on demand.",
+    "category": "functional",
     "priority": "High",
     "steps": [
       {
         "type": "action",
-        "description": "Trigger errors such as invalid login, PDF upload failure, payment failure."
+        "description": "Open AI study chat assistant in the study room"
+      },
+      {
+        "type": "action",
+        "description": "Submit a study-related question or request for explanation"
       },
       {
         "type": "assertion",
-        "description": "Confirm displayed error messages are understandable, courteous, and do not expose internal details."
+        "description": "Verify the assistant provides a relevant and context-aware response"
+      },
+      {
+        "type": "action",
+        "description": "Request AI-generated quizzes or summaries from chat"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the AI generates valid quizzes or summaries based on user input"
       }
     ]
   },
   {
     "id": "TC015",
-    "title": "PDF Parsing Robustness and Error Handling",
-    "description": "Test system behavior when uploading invalid, corrupted, or unsupported PDF files for parsing and content extraction.",
+    "title": "Push and Email Notifications Delivery",
+    "description": "Verify that push and email notifications for study reminders, content updates, and subscription alerts are sent per user preferences.",
+    "category": "functional",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Set user notification preferences for push and email"
+      },
+      {
+        "type": "action",
+        "description": "Trigger events that generate notifications (e.g., subscription expiry, new content published)"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify that push notifications are received on device if enabled"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify that email notifications are received in the registered email if enabled"
+      }
+    ]
+  },
+  {
+    "id": "TC016",
+    "title": "Admin Dashboard User Management",
+    "description": "Verify that admin users can view, search, edit, and deactivate regular user accounts via the admin dashboard.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Login as admin user"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to the User Management panel in the admin dashboard"
+      },
+      {
+        "type": "action",
+        "description": "Search for a user by email or ID"
+      },
+      {
+        "type": "action",
+        "description": "Edit user details (name, roles, status)"
+      },
+      {
+        "type": "action",
+        "description": "Deactivate the user account"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify changes are persisted and user cannot login if deactivated"
+      }
+    ]
+  },
+  {
+    "id": "TC017",
+    "title": "Subscription Status Update and Cancellation",
+    "description": "Verify that admin can update user subscription statuses and process cancellations, reflecting immediately in user access.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Login as admin user"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to Subscription Management in admin dashboard"
+      },
+      {
+        "type": "action",
+        "description": "Update a user's subscription status and process cancellation"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify that user's access is restricted appropriately after cancellation"
+      }
+    ]
+  },
+  {
+    "id": "TC018",
+    "title": "Audit Logging of User Actions",
+    "description": "Verify that critical user and admin actions are logged correctly with timestamps and are queryable from audit logs.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Perform key actions such as login, subscription purchase, profile update, and admin changes"
+      },
+      {
+        "type": "action",
+        "description": "Access audit logs in the admin dashboard"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify that all performed actions are logged with correct details and timestamps"
+      }
+    ]
+  },
+  {
+    "id": "TC019",
+    "title": "Session Timeout and Secure Session Management",
+    "description": "Verify that user sessions are securely maintained and timeout appropriately after inactivity.",
+    "category": "security",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Log in as a valid user"
+      },
+      {
+        "type": "action",
+        "description": "Remain inactive for session timeout duration configured"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify that the user is logged out and redirected to login page"
+      },
+      {
+        "type": "action",
+        "description": "Attempt to access secured pages after timeout"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify access is denied and login is required"
+      }
+    ]
+  },
+  {
+    "id": "TC020",
+    "title": "Platform Responsive UI on Multiple Devices",
+    "description": "Verify the application's UI properly adapts across desktop, tablet, and mobile devices and loads within 3 seconds under normal network conditions.",
+    "category": "ui",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Open the application on desktop, tablet, and mobile device simulators"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify UI elements are properly displayed and functional in each device size"
+      },
+      {
+        "type": "assertion",
+        "description": "Measure page load times and verify they are under 3 seconds on each device"
+      }
+    ]
+  },
+  {
+    "id": "TC021",
+    "title": "LGPD Compliance - User Data Access and Consent",
+    "description": "Verify that user data is handled according to LGPD, including obtaining consent, displaying privacy policy, and allowing data export or deletion requests.",
+    "category": "security",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Register a new user and accept privacy policy with explicit consent"
+      },
+      {
+        "type": "action",
+        "description": "Access user profile data export option"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify that user can download their data in machine-readable format"
+      },
+      {
+        "type": "action",
+        "description": "Request user data deletion via profile interface"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify that data deletion request is processed and user account is removed according to policy"
+      }
+    ]
+  },
+  {
+    "id": "TC022",
+    "title": "Error Handling When Stripe Payment Fails",
+    "description": "Verify that the platform handles Stripe payment failures gracefully and informs the user accurately.",
     "category": "error handling",
     "priority": "High",
     "steps": [
       {
         "type": "action",
-        "description": "Upload a corrupted or non-PDF file where PDF expected for material population."
-      },
-      {
-        "type": "assertion",
-        "description": "Verify system prevents upload and shows friendly error message."
+        "description": "Initiate a subscription checkout using Stripe"
       },
       {
         "type": "action",
-        "description": "Upload a very large PDF file to test performance limits."
+        "description": "Simulate payment failure using Stripe test cards that decline payments"
       },
       {
         "type": "assertion",
-        "description": "Check system handles the file gracefully without crashing or freezing."
+        "description": "Verify that user is notified of payment failure with meaningful error message"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify that subscription is not activated and user remains on checkout page"
+      }
+    ]
+  },
+  {
+    "id": "TC023",
+    "title": "Content Sharing and Community Interaction",
+    "description": "Verify that users can share flashcards and study content, rate and comment on shared content, and gamification points are updated accordingly.",
+    "category": "functional",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Create a set of flashcards"
+      },
+      {
+        "type": "action",
+        "description": "Share flashcards with community"
+      },
+      {
+        "type": "action",
+        "description": "Login as a different user and find shared flashcards"
+      },
+      {
+        "type": "action",
+        "description": "Submit ratings and comments on shared content"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify that ratings and comments are visible and gamification points are awarded to content creator"
       }
     ]
   }

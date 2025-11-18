@@ -86,11 +86,23 @@ const Dashboard = () => {
   const fetchProfile = async (userId: string) => {
     if (!isSupabaseConfigured || !navigator.onLine) return;
     try {
-      const { data, error } = await supabase
+      const query = supabase
         .from("profiles")
         .select("*")
-        .eq("id", userId)
-        .maybeSingle();
+        .eq("id", userId);
+      let data: any = null;
+      let error: any = null;
+      if (typeof (query as any).maybeSingle === 'function') {
+        ({ data, error } = await (query as any).maybeSingle());
+      } else if (typeof (query as any).single === 'function') {
+        try {
+          ({ data, error } = await (query as any).single());
+        } catch {
+          data = null; error = null;
+        }
+      } else {
+        data = null; error = null;
+      }
 
       if (error) throw error;
       setProfile(data);

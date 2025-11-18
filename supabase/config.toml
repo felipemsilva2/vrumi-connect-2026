@@ -1,16 +1,16 @@
 project_id = "owtylihsslimxdiovxia"
 
 [functions.populate-materiais-from-pdf]
-verify_jwt = false
+verify_jwt = true
 
 [functions.generate-flashcards]
-verify_jwt = false
+verify_jwt = true
 
 [functions.generate-questions]
-verify_jwt = false
+verify_jwt = true
 
 [functions.parse-pdf]
-verify_jwt = false
+verify_jwt = true
 
 [functions.create-checkout]
 verify_jwt = true
@@ -19,4 +19,10 @@ verify_jwt = true
 verify_jwt = true
 
 [functions.study-chat]
+verify_jwt = true
+
+[functions.import-traffic-signs]
+verify_jwt = true
+
+[functions.stripe-webhook]
 verify_jwt = false

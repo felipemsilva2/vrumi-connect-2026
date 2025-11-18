@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
+import { SubscriptionGate } from "@/components/auth/SubscriptionGate";
 
 interface NotificationSettings {
   study_reminders: boolean;
@@ -259,6 +260,7 @@ export default function NotificationSettings() {
   }
 
   return (
+    <SubscriptionGate feature="Notificações">
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
@@ -441,5 +443,6 @@ export default function NotificationSettings() {
         </p>
       </div>
     </div>
+    </SubscriptionGate>
   );
 }

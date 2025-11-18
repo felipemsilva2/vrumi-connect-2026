@@ -44,29 +44,37 @@ export default function NotificationSystem() {
 
   useEffect(() => {
     loadNotifications();
-    
-    // Configurar subscription para notificações em tempo real
-    const subscription = supabase
-      .channel('notifications')
-      .on('postgres_changes', {
-        event: 'INSERT',
-        schema: 'public',
-        table: 'notifications',
-        filter: `user_id=eq.${getCurrentUserId()}`
-      }, handleNewNotification)
-      .subscribe();
 
-    // Configurar intervalo para verificar novas notificações
-    const interval = setInterval(checkForNewNotifications, 30000); // Verificar a cada 30 segundos
+    let subscription: any = null;
+    (async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        const userId = user?.id;
+        if (userId && typeof (supabase as any).channel === 'function') {
+          subscription = (supabase as any)
+            .channel('notifications')
+            .on('postgres_changes', {
+              event: 'INSERT',
+              schema: 'public',
+              table: 'notifications',
+              filter: `user_id=eq.${userId}`
+            }, handleNewNotification)
+            .subscribe();
+        }
+      } catch {}
+    })();
+
+    const interval = setInterval(checkForNewNotifications, 30000);
 
     return () => {
-      subscription.unsubscribe();
+      if (subscription) subscription.unsubscribe();
       clearInterval(interval);
     };
   }, []);
 
-  const getCurrentUserId = () => {
-    return supabase.auth.getUser().then(({ data }) => data.user?.id || '');
+  const getCurrentUserId = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    return user?.id || '';
   };
 
   const loadNotifications = async () => {
@@ -106,12 +114,11 @@ export default function NotificationSystem() {
       if (!user) return;
 
       // Verificar se há notificações agendadas para agora
-      const { data } = await supabase
-        .from('notifications')
-        .select('*')
-        .eq('user_id', user.id)
-        .eq('read', false)
-        .order('created_at', { ascending: false });
+      let q: any = supabase.from('notifications').select('*');
+      if (typeof q.eq === 'function') q = q.eq('user_id', user.id);
+      if (typeof q.eq === 'function') q = q.eq('read', false);
+      if (typeof q.order === 'function') q = q.order('created_at', { ascending: false });
+      const { data } = await q;
 
       if (data && data.length > 0) {
         const mappedData: Notification[] = data.map(n => ({

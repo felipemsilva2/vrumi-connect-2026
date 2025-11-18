@@ -1,16 +1,45 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+const getCors = (req: Request) => {
+  const origin = req.headers.get('origin') || '';
+  const allowedList = (Deno.env.get('ALLOWED_ORIGINS') || '').split(',').map(s => s.trim()).filter(Boolean);
+  const allowed = allowedList.length === 0 || allowedList.includes(origin);
+  const headers = {
+    'Access-Control-Allow-Origin': allowed ? origin : '',
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  };
+  return { headers, allowed };
 };
 
 serve(async (req) => {
+  const { headers: corsHeaders, allowed } = getCors(req);
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: corsHeaders, status: allowed ? 200 : 403 });
   }
 
   try {
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ error: 'Não autenticado' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const token = authHeader.replace('Bearer ', '');
+    const { data: { user } } = await supabase.auth.getUser(token);
+    if (!user) {
+      return new Response(
+        JSON.stringify({ error: 'Usuário não autenticado' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     const formData = await req.formData();
     const file = formData.get('file') as File;
     
@@ -18,7 +47,23 @@ serve(async (req) => {
       throw new Error("No file provided");
     }
 
-    console.log(`Parsing PDF: ${file.name}, size: ${file.size} bytes`);
+    const type = (file as any).type || '';
+    const size = (file as any).size || 0;
+    if (!type.toLowerCase().includes('pdf')) {
+      return new Response(
+        JSON.stringify({ error: 'Tipo de arquivo inválido. Apenas PDF.' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    const maxSize = Number(Deno.env.get('MAX_UPLOAD_SIZE_BYTES') || '10485760');
+    if (size > maxSize) {
+      return new Response(
+        JSON.stringify({ error: 'Arquivo excede o tamanho máximo permitido' }),
+        { status: 413, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    console.log(`Parsing PDF: ${file.name}, size: ${size} bytes`);
 
     // Convert file to base64
     const arrayBuffer = await file.arrayBuffer();
