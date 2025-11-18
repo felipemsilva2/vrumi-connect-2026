@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Index from "@/pages/Index";
 import Auth from "@/pages/Auth";
 import Dashboard from "@/pages/Dashboard";
@@ -12,7 +12,6 @@ import AdminUsers from "@/pages/admin/AdminUsers";
 import AdminRoles from "@/pages/admin/AdminRoles";
 import AdminSubscriptions from "@/pages/admin/AdminSubscriptions";
 import AdminAuditLogs from "@/pages/admin/AdminAuditLogs";
-import PrivacyCenter from "@/pages/admin/PrivacyCenter";
 import AdminQuestions from "@/pages/AdminQuestions";
 import AdminFlashcards from "@/pages/AdminFlashcards";
 import AdminPopulate from "@/pages/AdminPopulate";
@@ -21,9 +20,30 @@ import Checkout from "@/pages/Checkout";
 import CheckoutSuccess from "@/pages/CheckoutSuccess";
 import CheckoutCancel from "@/pages/CheckoutCancel";
 import NotFound from "@/pages/NotFound";
-import { ProtectedAdminRoute } from "@/components/admin/ProtectedAdminRoute";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import TrafficSignsLibrary from "@/pages/TrafficSignsLibrary";
+import { useIsAdmin } from "@/hooks/useIsAdmin";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+
+const ProtectedAdminRoute = ({ children }: { children: React.ReactNode }) => {
+  const [userId, setUserId] = useState<string>();
+  const { isAdmin, isLoading } = useIsAdmin(userId);
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        setUserId(session.user.id);
+      }
+    };
+    checkAuth();
+  }, []);
+
+  if (isLoading) return <div>Loading...</div>;
+  if (!isAdmin) return <Navigate to="/auth" replace />;
+  return <>{children}</>;
+};
 
 const queryClient = new QueryClient();
 
@@ -66,13 +86,8 @@ const App = () => (
             </ProtectedAdminRoute>
           } />
           <Route path="/admin/audit-logs" element={
-            <ProtectedAdminRoute allowDpo>
+            <ProtectedAdminRoute>
               <AdminAuditLogs />
-            </ProtectedAdminRoute>
-          } />
-          <Route path="/admin/privacy" element={
-            <ProtectedAdminRoute allowDpo>
-              <PrivacyCenter />
             </ProtectedAdminRoute>
           } />
           <Route path="/admin/populate" element={

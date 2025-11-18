@@ -12,7 +12,7 @@ const Hero = () => {
           alt="Driving preparation" 
           className="w-full h-full object-cover"
           decoding="async"
-          fetchpriority="high"
+          fetchPriority="high"
           sizes="100vw"
         />
         <div className="absolute inset-0 bg-gradient-to-br from-primary/90 via-primary/70 to-accent/80" />
