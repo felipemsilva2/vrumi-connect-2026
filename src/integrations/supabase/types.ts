@@ -53,6 +53,33 @@ export type Database = {
         }
         Relationships: []
       }
+      audit_summaries: {
+        Row: {
+          generated_at: string
+          generated_by: string | null
+          id: string
+          period_month: number
+          period_year: number
+          summary: Json
+        }
+        Insert: {
+          generated_at?: string
+          generated_by?: string | null
+          id?: string
+          period_month: number
+          period_year: number
+          summary: Json
+        }
+        Update: {
+          generated_at?: string
+          generated_by?: string | null
+          id?: string
+          period_month?: number
+          period_year?: number
+          summary?: Json
+        }
+        Relationships: []
+      }
       challenge_results: {
         Row: {
           category: string | null
@@ -164,6 +191,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      data_subject_requests: {
+        Row: {
+          created_at: string
+          handled_by: string | null
+          id: string
+          notes: string | null
+          requested_at: string
+          resolved_at: string | null
+          status: string
+          type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          handled_by?: string | null
+          id?: string
+          notes?: string | null
+          requested_at?: string
+          resolved_at?: string | null
+          status?: string
+          type: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          handled_by?: string | null
+          id?: string
+          notes?: string | null
+          requested_at?: string
+          resolved_at?: string | null
+          status?: string
+          type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       flashcards: {
         Row: {
@@ -947,6 +1013,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      generate_audit_summary: {
+        Args: { p_month: number; p_year: number }
+        Returns: Json
+      }
       get_category_progress: {
         Args: { p_category: string; p_user_id: string }
         Returns: {
@@ -958,6 +1028,7 @@ export type Database = {
       }
       has_active_pass: { Args: { user_id: string }; Returns: boolean }
       is_admin: { Args: { user_id?: string }; Returns: boolean }
+      is_dpo: { Args: { user_id?: string }; Returns: boolean }
       log_admin_action: {
         Args: {
           p_action_type: string

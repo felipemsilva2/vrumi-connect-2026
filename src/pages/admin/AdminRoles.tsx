@@ -88,9 +88,12 @@ const AdminRoles = () => {
 
     try {
       if (selectedUser.action === "add") {
+        const { data: currentUser } = await supabase.auth.getUser();
+        if (!currentUser.user) throw new Error("No authenticated user");
+
         const { data, error } = await supabase
           .from("user_roles")
-          .insert({ user_id: selectedUser.userId, role: selectedUser.role })
+          .insert({ user_id: selectedUser.userId, role: selectedUser.role as "admin" | "user", created_by: currentUser.user.id })
           .select()
           .single();
 
@@ -120,13 +123,13 @@ const AdminRoles = () => {
           oldValues: { user_id: selectedUser.userId, role: selectedUser.role },
         });
 
-        toast.success(selectedUser.role === "admin" ? "Permissões de admin removidas com sucesso" : "Permissões de DPO removidas com sucesso");
+        toast.success(selectedUser.role === "admin" ? "Permissões de admin removidas com sucesso" : "DPO removido com sucesso");
       }
 
-      await fetchUserRoles();
+      fetchUserRoles();
     } catch (error) {
-      console.error("Error toggling admin role:", error);
-      toast.error("Erro ao alterar permissões");
+      console.error("Error toggling role:", error);
+      toast.error("Erro ao alterar role");
     } finally {
       setAlertOpen(false);
       setSelectedUser(null);
