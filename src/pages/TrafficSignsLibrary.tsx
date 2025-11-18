@@ -14,6 +14,8 @@ import {
 } from '@/components/ui/dialog';
 import FlashcardMode from '@/components/traffic-signs/FlashcardMode';
 import TimedChallenge from '@/components/traffic-signs/TimedChallenge';
+import StudyModeModal from '@/components/study/StudyModeModal';
+import StudyModeButtons from '@/components/study/StudyModeButtons';
 
 interface TrafficSign {
   id: string;
@@ -50,6 +52,7 @@ export default function TrafficSignsLibrary() {
   const [timedChallengeMode, setTimedChallengeMode] = useState(false);
   const [flashcardSigns, setFlashcardSigns] = useState<TrafficSign[]>([]);
   const [loading, setLoading] = useState(true);
+  const [studyModeModalOpen, setStudyModeModalOpen] = useState(false);
 
   const categories = ['Todas', 'Regulamentação', 'Advertência', 'Serviços Auxiliares', 'Indicação', 'Obras'];
 
