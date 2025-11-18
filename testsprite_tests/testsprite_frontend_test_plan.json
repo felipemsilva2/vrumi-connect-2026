@@ -1,55 +1,421 @@
 [
   {
-    "requirement": "Autenticação/Login",
-    "test_cases": [
-      "Usuário pode acessar a tela de login",
-      "Usuário pode realizar login com credenciais válidas",
-      "Usuário recebe mensagem de erro ao tentar login com credenciais inválidas",
-      "Usuário pode realizar logout"
+    "id": "TC001",
+    "title": "User Registration with Mandatory Consent",
+    "description": "Verify that user registration requires email, password, and explicit data processing consent checkbox before account creation.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to the registration page."
+      },
+      {
+        "type": "action",
+        "description": "Fill in valid email and password."
+      },
+      {
+        "type": "action",
+        "description": "Attempt to register without checking the consent checkbox."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify registration is blocked and a user-friendly error message is displayed requiring consent."
+      },
+      {
+        "type": "action",
+        "description": "Check the mandatory consent checkbox."
+      },
+      {
+        "type": "action",
+        "description": "Submit the registration form."
+      },
+      {
+        "type": "assertion",
+        "description": "Confirm that registration succeeds and user is redirected to the dashboard or welcome page."
+      }
     ]
   },
   {
-    "requirement": "Navegação",
-    "test_cases": [
-      "Usuário pode navegar entre as páginas principais",
-      "Links do menu levam para as páginas corretas",
-      "Página de erro é exibida para rotas inexistentes"
+    "id": "TC002",
+    "title": "Login with Correct Credentials",
+    "description": "Verify that user can log in successfully using valid email and password within 10 seconds.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to login page."
+      },
+      {
+        "type": "action",
+        "description": "Input valid registered email and correct password."
+      },
+      {
+        "type": "action",
+        "description": "Click login button."
+      },
+      {
+        "type": "assertion",
+        "description": "Check that login is successful and user is directed to the user dashboard within 10 seconds."
+      }
     ]
   },
   {
-    "requirement": "Dashboard do Usuário",
-    "test_cases": [
-      "Usuário visualiza informações do dashboard após login",
-      "Dashboard exibe dados atualizados do usuário"
+    "id": "TC003",
+    "title": "Login with Incorrect Credentials",
+    "description": "Verify that login attempt with invalid email or password fails and displays friendly error message.",
+    "category": "error handling",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to login page."
+      },
+      {
+        "type": "action",
+        "description": "Input invalid email and/or incorrect password."
+      },
+      {
+        "type": "action",
+        "description": "Click login button."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify login is rejected and user-friendly, non-technical error message is displayed."
+      }
     ]
   },
   {
-    "requirement": "Checkout/Pagamento",
-    "test_cases": [
-      "Usuário pode acessar a página de checkout",
-      "Processo de pagamento é concluído com sucesso",
-      "Usuário recebe confirmação após pagamento"
+    "id": "TC004",
+    "title": "PDF Upload and AI-Generated Multiple Choice Questions",
+    "description": "Ensure users can upload valid PDFs and the system generates multiple choice questions appropriately.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Log in as a registered user and navigate to the question generation module."
+      },
+      {
+        "type": "action",
+        "description": "Upload a PDF document containing driver's license theoretical content."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify system parses PDF successfully and triggers AI generation of multiple choice questions."
+      },
+      {
+        "type": "assertion",
+        "description": "Confirm generated questions are relevant to PDF content and stored in user-accessible study materials."
+      }
     ]
   },
   {
-    "requirement": "Geração de Questões/Flashcards",
-    "test_cases": [
-      "Usuário pode gerar questões a partir do material PDF",
-      "Usuário pode gerar flashcards a partir das questões"
+    "id": "TC005",
+    "title": "PDF Upload and AI-Generated Flashcards",
+    "description": "Validate the generation of educational flashcards from uploaded PDFs using AI service.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Log in and navigate to the flashcard generation module."
+      },
+      {
+        "type": "action",
+        "description": "Upload a PDF related to driver's license exam study."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify system extracts content and generates flashcards with front and back sides."
+      },
+      {
+        "type": "assertion",
+        "description": "Confirm flashcards are linked to user profile and can be reviewed in flashcard study mode."
+      }
     ]
   },
   {
-    "requirement": "Administração",
-    "test_cases": [
-      "Administrador pode acessar painel administrativo",
-      "Administrador pode criar e editar conteúdos"
+    "id": "TC006",
+    "title": "Flashcard Interaction and Local Save of Responses",
+    "description": "Verify that users can interact with flashcards (flip front/back) and responses are saved locally for progress tracking.",
+    "category": "functional",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Access generated flashcards from user dashboard."
+      },
+      {
+        "type": "action",
+        "description": "Flip flashcards to view both front and back sides."
+      },
+      {
+        "type": "action",
+        "description": "Mark flashcards as known or unknown according to user response."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify user responses are saved locally and persist after page reload or logout/login."
+      }
     ]
   },
   {
-    "requirement": "Responsividade",
-    "test_cases": [
-      "Layout se adapta corretamente em dispositivos móveis",
-      "Funcionalidades principais funcionam em telas pequenas"
+    "id": "TC007",
+    "title": "Simulado Test with Auto-Correction and Scoring",
+    "description": "Validate that users can take full simulados with automatic correction and immediate percentage score display.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to simulados section from dashboard."
+      },
+      {
+        "type": "action",
+        "description": "Start a new simulated exam."
+      },
+      {
+        "type": "action",
+        "description": "Answer all multiple choice questions."
+      },
+      {
+        "type": "action",
+        "description": "Submit the simulad."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the system auto-corrects the answers and displays percentage score immediately."
+      }
+    ]
+  },
+  {
+    "id": "TC008",
+    "title": "User Progress Dashboard Updates After Module Completion",
+    "description": "Ensure the user progress dashboard automatically updates statistics, study time, and revision suggestions after each study module is finished.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Complete a study module, such as a flashcard set or a simulado."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify that the dashboard reflects updated performance metrics, time spent, and personalized revision advice."
+      },
+      {
+        "type": "assertion",
+        "description": "Check that data is consistent across multiple sessions for the same user."
+      }
+    ]
+  },
+  {
+    "id": "TC009",
+    "title": "Responsive UI on Multiple Screen Resolutions",
+    "description": "Verify that the user interface adapts properly to at least three screen resolutions including mobile, tablet, and desktop.",
+    "category": "ui",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Open the platform on desktop resolution (e.g., 1920x1080)."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify all UI elements are correctly displayed, no overflow or misalignment occurs."
+      },
+      {
+        "type": "action",
+        "description": "Resize or access the platform on tablet resolution (e.g., 768x1024)."
+      },
+      {
+        "type": "assertion",
+        "description": "Confirm UI components rearrange accordingly and remain usable without horizontal scrolling."
+      },
+      {
+        "type": "action",
+        "description": "Access the platform on mobile resolution (e.g., 375x667)."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify responsive menu, touch-friendly controls, and consistent content rendering."
+      }
+    ]
+  },
+  {
+    "id": "TC010",
+    "title": "Stripe Payment Checkout Process",
+    "description": "Ensure that payment via Stripe proceeds correctly, payment verification occurs, and user receives confirmation email.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Select a paid plan and proceed to checkout."
+      },
+      {
+        "type": "action",
+        "description": "Complete payment using a valid test credit card in Stripe checkout."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify payment is successfully processed and transaction verified by back-end."
+      },
+      {
+        "type": "assertion",
+        "description": "Check that a confirmation email is sent to the user."
+      },
+      {
+        "type": "action",
+        "description": "Attempt payment with invalid card and verify failure."
+      },
+      {
+        "type": "assertion",
+        "description": "Confirm user-friendly error message is displayed and no payment is processed."
+      }
+    ]
+  },
+  {
+    "id": "TC011",
+    "title": "Marketplace Instructor Search and Filter (Planned Feature)",
+    "description": "Validate that the marketplace allows searching and filtering instructors by city, vehicle type, and pricing.",
+    "category": "functional",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to the instructors marketplace section."
+      },
+      {
+        "type": "action",
+        "description": "Enter search criteria such as city or region."
+      },
+      {
+        "type": "action",
+        "description": "Apply filters for vehicle type and pricing."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify that the list updates to show only instructors matching selected parameters."
+      },
+      {
+        "type": "action",
+        "description": "Select an instructor to view profile details."
+      },
+      {
+        "type": "assertion",
+        "description": "Check that all relevant information including certifications, pricing, and reviews are shown."
+      }
+    ]
+  },
+  {
+    "id": "TC012",
+    "title": "Admin Panel - User Management",
+    "description": "Check admin can list, search, edit, and disable user accounts appropriately.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Log in as admin and open user management panel."
+      },
+      {
+        "type": "action",
+        "description": "Search for specific users using filters such as email or registration date."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify search results are accurate and relevant."
+      },
+      {
+        "type": "action",
+        "description": "Edit user details like role or status."
+      },
+      {
+        "type": "assertion",
+        "description": "Confirm changes are saved and enforced in the system."
+      },
+      {
+        "type": "action",
+        "description": "Disable a user account and verify access is revoked."
+      }
+    ]
+  },
+  {
+    "id": "TC013",
+    "title": "Admin Panel - Question and Flashcard Management",
+    "description": "Ensure admin can create, edit, and delete multiple choice questions and flashcards.",
+    "category": "functional",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Log in as admin and navigate to question management."
+      },
+      {
+        "type": "action",
+        "description": "Create a new multiple choice question."
+      },
+      {
+        "type": "assertion",
+        "description": "Confirm question is stored and visible in the list."
+      },
+      {
+        "type": "action",
+        "description": "Edit existing questions and save changes."
+      },
+      {
+        "type": "action",
+        "description": "Delete a question and verify it no longer appears."
+      },
+      {
+        "type": "action",
+        "description": "Repeat above steps for flashcards in flashcard management panel."
+      }
+    ]
+  },
+  {
+    "id": "TC014",
+    "title": "User-Facing Error Messages Are Friendly and Non-Technical",
+    "description": "Verify that all error messages exposed to users are clear, friendly, and avoid technical jargon.",
+    "category": "error handling",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Trigger errors such as invalid login, PDF upload failure, payment failure."
+      },
+      {
+        "type": "assertion",
+        "description": "Confirm displayed error messages are understandable, courteous, and do not expose internal details."
+      }
+    ]
+  },
+  {
+    "id": "TC015",
+    "title": "PDF Parsing Robustness and Error Handling",
+    "description": "Test system behavior when uploading invalid, corrupted, or unsupported PDF files for parsing and content extraction.",
+    "category": "error handling",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Upload a corrupted or non-PDF file where PDF expected for material population."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify system prevents upload and shows friendly error message."
+      },
+      {
+        "type": "action",
+        "description": "Upload a very large PDF file to test performance limits."
+      },
+      {
+        "type": "assertion",
+        "description": "Check system handles the file gracefully without crashing or freezing."
+      }
     ]
   }
 ]

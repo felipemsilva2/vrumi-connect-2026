@@ -8,6 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -61,6 +62,69 @@ export default function AdminAuditLogs() {
     );
   });
 
+  const exportJson = () => {
+    const dataToExport = filteredLogs || [];
+    const blob = new Blob([JSON.stringify(dataToExport, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `audit-logs-${new Date().toISOString()}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  const exportCsv = () => {
+    const rows = filteredLogs || [];
+    const headers = [
+      "created_at",
+      "action_type",
+      "entity_type",
+      "entity_id",
+      "user_id",
+      "ip_address",
+      "user_agent",
+      "old_values",
+      "new_values",
+    ];
+    const escape = (val: any) => {
+      if (val === null || val === undefined) return "";
+      const str = typeof val === "string" ? val : JSON.stringify(val);
+      const replaced = str.replace(/"/g, '""');
+      return `"${replaced}"`;
+    };
+    const csv = [headers.join(",")]
+      .concat(
+        rows.map((r) =>
+          [
+            r.created_at,
+            r.action_type,
+            r.entity_type,
+            r.entity_id || "",
+            r.user_id || "",
+            r.ip_address || "",
+            r.user_agent || "",
+            r.old_values ? JSON.stringify(r.old_values) : "",
+            r.new_values ? JSON.stringify(r.new_values) : "",
+          ]
+            .map(escape)
+            .join(",")
+        )
+      )
+      .join("\n");
+
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `audit-logs-${new Date().toISOString()}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <AdminLayout>
       <div className="space-y-6">
@@ -72,8 +136,12 @@ export default function AdminAuditLogs() {
         </div>
 
         <Card>
-          <CardHeader>
+          <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle>Filtros</CardTitle>
+            <div className="flex gap-2">
+              <Button variant="secondary" onClick={exportJson} disabled={!filteredLogs || filteredLogs.length === 0}>Exportar JSON</Button>
+              <Button variant="secondary" onClick={exportCsv} disabled={!filteredLogs || filteredLogs.length === 0}>Exportar CSV</Button>
+            </div>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

@@ -103,7 +103,7 @@ export function TextSelectionTooltip({ onExplain, className }: TextSelectionTool
     <div
       ref={tooltipRef}
       className={cn(
-        "fixed z-50 bg-background border border-border shadow-lg rounded-lg p-2",
+        "fixed z-50 bg-background border border-border shadow-lg rounded-lg p-2 flex items-center justify-center",
         "transform -translate-x-1/2 -translate-y-full",
         "animate-in fade-in-0 zoom-in-95 duration-200",
         className
@@ -117,9 +117,9 @@ export function TextSelectionTooltip({ onExplain, className }: TextSelectionTool
         onClick={handleExplainClick}
         size="sm"
         variant="ghost"
-        className="h-10 sm:h-8 px-3 text-xs font-medium hover:bg-accent hover:text-accent-foreground"
+        className="h-10 sm:h-8 px-4 text-xs font-medium hover:bg-accent hover:text-accent-foreground"
       >
-        <MessageCircle className="h-4 w-4 mr-1" />
+        <MessageCircle className="h-4 w-4" />
         Explicar isso
       </Button>
       

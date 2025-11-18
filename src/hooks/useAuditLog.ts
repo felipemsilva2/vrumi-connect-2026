@@ -24,15 +24,14 @@ export const useAuditLog = () => {
         return;
       }
 
-      const { error } = await supabase.rpc('log_admin_action', {
-        p_user_id: user.id,
-        p_action_type: actionType,
-        p_entity_type: entityType,
-        p_entity_id: entityId || null,
-        p_old_values: oldValues ? JSON.parse(JSON.stringify(oldValues)) : null,
-        p_new_values: newValues ? JSON.parse(JSON.stringify(newValues)) : null,
-        p_ip_address: null,
-        p_user_agent: navigator.userAgent,
+      const { data, error } = await supabase.functions.invoke('log-audit', {
+        body: {
+          actionType,
+          entityType,
+          entityId: entityId || null,
+          oldValues: oldValues ? JSON.parse(JSON.stringify(oldValues)) : null,
+          newValues: newValues ? JSON.parse(JSON.stringify(newValues)) : null,
+        },
       });
 
       if (error) {

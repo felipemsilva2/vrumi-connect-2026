@@ -12,6 +12,7 @@ import AdminUsers from "@/pages/admin/AdminUsers";
 import AdminRoles from "@/pages/admin/AdminRoles";
 import AdminSubscriptions from "@/pages/admin/AdminSubscriptions";
 import AdminAuditLogs from "@/pages/admin/AdminAuditLogs";
+import PrivacyCenter from "@/pages/admin/PrivacyCenter";
 import AdminQuestions from "@/pages/AdminQuestions";
 import AdminFlashcards from "@/pages/AdminFlashcards";
 import AdminPopulate from "@/pages/AdminPopulate";
@@ -65,8 +66,13 @@ const App = () => (
             </ProtectedAdminRoute>
           } />
           <Route path="/admin/audit-logs" element={
-            <ProtectedAdminRoute>
+            <ProtectedAdminRoute allowDpo>
               <AdminAuditLogs />
+            </ProtectedAdminRoute>
+          } />
+          <Route path="/admin/privacy" element={
+            <ProtectedAdminRoute allowDpo>
+              <PrivacyCenter />
             </ProtectedAdminRoute>
           } />
           <Route path="/admin/populate" element={

@@ -29,7 +29,7 @@ const AdminRoles = () => {
   const [userRoles, setUserRoles] = useState<UserRole[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [alertOpen, setAlertOpen] = useState(false);
-  const [selectedUser, setSelectedUser] = useState<{ userId: string; action: "add" | "remove" } | null>(null);
+  const [selectedUser, setSelectedUser] = useState<{ userId: string; action: "add" | "remove"; role: "admin" | "dpo" } | null>(null);
   const { logAction } = useAuditLog();
 
   useEffect(() => {
@@ -78,8 +78,8 @@ const AdminRoles = () => {
     }
   };
 
-  const handleToggleAdmin = async (userId: string, isCurrentlyAdmin: boolean) => {
-    setSelectedUser({ userId, action: isCurrentlyAdmin ? "remove" : "add" });
+  const handleToggleRole = async (userId: string, role: "admin" | "dpo", hasRole: boolean) => {
+    setSelectedUser({ userId, action: hasRole ? "remove" : "add", role });
     setAlertOpen(true);
   };
 
@@ -88,10 +88,9 @@ const AdminRoles = () => {
 
     try {
       if (selectedUser.action === "add") {
-        // Adicionar role de admin
         const { data, error } = await supabase
           .from("user_roles")
-          .insert({ user_id: selectedUser.userId, role: "admin" })
+          .insert({ user_id: selectedUser.userId, role: selectedUser.role })
           .select()
           .single();
 
@@ -101,17 +100,16 @@ const AdminRoles = () => {
           actionType: "CREATE",
           entityType: "role",
           entityId: data.id,
-          newValues: { user_id: selectedUser.userId, role: "admin" },
+          newValues: { user_id: selectedUser.userId, role: selectedUser.role },
         });
 
-        toast.success("Usuário promovido a admin com sucesso");
+        toast.success(selectedUser.role === "admin" ? "Usuário promovido a admin com sucesso" : "Usuário designado como DPO com sucesso");
       } else {
-        // Remover role de admin
         const { error } = await supabase
           .from("user_roles")
           .delete()
           .eq("user_id", selectedUser.userId)
-          .eq("role", "admin");
+          .eq("role", selectedUser.role);
 
         if (error) throw error;
 
@@ -119,10 +117,10 @@ const AdminRoles = () => {
           actionType: "DELETE",
           entityType: "role",
           entityId: selectedUser.userId,
-          oldValues: { user_id: selectedUser.userId, role: "admin" },
+          oldValues: { user_id: selectedUser.userId, role: selectedUser.role },
         });
 
-        toast.success("Permissões de admin removidas com sucesso");
+        toast.success(selectedUser.role === "admin" ? "Permissões de admin removidas com sucesso" : "Permissões de DPO removidas com sucesso");
       }
 
       await fetchUserRoles();
@@ -170,6 +168,7 @@ const AdminRoles = () => {
             <TableBody>
               {userRoles.map((userRole) => {
                 const isAdmin = userRole.roles.includes("admin");
+                const isDpo = userRole.roles.includes("dpo");
                 
                 return (
                   <TableRow key={userRole.user_id}>
@@ -179,9 +178,9 @@ const AdminRoles = () => {
                         {userRole.roles.map((role) => (
                           <Badge
                             key={role}
-                            variant={role === "admin" ? "default" : "secondary"}
+                            variant={role === "admin" ? "default" : role === "dpo" ? "secondary" : "secondary"}
                           >
-                            {role === "admin" ? "Admin" : "Usuário"}
+                            {role === "admin" ? "Admin" : role === "dpo" ? "DPO" : "Usuário"}
                           </Badge>
                         ))}
                       </div>
@@ -190,23 +189,42 @@ const AdminRoles = () => {
                       {new Date(userRole.created_at).toLocaleDateString("pt-BR")}
                     </TableCell>
                     <TableCell className="text-right">
-                      <Button
-                        variant={isAdmin ? "destructive" : "default"}
-                        size="sm"
-                        onClick={() => handleToggleAdmin(userRole.user_id, isAdmin)}
-                      >
-                        {isAdmin ? (
-                          <>
-                            <ShieldOff className="h-4 w-4 mr-2" />
-                            Remover Admin
-                          </>
-                        ) : (
-                          <>
-                            <Shield className="h-4 w-4 mr-2" />
-                            Tornar Admin
-                          </>
-                        )}
-                      </Button>
+                      <div className="flex gap-2 justify-end">
+                        <Button
+                          variant={isAdmin ? "destructive" : "default"}
+                          size="sm"
+                          onClick={() => handleToggleRole(userRole.user_id, "admin", isAdmin)}
+                        >
+                          {isAdmin ? (
+                            <>
+                              <ShieldOff className="h-4 w-4 mr-2" />
+                              Remover Admin
+                            </>
+                          ) : (
+                            <>
+                              <Shield className="h-4 w-4 mr-2" />
+                              Tornar Admin
+                            </>
+                          )}
+                        </Button>
+                        <Button
+                          variant={isDpo ? "destructive" : "secondary"}
+                          size="sm"
+                          onClick={() => handleToggleRole(userRole.user_id, "dpo", isDpo)}
+                        >
+                          {isDpo ? (
+                            <>
+                              <ShieldOff className="h-4 w-4 mr-2" />
+                              Remover DPO
+                            </>
+                          ) : (
+                            <>
+                              <Shield className="h-4 w-4 mr-2" />
+                              Tornar DPO
+                            </>
+                          )}
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 );
@@ -222,8 +240,8 @@ const AdminRoles = () => {
             <AlertDialogTitle>Confirmar alteração de permissões</AlertDialogTitle>
             <AlertDialogDescription>
               {selectedUser?.action === "add"
-                ? "Tem certeza que deseja promover este usuário a administrador? Ele terá acesso total ao sistema."
-                : "Tem certeza que deseja remover as permissões de administrador deste usuário?"}
+                ? (selectedUser?.role === "admin" ? "Tem certeza que deseja promover este usuário a administrador? Ele terá acesso total ao sistema." : "Tem certeza que deseja designar este usuário como DPO? Ele terá acesso aos dados para conformidade.")
+                : (selectedUser?.role === "admin" ? "Tem certeza que deseja remover as permissões de administrador deste usuário?" : "Tem certeza que deseja remover as permissões de DPO deste usuário?")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
