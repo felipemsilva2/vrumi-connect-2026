@@ -4,7 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase, isSupabaseConfigured } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useFormValidation } from "@/hooks/useValidation";
 import { getErrorMessage } from "@/utils/errorMessages";
@@ -56,13 +56,31 @@ const Auth = () => {
     const emailValid = values.email && !errors.email;
     const passwordValid = values.password && !errors.password;
     const fullNameValid = isLogin || (values.fullName && !errors.fullName);
-    
-    return emailValid && passwordValid && fullNameValid;
+    const envOk = isSupabaseConfigured && navigator.onLine;
+    return envOk && emailValid && passwordValid && fullNameValid;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    if (!isSupabaseConfigured) {
+      toast({
+        title: "Configuração ausente",
+        description: "Supabase não está configurado. Verifique variáveis de ambiente.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!navigator.onLine) {
+      toast({
+        title: "Sem conexão",
+        description: "Você está offline. Conecte-se para continuar.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (!validateForm()) {
       toast({
         title: "Campos inválidos",
@@ -102,7 +120,7 @@ const Auth = () => {
           email: values.email,
           password: values.password,
           options: {
-            emailRedirectTo: `${window.location.origin}/dashboard`,
+            emailRedirectTo: `${window.location.origin}/auth`,
             data: {
               full_name: values.fullName,
             },
@@ -143,10 +161,26 @@ const Auth = () => {
 
   const handleGoogleLogin = async () => {
     try {
+      if (!isSupabaseConfigured) {
+        toast({
+          title: "Configuração ausente",
+          description: "Supabase não está configurado. Verifique variáveis de ambiente.",
+          variant: "destructive",
+        });
+        return;
+      }
+      if (!navigator.onLine) {
+        toast({
+          title: "Sem conexão",
+          description: "Você está offline. Conecte-se para continuar.",
+          variant: "destructive",
+        });
+        return;
+      }
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/dashboard`,
+          redirectTo: `${window.location.origin}/auth`,
         }
       });
 

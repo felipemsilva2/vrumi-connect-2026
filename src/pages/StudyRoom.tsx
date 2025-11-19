@@ -3,6 +3,8 @@ import { Send, Car, Loader2, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { ModernButton } from "@/components/ui/modern-button";
+import { ModernCard, ModernCardContent } from "@/components/ui/modern-card";
 import { cn } from "@/lib/utils";
 import { PDFViewer } from "@/components/study-room/PDFViewer";
 import MobilePDFReader from "@/components/study-room/MobilePDFReader";
@@ -14,9 +16,10 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { pdfjs } from "react-pdf";
-import { SmartBreadcrumb } from "@/components/SmartBreadcrumb";
+import { AppLayout } from '@/components/Layout/AppLayout';
 import { getErrorMessage } from "@/utils/errorMessages";
 import { SubscriptionGate } from "@/components/auth/SubscriptionGate";
+import { SmartBreadcrumb } from "@/components/SmartBreadcrumb";
 
 interface Message {
   id: string;
@@ -27,7 +30,12 @@ interface Message {
   user_id?: string;
 }
 
-export default function StudyRoom() {
+interface StudyRoomProps {
+  user: any;
+  profile: any;
+}
+
+export default function StudyRoom({ user, profile }: StudyRoomProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -330,42 +338,38 @@ export default function StudyRoom() {
   };
 
   return (
-    <SubscriptionGate feature="Sala de Estudos">
-    <div className="min-h-svh bg-muted/30">
-      {/* Header com Logo */}
-      <header className="bg-background border-b border-border sticky top-0 z-10 shadow-sm">
-        <div className="mx-auto max-w-[1400px] w-full px-4 sm:px-6 lg:px-8 py-3 sm:py-4">
-          <div className="flex items-center justify-between">
-            <div 
-              className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
-              onClick={() => navigate(homeRoute)}
-            >
-              <Car className="w-6 h-6 sm:w-8 sm:h-8 text-primary" />
-              <span className="text-lg sm:text-xl font-black text-foreground">Vrumi</span>
-            </div>
-            <h1 className="text-sm sm:text-lg font-semibold text-foreground">
-              Sala de Estudos
-            </h1>
-          </div>
-        </div>
-      </header>
-
-      {/* Breadcrumb */}
-      <div className="mx-auto max-w-[1400px] w-full px-3 sm:px-4 lg:px-6 py-3">
-        <SmartBreadcrumb />
-      </div>
+    <div className="w-full">
+      <SubscriptionGate feature="Sala de Estudos">
+      <div className="min-h-svh bg-muted/30">
 
       {/* Conteúdo Principal */}
       <div className="mx-auto max-w-[1400px] w-full px-3 sm:px-4 lg:px-6 py-4 sm:py-6">
-        <div className={cn(
-          "rounded-lg shadow-elegant overflow-hidden bg-background border border-border",
-          isMobile ? "flex flex-col min-h-[calc(100svh-140px)]" : "flex gap-4 min-h-[600px] h-[calc(100vh-140px)]"
-        )}>
+        <ModernCard 
+          className={cn(
+            "overflow-hidden",
+            isMobile ? "flex flex-col min-h-[calc(100svh-140px)]" : "flex gap-4 min-h-[600px] h-[calc(100vh-140px)]"
+          )}
+          variant="elevated"
+        >
           {isMobile ? (
             <>
               <div className="flex gap-2 p-3 border-b">
-                <Button variant={activeTab === 'pdf' ? 'default' : 'outline'} className="flex-1 h-12" onClick={() => setActiveTab('pdf')}>PDF</Button>
-                <Button variant={activeTab === 'chat' ? 'default' : 'outline'} className="flex-1 h-12" onClick={() => setActiveTab('chat')}>Chat</Button>
+                <ModernButton 
+                  variant={activeTab === 'pdf' ? 'default' : 'outline'} 
+                  className="flex-1 h-12" 
+                  onClick={() => setActiveTab('pdf')}
+                  size="lg"
+                >
+                  PDF
+                </ModernButton>
+                <ModernButton 
+                  variant={activeTab === 'chat' ? 'default' : 'outline'} 
+                  className="flex-1 h-12" 
+                  onClick={() => setActiveTab('chat')}
+                  size="lg"
+                >
+                  Chat
+                </ModernButton>
               </div>
               {activeTab === 'pdf' ? (
                 <div className="w-full flex-1">
@@ -383,9 +387,15 @@ export default function StudyRoom() {
                     <div className="flex items-center justify-between p-3">
                       <h3 className="text-sm font-semibold text-muted-foreground">Chat com IA</h3>
                       {messages.length > 0 && (
-                        <Button variant="ghost" size="sm" onClick={clearChatHistory} className="h-8 px-2 text-muted-foreground hover:text-foreground" title="Limpar histórico do chat">
+                        <ModernButton 
+                          variant="ghost" 
+                          size="sm" 
+                          onClick={clearChatHistory} 
+                          className="h-8 px-2 text-muted-foreground hover:text-foreground" 
+                          title="Limpar histórico do chat"
+                        >
                           <Trash2 className="h-4 w-4" />
-                        </Button>
+                        </ModernButton>
                       )}
                     </div>
                     <QuickActions onQuickAction={handleQuickAction} className="border-t border-border" />
@@ -418,7 +428,14 @@ export default function StudyRoom() {
                   <div className="border-t border-border p-3 bg-background pb-safe">
                     <div className="flex gap-2">
                       <Input value={inputValue} onChange={(e) => setInputValue(e.target.value)} onKeyPress={handleKeyPress} placeholder="Digite sua pergunta..." className="flex-1 text-sm" />
-                      <Button onClick={handleSendMessage} disabled={!inputValue.trim() || isLoading} className="bg-primary hover:bg-primary/90 shrink-0 h-12">{isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}</Button>
+                      <ModernButton 
+                        onClick={handleSendMessage} 
+                        disabled={!inputValue.trim() || isLoading} 
+                        className="bg-primary hover:bg-primary/90 shrink-0 h-12"
+                        size="lg"
+                      >
+                        {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                      </ModernButton>
                     </div>
                   </div>
                 </div>
@@ -432,9 +449,15 @@ export default function StudyRoom() {
                   <div className="flex items-center justify-between p-4">
                     <h3 className="text-sm font-semibold text-muted-foreground">Chat com IA</h3>
                     {messages.length > 0 && (
-                      <Button variant="ghost" size="sm" onClick={clearChatHistory} className="h-8 px-2 text-muted-foreground hover:text-foreground" title="Limpar histórico do chat">
+                      <ModernButton 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={clearChatHistory} 
+                        className="h-8 px-2 text-muted-foreground hover:text-foreground" 
+                        title="Limpar histórico do chat"
+                      >
                         <Trash2 className="h-4 w-4" />
-                      </Button>
+                      </ModernButton>
                     )}
                   </div>
                   <QuickActions onQuickAction={handleQuickAction} className="border-t border-border" />
@@ -467,19 +490,27 @@ export default function StudyRoom() {
                 <div className="border-t border-border p-4 bg-background">
                   <div className="flex gap-2">
                     <Input value={inputValue} onChange={(e) => setInputValue(e.target.value)} onKeyPress={handleKeyPress} placeholder="Digite sua pergunta..." className="flex-1" />
-                    <Button onClick={handleSendMessage} disabled={!inputValue.trim() || isLoading} className="bg-primary hover:bg-primary/90 shrink-0 h-12">{isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}</Button>
+                    <ModernButton 
+                      onClick={handleSendMessage} 
+                      disabled={!inputValue.trim() || isLoading} 
+                      className="bg-primary hover:bg-primary/90 shrink-0 h-12"
+                      size="lg"
+                    >
+                      {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                    </ModernButton>
                   </div>
                 </div>
               </div>
             </>
           )}
-        </div>
+        </ModernCard>
       </div>
       
       {/* Tooltip de seleção de texto */}
       <TextSelectionTooltip onExplain={handleTextExplanation} />
     </div>
     </SubscriptionGate>
+    </div>
   );
 }
 class MobileReaderErrorBoundary extends React.Component<{ onError?: (error: Error) => void; fallback: React.ReactNode; children: React.ReactNode }, { hasError: boolean }> {

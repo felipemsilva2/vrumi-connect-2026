@@ -1,15 +1,10 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { supabase, isSupabaseConfigured } from "@/integrations/supabase/client";
-import { Car } from "lucide-react";
-import type { User as SupabaseUser } from "@supabase/supabase-js";
-import { DashboardWithSidebar } from "@/components/ui/dashboard-with-collapsible-sidebar";
-import { DashboardSkeleton } from "@/components/ui/skeleton-loaders";
-import { OnboardingTutorial } from "@/components/OnboardingTutorial";
-import { useToast } from "@/hooks/use-toast";
+import TrafficSignsLibrary from "./TrafficSignsLibrary";
+import { useNavigate } from "react-router-dom";
 import { getErrorMessage } from "@/utils/errorMessages";
-import { notificationScheduler } from "@/services/NotificationSchedulerService";
-import { AppLayout } from '@/components/Layout/AppLayout';
+import { useToast } from "@/hooks/use-toast";
+import { AppLayout } from "@/components/Layout/AppLayout";
 
 interface Profile {
   full_name: string | null;
@@ -19,37 +14,15 @@ interface Profile {
   total_questions_answered: number;
 }
 
-const Dashboard = () => {
-  const [user, setUser] = useState<SupabaseUser | null>(null);
+const TrafficSignsLibraryWrapper = () => {
+  const [user, setUser] = useState<any>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [showOnboarding, setShowOnboarding] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
   useEffect(() => {
     checkUser();
-    
-    // Iniciar o agendador de notificações
-    notificationScheduler.start();
-    
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        if (event === "SIGNED_OUT" || !session) {
-          navigate("/auth");
-          // Parar o agendador ao fazer logout
-          notificationScheduler.stop();
-        } else {
-          setUser(session.user);
-        }
-      }
-    );
-
-    return () => {
-      subscription.unsubscribe();
-      // Parar o agendador ao desmontar o componente
-      notificationScheduler.stop();
-    };
   }, [navigate]);
 
   const checkUser = async () => {
@@ -107,14 +80,6 @@ const Dashboard = () => {
 
       if (error) throw error;
       setProfile(data);
-      
-      // Check if user has already seen onboarding
-      const hasSeenOnboarding = localStorage.getItem(`onboarding_seen_${userId}`);
-      
-      // Show onboarding for new users (no study progress) who haven't seen it yet
-      if (data && (!data.study_progress || data.study_progress === 0) && !hasSeenOnboarding) {
-        setTimeout(() => setShowOnboarding(true), 1000); // Delay to show after page load
-      }
     } catch (error) {
       const errorInfo = getErrorMessage(error);
       
@@ -130,20 +95,27 @@ const Dashboard = () => {
   };
 
   if (isLoading) {
-    return <DashboardSkeleton />;
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
+
+  if (!user || !profile) {
+    return null;
   }
 
   return (
-    <>
-      <DashboardWithSidebar user={user} profile={profile} />
-      <OnboardingTutorial
-        isOpen={showOnboarding}
-        onClose={() => setShowOnboarding(false)}
-        onComplete={() => console.log("Onboarding completed")}
-        userId={user?.id}
-      />
-    </>
+    <AppLayout 
+      user={user} 
+      profile={profile}
+      title="Biblioteca de Placas"
+      subtitle="Consulte todas as placas de trânsito brasileiras"
+    >
+      <TrafficSignsLibrary user={user} profile={profile} />
+    </AppLayout>
   );
 };
 
-export default Dashboard;
+export default TrafficSignsLibraryWrapper;

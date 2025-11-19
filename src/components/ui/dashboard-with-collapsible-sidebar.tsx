@@ -26,7 +26,7 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useContextualNavigation } from "@/utils/navigation";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase, isSupabaseConfigured } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Car } from "lucide-react";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
@@ -36,6 +36,8 @@ import NotificationSystem from "@/components/notifications/NotificationSystem";
 import NotificationSettings from "@/components/notifications/NotificationSettings";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { ModernCard, ModernCardContent } from "@/components/ui/modern-card";
+import { ModernButton } from "@/components/ui/modern-button";
 
 interface DashboardProps {
   user: any;
@@ -58,13 +60,13 @@ export const DashboardWithSidebar = ({ user, profile }: DashboardProps) => {
 
   return (
     <div className={`flex min-h-screen w-full ${isDark ? 'dark' : ''}`}>
-      <div className="flex w-full bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100">
+      <div className="flex w-full bg-background text-foreground">
         {!isMobile && (
           <Sidebar user={user} selected={selected} setSelected={setSelected} />
         )}
         {isMobile && (
           <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
-            <SheetContent side="left" className="p-0 w-3/4 sm:max-w-sm bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100">
+            <SheetContent side="left" className="p-0 w-3/4 sm:max-w-sm bg-background text-foreground">
               <Sidebar user={user} selected={selected} setSelected={(v: string) => { setSelected(v); setMobileMenuOpen(false); }} />
             </SheetContent>
           </Sheet>
@@ -106,7 +108,7 @@ const Sidebar = ({ user, selected, setSelected }: SidebarProps) => {
 
   const handleSignOut = async () => {
     try {
-      const { error } = await supabase.auth.signOut();
+      const { error } = await supabase.auth.signOut({ scope: 'local' });
       if (error) throw error;
 
       toast({
@@ -131,7 +133,7 @@ const Sidebar = ({ user, selected, setSelected }: SidebarProps) => {
     <nav
       className={`sticky top-0 h-screen shrink-0 border-r transition-all duration-300 ease-in-out ${
         open ? 'w-64' : 'w-16'
-      } border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-2 shadow-sm`}
+      } border-border bg-background p-2 shadow-sm`}
     >
       <TitleSection open={open} user={user} hasActivePass={hasActivePass} activePass={activePass} />
 
@@ -222,25 +224,27 @@ const Sidebar = ({ user, selected, setSelected }: SidebarProps) => {
       </div>
 
       {isAdmin && open && (
-        <div className="border-t border-gray-200 dark:border-gray-800 pt-4 space-y-1 mb-4">
-          <div className="px-3 py-2 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+        <div className="border-t border-border pt-4 space-y-1 mb-4">
+          <div className="px-3 py-2 text-xs font-medium text-muted-foreground uppercase tracking-wide">
             Administração
           </div>
-          <button
+          <ModernButton
             onClick={handleAdminAccess}
-            className="relative flex h-12 w-full items-center rounded-md transition-all duration-200 text-gray-600 dark:text-gray-400 hover:bg-primary/10 dark:hover:bg-primary/20 hover:text-primary dark:hover:text-primary"
+            variant="ghost"
+            size="lg"
+            className="w-full justify-start text-muted-foreground hover:bg-primary/10 hover:text-primary"
           >
             <div className="grid h-full w-12 place-content-center">
               <Shield className="h-4 w-4" />
             </div>
             <span className="text-sm font-medium">Área Admin</span>
-          </button>
+          </ModernButton>
         </div>
       )}
 
       {open && (
-        <div className="border-t border-gray-200 dark:border-gray-800 pt-4 space-y-1">
-          <div className="px-3 py-2 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+        <div className="border-t border-border pt-4 space-y-1">
+          <div className="px-3 py-2 text-xs font-medium text-muted-foreground uppercase tracking-wide">
             Conta
           </div>
           <Option
@@ -250,15 +254,17 @@ const Sidebar = ({ user, selected, setSelected }: SidebarProps) => {
             setSelected={setSelected}
             open={open}
           />
-          <button
+          <ModernButton
             onClick={handleSignOut}
-            className="relative flex h-12 w-full items-center rounded-md transition-all duration-200 text-gray-600 dark:text-gray-400 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-400"
+            variant="ghost"
+            size="lg"
+            className="w-full justify-start text-muted-foreground hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-400"
           >
             <div className="grid h-full w-12 place-content-center">
               <LogOut className="h-4 w-4" />
             </div>
             <span className="text-sm font-medium">Sair</span>
-          </button>
+          </ModernButton>
         </div>
       )}
 
@@ -284,8 +290,8 @@ const Option = ({ Icon, title, selected, setSelected, open, notifs, tooltip, isE
       onClick={handleClick}
       className={`relative flex h-12 w-full items-center rounded-md transition-all duration-200 ${
         isSelected 
-          ? "bg-primary/10 dark:bg-primary/20 text-primary shadow-sm border-l-2 border-primary" 
-          : "text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-200"
+          ? "bg-primary/10 text-primary shadow-sm border-l-2 border-primary" 
+          : "text-muted-foreground hover:bg-accent/10 hover:text-foreground"
       }`}
       aria-label={title}
       title={tooltip}
@@ -324,18 +330,18 @@ const TitleSection = ({ open, user, hasActivePass, activePass }: any) => {
   };
 
   return (
-    <div className="mb-6 border-b border-gray-200 dark:border-gray-800 pb-4">
-      <div className="flex cursor-pointer items-center justify-between rounded-md p-2 transition-colors hover:bg-gray-50 dark:hover:bg-gray-800">
+    <div className="mb-6 border-b border-border pb-4">
+      <div className="flex cursor-pointer items-center justify-between rounded-md p-2 transition-colors hover:bg-accent/10">
         <div className="flex items-center gap-3">
           <Logo />
           {open && (
             <div className={`transition-opacity duration-200 ${open ? 'opacity-100' : 'opacity-0'}`}>
               <div className="flex items-center gap-2">
                 <div>
-                  <span className="block text-sm font-semibold text-gray-900 dark:text-gray-100">
+                  <span className="block text-sm font-semibold text-foreground">
                     {user?.email?.split('@')[0] || 'Estudante'}
                   </span>
-                  <span className={`block text-xs ${hasActivePass ? 'text-green-600 dark:text-green-400' : 'text-gray-500 dark:text-gray-400'}`}>
+                  <span className={`block text-xs ${hasActivePass ? 'text-success' : 'text-muted-foreground'}`}>
                     {getPlanDisplay()}
                   </span>
                 </div>
@@ -344,7 +350,7 @@ const TitleSection = ({ open, user, hasActivePass, activePass }: any) => {
           )}
         </div>
         {open && (
-          <ChevronDown className="h-4 w-4 text-gray-400 dark:text-gray-500" />
+          <ChevronDown className="h-4 w-4 text-muted-foreground" />
         )}
       </div>
     </div>
@@ -361,23 +367,25 @@ const Logo = () => {
 
 const ToggleClose = ({ open, setOpen }: any) => {
   return (
-    <button
+    <ModernButton
       onClick={() => setOpen(!open)}
-      className="absolute bottom-0 left-0 right-0 border-t border-gray-200 dark:border-gray-800 transition-colors hover:bg-gray-50 dark:hover:bg-gray-800"
+      variant="ghost"
+      size="lg"
+      className="absolute bottom-0 left-0 right-0 border-t border-border transition-colors hover:bg-accent/10 w-full justify-start rounded-none"
       aria-label={open ? "Ocultar sidebar" : "Mostrar sidebar"}
       title={open ? "Ocultar menu lateral" : "Mostrar menu lateral"}
     >
       <div className="flex items-center p-4">
         <div className="grid size-12 place-content-center">
           <ChevronsRight
-            className={`h-5 w-5 transition-transform duration-300 text-gray-500 dark:text-gray-400 ${
+            className={`h-5 w-5 transition-transform duration-300 text-muted-foreground ${
               open ? "rotate-180" : ""
             }`}
           />
         </div>
         {open && (
           <span
-            className={`text-sm font-medium text-gray-600 dark:text-gray-300 transition-opacity duration-200 ${
+            className={`text-sm font-medium text-muted-foreground transition-opacity duration-200 ${
               open ? 'opacity-100' : 'opacity-0'
             }`}
           >
@@ -385,7 +393,7 @@ const ToggleClose = ({ open, setOpen }: any) => {
           </span>
         )}
       </div>
-    </button>
+    </ModernButton>
   );
 };
 
@@ -457,31 +465,35 @@ const MainContent = ({ isDark, setIsDark, user, profile, selected, isMobile, ope
   }
 
   return (
-    <div className="flex-1 bg-gray-50 dark:bg-gray-950 p-4 sm:p-6 overflow-auto overscroll-y-contain pb-safe">
+    <div className="flex-1 bg-background p-4 sm:p-6 overflow-auto overscroll-y-contain pb-safe">
       <SmartBreadcrumb />
       {selected === "Dashboard" && (
         <div className="flex items-center justify-between mb-6 sm:mb-8">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100">Dashboard</h1>
-            <p className="text-gray-600 dark:text-gray-400 mt-1">
+            <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Dashboard</h1>
+            <p className="text-muted-foreground mt-1">
               Olá, {profile?.full_name || user?.email?.split('@')[0]}! Continue estudando para sua CNH
             </p>
           </div>
           <div className="flex items-center gap-3 sm:gap-4">
             {isMobile && (
-              <button
+              <ModernButton
                 onClick={openMobileMenu}
-                className="flex h-12 w-12 items-center justify-center rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
+                variant="outline"
+                size="lg"
+                className="h-12 w-12 p-0 border-border bg-background text-foreground hover:bg-accent/10"
                 aria-label="Abrir menu"
                 title="Menu"
               >
                 <ChevronDown className="h-5 w-5" />
-              </button>
+              </ModernButton>
             )}
             <NotificationSystem />
-            <button
+            <ModernButton
               onClick={() => setIsDark(!isDark)}
-              className="flex h-12 w-12 items-center justify-center rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
+              variant="outline"
+              size="lg"
+              className="h-12 w-12 p-0 border-border bg-background text-foreground hover:bg-accent/10"
               aria-label={isDark ? "Ativar modo claro" : "Ativar modo escuro"}
               title={isDark ? "Modo claro" : "Modo escuro"}
             >
@@ -490,12 +502,12 @@ const MainContent = ({ isDark, setIsDark, user, profile, selected, isMobile, ope
               ) : (
                 <Moon className="h-5 w-5" />
               )}
-            </button>
+            </ModernButton>
           </div>
         </div>
       )}
       
-      <Suspense fallback={<div className="p-4 text-sm text-gray-500">Carregando…</div>}>
+      <Suspense fallback={<div className="p-4 text-sm text-muted-foreground">Carregando…</div>}>
         {renderContent()}
       </Suspense>
     </div>
@@ -516,6 +528,10 @@ const DashboardHome = ({ user, profile }: any) => {
   }, [user, refreshKey])
 
   const fetchRecentActivities = async () => {
+    if (!isSupabaseConfigured || !navigator.onLine || !user?.id) {
+      setLoading(false)
+      return
+    }
     try {
       const { data, error } = await supabase
         .from("user_activities")
@@ -537,7 +553,7 @@ const DashboardHome = ({ user, profile }: any) => {
   useEffect(() => {
     const fetchProfileAggregates = async () => {
       try {
-        if (!user?.id) return
+        if (!user?.id || !isSupabaseConfigured || !navigator.onLine) return
         const query = supabase
           .from("profiles")
           .select("total_flashcards_studied,total_questions_answered,correct_answers,study_progress")
@@ -643,57 +659,57 @@ const DashboardHome = ({ user, profile }: any) => {
   return (
     <>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 mb-6 lg:mb-8" data-tutorial="dashboard">
-        <div className="p-4 sm:p-6 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm hover:shadow-md transition-shadow">
+        <ModernCard variant="elevated" interactive={true} className="p-4 sm:p-6">
           <div className="flex items-center justify-between mb-4">
             <div className="p-2 bg-primary/10 dark:bg-primary/20 rounded-lg">
               <BookOpen className="h-5 w-5 text-primary" />
             </div>
             <TrendingUp className="h-4 w-4 text-success" />
           </div>
-          <h3 className="font-medium text-gray-600 dark:text-gray-400 mb-1">Flashcards Estudados</h3>
-          <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+          <h3 className="font-medium text-muted-foreground mb-1">Flashcards Estudados</h3>
+          <p className="text-2xl font-bold text-foreground">
             {aggregates?.total_flashcards_studied || 0}
           </p>
           <p className="text-sm text-success mt-1">Continue estudando!</p>
-        </div>
-        <div className="p-4 sm:p-6 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm hover:shadow-md transition-shadow">
+        </ModernCard>
+        <ModernCard variant="elevated" interactive={true} className="p-4 sm:p-6">
           <div className="flex items-center justify-between mb-4">
             <div className="p-2 bg-success/10 dark:bg-success/20 rounded-lg">
               <Trophy className="h-5 w-5 text-success" />
             </div>
             <TrendingUp className="h-4 w-4 text-success" />
           </div>
-          <h3 className="font-medium text-gray-600 dark:text-gray-400 mb-1">Taxa de Acerto</h3>
-          <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{successRate}%</p>
+          <h3 className="font-medium text-muted-foreground mb-1">Taxa de Acerto</h3>
+          <p className="text-2xl font-bold text-foreground">{successRate}%</p>
           <p className="text-sm text-success mt-1">Excelente desempenho!</p>
-        </div>
-        <div className="p-4 sm:p-6 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm hover:shadow-md transition-shadow">
+        </ModernCard>
+        <ModernCard variant="elevated" interactive={true} className="p-4 sm:p-6">
           <div className="flex items-center justify-between mb-4">
             <div className="p-2 bg-accent/10 dark:bg-accent/20 rounded-lg">
               <Target className="h-5 w-5 text-accent" />
             </div>
             <TrendingUp className="h-4 w-4 text-success" />
           </div>
-          <h3 className="font-medium text-gray-600 dark:text-gray-400 mb-1">Questões Respondidas</h3>
-          <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+          <h3 className="font-medium text-muted-foreground mb-1">Questões Respondidas</h3>
+          <p className="text-2xl font-bold text-foreground">
             {aggregates?.total_questions_answered || 0}
           </p>
           <p className="text-sm text-success mt-1">Meta: 500 questões</p>
-        </div>
+        </ModernCard>
 
-        <div className="p-4 sm:p-6 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm hover:shadow-md transition-shadow">
+        <ModernCard variant="elevated" interactive={true} className="p-4 sm:p-6">
           <div className="flex items-center justify-between mb-4">
             <div className="p-2 bg-secondary/10 dark:bg-secondary/20 rounded-lg">
               <BarChart3 className="h-5 w-5 text-secondary" />
             </div>
             <TrendingUp className="h-4 w-4 text-success" />
           </div>
-          <h3 className="font-medium text-gray-600 dark:text-gray-400 mb-1">Progresso Geral</h3>
-          <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+          <h3 className="font-medium text-muted-foreground mb-1">Progresso Geral</h3>
+          <p className="text-2xl font-bold text-foreground">
             {aggregates?.study_progress || 0}%
           </p>
           <p className="text-sm text-success mt-1">Continue assim!</p>
-        </div>
+        </ModernCard>
       </div>
     </>
   )

@@ -28,7 +28,7 @@ export const AdminLayout = ({ children }: AdminLayoutProps) => {
 
   const handleLogout = async () => {
     try {
-      await supabase.auth.signOut();
+      await supabase.auth.signOut({ scope: 'local' });
       toast.success("Logout realizado com sucesso");
       navigate("/auth");
     } catch (error) {

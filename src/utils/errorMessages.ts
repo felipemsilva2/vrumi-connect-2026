@@ -46,7 +46,7 @@ const AUTH_ERRORS: Record<string, ErrorMessage> = {
 export const getErrorMessage = (error: any, context?: ErrorContext): ErrorMessage => {
   const baseMessage: ErrorMessage = { title: '', message: '' };
   if (error?.code) {
-    const errorKey = error.code.toLowerCase().replace(/_/g, '');
+    const errorKey = error.code.toLowerCase();
     const message = AUTH_ERRORS[errorKey as keyof typeof AUTH_ERRORS];
     if (message) {
       baseMessage.title = message.title;

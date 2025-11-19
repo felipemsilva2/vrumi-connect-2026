@@ -165,22 +165,40 @@ export default function NotificationSettings() {
       return; // Não criar notificação durante horário de silêncio
     }
 
+    const payloadWithSchedule: any = {
+      user_id: userId,
+      type,
+      title,
+      message,
+      scheduled_for: scheduledTime.toISOString(),
+      data: {
+        scheduled_type: 'user_defined',
+        hour,
+        created_by_settings: true
+      }
+    };
+
     const { error } = await supabase
       .from('notifications')
-      .insert({
+      .insert(payloadWithSchedule);
+
+    if (error && (error as any).code === 'PGRST204') {
+      const fallbackPayload: any = {
         user_id: userId,
         type,
         title,
         message,
-        scheduled_for: scheduledTime.toISOString(),
         data: {
           scheduled_type: 'user_defined',
           hour,
-          created_by_settings: true
+          created_by_settings: true,
+          scheduled_for: scheduledTime.toISOString()
         }
-      });
-
-    if (error) {
+      };
+      await supabase
+        .from('notifications')
+        .insert(fallbackPayload);
+    } else if (error) {
       console.error(`Erro ao criar notificação agendada ${type}:`, error);
     }
   };
