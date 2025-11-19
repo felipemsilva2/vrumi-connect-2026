@@ -65,6 +65,13 @@ export default function TrafficSignsLibrary() {
     filterSigns();
   }, [signs, selectedCategory, searchTerm]);
 
+  // Scroll to top when study modes are activated
+  useEffect(() => {
+    if (flashcardMode || timedChallengeMode) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [flashcardMode, timedChallengeMode]);
+
   const fetchTrafficSigns = async () => {
     try {
       setLoading(true);
