@@ -18,6 +18,7 @@ import FlashcardMode from '@/components/traffic-signs/FlashcardMode';
 import TimedChallenge from '@/components/traffic-signs/TimedChallenge';
 import StudyModeModal from '@/components/study/StudyModeModal';
 import StudyModeButtons from '@/components/study/StudyModeButtons';
+import { SubscriptionGate } from '@/components/auth/SubscriptionGate';
 
 interface TrafficSign {
   id: string;
@@ -44,7 +45,12 @@ const categoryIcons = {
   'Obras': '🚧',
 };
 
-export default function TrafficSignsLibrary() {
+interface TrafficSignsLibraryProps {
+  user: any;
+  profile: any;
+}
+
+export default function TrafficSignsLibrary({ user, profile }: TrafficSignsLibraryProps) {
   const [signs, setSigns] = useState<TrafficSign[]>([]);
   const [filteredSigns, setFilteredSigns] = useState<TrafficSign[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>('Todas');
@@ -161,7 +167,8 @@ export default function TrafficSignsLibrary() {
   const hasMore = displayedCount < filteredSigns.length;
 
   return (
-    <div className="w-full">
+    <SubscriptionGate feature="Biblioteca de Placas">
+      <div className="w-full">
       {/* Sticky Header */}
       <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm border-b border-border p-4 sm:p-6 mb-4">
         <div className="mb-4">
@@ -518,6 +525,7 @@ export default function TrafficSignsLibrary() {
             )}
           </DialogContent>
         </Dialog>
-    </div>
+      </div>
+    </SubscriptionGate>
   );
 }

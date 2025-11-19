@@ -277,10 +277,12 @@ const Option = ({ Icon, title, selected, setSelected, open, notifs, tooltip, isE
   const navigate = useNavigate();
   const isSelected = selected === title;
   
-  const handleClick = () => {
+  const handleClick = (e: React.MouseEvent) => {
+    e.preventDefault();
     if (isExternalLink && externalPath) {
       navigate(externalPath);
     } else {
+      // Force immediate state update
       setSelected(title);
     }
   };
