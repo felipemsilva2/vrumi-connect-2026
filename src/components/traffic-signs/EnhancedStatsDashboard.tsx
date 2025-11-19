@@ -14,7 +14,8 @@ import {
   BarChart3,
   Calendar,
   CheckCircle,
-  AlertCircle
+  AlertCircle,
+  ChevronRight
 } from 'lucide-react';
 
 interface UserStats {

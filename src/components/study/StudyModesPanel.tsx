@@ -37,7 +37,7 @@ export default function StudyModesPanel({
   const toggleExpanded = () => {
     setIsAnimating(true);
     setIsExpanded(!isExpanded);
-    analytics.trackButtonInteraction('study_modes_panel', isExpanded ? 'collapse' : 'expand');
+    analytics.trackEvent('study_modes_panel', isExpanded ? 'collapse' : 'expand', 'toggle_panel');
     
     setTimeout(() => {
       setIsAnimating(false);

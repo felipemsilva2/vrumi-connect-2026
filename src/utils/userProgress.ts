@@ -150,7 +150,7 @@ class UserProgressTracker {
       totalMastered: this.progress.masteredSigns.size,
       studyStreak: this.progress.streak,
       totalStudyTime: this.progress.totalStudyTime,
-      overallAccuracy: totalSessions > 0 ? (correctSessions.length / totalSessions) * 100 : 0
+      overallAccuracy: totalSessions > 0 ? (correctSessions / totalSessions) * 100 : 0
     };
   }
 
