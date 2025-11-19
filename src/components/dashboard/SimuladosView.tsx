@@ -699,7 +699,7 @@ export const SimuladosView = () => {
           <div className="mt-3 inline-flex items-center gap-2 px-3 py-1.5 bg-primary/10 text-primary rounded-full text-sm font-medium">
             <Calendar className="h-4 w-4" />
             <span>
-              {daysRemaining} {daysRemaining === 1 ? 'dia restante' : 'dias restantes'} no seu passaporte
+              {daysRemaining} {Number(daysRemaining) === 1 ? 'dia restante' : 'dias restantes'} no seu passaporte
             </span>
           </div>
         )}

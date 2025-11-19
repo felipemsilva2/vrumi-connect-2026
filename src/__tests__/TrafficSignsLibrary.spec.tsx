@@ -5,7 +5,7 @@ import { MemoryRouter } from 'react-router-dom'
 import TrafficSignsLibrary from '@/pages/TrafficSignsLibrary'
 
 vi.mock('react-router-dom', async (orig) => {
-  const actual = await orig()
+  const actual = await orig() as any
   return { 
     ...actual,
     useNavigate: () => vi.fn()
@@ -26,7 +26,7 @@ describe('TrafficSignsLibrary back navigation', () => {
     )
 
     const btn = await screen.findByRole('button', { name: /Voltar/i })
-    expect(btn).toBeInTheDocument()
+    expect(btn).toBeDefined()
     await user.click(btn)
   })
 
@@ -39,7 +39,7 @@ describe('TrafficSignsLibrary back navigation', () => {
     )
     const btn = await screen.findByRole('button', { name: /Voltar/i })
     btn.focus()
-    expect(btn).toHaveFocus()
+    expect(document.activeElement).toBe(btn)
     await user.keyboard('{Enter}')
   })
 })
