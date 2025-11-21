@@ -279,7 +279,7 @@ export const EstatisticasView = () => {
             })
             
             const trend = weeklyData[3] > weeklyData[2] ? 'up' : 
-                         weeklyData[3] < weeklyData[2] ? 'down' : 'stable'
+                          weeklyData[3] < weeklyData[2] ? 'down' : 'stable'
             
             return {
               name: module.title,
@@ -851,7 +851,7 @@ export const EstatisticasView = () => {
                     <div 
                       className="w-full bg-yellow-500 rounded-t transition-all duration-300 hover:bg-yellow-400"
                       style={{ 
-                        height: `${Math.max(8, (day.activities / Math.max(1, ...trafficSignsAnalytics.recentProgress.map(d => d.activities))) * 100}%`,
+                        height: `${Math.max(8, (day.activities / Math.max(1, ...trafficSignsAnalytics.recentProgress.map(d => d.activities))) * 100)}%`,
                         minHeight: '8px'
                       }}
                       title={`${day.activities} atividades em ${day.date}`}
