@@ -28,6 +28,7 @@ import { useNavigate } from "react-router-dom";
 import { useContextualNavigation } from "@/utils/navigation";
 import { supabase, isSupabaseConfigured } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { Badge } from "@/components/ui/badge";
 import { Car } from "lucide-react";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
 import { useActivePass } from "@/hooks/useActivePass";
@@ -552,7 +553,6 @@ const DashboardHome = ({ user, profile, setSelected }: any) => {
       const { data: sm2Data, error: sm2Error } = await supabase
         .from("flashcards")
         .select("id")
-        .eq("user_id", user.id)
         .not("due_date", "is", null)
         .lte("due_date", new Date().toISOString())
         .limit(100)
@@ -587,7 +587,7 @@ const DashboardHome = ({ user, profile, setSelected }: any) => {
       // Buscar progresso do usuário por capítulos
       const { data: userProgress, error: progressError } = await supabase
         .from("user_progress")
-        .select("chapter_id, completed")
+        .select("lesson_id, completed")
         .eq("user_id", user.id)
 
       if (progressError) throw progressError
@@ -596,15 +596,15 @@ const DashboardHome = ({ user, profile, setSelected }: any) => {
       const moduleProgress = modules.map(module => {
         const moduleChapters = chapters.filter(chapter => chapter.module_id === module.id)
         const completedChapters = moduleChapters.filter(chapter =>
-          userProgress?.some(progress => progress.chapter_id === chapter.id && progress.completed)
+          userProgress?.some(progress => progress.lesson_id === chapter.id && progress.completed)
         ).length
         const totalChapters = moduleChapters.length
         const progress = totalChapters > 0 ? Math.round((completedChapters / totalChapters) * 100) : 0
 
         return {
-          name: module.name,
+          name: module.title,
           progress,
-          color: getModuleColor(module.name)
+          color: getModuleColor(module.title)
         }
       }).filter(module => module.progress > 0) // Mostrar apenas módulos com progresso
 
@@ -620,9 +620,9 @@ const DashboardHome = ({ user, profile, setSelected }: any) => {
 
     try {
       // Buscar últimas tentativas de simulados
-      const { data: attempts, error: attemptsError } = await supabase
+      const { data: attempts, error: attemptsError} = await supabase
         .from("user_quiz_attempts")
-        .select("score, total_questions, created_at")
+        .select("score_percentage, total_questions, created_at")
         .eq("user_id", user.id)
         .order("created_at", { ascending: false })
         .limit(5)
@@ -635,7 +635,7 @@ const DashboardHome = ({ user, profile, setSelected }: any) => {
 
       const { data: weekAttempts, error: weekError } = await supabase
         .from("user_quiz_attempts")
-        .select("score, total_questions")
+        .select("score_percentage, total_questions")
         .eq("user_id", user.id)
         .gte("created_at", sevenDaysAgo.toISOString())
 
@@ -645,11 +645,11 @@ const DashboardHome = ({ user, profile, setSelected }: any) => {
       const lastAttempt = attempts?.[0]
       const weekAverage = weekAttempts && weekAttempts.length > 0
         ? Math.round(weekAttempts.reduce((sum, attempt) =>
-          sum + (attempt.score / attempt.total_questions) * 100, 0) / weekAttempts.length)
+          sum + attempt.score_percentage, 0) / weekAttempts.length)
         : 0
 
       setQuizStats({
-        lastScore: lastAttempt ? Math.round((lastAttempt.score / lastAttempt.total_questions) * 100) : 0,
+        lastScore: lastAttempt ? Math.round(lastAttempt.score_percentage) : 0,
         weekAverage,
         totalAttempts: attempts?.length || 0
       })
@@ -944,7 +944,7 @@ const DashboardHome = ({ user, profile, setSelected }: any) => {
                   </div>
                 </div>
                 <ModernButton
-                  variant="primary"
+                  variant="default"
                   size="sm"
                   onClick={() => {
                     console.log('Navigating to Flashcards...')
@@ -1038,7 +1038,7 @@ const DashboardHome = ({ user, profile, setSelected }: any) => {
                 <div className="text-4xl mb-2">🔒</div>
                 <p className="text-sm text-muted-foreground mb-2">Assinatura não ativa</p>
                 <ModernButton
-                  variant="primary"
+                  variant="default"
                   size="sm"
                   onClick={() => {
                     console.log('Navigating to Meu Perfil...')

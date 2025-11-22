@@ -259,10 +259,10 @@ export const EstatisticasView = () => {
         
         const { data: weeklyProgress } = await supabase
           .from("user_progress")
-          .select("chapter_id, completed, completed_at")
+          .select("lesson_id, completed, completion_date")
           .eq("user_id", user.id)
           .eq("completed", true)
-          .gte("completed_at", fourWeeksAgo.toISOString())
+          .gte("completion_date", fourWeeksAgo.toISOString())
         
         if (weeklyProgress && modules && chapters) {
           const trends = modules.map(module => {
@@ -270,8 +270,8 @@ export const EstatisticasView = () => {
             const weeklyData = [0, 0, 0, 0] // 4 semanas
             
             weeklyProgress.forEach(progress => {
-              if (moduleChapters.some(ch => ch.id === progress.chapter_id)) {
-                const weeksAgo = Math.floor((today.getTime() - new Date(progress.completed_at).getTime()) / (7 * 24 * 60 * 60 * 1000))
+              if (progress.lesson_id && moduleChapters.some(ch => ch.id === progress.lesson_id)) {
+                const weeksAgo = Math.floor((today.getTime() - new Date(progress.completion_date).getTime()) / (7 * 24 * 60 * 60 * 1000))
                 if (weeksAgo < 4) {
                   weeklyData[3 - weeksAgo]++
                 }
@@ -401,9 +401,8 @@ export const EstatisticasView = () => {
       // Buscar modos de estudo utilizados
       const { data: studyModesData } = await supabase
         .from("user_activities")
-        .select("activity_type, created_at")
+        .select("activity_type, created_at, metadata")
         .eq("user_id", user.id)
-        .eq("activity_category", "traffic_signs")
         .gte("created_at", new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()) // Últimos 30 dias
 
       // Análise por categoria
