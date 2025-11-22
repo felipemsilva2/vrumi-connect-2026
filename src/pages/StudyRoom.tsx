@@ -15,7 +15,7 @@ import { useContextualNavigation } from "@/utils/navigation";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { pdfjs } from "react-pdf";
+import * as pdfjsLib from "pdfjs-dist";
 import { AppLayout } from '@/components/Layout/AppLayout';
 import { getErrorMessage } from "@/utils/errorMessages";
 import { SubscriptionGate } from "@/components/auth/SubscriptionGate";
@@ -54,7 +54,12 @@ export default function StudyRoom({ user, profile }: StudyRoomProps) {
 
   const extractPdfContext = async (file: string, currentPage: number): Promise<string> => {
     try {
-      const pdf = await pdfjs.getDocument(file).promise;
+      const loadingTask = pdfjsLib.getDocument({
+        url: file,
+        cMapUrl: 'https://unpkg.com/pdfjs-dist@3.11.174/cmaps/',
+        cMapPacked: true,
+      });
+      const pdf = await loadingTask.promise;
       const numPages = pdf.numPages;
       
       // Extrair contexto: página atual + 2 anteriores + 2 posteriores
