@@ -393,6 +393,7 @@ export type Database = {
           avatar_url: string | null
           correct_answers: number | null
           created_at: string
+          email: string | null
           full_name: string | null
           id: string
           study_progress: number | null
@@ -404,6 +405,7 @@ export type Database = {
           avatar_url?: string | null
           correct_answers?: number | null
           created_at?: string
+          email?: string | null
           full_name?: string | null
           id: string
           study_progress?: number | null
@@ -415,6 +417,7 @@ export type Database = {
           avatar_url?: string | null
           correct_answers?: number | null
           created_at?: string
+          email?: string | null
           full_name?: string | null
           id?: string
           study_progress?: number | null

@@ -144,10 +144,10 @@ const FlashcardSection = () => {
             Não Sabia
           </Button>
           <Button
-            variant="success"
+            variant="default"
             size="lg"
             onClick={() => handleNext(true)}
-            className="flex-1 sm:flex-none"
+            className="flex-1 sm:flex-none bg-green-600 hover:bg-green-700 text-white"
           >
             <CheckCircle className="w-5 h-5" />
             Sabia

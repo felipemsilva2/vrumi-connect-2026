@@ -16,12 +16,15 @@ vi.mock('@/utils/studyAnalytics', () => ({
   analytics: { trackEvent: vi.fn() }
 }))
 
+const mockUser = { id: '123', email: 'test@test.com' }
+const mockProfile = { full_name: 'Test User', study_progress: 0, total_flashcards_studied: 0, correct_answers: 0, total_questions_answered: 0 }
+
 describe('TrafficSignsLibrary back navigation', () => {
   it('renders back button and navigates to home on click', async () => {
     const user = userEvent.setup()
     render(
       <MemoryRouter>
-        <TrafficSignsLibrary />
+        <TrafficSignsLibrary user={mockUser} profile={mockProfile} />
       </MemoryRouter>
     )
 
@@ -34,7 +37,7 @@ describe('TrafficSignsLibrary back navigation', () => {
     const user = userEvent.setup()
     render(
       <MemoryRouter>
-        <TrafficSignsLibrary />
+        <TrafficSignsLibrary user={mockUser} profile={mockProfile} />
       </MemoryRouter>
     )
     const btn = await screen.findByRole('button', { name: /Voltar/i })
@@ -66,45 +69,20 @@ describe('TrafficSignsLibrary scroll to top on study mode', () => {
     window.scrollTo = vi.fn()
     render(
       <MemoryRouter>
-        <TrafficSignsLibrary />
+        <TrafficSignsLibrary user={mockUser} profile={mockProfile} />
       </MemoryRouter>
     )
     const btn = await screen.findByRole('button', { name: /Estudo Linear/i })
     await user.click(btn)
     expect(window.scrollTo).toHaveBeenCalled()
-})
-
-describe('TrafficSignsLibrary above-the-fold visibility', () => {
-  it('shows study modes panel expanded on initial render', async () => {
-    render(
-      <MemoryRouter>
-        <TrafficSignsLibrary />
-      </MemoryRouter>
-    )
-    const region = await screen.findByRole('region', { name: /Painel de modalidades de estudo/i })
-    expect(region).toBeDefined()
-    const linearBtn = await screen.findByRole('button', { name: /Iniciar Estudo Linear/i })
-    expect(linearBtn).toBeDefined()
   })
 
-  it('shows search input and category select without scrolling', async () => {
-    render(
-      <MemoryRouter>
-        <TrafficSignsLibrary />
-      </MemoryRouter>
-    )
-    const search = await screen.findByPlaceholderText(/Buscar por código, nome ou descrição/i)
-    expect(search).toBeDefined()
-    const categorySelect = await screen.findByDisplayValue(/Todas/i)
-    expect(categorySelect).toBeDefined()
-  })
-})
   it('scrolls to top when starting smart study', async () => {
     const user = userEvent.setup()
     window.scrollTo = vi.fn()
     render(
       <MemoryRouter>
-        <TrafficSignsLibrary />
+        <TrafficSignsLibrary user={mockUser} profile={mockProfile} />
       </MemoryRouter>
     )
     const btn = await screen.findByRole('button', { name: /Estudo Inteligente/i })
@@ -117,11 +95,37 @@ describe('TrafficSignsLibrary above-the-fold visibility', () => {
     window.scrollTo = vi.fn()
     render(
       <MemoryRouter>
-        <TrafficSignsLibrary />
+        <TrafficSignsLibrary user={mockUser} profile={mockProfile} />
       </MemoryRouter>
     )
     const btn = await screen.findByRole('button', { name: /Desafio 60s/i })
     await user.click(btn)
     expect(window.scrollTo).toHaveBeenCalled()
+  })
+})
+
+describe('TrafficSignsLibrary above-the-fold visibility', () => {
+  it('shows study modes panel expanded on initial render', async () => {
+    render(
+      <MemoryRouter>
+        <TrafficSignsLibrary user={mockUser} profile={mockProfile} />
+      </MemoryRouter>
+    )
+    const region = await screen.findByRole('region', { name: /Painel de modalidades de estudo/i })
+    expect(region).toBeDefined()
+    const linearBtn = await screen.findByRole('button', { name: /Iniciar Estudo Linear/i })
+    expect(linearBtn).toBeDefined()
+  })
+
+  it('shows search input and category select without scrolling', async () => {
+    render(
+      <MemoryRouter>
+        <TrafficSignsLibrary user={mockUser} profile={mockProfile} />
+      </MemoryRouter>
+    )
+    const search = await screen.findByPlaceholderText(/Buscar por código, nome ou descrição/i)
+    expect(search).toBeDefined()
+    const categorySelect = await screen.findByDisplayValue(/Todas/i)
+    expect(categorySelect).toBeDefined()
   })
 })

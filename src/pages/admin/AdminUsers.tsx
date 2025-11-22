@@ -51,7 +51,7 @@ const AdminUsers = () => {
 
   const fetchUsers = async () => {
     try {
-      // Buscar profiles
+      // Buscar profiles com email incluído
       const { data: profilesData, error: profilesError } = await supabase
         .from("profiles")
         .select("*")
@@ -59,14 +59,9 @@ const AdminUsers = () => {
 
       if (profilesError) throw profilesError;
 
-      // Buscar emails do auth.users
-      const { data: { users: authUsers } } = await supabase.auth.admin.listUsers();
-
       // Buscar passes ativos para cada usuário
       const usersWithActivePass = await Promise.all(
         (profilesData || []).map(async (profile) => {
-          const authUser = authUsers?.find((u: any) => u.id === profile.id);
-          
           const { data: activePass } = await supabase
             .from("user_passes")
             .select("id")
@@ -77,7 +72,7 @@ const AdminUsers = () => {
 
           return {
             ...profile,
-            email: authUser?.email || "N/A",
+            email: profile.email || "N/A",
             has_active_pass: !!activePass,
           };
         })
