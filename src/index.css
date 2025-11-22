@@ -2,114 +2,70 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
-*/
-
 @layer base {
   :root {
-    --background: 210 40% 98%;
-    --foreground: 215 25% 15%;
+    /* Apple-like Design System Tokens */
 
+    /* Base Colors - Clean White & Soft Grays */
+    --background: 0 0% 100%;
+    --foreground: 240 10% 3.9%;
+
+    /* Card & Surfaces - Subtle distinction */
     --card: 0 0% 100%;
-    --card-foreground: 215 25% 15%;
-
+    --card-foreground: 240 10% 3.9%;
     --popover: 0 0% 100%;
-    --popover-foreground: 215 25% 15%;
+    --popover-foreground: 240 10% 3.9%;
 
+    /* Primary - Emerald Green (Vrumi Brand) */
     --primary: 160 84% 39%;
+    /* #10b981 */
     --primary-foreground: 0 0% 100%;
-    --primary-glow: 160 84% 55%;
 
-    --secondary: 160 70% 45%;
-    --secondary-foreground: 0 0% 100%;
+    /* Secondary - Subtle Gray */
+    --secondary: 240 4.8% 95.9%;
+    --secondary-foreground: 240 5.9% 10%;
 
-    --muted: 210 30% 92%;
-    --muted-foreground: 215 15% 45%;
+    /* Muted - For de-emphasized text */
+    --muted: 240 4.8% 95.9%;
+    --muted-foreground: 240 3.8% 46.1%;
 
-    --accent: 160 90% 50%;
-    --accent-foreground: 0 0% 100%;
+    /* Accent - For highlights */
+    --accent: 240 4.8% 95.9%;
+    --accent-foreground: 240 5.9% 10%;
 
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 100%;
+    /* Destructive - Error states */
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
 
-    --border: 215 20% 88%;
-    --input: 215 20% 92%;
-    --ring: 160 84% 39%;
+    /* Borders & Inputs */
+    --border: 240 5.9% 90%;
+    --input: 240 5.9% 90%;
+    --ring: 240 5.9% 10%;
 
-    --success: 160 84% 39%;
-    --success-foreground: 0 0% 100%;
-
+    /* Radius - Larger, softer corners */
     --radius: 0.75rem;
-    
-    --gradient-hero: linear-gradient(135deg, hsl(160 84% 39%) 0%, hsl(160 84% 50%) 100%);
-    --gradient-card: linear-gradient(180deg, hsl(0 0% 100%) 0%, hsl(210 40% 99%) 100%);
-    --shadow-elegant: 0 10px 40px -10px hsl(160 84% 39% / 0.25);
-    --shadow-card: 0 4px 20px -4px hsl(160 30% 60% / 0.15);
-    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
-    --sidebar-background: 0 0% 98%;
-
-    --sidebar-foreground: 240 5.3% 26.1%;
-
-    --sidebar-primary: 240 5.9% 10%;
-
-    --sidebar-primary-foreground: 0 0% 98%;
-
-    --sidebar-accent: 240 4.8% 95.9%;
-
-    --sidebar-accent-foreground: 240 5.9% 10%;
-
-    --sidebar-border: 220 13% 91%;
-
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    /* Shadows - Soft, diffused */
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
   }
 
   .dark {
-    --background: 215 30% 12%;
-    --foreground: 210 40% 98%;
+    /* Dark Mode - Deep Grays, not pure black */
+    --background: 240 10% 3.9%;
+    --foreground: 0 0% 98%;
 
-    --card: 215 25% 16%;
-    --card-foreground: 210 40% 98%;
+    --accent: 240 3.7% 15.9%;
+    --accent-foreground: 0 0% 98%;
 
-    --popover: 215 25% 16%;
-    --popover-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
 
-    --primary: 160 84% 45%;
-    --primary-foreground: 0 0% 100%;
-    --primary-glow: 160 84% 60%;
-
-    --secondary: 160 70% 40%;
-    --secondary-foreground: 0 0% 100%;
-
-    --muted: 215 20% 20%;
-    --muted-foreground: 215 15% 65%;
-
-    --accent: 160 90% 55%;
-    --accent-foreground: 0 0% 100%;
-
-    --destructive: 0 70% 50%;
-    --destructive-foreground: 0 0% 100%;
-
-    --border: 215 20% 24%;
-    --input: 215 20% 24%;
-    --ring: 160 84% 45%;
-    
-    --success: 160 84% 45%;
-    --success-foreground: 0 0% 100%;
-    
-    --gradient-hero: linear-gradient(135deg, hsl(160 84% 35%) 0%, hsl(160 84% 50%) 100%);
-    --gradient-card: linear-gradient(180deg, hsl(215 25% 16%) 0%, hsl(215 25% 18%) 100%);
-    --shadow-elegant: 0 10px 40px -10px hsl(160 84% 30% / 0.4);
-    --shadow-card: 0 4px 20px -4px hsl(160 30% 20% / 0.3);
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --border: 240 3.7% 15.9%;
+    --input: 240 3.7% 15.9%;
+    --ring: 240 4.9% 83.9%;
   }
 }
 
@@ -118,78 +74,24 @@ All colors MUST be HSL.
     @apply border-border;
   }
 
+  html {
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-sans antialiased;
+    font-feature-settings: "rlig" 1, "calt" 1;
   }
 }
 
-@keyframes fadeIn {
-  to {
-    opacity: 1;
+@layer utilities {
+  .glass {
+    @apply bg-white/70 dark:bg-black/70 backdrop-blur-lg border border-white/20 dark:border-white/10;
   }
-}
 
-@keyframes glow-wave {
-  0%, 100% {
-    background-color: #0a192f;
-    box-shadow: none;
+  .text-balance {
+    text-wrap: balance;
   }
-  50% {
-    background-color: #10b981;
-    box-shadow: 0 0 15px #10b981, 0 0 25px #059669;
-  }
-}
-
-.dynamic-grid-background {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  flex-wrap: wrap;
-  align-content: flex-start;
-}
-
-.grid-bar {
-  width: 22px;
-  height: 10px;
-  background-color: #0a192f;
-  opacity: 0;
-  animation: fadeIn 0.5s ease-out forwards, glow-wave 8s ease-in-out infinite;
-}
-
-/* Custom scrollbar for study room */
-.study-room-scrollbar::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-
-.study-room-scrollbar::-webkit-scrollbar-track {
-  background: hsl(var(--muted) / 0.3);
-  border-radius: 4px;
-}
-
-.study-room-scrollbar::-webkit-scrollbar-thumb {
-  background: hsl(var(--primary) / 0.5);
-  border-radius: 4px;
-  transition: background 0.2s ease;
-}
-
-.study-room-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: hsl(var(--primary) / 0.7);
-}
-
-/* Firefox scrollbar */
-.study-room-scrollbar {
-  scrollbar-width: thin;
-  scrollbar-color: hsl(var(--primary) / 0.5) hsl(var(--muted) / 0.3);
-}
-
-/* Safe area helpers for iOS Safari bottom bar */
-.pb-safe {
-  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 1rem);
-}
-.mb-safe {
-  margin-bottom: calc(env(safe-area-inset-bottom, 0px) + 1rem);
-}
-.pt-safe {
-  padding-top: calc(env(safe-area-inset-top, 0px) + 1rem);
 }

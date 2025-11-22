@@ -1,16 +1,29 @@
 import * as React from "react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X, Car } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useContextualNavigation } from "@/utils/navigation";
+import { cn } from "@/lib/utils";
+
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
   const menuRef = React.useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const homeRoute = useContextualNavigation();
+
   const toggleMenu = () => setIsOpen(!isOpen);
-  React.useEffect(() => {
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 20);
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  useEffect(() => {
     if (isOpen) {
       document.body.classList.add("overflow-hidden");
       const el = menuRef.current;
@@ -23,6 +36,7 @@ const Navbar = () => {
     }
     return () => document.body.classList.remove("overflow-hidden");
   }, [isOpen]);
+
   const scrollToSection = (id: string) => {
     const element = document.getElementById(id);
     if (element) {
@@ -32,153 +46,137 @@ const Navbar = () => {
     }
     setIsOpen(false);
   };
-  return <div className="flex justify-center w-full py-6 px-4 fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-sm">
-      <div className="flex items-center justify-between px-6 py-3 bg-card rounded-full shadow-card w-full max-w-3xl relative z-10 border border-border">
+
+  return (
+    <div className={cn(
+      "fixed top-0 left-0 right-0 z-50 flex justify-center transition-all duration-300",
+      scrolled ? "py-4" : "py-6"
+    )}>
+      <motion.div
+        className={cn(
+          "flex items-center justify-between px-6 py-3 w-full max-w-5xl relative z-10 transition-all duration-300",
+          scrolled
+            ? "bg-white/80 dark:bg-black/80 backdrop-blur-xl border border-white/20 dark:border-white/10 shadow-lg rounded-full mx-4"
+            : "bg-transparent border-transparent"
+        )}
+        initial={{ y: -100, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.5, ease: "easeOut" }}
+      >
         <div className="flex items-center">
-          <motion.div className="flex items-center gap-2 cursor-pointer" initial={{
-          scale: 0.8
-        }} animate={{
-          scale: 1
-        }} whileHover={{
-          scale: 1.05
-        }} transition={{
-          duration: 0.3
-        }} onClick={() => navigate("/")}>
-            <Car className="w-8 h-8 text-primary" />
-            <span className="text-xl font-black text-foreground">Vrumi</span>
+          <motion.div
+            className="flex items-center gap-2 cursor-pointer"
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={() => navigate("/")}
+          >
+            <div className="bg-primary/10 p-2 rounded-full">
+              <Car className="w-5 h-5 text-primary" />
+            </div>
+            <span className="text-lg font-bold tracking-tight text-foreground">Vrumi</span>
           </motion.div>
         </div>
-        
+
         {/* Desktop Navigation */}
-        <nav className="hidden md:flex items-center space-x-8">
-          {[{
-          label: "Início",
-          id: "inicio"
-        }, {
-          label: "Preço",
-          id: "preço"
-        }, {
-          label: "Vantagens",
-          id: "recursos"
-        }].map(item => <motion.div key={item.label} initial={{
-          opacity: 0,
-          y: -10
-        }} animate={{
-          opacity: 1,
-          y: 0
-        }} transition={{
-          duration: 0.3
-        }} whileHover={{
-          scale: 1.05
-        }}>
-              <button onClick={() => scrollToSection(item.id)} className="text-sm text-foreground hover:text-primary transition-colors font-medium">
-                {item.label}
-              </button>
-            </motion.div>)}
+        <nav className="hidden md:flex items-center space-x-1">
+          {[
+            { label: "Início", id: "inicio" },
+            { label: "Preço", id: "preço" },
+            { label: "Vantagens", id: "recursos" }
+          ].map((item) => (
+            <button
+              key={item.label}
+              onClick={() => scrollToSection(item.id)}
+              className="px-4 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors font-medium rounded-full hover:bg-secondary/50"
+            >
+              {item.label}
+            </button>
+          ))}
         </nav>
 
         {/* Desktop CTA Button */}
-        <motion.div className="hidden md:block" initial={{
-        opacity: 0,
-        x: 20
-      }} animate={{
-        opacity: 1,
-        x: 0
-      }} transition={{
-        duration: 0.3,
-        delay: 0.2
-      }} whileHover={{
-        scale: 1.05
-      }}>
-          <button onClick={() => navigate("/auth")} className="inline-flex items-center justify-center px-5 py-2 text-sm text-primary-foreground bg-primary rounded-full hover:bg-primary/90 transition-colors font-medium">
+        <div className="hidden md:block">
+          <button
+            onClick={() => navigate("/auth")}
+            className="inline-flex items-center justify-center px-5 py-2 text-sm font-medium text-white bg-primary rounded-full hover:bg-primary/90 transition-all shadow-md hover:shadow-lg hover:scale-105 active:scale-95"
+          >
             Entrar
           </button>
-        </motion.div>
+        </div>
 
         {/* Mobile Menu Button */}
-        <motion.button className="md:hidden flex items-center justify-center h-12 w-12" onClick={toggleMenu} whileTap={{
-        scale: 0.9
-      }}>
-          <Menu className="h-6 w-6 text-foreground" />
-        </motion.button>
-      </div>
+        <button
+          className="md:hidden flex items-center justify-center h-10 w-10 rounded-full hover:bg-secondary/50 transition-colors"
+          onClick={toggleMenu}
+        >
+          <Menu className="h-5 w-5 text-foreground" />
+        </button>
+      </motion.div>
 
       {/* Mobile Menu Overlay */}
       <AnimatePresence>
-        {isOpen && <motion.div role="dialog" aria-modal="true" aria-label="Menu" tabIndex={-1} className="fixed inset-0 bg-background/95 backdrop-blur-sm z-[60] pt-24 pt-safe px-6 md:hidden" initial={{
-        opacity: 0,
-        x: "100%"
-      }} animate={{
-        opacity: 1,
-        x: 0
-      }} exit={{
-        opacity: 0,
-        x: "100%"
-      }} transition={{
-        type: "spring",
-        damping: 25,
-        stiffness: 300
-      }}>
-            <motion.button className="absolute top-6 right-6 p-2 z-[70]" onClick={toggleMenu} whileTap={{
-          scale: 0.9
-        }} initial={{
-          opacity: 0
-        }} animate={{
-          opacity: 1
-        }} transition={{
-          delay: 0.2
-        }}>
-              <X className="h-6 w-6 text-foreground" />
-            </motion.button>
-            <div ref={menuRef} className="flex flex-col space-y-6 relative z-[65]">
-              {[{
-              label: "Início",
-              id: "inicio"
-            }, {
-              label: "Preço",
-              id: "preço"
-            }, {
-              label: "Vantagens",
-              id: "recursos"
-            }].map((item, i) => <motion.div key={item.label} initial={{
-              opacity: 0,
-              x: 20
-            }} animate={{
-              opacity: 1,
-              x: 0
-            }} transition={{
-              delay: i * 0.1 + 0.1
-            }} exit={{
-              opacity: 0,
-              x: 20
-            }}>
-                <button onClick={() => scrollToSection(item.id)} className="text-base text-foreground font-medium">
-                  {item.label}
-                </button>
-              </motion.div>)}
+        {isOpen && (
+          <motion.div
+            role="dialog"
+            aria-modal="true"
+            aria-label="Menu"
+            tabIndex={-1}
+            className="fixed inset-0 bg-background/95 backdrop-blur-xl z-[60] pt-24 pt-safe px-6 md:hidden"
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.3, ease: "easeInOut" }}
+          >
+            <button
+              className="absolute top-6 right-6 p-2 z-[70] rounded-full bg-secondary/50"
+              onClick={toggleMenu}
+            >
+              <X className="h-5 w-5 text-foreground" />
+            </button>
 
-              <motion.div initial={{
-              opacity: 0,
-              y: 20
-            }} animate={{
-              opacity: 1,
-              y: 0
-            }} transition={{
-              delay: 0.5
-            }} exit={{
-              opacity: 0,
-              y: 20
-            }} className="pt-6">
-                <button onClick={() => {
-                toggleMenu();
-                navigate("/auth");
-            }} className="inline-flex items-center justify-center w-full px-5 py-3 text-base text-primary-foreground bg-primary rounded-full hover:bg-primary/90 transition-colors font-medium focus:outline-none focus:ring-2 focus:ring-primary">
+            <div ref={menuRef} className="flex flex-col space-y-4 relative z-[65]">
+              {[
+                { label: "Início", id: "inicio" },
+                { label: "Preço", id: "preço" },
+                { label: "Vantagens", id: "recursos" }
+              ].map((item, i) => (
+                <motion.div
+                  key={item.label}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: i * 0.1 }}
+                >
+                  <button
+                    onClick={() => scrollToSection(item.id)}
+                    className="text-2xl font-semibold text-foreground w-full text-left py-4 border-b border-border/50"
+                  >
+                    {item.label}
+                  </button>
+                </motion.div>
+              ))}
+
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
+                className="pt-8"
+              >
+                <button
+                  onClick={() => {
+                    toggleMenu();
+                    navigate("/auth");
+                  }}
+                  className="w-full px-5 py-4 text-lg text-white bg-primary rounded-2xl font-semibold shadow-lg active:scale-95 transition-all"
+                >
                   Entrar
                 </button>
               </motion.div>
             </div>
-          </motion.div>}
+          </motion.div>
+        )}
       </AnimatePresence>
-    </div>;
+    </div>
+  );
 };
+
 export { Navbar };

@@ -1,77 +1,112 @@
 import { Button } from "@/components/ui/button";
-import { Car, BookOpen, Award } from "lucide-react";
+import { Car, BookOpen, Award, ChevronRight } from "lucide-react";
+import { motion } from "framer-motion";
 import heroBg from "@/assets/hero-bg.jpg";
 
 const Hero = () => {
   return (
-    <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
-      {/* Background Image with Overlay */}
+    <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-20">
+      {/* Background Image with Gradient Overlay */}
       <div className="absolute inset-0 z-0">
-        <img 
-          src={heroBg} 
-          alt="Driving preparation" 
-          className="w-full h-full object-cover"
-          decoding="async"
-          fetchPriority="high"
-          sizes="100vw"
-        />
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/90 via-primary/70 to-accent/80" />
+        <motion.div
+          initial={{ scale: 1.1 }}
+          animate={{ scale: 1 }}
+          transition={{ duration: 2, ease: "easeOut" }}
+          className="w-full h-full"
+        >
+          <img
+            src={heroBg}
+            alt="Driving preparation"
+            className="w-full h-full object-cover"
+            decoding="async"
+            fetchPriority="high"
+          />
+        </motion.div>
+        <div className="absolute inset-0 bg-gradient-to-b from-background/90 via-background/50 to-background" />
+        <div className="absolute inset-0 bg-gradient-to-r from-background/80 via-transparent to-background/80" />
       </div>
 
       {/* Content */}
-      <div className="relative z-10 container mx-auto px-4 py-20 text-center">
-        <div className="max-w-4xl mx-auto space-y-8 animate-fade-in">
+      <div className="relative z-10 container mx-auto px-4 text-center">
+        <div className="max-w-5xl mx-auto space-y-8">
+
           {/* Badge */}
-          <div className="inline-flex items-center gap-2 bg-card/10 backdrop-blur-sm border border-card/20 rounded-full px-6 py-3 text-card-foreground">
-            <Award className="w-5 h-5 text-secondary" />
-            <span className="text-sm font-medium">Vrumi - Plataforma #1 de Preparação</span>
-          </div>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="flex justify-center"
+          >
+            <div className="inline-flex items-center gap-2 bg-secondary/50 backdrop-blur-md border border-white/10 rounded-full px-4 py-1.5 text-foreground shadow-sm">
+              <Award className="w-4 h-4 text-primary" />
+              <span className="text-sm font-medium">Plataforma #1 de Preparação</span>
+            </div>
+          </motion.div>
 
           {/* Main Heading */}
-          <h1 className="text-5xl md:text-7xl font-bold text-primary-foreground leading-tight">
-            Passe na sua CNH
-            <span className="block text-secondary mt-2">com Facilidade</span>
-          </h1>
+          <motion.h1
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.4, ease: "easeOut" }}
+            className="text-6xl md:text-8xl font-bold tracking-tight text-foreground leading-[1.1]"
+          >
+            Sua CNH, <br className="hidden md:block" />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-primary/60">
+              Sem Estresse.
+            </span>
+          </motion.h1>
 
           {/* Subheading */}
-          <p className="text-xl md:text-2xl text-primary-foreground/90 max-w-2xl mx-auto leading-relaxed">
-            Todos os recursos que você precisa em uma única plataforma: flashcards inteligentes e materiais teóricos completos.
-          </p>
+          <motion.p
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.6, ease: "easeOut" }}
+            className="text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto leading-relaxed font-light"
+          >
+            Domine a teoria e a prática com a metodologia mais moderna do mercado. Flashcards, simulados e suporte em um só lugar.
+          </motion.p>
 
           {/* CTA Buttons */}
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-4">
-            <Button variant="hero" size="lg" className="text-lg h-12">
-              <Car className="w-5 h-5" />
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.8, ease: "easeOut" }}
+            className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-8"
+          >
+            <Button size="lg" className="text-lg h-14 px-8 rounded-full shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 bg-primary text-white border-0">
               Começar Agora
+              <ChevronRight className="w-5 h-5 ml-2" />
             </Button>
-            <Button variant="outline" size="lg" className="text-lg h-12 bg-card/10 backdrop-blur-sm border-2 text-primary-foreground hover:bg-card/20">
-              <BookOpen className="w-5 h-5" />
+            <Button variant="outline" size="lg" className="text-lg h-14 px-8 rounded-full backdrop-blur-sm border-2 hover:bg-secondary/50 transition-all duration-300">
+              <BookOpen className="w-5 h-5 mr-2" />
               Ver Conteúdo
             </Button>
-          </div>
+          </motion.div>
 
           {/* Stats */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-6 sm:gap-8 pt-10 sm:pt-12 max-w-3xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 1, delay: 1.2 }}
+            className="grid grid-cols-2 sm:grid-cols-3 gap-8 pt-16 max-w-3xl mx-auto border-t border-border/50 mt-16"
+          >
             {[
               { value: "10K+", label: "Alunos Aprovados" },
               { value: "95%", label: "Taxa de Aprovação" },
               { value: "500+", label: "Questões" },
             ].map((stat, index) => (
               <div key={index} className="text-center">
-                <div className="text-2xl sm:text-3xl md:text-4xl font-bold text-secondary mb-2">
+                <div className="text-3xl md:text-4xl font-bold text-foreground mb-1 tracking-tight">
                   {stat.value}
                 </div>
-                <div className="text-xs sm:text-sm md:text-base text-primary-foreground/80">
+                <div className="text-sm md:text-base text-muted-foreground font-medium">
                   {stat.label}
                 </div>
               </div>
             ))}
-          </div>
+          </motion.div>
         </div>
       </div>
-
-      {/* Decorative Elements */}
-      <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-background to-transparent z-10" />
     </section>
   );
 };

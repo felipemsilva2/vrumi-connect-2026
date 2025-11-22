@@ -72,10 +72,10 @@ export const DashboardWithSidebar = ({ user, profile }: DashboardProps) => {
             </SheetContent>
           </Sheet>
         )}
-        <MainContent 
-          isDark={isDark} 
-          setIsDark={setIsDark} 
-          user={user} 
+        <MainContent
+          isDark={isDark}
+          setIsDark={setIsDark}
+          user={user}
           profile={profile}
           selected={selected}
           setSelected={setSelected}
@@ -100,7 +100,7 @@ const Sidebar = ({ user, selected, setSelected }: SidebarProps) => {
   const { toast } = useToast();
   const { isAdmin, isLoading } = useIsAdmin(user?.id);
   const { hasActivePass, activePass, isLoading: isLoadingPass } = useActivePass(user?.id);
-  
+
   console.log('[Sidebar] Rendering with:', {
     userId: user?.id,
     userEmail: user?.email,
@@ -117,7 +117,7 @@ const Sidebar = ({ user, selected, setSelected }: SidebarProps) => {
         title: "Logout realizado",
         description: "Até logo!",
       });
-      navigate(homeRoute);
+      navigate("/");
     } catch (error: any) {
       toast({
         title: "Erro ao fazer logout",
@@ -133,9 +133,8 @@ const Sidebar = ({ user, selected, setSelected }: SidebarProps) => {
 
   return (
     <nav
-      className={`sticky top-0 h-screen shrink-0 border-r transition-all duration-300 ease-in-out ${
-        open ? 'w-64' : 'w-16'
-      } border-border bg-background p-2 shadow-sm`}
+      className={`sticky top-0 h-screen shrink-0 border-r transition-all duration-300 ease-in-out ${open ? 'w-64' : 'w-16'
+        } border-border bg-background p-2 shadow-sm`}
     >
       <TitleSection open={open} user={user} hasActivePass={hasActivePass} activePass={activePass} />
 
@@ -177,7 +176,7 @@ const Sidebar = ({ user, selected, setSelected }: SidebarProps) => {
           isExternalLink
           externalPath="/study-room"
         />
-        
+
         {/* TEMPORARIAMENTE OCULTO - Lançamento futuro
         <Option
           Icon={FileText}
@@ -278,7 +277,7 @@ const Sidebar = ({ user, selected, setSelected }: SidebarProps) => {
 const Option = ({ Icon, title, selected, setSelected, open, notifs, tooltip, isExternalLink, externalPath, dataTutorial }: any) => {
   const navigate = useNavigate();
   const isSelected = selected === title;
-  
+
   const handleClick = (e: React.MouseEvent) => {
     e.preventDefault();
     if (isExternalLink && externalPath) {
@@ -288,15 +287,14 @@ const Option = ({ Icon, title, selected, setSelected, open, notifs, tooltip, isE
       setSelected(title);
     }
   };
-  
+
   return (
     <button
       onClick={handleClick}
-      className={`relative flex h-12 w-full items-center rounded-md transition-all duration-200 ${
-        isSelected 
-          ? "bg-primary/10 text-primary shadow-sm border-l-2 border-primary" 
+      className={`relative flex h-12 w-full items-center rounded-md transition-all duration-200 ${isSelected
+          ? "bg-primary/10 text-primary shadow-sm border-l-2 border-primary"
           : "text-muted-foreground hover:bg-accent/10 hover:text-foreground"
-      }`}
+        }`}
       aria-label={title}
       title={tooltip}
       data-tutorial={dataTutorial}
@@ -306,9 +304,8 @@ const Option = ({ Icon, title, selected, setSelected, open, notifs, tooltip, isE
       </div>
       {open && (
         <span
-          className={`text-sm font-medium transition-opacity duration-200 ${
-            open ? 'opacity-100' : 'opacity-0'
-          }`}
+          className={`text-sm font-medium transition-opacity duration-200 ${open ? 'opacity-100' : 'opacity-0'
+            }`}
         >
           {title}
         </span>
@@ -326,8 +323,8 @@ const TitleSection = ({ open, user, hasActivePass, activePass }: any) => {
   const getPlanDisplay = () => {
     if (hasActivePass && activePass) {
       const daysRemaining = Math.ceil((new Date(activePass.expires_at).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
-      const planType = activePass.pass_type === 'family_90_days' ? 'Família' : 
-                      activePass.pass_type === '90_days' ? 'Premium 90 dias' : 'Premium 30 dias';
+      const planType = activePass.pass_type === 'family_90_days' ? 'Família' :
+        activePass.pass_type === '90_days' ? 'Premium 90 dias' : 'Premium 30 dias';
       return `${planType} (${daysRemaining}d restantes)`;
     }
     return 'Plano Gratuito';
@@ -382,16 +379,14 @@ const ToggleClose = ({ open, setOpen }: any) => {
       <div className="flex items-center p-4">
         <div className="grid size-12 place-content-center">
           <ChevronsRight
-            className={`h-5 w-5 transition-transform duration-300 text-muted-foreground ${
-              open ? "rotate-180" : ""
-            }`}
+            className={`h-5 w-5 transition-transform duration-300 text-muted-foreground ${open ? "rotate-180" : ""
+              }`}
           />
         </div>
         {open && (
           <span
-            className={`text-sm font-medium text-muted-foreground transition-opacity duration-200 ${
-              open ? 'opacity-100' : 'opacity-0'
-            }`}
+            className={`text-sm font-medium text-muted-foreground transition-opacity duration-200 ${open ? 'opacity-100' : 'opacity-0'
+              }`}
           >
             Ocultar
           </span>
@@ -409,7 +404,7 @@ const LazyConquistasView = React.lazy(() => import("@/components/dashboard/Conqu
 const LazyPerfilView = React.lazy(() => import("@/components/dashboard/PerfilView").then(m => ({ default: m.PerfilView })));
 
 const MainContent = ({ isDark, setIsDark, user, profile, selected, setSelected, isMobile, openMobileMenu }: any) => {
-  const successRate = profile?.total_questions_answered 
+  const successRate = profile?.total_questions_answered
     ? Math.round((profile.correct_answers / profile.total_questions_answered) * 100)
     : 0;
 
@@ -419,12 +414,12 @@ const MainContent = ({ isDark, setIsDark, user, profile, selected, setSelected, 
       // Convert to title case and take only first name if name is too long
       const names = fullName.toLowerCase().split(' ');
       const firstName = names[0].charAt(0).toUpperCase() + names[0].slice(1);
-      
+
       // If name is too long (>15 chars) or has many parts, use just first name
       if (fullName.length > 15 || names.length > 3) {
         return firstName;
       }
-      
+
       // Otherwise, return first name or first + last if reasonable
       if (names.length === 1) {
         return firstName;
@@ -433,13 +428,13 @@ const MainContent = ({ isDark, setIsDark, user, profile, selected, setSelected, 
         return `${firstName} ${lastName}`;
       }
     }
-    
+
     // Fallback to email username
     if (email) {
       const username = email.split('@')[0];
       return username.length > 12 ? username.substring(0, 12) + '...' : username;
     }
-    
+
     return 'Estudante';
   };
 
@@ -510,7 +505,7 @@ const MainContent = ({ isDark, setIsDark, user, profile, selected, setSelected, 
           </div>
         </div>
       )}
-      
+
       <Suspense fallback={<div className="p-4 text-sm text-muted-foreground">Carregando…</div>}>
         {renderContent()}
       </Suspense>
@@ -527,7 +522,7 @@ const DashboardHome = ({ user, profile, setSelected }: any) => {
   const [categoryProgress, setCategoryProgress] = useState<any[]>([])
   const [quizStats, setQuizStats] = useState<any>({})
   const [trafficSignsStats, setTrafficSignsStats] = useState<any>({ studied: 0, total: 0, confidence: 0 })
-  const successRate = aggregates?.total_questions_answered 
+  const successRate = aggregates?.total_questions_answered
     ? Math.round((aggregates.correct_answers / aggregates.total_questions_answered) * 100)
     : 0
 
@@ -535,7 +530,7 @@ const DashboardHome = ({ user, profile, setSelected }: any) => {
   const { hasActivePass, activePass, daysRemaining } = useActivePass(user?.id)
   const materiaisQuery = useMateriaisHierarchy()
   const { data: materiaisData, isLoading: materiaisLoading } = materiaisQuery
-  
+
   // Extract modules and chapters from the query data
   const modules = materiaisData || []
   const chapters = materiaisData?.flatMap(module => module.chapters) || []
@@ -551,7 +546,7 @@ const DashboardHome = ({ user, profile, setSelected }: any) => {
 
   const fetchPendingReviews = async () => {
     if (!user?.id || !isSupabaseConfigured || !navigator.onLine) return
-    
+
     try {
       // Primeiro, verificar se há cartões com SM-2 disponíveis
       const { data: sm2Data, error: sm2Error } = await supabase
@@ -600,7 +595,7 @@ const DashboardHome = ({ user, profile, setSelected }: any) => {
       // Calcular progresso por módulo
       const moduleProgress = modules.map(module => {
         const moduleChapters = chapters.filter(chapter => chapter.module_id === module.id)
-        const completedChapters = moduleChapters.filter(chapter => 
+        const completedChapters = moduleChapters.filter(chapter =>
           userProgress?.some(progress => progress.chapter_id === chapter.id && progress.completed)
         ).length
         const totalChapters = moduleChapters.length
@@ -649,8 +644,8 @@ const DashboardHome = ({ user, profile, setSelected }: any) => {
       // Calcular estatísticas
       const lastAttempt = attempts?.[0]
       const weekAverage = weekAttempts && weekAttempts.length > 0
-        ? Math.round(weekAttempts.reduce((sum, attempt) => 
-            sum + (attempt.score / attempt.total_questions) * 100, 0) / weekAttempts.length)
+        ? Math.round(weekAttempts.reduce((sum, attempt) =>
+          sum + (attempt.score / attempt.total_questions) * 100, 0) / weekAttempts.length)
         : 0
 
       setQuizStats({
@@ -666,7 +661,7 @@ const DashboardHome = ({ user, profile, setSelected }: any) => {
 
   const fetchTrafficSignsStats = async () => {
     if (!user?.id || !isSupabaseConfigured || !navigator.onLine) return
-    
+
     try {
       // Buscar total de placas disponíveis
       const { data: totalSigns, error: totalError } = await supabase
@@ -902,9 +897,9 @@ const DashboardHome = ({ user, profile, setSelected }: any) => {
         </ModernCard>
 
         {/* Placas de Trânsito */}
-        <ModernCard 
-          variant="elevated" 
-          interactive={true} 
+        <ModernCard
+          variant="elevated"
+          interactive={true}
           className="p-4 sm:p-6 h-full cursor-pointer"
           onClick={() => {
             console.log('Navigating to Biblioteca de Placas...')
@@ -935,7 +930,7 @@ const DashboardHome = ({ user, profile, setSelected }: any) => {
             <h3 className="text-lg font-semibold text-foreground">Revisões Pendentes</h3>
             <Clock className="h-5 w-5 text-muted-foreground" />
           </div>
-          
+
           <div className="space-y-4">
             {pendingReviews > 0 ? (
               <div className="flex items-center justify-between p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
@@ -948,8 +943,8 @@ const DashboardHome = ({ user, profile, setSelected }: any) => {
                     <p className="text-sm text-muted-foreground">{pendingReviews} flashcards pendentes</p>
                   </div>
                 </div>
-                <ModernButton 
-                  variant="primary" 
+                <ModernButton
+                  variant="primary"
                   size="sm"
                   onClick={() => {
                     console.log('Navigating to Flashcards...')
@@ -975,7 +970,7 @@ const DashboardHome = ({ user, profile, setSelected }: any) => {
             <h3 className="text-lg font-semibold text-foreground">Progresso por Categoria</h3>
             <Target className="h-5 w-5 text-muted-foreground" />
           </div>
-          
+
           {categoryProgress.length > 0 ? (
             <div className="space-y-3">
               {categoryProgress.map((category) => (
@@ -985,7 +980,7 @@ const DashboardHome = ({ user, profile, setSelected }: any) => {
                     <span className="text-muted-foreground">{category.progress}%</span>
                   </div>
                   <div className="w-full bg-muted rounded-full h-2">
-                    <div 
+                    <div
                       className={`${category.color} h-2 rounded-full transition-all duration-300`}
                       style={{ width: `${category.progress}%` }}
                     ></div>
@@ -999,11 +994,11 @@ const DashboardHome = ({ user, profile, setSelected }: any) => {
               <p className="text-sm text-muted-foreground">Comece a estudar para ver seu progresso!</p>
             </div>
           )}
-          
+
           <div className="mt-4 pt-4 border-t border-border">
-            <ModernButton 
-              variant="outline" 
-              size="sm" 
+            <ModernButton
+              variant="outline"
+              size="sm"
               className="w-full"
               onClick={() => {
                 console.log('Navigating to Estatísticas...')
@@ -1024,7 +1019,7 @@ const DashboardHome = ({ user, profile, setSelected }: any) => {
             <h3 className="text-lg font-semibold text-foreground">Status da Assinatura</h3>
             <CreditCard className="h-5 w-5 text-muted-foreground" />
           </div>
-          
+
           <div className="space-y-4">
             {hasActivePass ? (
               <div className="flex items-center gap-3 p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
@@ -1042,8 +1037,8 @@ const DashboardHome = ({ user, profile, setSelected }: any) => {
               <div className="text-center py-4">
                 <div className="text-4xl mb-2">🔒</div>
                 <p className="text-sm text-muted-foreground mb-2">Assinatura não ativa</p>
-                <ModernButton 
-                  variant="primary" 
+                <ModernButton
+                  variant="primary"
                   size="sm"
                   onClick={() => {
                     console.log('Navigating to Meu Perfil...')
@@ -1063,7 +1058,7 @@ const DashboardHome = ({ user, profile, setSelected }: any) => {
             <h3 className="text-lg font-semibold text-foreground">Resumo de Simulados</h3>
             <BarChart3 className="h-5 w-5 text-muted-foreground" />
           </div>
-          
+
           {quizStats.totalAttempts > 0 ? (
             <div className="space-y-3">
               <div className="flex justify-between items-center">
@@ -1085,11 +1080,11 @@ const DashboardHome = ({ user, profile, setSelected }: any) => {
               <p className="text-sm text-muted-foreground">Nenhum simulado realizado</p>
             </div>
           )}
-          
+
           <div className="mt-4 pt-4 border-t border-border">
-            <ModernButton 
-              variant="outline" 
-              size="sm" 
+            <ModernButton
+              variant="outline"
+              size="sm"
               className="w-full"
               onClick={() => setSelected("Simulados")}
             >
@@ -1106,10 +1101,10 @@ const DashboardHome = ({ user, profile, setSelected }: any) => {
             <h3 className="text-lg font-semibold text-foreground">Atividades Recentes</h3>
             <Clock className="h-5 w-5 text-muted-foreground" />
           </div>
-          
+
           {loading ? (
             <div className="space-y-3">
-              {[1,2,3].map(i => (
+              {[1, 2, 3].map(i => (
                 <div key={i} className="flex items-center gap-3 p-3 rounded-lg bg-muted/30 animate-pulse">
                   <div className="w-8 h-8 bg-muted rounded-full"></div>
                   <div className="flex-1">
@@ -1124,7 +1119,7 @@ const DashboardHome = ({ user, profile, setSelected }: any) => {
               {recentActivities.map((activity, index) => {
                 const IconComponent = getActivityIcon(activity.type)
                 const colorClass = getActivityColor(activity.type)
-                
+
                 // Define colors based on activity type
                 const colorStyles = {
                   blue: { bg: 'bg-blue-100 dark:bg-blue-900/20', text: 'text-blue-600 dark:text-blue-400' },
@@ -1133,9 +1128,9 @@ const DashboardHome = ({ user, profile, setSelected }: any) => {
                   orange: { bg: 'bg-orange-100 dark:bg-orange-900/20', text: 'text-orange-600 dark:text-orange-400' },
                   red: { bg: 'bg-red-100 dark:bg-red-900/20', text: 'text-red-600 dark:text-red-400' }
                 }
-                
+
                 const style = colorStyles[colorClass as keyof typeof colorStyles] || colorStyles.blue
-                
+
                 return (
                   <div key={activity.id || index} className="flex items-center gap-3 p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
                     <div className={`w-8 h-8 rounded-full flex items-center justify-center ${style.bg}`}>
@@ -1156,9 +1151,9 @@ const DashboardHome = ({ user, profile, setSelected }: any) => {
             <div className="text-center py-8">
               <div className="text-4xl mb-4">📚</div>
               <p className="text-muted-foreground">Nenhuma atividade recente. Comece a estudar!</p>
-              <ModernButton 
-                variant="outline" 
-                size="sm" 
+              <ModernButton
+                variant="outline"
+                size="sm"
                 className="mt-4"
                 onClick={() => {
                   console.log('Navigating to Flashcards...')

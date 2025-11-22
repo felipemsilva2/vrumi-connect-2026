@@ -36,8 +36,8 @@ export default function MinimalModernHero({
   return <section className={`relative min-h-screen w-full overflow-hidden ${className}`} style={{
     background: "#FFFFFF"
   }}>
-      {/* Subtle Grid */}
-      <div className="absolute inset-0" style={{
+    {/* Subtle Grid */}
+    <div className="absolute inset-0" style={{
       backgroundImage: `
             linear-gradient(rgba(0, 0, 0, 0.03) 1px, transparent 1px),
             linear-gradient(90deg, rgba(0, 0, 0, 0.03) 1px, transparent 1px)
@@ -45,8 +45,8 @@ export default function MinimalModernHero({
       backgroundSize: "100px 100px"
     }} />
 
-      {/* Accent Line Top */}
-      <motion.div className="absolute top-0 left-0 h-1" style={{
+    {/* Accent Line Top */}
+    <motion.div className="absolute top-0 left-0 h-1" style={{
       background: `linear-gradient(90deg, ${accentColor}, transparent)`
     }} initial={{
       width: "0%"
@@ -57,8 +57,8 @@ export default function MinimalModernHero({
       ease: "easeOut"
     }} />
 
-      {/* Floating Accent Circle */}
-      <motion.div className="absolute rounded-full" style={{
+    {/* Floating Accent Circle */}
+    <motion.div className="absolute rounded-full hidden md:block" style={{
       top: "20%",
       right: "10%",
       width: "400px",
@@ -73,8 +73,8 @@ export default function MinimalModernHero({
       ease: "linear"
     }} />
 
-      {/* Small Accent Dot */}
-      <motion.div className="absolute rounded-full" style={{
+    {/* Small Accent Dot */}
+    <motion.div className="absolute rounded-full hidden md:block" style={{
       bottom: "30%",
       right: "15%",
       width: "80px",
@@ -89,11 +89,11 @@ export default function MinimalModernHero({
       repeat: Infinity
     }} />
 
-      {/* Content Container */}
-      <div className="relative z-10 min-h-screen flex items-center px-6 py-20">
-        <div className="max-w-7xl mx-auto w-full">
-          {/* Logo */}
-          <motion.div initial={{
+    {/* Content Container */}
+    <div className="relative z-10 min-h-screen flex items-center px-6 py-20">
+      <div className="max-w-7xl mx-auto w-full">
+        {/* Logo */}
+        <motion.div initial={{
           opacity: 0,
           y: -20
         }} animate={{
@@ -102,12 +102,12 @@ export default function MinimalModernHero({
         }} transition={{
           duration: 0.6
         }} className="mb-16">
-            {logo}
-          </motion.div>
+          {logo}
+        </motion.div>
 
-          <div className="max-w-4xl">
-            {/* Badge */}
-            {badge && <motion.div initial={{
+        <div className="max-w-4xl">
+          {/* Badge */}
+          {badge && <motion.div initial={{
             opacity: 0,
             x: -20
           }} animate={{
@@ -120,7 +120,7 @@ export default function MinimalModernHero({
             background: `${accentColor}15`,
             border: `1px solid ${accentColor}40`
           }}>
-                <motion.div className="w-2 h-2 rounded-full" style={{
+            <motion.div className="w-2 h-2 rounded-full" style={{
               background: accentColor
             }} animate={{
               scale: [1, 1.3, 1]
@@ -128,16 +128,16 @@ export default function MinimalModernHero({
               duration: 2,
               repeat: Infinity
             }} />
-                <span className="text-sm font-bold uppercase tracking-wider" style={{
+            <span className="text-sm font-bold uppercase tracking-wider" style={{
               color: "#000000",
               fontFamily: "Inter, sans-serif"
             }}>
-                  {badge}
-                </span>
-              </motion.div>}
+              {badge}
+            </span>
+          </motion.div>}
 
-            {/* Title */}
-            <motion.h1 initial={{
+          {/* Title */}
+          <motion.h1 initial={{
             opacity: 0,
             y: 30
           }} animate={{
@@ -146,20 +146,20 @@ export default function MinimalModernHero({
           }} transition={{
             duration: 0.8,
             delay: 0.3
-          }} className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-black leading-tight mb-6" style={{
+          }} className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-black leading-tight mb-6" style={{
             fontFamily: "Inter, sans-serif",
             color: "#000000",
             letterSpacing: "-0.04em"
           }}>
-              {title.split(" ").map((word, index) => <React.Fragment key={index}>
-                  {index === Math.floor(title.split(" ").length / 2) ? <span style={{
+            {title.split(" ").map((word, index) => <React.Fragment key={index}>
+              {index === Math.floor(title.split(" ").length / 2) ? <span style={{
                 color: accentColor
               }}>{word} </span> : <span>{word} </span>}
-                </React.Fragment>)}
-            </motion.h1>
+            </React.Fragment>)}
+          </motion.h1>
 
-            {/* Subtitle */}
-            {subtitle && <motion.h2 initial={{
+          {/* Subtitle */}
+          {subtitle && <motion.h2 initial={{
             opacity: 0,
             y: 20
           }} animate={{
@@ -172,11 +172,11 @@ export default function MinimalModernHero({
             fontFamily: "Inter, sans-serif",
             color: "#666666"
           }}>
-                {subtitle}
-              </motion.h2>}
+            {subtitle}
+          </motion.h2>}
 
-            {/* Description */}
-            <motion.p initial={{
+          {/* Description */}
+          <motion.p initial={{
             opacity: 0,
             y: 20
           }} animate={{
@@ -191,11 +191,11 @@ export default function MinimalModernHero({
             lineHeight: "1.6",
             maxWidth: "700px"
           }} className="text-sm sm:text-base md:text-lg lg:text-xl mb-8 sm:mb-12">
-              {description}
-            </motion.p>
+            {description}
+          </motion.p>
 
-            {/* Buttons */}
-            <motion.div initial={{
+          {/* Buttons */}
+          <motion.div initial={{
             opacity: 0,
             y: 20
           }} animate={{
@@ -205,7 +205,7 @@ export default function MinimalModernHero({
             duration: 0.6,
             delay: 0.9
           }} className="flex flex-col sm:flex-row items-start gap-4 mb-16">
-              {primaryButton && <motion.button whileHover={{
+            {primaryButton && <motion.button whileHover={{
               scale: 1.05,
               boxShadow: `0 20px 50px ${accentColor}40`
             }} whileTap={{
@@ -215,10 +215,10 @@ export default function MinimalModernHero({
               color: "#000000",
               fontFamily: "Inter, sans-serif"
             }}>
-                  {primaryButton.label}
-                </motion.button>}
+              {primaryButton.label}
+            </motion.button>}
 
-              {secondaryButton && <motion.button whileHover={{
+            {secondaryButton && <motion.button whileHover={{
               scale: 1.05,
               background: "#F5F5F5"
             }} whileTap={{
@@ -229,12 +229,12 @@ export default function MinimalModernHero({
               fontFamily: "Inter, sans-serif",
               border: "2px solid #E0E0E0"
             }}>
-                  {secondaryButton.label}
-                </motion.button>}
-            </motion.div>
+              {secondaryButton.label}
+            </motion.button>}
+          </motion.div>
 
-            {/* Stats */}
-            {stats.length > 0 && <motion.div initial={{
+          {/* Stats */}
+          {stats.length > 0 && <motion.div initial={{
             opacity: 0,
             y: 20
           }} animate={{
@@ -244,34 +244,34 @@ export default function MinimalModernHero({
             duration: 0.6,
             delay: 1.1
           }} className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-8">
-                {stats.map((stat, index) => <motion.div key={index} whileHover={{
+            {stats.map((stat, index) => <motion.div key={index} whileHover={{
               y: -5
             }} className="relative">
-                    <div className="absolute top-0 left-0 w-8 h-1 mb-2" style={{
+              <div className="absolute top-0 left-0 w-8 h-1 mb-2" style={{
                 background: accentColor
               }} />
-                    <div className="pt-4">
-                      <div className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black mb-2" style={{
+              <div className="pt-4">
+                <div className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black mb-2" style={{
                   fontFamily: "Inter, sans-serif",
                   color: "#000000"
                 }}>
-                        {stat.value}
-                      </div>
-                      <div className="text-xs sm:text-sm font-semibold uppercase tracking-wide" style={{
+                  {stat.value}
+                </div>
+                <div className="text-xs sm:text-sm font-semibold uppercase tracking-wide" style={{
                   fontFamily: "Inter, sans-serif",
                   color: "#888888"
                 }}>
-                        {stat.label}
-                      </div>
-                    </div>
-                  </motion.div>)}
-              </motion.div>}
-          </div>
+                  {stat.label}
+                </div>
+              </div>
+            </motion.div>)}
+          </motion.div>}
         </div>
       </div>
+    </div>
 
-      {/* Decorative Elements */}
-      <motion.div className="absolute" style={{
+    {/* Decorative Elements */}
+    <motion.div className="absolute hidden md:block" style={{
       bottom: "10%",
       right: "5%",
       width: "200px",
@@ -285,8 +285,8 @@ export default function MinimalModernHero({
       repeat: Infinity
     }} />
 
-      {/* Bottom Accent Line */}
-      <motion.div className="absolute bottom-0 right-0 h-1" style={{
+    {/* Bottom Accent Line */}
+    <motion.div className="absolute bottom-0 right-0 h-1" style={{
       background: `linear-gradient(270deg, ${accentColor}, transparent)`
     }} initial={{
       width: "0%"
@@ -297,5 +297,5 @@ export default function MinimalModernHero({
       delay: 0.5,
       ease: "easeOut"
     }} />
-    </section>;
+  </section>;
 }
