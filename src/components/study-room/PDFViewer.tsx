@@ -1,15 +1,13 @@
-import { useState, useCallback, forwardRef, useImperativeHandle, useRef, useEffect } from "react";
-import { Document, Page, pdfjs } from "react-pdf";
+import { useState, forwardRef, useImperativeHandle, useRef, useEffect } from "react";
+import { Viewer, Worker, SpecialZoomLevel } from "@react-pdf-viewer/core";
+import { zoomPlugin } from "@react-pdf-viewer/zoom";
 import { Button } from "@/components/ui/button";
 import { ZoomIn, ZoomOut, ChevronLeft, ChevronRight, Upload, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { useIsMobile } from "@/hooks/use-mobile";
-import "react-pdf/dist/Page/AnnotationLayer.css";
-import "react-pdf/dist/Page/TextLayer.css";
-
-// Configure worker
-pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
+import "@react-pdf-viewer/core/lib/styles/index.css";
+import "@react-pdf-viewer/zoom/lib/styles/index.css";
 
 interface PDFViewerProps {
   className?: string;
@@ -22,60 +20,25 @@ export interface PDFViewerHandle {
 
 export const PDFViewer = forwardRef<PDFViewerHandle, PDFViewerProps>(({ className }, ref) => {
   const [file, setFile] = useState<string | null>("/materiais/MANUAL-OBTENCAO_2025.pdf");
-  const [numPages, setNumPages] = useState<number>(0);
   const [pageNumber, setPageNumber] = useState<number>(1);
   const isMobile = useIsMobile();
-  const [scale, setScale] = useState<number>(isMobile ? 1.2 : 1.0);
-  const [fitMode, setFitMode] = useState<'scale' | 'fitWidth'>(isMobile ? 'fitWidth' : 'scale');
   const containerRef = useRef<HTMLDivElement>(null);
-  const [containerWidth, setContainerWidth] = useState<number>(0);
-  const [zoomFactor, setZoomFactor] = useState<number>(isMobile ? 1.25 : 1.0);
+  const zoomPluginInstance = zoomPlugin();
+  const { ZoomIn: ZoomInButton, ZoomOut: ZoomOutButton } = zoomPluginInstance;
 
-  const onDocumentLoadSuccess = useCallback(({ numPages }: { numPages: number }) => {
-    setNumPages(numPages);
-    setPageNumber(1);
-    toast.success(`PDF carregado: ${numPages} páginas`);
-  }, []);
-
-  const onDocumentLoadError = useCallback((error: Error) => {
-    console.error("Erro ao carregar PDF:", error);
-    toast.error("Erro ao carregar o PDF");
-  }, []);
-
-  const handleFileUpload = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const uploadedFile = event.target.files?.[0];
     if (uploadedFile) {
       const fileUrl = URL.createObjectURL(uploadedFile);
       setFile(fileUrl);
       toast.info("Carregando PDF...");
     }
-  }, []);
-
-  const handleZoomIn = () => setScale((prev) => Math.min(prev + 0.2, 3.0));
-  const handleZoomOut = () => setScale((prev) => Math.max(prev - 0.2, 0.5));
-  const handlePreviousPage = () => setPageNumber((prev) => Math.max(prev - 1, 1));
-  const handleNextPage = () => setPageNumber((prev) => Math.min(prev + 1, numPages));
+  };
 
   useImperativeHandle(ref, () => ({
     getCurrentFile: () => file,
     getCurrentPage: () => pageNumber,
   }));
-
-  useEffect(() => {
-    const el = containerRef.current;
-    if (!el) return;
-    const ro = new ResizeObserver((entries) => {
-      for (const entry of entries) {
-        const width = Math.floor(entry.contentRect.width);
-        setContainerWidth(width);
-      }
-    });
-    ro.observe(el);
-    setContainerWidth(el.clientWidth);
-    return () => {
-      ro.disconnect();
-    };
-  }, []);
 
   return (
     <div className={cn("flex flex-col h-full bg-background pb-safe", className)}>
@@ -103,89 +66,40 @@ export const PDFViewer = forwardRef<PDFViewerHandle, PDFViewerProps>(({ classNam
         </div>
 
         {file && (
-          <>
-            {/* Controles de navegação */}
-            <div className="flex items-center gap-1 sm:gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handlePreviousPage}
-                disabled={pageNumber <= 1}
-                className={isMobile ? "h-12 w-12" : ""}
-              >
-                <ChevronLeft className="h-3 w-3 sm:h-4 sm:w-4" />
-              </Button>
-              <span className="text-xs sm:text-sm font-medium min-w-[60px] sm:min-w-[80px] text-center">
-                {pageNumber} / {numPages}
-              </span>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleNextPage}
-                disabled={pageNumber >= numPages}
-                className={isMobile ? "h-12 w-12" : ""}
-              >
-                <ChevronRight className="h-3 w-3 sm:h-4 sm:w-4" />
-              </Button>
-            </div>
-
-            {/* Controles de zoom */}
-            <div className="flex items-center gap-1 sm:gap-2">
-              <Button variant="outline" size="sm" onClick={handleZoomOut} disabled={scale <= 0.5} className={isMobile ? "h-12 w-12" : ""}>
-                <ZoomOut className="h-3 w-3 sm:h-4 sm:w-4" />
-              </Button>
-              <span className="text-xs sm:text-sm font-medium min-w-[45px] sm:min-w-[60px] text-center">
-                {Math.round(scale * 100)}%
-              </span>
-              <Button variant="outline" size="sm" onClick={handleZoomIn} disabled={scale >= 3.0} className={isMobile ? "h-12 w-12" : ""}>
-                <ZoomIn className="h-3 w-3 sm:h-4 sm:w-4" />
-              </Button>
-              {fitMode === 'fitWidth' && (
-                <>
-                  <Button variant="outline" size="sm" className={isMobile ? "h-12" : ""} onClick={() => setZoomFactor((z) => Math.max(1.0, Math.round((z - 0.15) * 100) / 100))}>
-                    A-
-                  </Button>
-                  <span className="text-xs sm:text-sm font-medium min-w-[36px] text-center">{Math.round(zoomFactor * 100)}%</span>
-                  <Button variant="outline" size="sm" className={isMobile ? "h-12" : ""} onClick={() => setZoomFactor((z) => Math.min(2.0, Math.round((z + 0.15) * 100) / 100))}>
-                    A+
-                  </Button>
-                </>
+          <div className="flex items-center gap-1 sm:gap-2">
+            <ZoomOutButton>
+              {(props: any) => (
+                <Button variant="outline" size="sm" onClick={props.onClick} className={isMobile ? "h-12 w-12" : ""}>
+                  <ZoomOut className="h-3 w-3 sm:h-4 sm:w-4" />
+                </Button>
               )}
-              <Button variant="outline" size="sm" className={isMobile ? "h-12" : ""} onClick={() => setFitMode(fitMode === 'fitWidth' ? 'scale' : 'fitWidth')}>
-                {fitMode === 'fitWidth' ? 'Ajustar Largura' : 'Zoom Livre'}
-              </Button>
-            </div>
-          </>
+            </ZoomOutButton>
+            <ZoomInButton>
+              {(props: any) => (
+                <Button variant="outline" size="sm" onClick={props.onClick} className={isMobile ? "h-12 w-12" : ""}>
+                  <ZoomIn className="h-3 w-3 sm:h-4 sm:w-4" />
+                </Button>
+              )}
+            </ZoomInButton>
+          </div>
         )}
       </div>
 
       {/* Área de visualização do PDF */}
       <div ref={containerRef} className="flex-1 overflow-auto flex items-start justify-center p-4 bg-muted/5 study-room-scrollbar">
         {file ? (
-          <Document
-            file={file}
-            onLoadSuccess={onDocumentLoadSuccess}
-            onLoadError={onDocumentLoadError}
-            loading={
-              <div className="flex items-center justify-center p-8">
-                <div className="text-center">
-                  <FileText className="h-12 w-12 mx-auto mb-4 text-muted-foreground animate-pulse" />
-                  <p className="text-muted-foreground">Carregando PDF...</p>
-                </div>
-              </div>
-            }
-          >
-            <Page
-              pageNumber={pageNumber}
-              {...(fitMode === 'fitWidth' && containerWidth ? { width: Math.max(Math.floor((containerWidth - 16) * zoomFactor), 320) } : { scale })}
-              loading={
-                <div className="flex items-center justify-center p-8 bg-background rounded-lg border border-border">
-                  <p className="text-muted-foreground">Carregando página...</p>
-                </div>
-              }
-              className="shadow-lg"
-            />
-          </Document>
+          <Worker workerUrl="https://unpkg.com/pdfjs-dist@3.11.174/build/pdf.worker.min.js">
+            <div className="w-full h-full">
+              <Viewer
+                fileUrl={file}
+                plugins={[zoomPluginInstance]}
+                defaultScale={isMobile ? SpecialZoomLevel.PageWidth : SpecialZoomLevel.PageFit}
+                onDocumentLoad={(e) => {
+                  toast.success(`PDF carregado: ${e.doc.numPages} páginas`);
+                }}
+              />
+            </div>
+          </Worker>
         ) : (
           <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
             <FileText className="h-16 w-16 mb-4" />
