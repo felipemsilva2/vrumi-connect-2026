@@ -61,13 +61,31 @@ export const PDFViewer = forwardRef<PDFViewerHandle, PDFViewerProps>(({ classNam
       </div>
 
       {/* Área de visualização do PDF */}
-      <div className="flex-1 overflow-auto flex items-start justify-center bg-muted/5">
+      <div className="flex-1 overflow-auto bg-muted/5">
         {file ? (
-          <iframe
-            src={file}
-            className="w-full h-full border-0"
-            title="PDF Viewer"
-          />
+          <object 
+            data={file} 
+            type="application/pdf" 
+            className="w-full h-full"
+          >
+            <embed 
+              src={file} 
+              type="application/pdf" 
+              className="w-full h-full" 
+            />
+            <div className="flex flex-col items-center justify-center h-full p-4 text-muted-foreground">
+              <FileText className="h-16 w-16 mb-4" />
+              <p className="text-lg font-medium mb-2">Não foi possível exibir o PDF</p>
+              <a 
+                href={file} 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="text-primary underline hover:text-primary/80"
+              >
+                Abrir PDF em nova guia
+              </a>
+            </div>
+          </object>
         ) : (
           <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
             <FileText className="h-16 w-16 mb-4" />
