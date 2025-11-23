@@ -51,7 +51,16 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
   subtitle,
   showBreadcrumb = true
 }) => {
-  const [isDark, setIsDark] = useState(false);
+  const [isDark, setIsDark] = useState(() => {
+    if (typeof window !== "undefined") {
+      return (
+        localStorage.getItem("theme") === "dark" ||
+        (!("theme" in localStorage) &&
+          window.matchMedia("(prefers-color-scheme: dark)").matches)
+      );
+    }
+    return false;
+  });
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const isMobile = useIsMobile();
@@ -63,9 +72,11 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
 
   useEffect(() => {
     if (isDark) {
-      document.documentElement.classList.add('dark');
+      document.documentElement.classList.add("dark");
+      localStorage.setItem("theme", "dark");
     } else {
-      document.documentElement.classList.remove('dark');
+      document.documentElement.classList.remove("dark");
+      localStorage.setItem("theme", "light");
     }
   }, [isDark]);
 
@@ -95,7 +106,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
 
   const getPageTitle = () => {
     if (title) return title;
-    
+
     const path = location.pathname;
     if (path.includes('/traffic-signs-library')) return 'Biblioteca de Placas';
     if (path.includes('/study-room')) return 'Sala de Estudos';
@@ -105,7 +116,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
 
   const getPageSubtitle = () => {
     if (subtitle) return subtitle;
-    
+
     const path = location.pathname;
     if (path.includes('/traffic-signs-library')) return 'Consulte todas as placas de trânsito brasileiras';
     if (path.includes('/study-room')) return 'Estude com IA e visualize materiais';
@@ -117,11 +128,11 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
     if (fullName) {
       const names = fullName.toLowerCase().split(' ');
       const firstName = names[0].charAt(0).toUpperCase() + names[0].slice(1);
-      
+
       if (fullName.length > 15 || names.length > 3) {
         return firstName;
       }
-      
+
       if (names.length === 1) {
         return firstName;
       } else {
@@ -129,20 +140,20 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
         return `${firstName} ${lastName}`;
       }
     }
-    
+
     if (email) {
       const username = email.split('@')[0];
       return username.length > 12 ? username.substring(0, 12) + '...' : username;
     }
-    
+
     return 'Estudante';
   };
 
   const getPlanDisplay = () => {
     if (hasActivePass && activePass) {
       const daysRemaining = Math.ceil((new Date(activePass.expires_at).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
-      const planType = activePass.pass_type === 'family_90_days' ? 'Família' : 
-                      activePass.pass_type === '90_days' ? 'Premium 90 dias' : 'Premium 30 dias';
+      const planType = activePass.pass_type === 'family_90_days' ? 'Família' :
+        activePass.pass_type === '90_days' ? 'Premium 90 dias' : 'Premium 30 dias';
       return `${planType} (${daysRemaining}d restantes)`;
     }
     return 'Plano Gratuito';
@@ -176,9 +187,8 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
         {/* Desktop Sidebar */}
         {!isMobile && (
           <div
-            className={`sticky top-0 h-screen shrink-0 border-r transition-all duration-300 ease-in-out ${
-              sidebarOpen ? 'w-64' : 'w-16'
-            } border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-2 shadow-sm z-40`}
+            className={`sticky top-0 h-screen shrink-0 border-r transition-all duration-300 ease-in-out ${sidebarOpen ? 'w-64' : 'w-16'
+              } border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-2 shadow-sm z-40`}
           >
             {/* Logo Section */}
             <div className="mb-6 border-b border-gray-200 dark:border-gray-800 pb-4">
@@ -210,11 +220,10 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
                 <button
                   key={item.label}
                   onClick={() => navigate(item.path)}
-                  className={`relative flex h-12 w-full items-center rounded-md transition-all duration-200 ${
-                    isActiveRoute(item.path)
-                      ? "bg-primary/10 dark:bg-primary/20 text-primary shadow-sm border-l-2 border-primary" 
+                  className={`relative flex h-12 w-full items-center rounded-md transition-all duration-200 ${isActiveRoute(item.path)
+                      ? "bg-primary/10 dark:bg-primary/20 text-primary shadow-sm border-l-2 border-primary"
                       : "text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-200"
-                  }`}
+                    }`}
                   aria-label={item.label}
                   title={item.tooltip}
                 >
@@ -290,9 +299,8 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
               <div className="flex items-center p-4">
                 <div className="grid size-12 place-content-center">
                   <ChevronsRight
-                    className={`h-5 w-5 transition-transform duration-300 text-gray-500 dark:text-gray-400 ${
-                      sidebarOpen ? "rotate-180" : ""
-                    }`}
+                    className={`h-5 w-5 transition-transform duration-300 text-gray-500 dark:text-gray-400 ${sidebarOpen ? "rotate-180" : ""
+                      }`}
                   />
                 </div>
                 {sidebarOpen && (
@@ -337,11 +345,10 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
                     <button
                       key={item.label}
                       onClick={() => navigate(item.path)}
-                      className={`flex w-full items-center rounded-md p-3 transition-all duration-200 ${
-                        isActiveRoute(item.path)
-                          ? "bg-primary/10 dark:bg-primary/20 text-primary" 
+                      className={`flex w-full items-center rounded-md p-3 transition-all duration-200 ${isActiveRoute(item.path)
+                          ? "bg-primary/10 dark:bg-primary/20 text-primary"
                           : "text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800"
-                      }`}
+                        }`}
                     >
                       <item.icon className="h-5 w-5 mr-3" />
                       <span className="text-sm font-medium">{item.label}</span>
