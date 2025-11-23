@@ -33,6 +33,7 @@ import { useIsAdmin } from "@/hooks/useIsAdmin";
 import { useActivePass } from "@/hooks/useActivePass";
 import { SmartBreadcrumb } from "@/components/SmartBreadcrumb";
 import NotificationSystem from "@/components/notifications/NotificationSystem";
+import { useTheme } from "@/components/ThemeProvider";
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -51,16 +52,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
   subtitle,
   showBreadcrumb = true
 }) => {
-  const [isDark, setIsDark] = useState(() => {
-    if (typeof window !== "undefined") {
-      return (
-        localStorage.getItem("theme") === "dark" ||
-        (!("theme" in localStorage) &&
-          window.matchMedia("(prefers-color-scheme: dark)").matches)
-      );
-    }
-    return false;
-  });
+  const { theme, setTheme } = useTheme();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const isMobile = useIsMobile();
@@ -69,16 +61,6 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
   const { toast } = useToast();
   const { isAdmin } = useIsAdmin(user?.id);
   const { hasActivePass, activePass } = useActivePass(user?.id);
-
-  useEffect(() => {
-    if (isDark) {
-      document.documentElement.classList.add("dark");
-      localStorage.setItem("theme", "dark");
-    } else {
-      document.documentElement.classList.remove("dark");
-      localStorage.setItem("theme", "light");
-    }
-  }, [isDark]);
 
   useEffect(() => {
     // Close mobile menu when route changes
@@ -182,16 +164,16 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
   };
 
   return (
-    <div className={`flex min-h-screen w-full ${isDark ? 'dark' : ''}`}>
-      <div className="flex w-full bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100">
+    <div className="flex min-h-screen w-full">
+      <div className="flex w-full bg-background text-foreground">
         {/* Desktop Sidebar */}
         {!isMobile && (
           <div
             className={`sticky top-0 h-screen shrink-0 border-r transition-all duration-300 ease-in-out ${sidebarOpen ? 'w-64' : 'w-16'
-              } border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-2 shadow-sm z-40`}
+              } border-border bg-background p-2 shadow-sm z-40`}
           >
             {/* Logo Section */}
-            <div className="mb-6 border-b border-gray-200 dark:border-gray-800 pb-4">
+            <div className="mb-6 border-b border-border pb-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3 cursor-pointer" onClick={() => navigate("/dashboard")}>
                   <div className="grid size-10 shrink-0 place-content-center rounded-lg bg-gradient-to-br from-primary to-primary/80 shadow-sm">
@@ -199,17 +181,17 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
                   </div>
                   {sidebarOpen && (
                     <div>
-                      <span className="block text-sm font-semibold text-gray-900 dark:text-gray-100">
+                      <span className="block text-sm font-semibold text-foreground">
                         {userName}
                       </span>
-                      <span className={`block text-xs ${hasActivePass ? 'text-green-600 dark:text-green-400' : 'text-gray-500 dark:text-gray-400'}`}>
+                      <span className={`block text-xs ${hasActivePass ? 'text-green-600 dark:text-green-400' : 'text-muted-foreground'}`}>
                         {getPlanDisplay()}
                       </span>
                     </div>
                   )}
                 </div>
                 {sidebarOpen && (
-                  <ChevronDown className="h-4 w-4 text-gray-400 dark:text-gray-500" />
+                  <ChevronDown className="h-4 w-4 text-muted-foreground" />
                 )}
               </div>
             </div>
@@ -221,8 +203,8 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
                   key={item.label}
                   onClick={() => navigate(item.path)}
                   className={`relative flex h-12 w-full items-center rounded-md transition-all duration-200 ${isActiveRoute(item.path)
-                      ? "bg-primary/10 dark:bg-primary/20 text-primary shadow-sm border-l-2 border-primary"
-                      : "text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-200"
+                      ? "bg-primary/10 text-primary shadow-sm border-l-2 border-primary"
+                      : "text-muted-foreground hover:bg-accent/10 hover:text-foreground"
                     }`}
                   aria-label={item.label}
                   title={item.tooltip}
@@ -246,13 +228,13 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
 
             {/* Admin Section */}
             {isAdmin && sidebarOpen && (
-              <div className="border-t border-gray-200 dark:border-gray-800 pt-4 space-y-1 mb-4">
-                <div className="px-3 py-2 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+              <div className="border-t border-border pt-4 space-y-1 mb-4">
+                <div className="px-3 py-2 text-xs font-medium text-muted-foreground uppercase tracking-wide">
                   Administração
                 </div>
                 <button
                   onClick={() => navigate("/admin/dashboard")}
-                  className="relative flex h-12 w-full items-center rounded-md transition-all duration-200 text-gray-600 dark:text-gray-400 hover:bg-primary/10 dark:hover:bg-primary/20 hover:text-primary dark:hover:text-primary"
+                  className="relative flex h-12 w-full items-center rounded-md transition-all duration-200 text-muted-foreground hover:bg-primary/10 hover:text-primary"
                 >
                   <div className="grid h-full w-12 place-content-center">
                     <Shield className="h-4 w-4" />
@@ -264,13 +246,13 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
 
             {/* Account Section */}
             {sidebarOpen && (
-              <div className="border-t border-gray-200 dark:border-gray-800 pt-4 space-y-1">
-                <div className="px-3 py-2 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+              <div className="border-t border-border pt-4 space-y-1">
+                <div className="px-3 py-2 text-xs font-medium text-muted-foreground uppercase tracking-wide">
                   Conta
                 </div>
                 <button
                   onClick={() => navigate("/dashboard?tab=perfil")}
-                  className="relative flex h-12 w-full items-center rounded-md transition-all duration-200 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-200"
+                  className="relative flex h-12 w-full items-center rounded-md transition-all duration-200 text-muted-foreground hover:bg-accent/10 hover:text-foreground"
                 >
                   <div className="grid h-full w-12 place-content-center">
                     <User className="h-4 w-4" />
@@ -279,7 +261,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
                 </button>
                 <button
                   onClick={handleSignOut}
-                  className="relative flex h-12 w-full items-center rounded-md transition-all duration-200 text-gray-600 dark:text-gray-400 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-400"
+                  className="relative flex h-12 w-full items-center rounded-md transition-all duration-200 text-muted-foreground hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-400"
                 >
                   <div className="grid h-full w-12 place-content-center">
                     <LogOut className="h-4 w-4" />
@@ -292,19 +274,19 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
             {/* Toggle Sidebar */}
             <button
               onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="absolute bottom-0 left-0 right-0 border-t border-gray-200 dark:border-gray-800 transition-colors hover:bg-gray-50 dark:hover:bg-gray-800"
+              className="absolute bottom-0 left-0 right-0 border-t border-border transition-colors hover:bg-accent/10"
               aria-label={sidebarOpen ? "Ocultar sidebar" : "Mostrar sidebar"}
               title={sidebarOpen ? "Ocultar menu lateral" : "Mostrar menu lateral"}
             >
               <div className="flex items-center p-4">
                 <div className="grid size-12 place-content-center">
                   <ChevronsRight
-                    className={`h-5 w-5 transition-transform duration-300 text-gray-500 dark:text-gray-400 ${sidebarOpen ? "rotate-180" : ""
+                    className={`h-5 w-5 transition-transform duration-300 text-muted-foreground ${sidebarOpen ? "rotate-180" : ""
                       }`}
                   />
                 </div>
                 {sidebarOpen && (
-                  <span className="text-sm font-medium text-gray-600 dark:text-gray-300">
+                  <span className="text-sm font-medium text-muted-foreground">
                     Ocultar
                   </span>
                 )}
@@ -316,26 +298,26 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
         {/* Mobile Sidebar */}
         {isMobile && (
           <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
-            <SheetContent side="left" className="p-0 w-3/4 sm:max-w-sm bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100">
+            <SheetContent side="left" className="p-0 w-3/4 sm:max-w-sm bg-background text-foreground">
               {/* Mobile Sidebar Content - Similar to desktop but simplified */}
               <div className="h-full p-4">
-                <div className="mb-6 border-b border-gray-200 dark:border-gray-800 pb-4">
+                <div className="mb-6 border-b border-border pb-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <div className="grid size-10 place-content-center rounded-lg bg-gradient-to-br from-primary to-primary/80 shadow-sm">
                         <Car className="h-6 w-6 text-primary-foreground" />
                       </div>
                       <div>
-                        <span className="block text-sm font-semibold text-gray-900 dark:text-gray-100">
+                        <span className="block text-sm font-semibold text-foreground">
                           {userName}
                         </span>
-                        <span className={`block text-xs ${hasActivePass ? 'text-green-600 dark:text-green-400' : 'text-gray-500 dark:text-gray-400'}`}>
+                        <span className={`block text-xs ${hasActivePass ? 'text-green-600 dark:text-green-400' : 'text-muted-foreground'}`}>
                           {getPlanDisplay()}
                         </span>
                       </div>
                     </div>
                     <button onClick={() => setMobileMenuOpen(false)}>
-                      <X className="h-6 w-6 text-gray-500" />
+                      <X className="h-6 w-6 text-muted-foreground" />
                     </button>
                   </div>
                 </div>
@@ -346,8 +328,8 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
                       key={item.label}
                       onClick={() => navigate(item.path)}
                       className={`flex w-full items-center rounded-md p-3 transition-all duration-200 ${isActiveRoute(item.path)
-                          ? "bg-primary/10 dark:bg-primary/20 text-primary"
-                          : "text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800"
+                          ? "bg-primary/10 text-primary"
+                          : "text-muted-foreground hover:bg-accent/10"
                         }`}
                     >
                       <item.icon className="h-5 w-5 mr-3" />
@@ -362,13 +344,13 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
                 </div>
 
                 {isAdmin && (
-                  <div className="border-t border-gray-200 dark:border-gray-800 pt-4 mt-4">
-                    <div className="px-3 py-2 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+                  <div className="border-t border-border pt-4 mt-4">
+                    <div className="px-3 py-2 text-xs font-medium text-muted-foreground uppercase tracking-wide">
                       Administração
                     </div>
                     <button
                       onClick={() => navigate("/admin/dashboard")}
-                      className="flex w-full items-center rounded-md p-3 text-gray-600 dark:text-gray-400 hover:bg-primary/10 dark:hover:bg-primary/20 hover:text-primary"
+                      className="flex w-full items-center rounded-md p-3 text-muted-foreground hover:bg-primary/10 hover:text-primary"
                     >
                       <Shield className="h-5 w-5 mr-3" />
                       <span className="text-sm font-medium">Área Admin</span>
@@ -376,20 +358,20 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
                   </div>
                 )}
 
-                <div className="border-t border-gray-200 dark:border-gray-800 pt-4 mt-4">
-                  <div className="px-3 py-2 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+                <div className="border-t border-border pt-4 mt-4">
+                  <div className="px-3 py-2 text-xs font-medium text-muted-foreground uppercase tracking-wide">
                     Conta
                   </div>
                   <button
                     onClick={() => navigate("/dashboard?tab=perfil")}
-                    className="flex w-full items-center rounded-md p-3 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-200"
+                    className="flex w-full items-center rounded-md p-3 text-muted-foreground hover:bg-accent/10 hover:text-foreground"
                   >
                     <User className="h-5 w-5 mr-3" />
                     <span className="text-sm font-medium">Meu Perfil</span>
                   </button>
                   <button
                     onClick={handleSignOut}
-                    className="flex w-full items-center rounded-md p-3 text-gray-600 dark:text-gray-400 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600"
+                    className="flex w-full items-center rounded-md p-3 text-muted-foreground hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600"
                   >
                     <LogOut className="h-5 w-5 mr-3" />
                     <span className="text-sm font-medium">Sair</span>
@@ -403,24 +385,24 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
         {/* Main Content */}
         <div className="flex-1 flex flex-col">
           {/* Header */}
-          <header className="sticky top-0 z-30 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 px-4 sm:px-6 py-4">
+          <header className="sticky top-0 z-30 bg-background border-b border-border px-4 sm:px-6 py-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
                 {isMobile && (
                   <button
                     onClick={() => setMobileMenuOpen(true)}
-                    className="flex h-10 w-10 items-center justify-center rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800"
+                    className="flex h-10 w-10 items-center justify-center rounded-lg border border-border bg-background text-muted-foreground hover:bg-accent/10"
                     aria-label="Abrir menu"
                   >
                     <Menu className="h-5 w-5" />
                   </button>
                 )}
                 <div>
-                  <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100">
+                  <h1 className="text-xl sm:text-2xl font-bold text-foreground">
                     {getPageTitle()}
                   </h1>
                   {getPageSubtitle() && (
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                    <p className="text-sm text-muted-foreground">
                       {getPageSubtitle()}
                     </p>
                   )}
@@ -429,11 +411,11 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
               <div className="flex items-center gap-3">
                 <NotificationSystem />
                 <button
-                  onClick={() => setIsDark(!isDark)}
-                  className="flex h-10 w-10 items-center justify-center rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800"
-                  aria-label={isDark ? "Ativar modo claro" : "Ativar modo escuro"}
+                  onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+                  className="flex h-10 w-10 items-center justify-center rounded-lg border border-border bg-background text-muted-foreground hover:bg-accent/10"
+                  aria-label={theme === "dark" ? "Ativar modo claro" : "Ativar modo escuro"}
                 >
-                  {isDark ? (
+                  {theme === "dark" ? (
                     <Sun className="h-5 w-5" />
                   ) : (
                     <Moon className="h-5 w-5" />

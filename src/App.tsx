@@ -45,77 +45,81 @@ const ProtectedAdminRoute = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
+import { ThemeProvider } from "@/components/ThemeProvider";
+
 const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <ErrorBoundary>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/auth" element={<Auth />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/study-room" element={<StudyRoom />} />
-          <Route path="/traffic-signs-library" element={<TrafficSignsLibrary />} />
+    <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <ErrorBoundary>
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/auth" element={<Auth />} />
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/study-room" element={<StudyRoom />} />
+              <Route path="/traffic-signs-library" element={<TrafficSignsLibrary />} />
 
-          <Route path="/checkout" element={<Checkout />} />
-          <Route path="/checkout/success" element={<CheckoutSuccess />} />
-          <Route path="/checkout/cancel" element={<CheckoutCancel />} />
+              <Route path="/checkout" element={<Checkout />} />
+              <Route path="/checkout/success" element={<CheckoutSuccess />} />
+              <Route path="/checkout/cancel" element={<CheckoutCancel />} />
 
-          <Route path="/admin/dashboard" element={
-            <ProtectedAdminRoute>
-              <AdminDashboard />
-            </ProtectedAdminRoute>
-          } />
-          <Route path="/admin/users" element={
-            <ProtectedAdminRoute>
-              <AdminUsers />
-            </ProtectedAdminRoute>
-          } />
-          <Route path="/admin/subscriptions" element={
-            <ProtectedAdminRoute>
-              <AdminSubscriptions />
-            </ProtectedAdminRoute>
-          } />
-          <Route path="/admin/roles" element={
-            <ProtectedAdminRoute>
-              <AdminRoles />
-            </ProtectedAdminRoute>
-          } />
-          <Route path="/admin/audit-logs" element={
-            <ProtectedAdminRoute>
-              <AdminAuditLogs />
-            </ProtectedAdminRoute>
-          } />
-          <Route path="/admin/populate" element={
-            <ProtectedAdminRoute>
-              <AdminPopulate />
-            </ProtectedAdminRoute>
-          } />
-          <Route path="/admin/flashcards" element={
-            <ProtectedAdminRoute>
-              <AdminFlashcards />
-            </ProtectedAdminRoute>
-          } />
-          <Route path="/admin/questions" element={
-            <ProtectedAdminRoute>
-              <AdminQuestions />
-            </ProtectedAdminRoute>
-          } />
-          <Route path="/admin/traffic-signs" element={
-            <ProtectedAdminRoute>
-              <AdminTrafficSignsImport />
-            </ProtectedAdminRoute>
-          } />
+              <Route path="/admin/dashboard" element={
+                <ProtectedAdminRoute>
+                  <AdminDashboard />
+                </ProtectedAdminRoute>
+              } />
+              <Route path="/admin/users" element={
+                <ProtectedAdminRoute>
+                  <AdminUsers />
+                </ProtectedAdminRoute>
+              } />
+              <Route path="/admin/subscriptions" element={
+                <ProtectedAdminRoute>
+                  <AdminSubscriptions />
+                </ProtectedAdminRoute>
+              } />
+              <Route path="/admin/roles" element={
+                <ProtectedAdminRoute>
+                  <AdminRoles />
+                </ProtectedAdminRoute>
+              } />
+              <Route path="/admin/audit-logs" element={
+                <ProtectedAdminRoute>
+                  <AdminAuditLogs />
+                </ProtectedAdminRoute>
+              } />
+              <Route path="/admin/populate" element={
+                <ProtectedAdminRoute>
+                  <AdminPopulate />
+                </ProtectedAdminRoute>
+              } />
+              <Route path="/admin/flashcards" element={
+                <ProtectedAdminRoute>
+                  <AdminFlashcards />
+                </ProtectedAdminRoute>
+              } />
+              <Route path="/admin/questions" element={
+                <ProtectedAdminRoute>
+                  <AdminQuestions />
+                </ProtectedAdminRoute>
+              } />
+              <Route path="/admin/traffic-signs" element={
+                <ProtectedAdminRoute>
+                  <AdminTrafficSignsImport />
+                </ProtectedAdminRoute>
+              } />
 
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-        </ErrorBoundary>
-      </BrowserRouter>
-    </TooltipProvider>
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </ErrorBoundary>
+        </BrowserRouter>
+      </TooltipProvider>
+    </ThemeProvider>
   </QueryClientProvider>
 );
 

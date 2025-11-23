@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Viewer, Worker } from '@react-pdf-viewer/core';
 import '@react-pdf-viewer/core/lib/styles/index.css';
+import pdfWorker from 'pdfjs-dist/build/pdf.worker.min.js?url';
 
 interface PDFViewerProps {
   className?: string;
@@ -65,7 +66,7 @@ export const PDFViewer = forwardRef<PDFViewerHandle, PDFViewerProps>(({ classNam
       {/* Área de visualização do PDF */}
       <div className="flex-1 overflow-auto bg-muted/5">
         {file ? (
-          <Worker workerUrl={`https://unpkg.com/pdfjs-dist@3.11.174/build/pdf.worker.min.js`}>
+          <Worker workerUrl={pdfWorker}>
             <div className="h-full">
               <Viewer fileUrl={file} />
             </div>

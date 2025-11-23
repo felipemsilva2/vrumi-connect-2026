@@ -46,22 +46,20 @@ interface DashboardProps {
   profile: any;
 }
 
+import { useTheme } from "@/components/ThemeProvider";
+
+// ... (imports remain the same)
+
 export const DashboardWithSidebar = ({ user, profile }: DashboardProps) => {
-  const [isDark, setIsDark] = useState(false);
+  const { theme, setTheme } = useTheme();
   const [selected, setSelected] = useState("Dashboard");
   const isMobile = useIsMobile();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  useEffect(() => {
-    if (isDark) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  }, [isDark]);
+  // Removed local useEffect for theme management
 
   return (
-    <div className={`flex min-h-screen w-full ${isDark ? 'dark' : ''}`}>
+    <div className="flex min-h-screen w-full">
       <div className="flex w-full bg-background text-foreground">
         {!isMobile && (
           <Sidebar user={user} selected={selected} setSelected={setSelected} />
@@ -74,8 +72,8 @@ export const DashboardWithSidebar = ({ user, profile }: DashboardProps) => {
           </Sheet>
         )}
         <MainContent
-          isDark={isDark}
-          setIsDark={setIsDark}
+          isDark={theme === 'dark'}
+          setIsDark={(isDark: boolean) => setTheme(isDark ? 'dark' : 'light')}
           user={user}
           profile={profile}
           selected={selected}
@@ -87,6 +85,10 @@ export const DashboardWithSidebar = ({ user, profile }: DashboardProps) => {
     </div>
   );
 };
+
+// ... (Sidebar and other components remain the same)
+
+
 
 interface SidebarProps {
   user: any;
@@ -293,8 +295,8 @@ const Option = ({ Icon, title, selected, setSelected, open, notifs, tooltip, isE
     <button
       onClick={handleClick}
       className={`relative flex h-12 w-full items-center rounded-md transition-all duration-200 ${isSelected
-          ? "bg-primary/10 text-primary shadow-sm border-l-2 border-primary"
-          : "text-muted-foreground hover:bg-accent/10 hover:text-foreground"
+        ? "bg-primary/10 text-primary shadow-sm border-l-2 border-primary"
+        : "text-muted-foreground hover:bg-accent/10 hover:text-foreground"
         }`}
       aria-label={title}
       title={tooltip}
@@ -620,7 +622,7 @@ const DashboardHome = ({ user, profile, setSelected }: any) => {
 
     try {
       // Buscar últimas tentativas de simulados
-      const { data: attempts, error: attemptsError} = await supabase
+      const { data: attempts, error: attemptsError } = await supabase
         .from("user_quiz_attempts")
         .select("score_percentage, total_questions, created_at")
         .eq("user_id", user.id)
