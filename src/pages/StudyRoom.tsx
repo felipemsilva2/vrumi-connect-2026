@@ -15,7 +15,7 @@ import { useContextualNavigation } from "@/utils/navigation";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import * as pdfjsLib from "pdfjs-dist";
+// PDF context extraction removed - using simpler chat approach
 import { AppLayout } from '@/components/Layout/AppLayout';
 import { getErrorMessage } from "@/utils/errorMessages";
 import { SubscriptionGate } from "@/components/auth/SubscriptionGate";
@@ -52,46 +52,8 @@ export default function StudyRoom({ user, profile }: StudyRoomProps) {
   const mobilePdfFile = "/materiais/MANUAL-OBTENCAO_2025.pdf";
   const [mobilePdfFailed, setMobilePdfFailed] = useState(false);
 
-  const extractPdfContext = async (file: string, currentPage: number): Promise<string> => {
-    try {
-      const loadingTask = pdfjsLib.getDocument({
-        url: file,
-        cMapUrl: 'https://unpkg.com/pdfjs-dist@3.11.174/cmaps/',
-        cMapPacked: true,
-      });
-      const pdf = await loadingTask.promise;
-      const numPages = pdf.numPages;
-      
-      // Extrair contexto: página atual + 2 anteriores + 2 posteriores
-      const startPage = Math.max(1, currentPage - 2);
-      const endPage = Math.min(numPages, currentPage + 2);
-      
-      let context = "";
-      for (let i = startPage; i <= endPage; i++) {
-        const page = await pdf.getPage(i);
-        const textContent = await page.getTextContent();
-        const pageText = textContent.items
-          .map((item: any) => ('str' in item ? item.str : ''))
-          .join(" ");
-        context += `\n[Página ${i}]\n${pageText}\n`;
-      }
-      
-      return context.substring(0, 8000); // Limitar contexto
-    } catch (error) {
-      const errorInfo = getErrorMessage(error, {
-        operation: 'extrair PDF',
-        component: 'PDFViewer'
-      });
-      
-      toast.error(errorInfo.title, {
-        description: errorInfo.message,
-        duration: 5000,
-      });
-      
-      console.error("Erro ao extrair texto do PDF:", error);
-      return "";
-    }
-  };
+  // Simplified - chat works without automatic PDF context extraction
+  // Users can reference their PDF viewing manually
 
   // Load chat history and get user on component mount
   useEffect(() => {
@@ -132,21 +94,21 @@ export default function StudyRoom({ user, profile }: StudyRoomProps) {
     // Save user message to database
     await saveMessage(userMessage);
 
+
     try {
-      // Extrair contexto do PDF atual
+      // Note: PDF context extraction simplified - users can reference content manually
       const currentFile = isMobile ? mobilePdfFile : pdfViewerRef.current?.getCurrentFile();
       const currentPage = isMobile ? mobilePdfPage : (pdfViewerRef.current?.getCurrentPage() || 1);
       
-      let pdfContext = "";
-      if (currentFile) {
-        pdfContext = await extractPdfContext(currentFile, currentPage);
-      }
+      const pdfContext = currentFile 
+        ? `O usuário está visualizando o PDF "${currentFile}" na página ${currentPage}.`
+        : "Nenhum PDF carregado.";
 
       // Chamar edge function
       const { data, error } = await supabase.functions.invoke("study-chat", {
         body: {
           message: userMessage.content,
-          pdfContext: pdfContext || "Nenhum PDF carregado.",
+          pdfContext: pdfContext,
         },
       });
 
