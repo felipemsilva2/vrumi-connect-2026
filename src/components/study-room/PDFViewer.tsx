@@ -4,6 +4,8 @@ import { Upload, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { Viewer, Worker } from '@react-pdf-viewer/core';
+import '@react-pdf-viewer/core/lib/styles/index.css';
 
 interface PDFViewerProps {
   className?: string;
@@ -63,29 +65,11 @@ export const PDFViewer = forwardRef<PDFViewerHandle, PDFViewerProps>(({ classNam
       {/* Área de visualização do PDF */}
       <div className="flex-1 overflow-auto bg-muted/5">
         {file ? (
-          <object 
-            data={file} 
-            type="application/pdf" 
-            className="w-full h-full"
-          >
-            <embed 
-              src={file} 
-              type="application/pdf" 
-              className="w-full h-full" 
-            />
-            <div className="flex flex-col items-center justify-center h-full p-4 text-muted-foreground">
-              <FileText className="h-16 w-16 mb-4" />
-              <p className="text-lg font-medium mb-2">Não foi possível exibir o PDF</p>
-              <a 
-                href={file} 
-                target="_blank" 
-                rel="noopener noreferrer" 
-                className="text-primary underline hover:text-primary/80"
-              >
-                Abrir PDF em nova guia
-              </a>
+          <Worker workerUrl={`https://unpkg.com/pdfjs-dist@3.11.174/build/pdf.worker.min.js`}>
+            <div className="h-full">
+              <Viewer fileUrl={file} />
             </div>
-          </object>
+          </Worker>
         ) : (
           <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
             <FileText className="h-16 w-16 mb-4" />
