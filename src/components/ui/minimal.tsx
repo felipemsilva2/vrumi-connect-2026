@@ -45,18 +45,6 @@ export default function MinimalModernHero({
       backgroundSize: "100px 100px"
     }} />
 
-    {/* Accent Line Top */}
-    <motion.div className="absolute top-0 left-0 h-1" style={{
-      background: `linear-gradient(90deg, ${accentColor}, transparent)`
-    }} initial={{
-      width: "0%"
-    }} animate={{
-      width: "50%"
-    }} transition={{
-      duration: 1.5,
-      ease: "easeOut"
-    }} />
-
     {/* Floating Accent Circle */}
     <motion.div className="absolute rounded-full hidden md:block" style={{
       top: "20%",
@@ -283,19 +271,6 @@ export default function MinimalModernHero({
     }} transition={{
       duration: 15,
       repeat: Infinity
-    }} />
-
-    {/* Bottom Accent Line */}
-    <motion.div className="absolute bottom-0 right-0 h-1" style={{
-      background: `linear-gradient(270deg, ${accentColor}, transparent)`
-    }} initial={{
-      width: "0%"
-    }} animate={{
-      width: "40%"
-    }} transition={{
-      duration: 1.5,
-      delay: 0.5,
-      ease: "easeOut"
     }} />
   </section>;
 }
