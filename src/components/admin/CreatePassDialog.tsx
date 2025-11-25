@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { CalendarIcon } from "lucide-react";
-import { format } from "date-fns";
+import { format, addDays } from "date-fns";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
@@ -22,7 +22,7 @@ interface CreatePassDialogProps {
 export const CreatePassDialog = ({ open, onOpenChange, onSuccess, prefilledEmail }: CreatePassDialogProps) => {
   const [userEmail, setUserEmail] = useState(prefilledEmail || "");
   const [passType, setPassType] = useState<"30_days" | "90_days" | "family_90_days">("30_days");
-  const [expiresAt, setExpiresAt] = useState<Date>();
+  const [expiresAt, setExpiresAt] = useState<Date>(addDays(new Date(), 30));
   const [price, setPrice] = useState("29.90");
   const [isLoading, setIsLoading] = useState(false);
   const [secondUserEmail, setSecondUserEmail] = useState("");
@@ -34,12 +34,23 @@ export const CreatePassDialog = ({ open, onOpenChange, onSuccess, prefilledEmail
     }
   });
 
-  // Atualizar preço automaticamente quando o tipo de pass mudar
+  // Atualizar preço e data automaticamente quando o tipo de pass mudar
   const handlePassTypeChange = (value: "30_days" | "90_days" | "family_90_days") => {
     setPassType(value);
-    if (value === "30_days") setPrice("29.90");
-    else if (value === "90_days") setPrice("79.90");
-    else if (value === "family_90_days") setPrice("84.90");
+    const today = new Date();
+
+    if (value === "30_days") {
+      setPrice("29.90");
+      setExpiresAt(addDays(today, 30));
+    }
+    else if (value === "90_days") {
+      setPrice("79.90");
+      setExpiresAt(addDays(today, 90));
+    }
+    else if (value === "family_90_days") {
+      setPrice("84.90");
+      setExpiresAt(addDays(today, 90));
+    }
   };
 
   const handleCreate = async () => {
@@ -56,7 +67,7 @@ export const CreatePassDialog = ({ open, onOpenChange, onSuccess, prefilledEmail
     setIsLoading(true);
     try {
       console.log('Creating pass with data:', { userEmail, passType, expiresAt, price });
-      
+
       const { data, error } = await supabase.functions.invoke("admin-create-pass", {
         body: {
           user_email: userEmail,
@@ -76,7 +87,7 @@ export const CreatePassDialog = ({ open, onOpenChange, onSuccess, prefilledEmail
       toast.success("Assinatura criada com sucesso");
       onSuccess();
       onOpenChange(false);
-      
+
       // Reset form
       setUserEmail("");
       setSecondUserEmail("");
