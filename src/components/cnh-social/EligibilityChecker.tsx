@@ -75,16 +75,16 @@ export function EligibilityChecker() {
 
     if (step === "result") {
         return (
-            <Card className="w-full max-w-md mx-auto border-2 border-indigo-100 dark:border-indigo-900 shadow-lg">
+            <Card className="w-full max-w-md mx-auto border border-border shadow-lg bg-card">
                 <CardHeader className="text-center pb-2">
-                    <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-indigo-50 dark:bg-indigo-950">
+                    <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
                         {isEligible ? (
-                            <CheckCircle2 className="h-10 w-10 text-green-500" />
+                            <CheckCircle2 className="h-10 w-10 text-primary" />
                         ) : (
-                            <XCircle className="h-10 w-10 text-red-500" />
+                            <XCircle className="h-10 w-10 text-destructive" />
                         )}
                     </div>
-                    <CardTitle className="text-2xl font-bold">
+                    <CardTitle className="text-2xl font-bold text-foreground">
                         {isEligible ? "Provavelmente Elegível! 🎉" : "Talvez não seja elegível 😕"}
                     </CardTitle>
                     <CardDescription>
@@ -93,12 +93,12 @@ export function EligibilityChecker() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                     {isEligible ? (
-                        <div className="rounded-lg bg-green-50 dark:bg-green-900/20 p-4 text-sm text-green-700 dark:text-green-300">
-                            <p>Você atende aos critérios básicos! O próximo passo é verificar o edital específico do Detran do seu estado ({formData.state}).</p>
+                        <div className="rounded-lg bg-primary/10 p-4 text-sm text-primary-foreground dark:text-primary">
+                            <p className="text-primary font-medium">Você atende aos critérios básicos! O próximo passo é verificar o edital específico do Detran do seu estado ({formData.state}).</p>
                         </div>
                     ) : (
                         <div className="space-y-3">
-                            <div className="rounded-lg bg-red-50 dark:bg-red-900/20 p-4 text-sm text-red-700 dark:text-red-300">
+                            <div className="rounded-lg bg-destructive/10 p-4 text-sm text-destructive">
                                 <p className="font-semibold mb-2">Motivos:</p>
                                 <ul className="list-disc pl-4 space-y-1">
                                     {reasons.map((reason, index) => (
@@ -106,7 +106,7 @@ export function EligibilityChecker() {
                                     ))}
                                 </ul>
                             </div>
-                            <div className="flex items-start gap-2 text-xs text-gray-500 dark:text-gray-400 mt-2">
+                            <div className="flex items-start gap-2 text-xs text-muted-foreground mt-2">
                                 <AlertCircle className="w-4 h-4 mt-0.5" />
                                 <p>As regras podem variar ligeiramente por estado. Recomendamos sempre consultar o Detran local.</p>
                             </div>
@@ -114,7 +114,7 @@ export function EligibilityChecker() {
                     )}
                 </CardContent>
                 <CardFooter>
-                    <Button onClick={reset} className="w-full bg-indigo-600 hover:bg-indigo-700 text-white">
+                    <Button onClick={reset} className="w-full bg-primary hover:bg-primary/90 text-primary-foreground">
                         Verificar Novamente
                     </Button>
                 </CardFooter>
@@ -123,9 +123,9 @@ export function EligibilityChecker() {
     }
 
     return (
-        <Card className="w-full max-w-md mx-auto border-indigo-100 dark:border-indigo-900 shadow-md">
+        <Card className="w-full max-w-md mx-auto border border-border shadow-md bg-card">
             <CardHeader>
-                <CardTitle className="text-xl text-center text-indigo-700 dark:text-indigo-400">Verificador de Elegibilidade</CardTitle>
+                <CardTitle className="text-xl text-center text-primary">Verificador de Elegibilidade</CardTitle>
                 <CardDescription className="text-center">
                     Responda às perguntas para saber se você pode participar.
                 </CardDescription>
@@ -197,7 +197,7 @@ export function EligibilityChecker() {
             <CardFooter>
                 <Button
                     onClick={handleCheck}
-                    className="w-full bg-indigo-600 hover:bg-indigo-700 text-white"
+                    className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
                     disabled={!formData.age || !formData.income || !formData.cadUnico || !formData.state || !formData.firstLicense}
                 >
                     Verificar Agora

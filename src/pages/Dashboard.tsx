@@ -8,7 +8,7 @@ import { DashboardSkeleton } from "@/components/ui/skeleton-loaders";
 import { OnboardingTutorial } from "@/components/OnboardingTutorial";
 import { useToast } from "@/hooks/use-toast";
 import { getErrorMessage } from "@/utils/errorMessages";
-import { notificationScheduler } from "@/services/NotificationSchedulerService";
+// import { notificationScheduler } from "@/services/NotificationSchedulerService";
 import { AppLayout } from '@/components/Layout/AppLayout';
 
 interface Profile {
@@ -29,16 +29,16 @@ const Dashboard = () => {
 
   useEffect(() => {
     checkUser();
-    
+
     // Iniciar o agendador de notificações
-    notificationScheduler.start();
-    
+    // notificationScheduler.start();
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         if (event === "SIGNED_OUT" || !session) {
           navigate("/auth");
           // Parar o agendador ao fazer logout
-          notificationScheduler.stop();
+          // notificationScheduler.stop();
         } else {
           setUser(session.user);
         }
@@ -48,7 +48,7 @@ const Dashboard = () => {
     return () => {
       subscription.unsubscribe();
       // Parar o agendador ao desmontar o componente
-      notificationScheduler.stop();
+      // notificationScheduler.stop();
     };
   }, [navigate]);
 
@@ -59,7 +59,7 @@ const Dashboard = () => {
     }
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      
+
       if (!session) {
         navigate("/auth");
         return;
@@ -69,14 +69,14 @@ const Dashboard = () => {
       await fetchProfile(session.user.id);
     } catch (error) {
       const errorInfo = getErrorMessage(error);
-      
+
       toast({
         title: errorInfo.title,
         description: errorInfo.message,
         variant: "destructive",
         duration: 5000,
       });
-      
+
       console.error("Error checking user:", error);
       navigate("/auth");
     } finally {
@@ -107,24 +107,24 @@ const Dashboard = () => {
 
       if (error) throw error;
       setProfile(data);
-      
+
       // Check if user has already seen onboarding
       const hasSeenOnboarding = localStorage.getItem(`onboarding_seen_${userId}`);
-      
+
       // Show onboarding for new users (no study progress) who haven't seen it yet
       if (data && (!data.study_progress || data.study_progress === 0) && !hasSeenOnboarding) {
         setTimeout(() => setShowOnboarding(true), 1000); // Delay to show after page load
       }
     } catch (error) {
       const errorInfo = getErrorMessage(error);
-      
+
       toast({
         title: errorInfo.title,
         description: errorInfo.message,
         variant: "destructive",
         duration: 5000,
       });
-      
+
       console.error("Error fetching profile:", error);
     }
   };

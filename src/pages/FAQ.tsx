@@ -7,7 +7,7 @@ export default function FAQPage() {
   return (
     <>
       <Navbar />
-      <div className="container mx-auto px-4 py-12 max-w-4xl">
+      <div className="container mx-auto px-4 pt-32 pb-12 max-w-4xl">
         <div className="mb-8">
           <h1 className="text-4xl font-bold mb-4">Perguntas Frequentes</h1>
           <p className="text-muted-foreground">
@@ -104,9 +104,26 @@ export default function FAQPage() {
               O Vrumi oferece certificado de conclusão?
             </AccordionTrigger>
             <AccordionContent>
-              O Vrumi é uma plataforma de estudos complementar. O certificado oficial necessário para a habilitação
-              é emitido pelo CFC (Centro de Formação de Condutores) credenciado ao DETRAN após a conclusão do curso
-              presencial obrigatório.
+              Com a nova lei em vigor a partir de Dezembro/2025, o certificado de conclusão do curso teórico do CFC
+              deixou de ser obrigatório para as categorias A e B. Você pode utilizar o Vrumi para se preparar
+              de forma autônoma para os exames oficiais do DETRAN, que continuam sendo obrigatórios.
+            </AccordionContent>
+          </AccordionItem>
+
+          <AccordionItem value="item-11">
+            <AccordionTrigger className="text-left">
+              A autoescola deixou de ser obrigatória?
+            </AccordionTrigger>
+            <AccordionContent>
+              Sim! A lei foi aprovada pelo Presidente e entra em vigor em Dezembro de 2025.
+              <br /><br />
+              <strong>O que mudou:</strong>
+              <ul className="list-disc pl-6 mt-2 space-y-1">
+                <li>Não é mais obrigatório frequentar aulas teóricas e práticas em Autoescolas (CFCs) para categorias A e B.</li>
+                <li>Você tem total liberdade para estudar por conta própria ou com instrutores independentes.</li>
+                <li>A economia no processo de habilitação pode chegar a 80%.</li>
+                <li>Os exames teórico e prático do DETRAN continuam sendo obrigatórios para garantir sua aptidão.</li>
+              </ul>
             </AccordionContent>
           </AccordionItem>
 

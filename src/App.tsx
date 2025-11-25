@@ -2,7 +2,8 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { ThemeProvider, useTheme } from "@/components/ThemeProvider";
 import Index from "@/pages/Index";
 import Auth from "@/pages/Auth";
 import Dashboard from "@/pages/Dashboard";
@@ -52,17 +53,37 @@ const ProtectedAdminRoute = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
-import { ThemeProvider } from "@/components/ThemeProvider";
+
 
 const queryClient = new QueryClient();
 
+const ThemeHandler = () => {
+  const { pathname } = useLocation();
+  const { setTheme } = useTheme();
+
+  useEffect(() => {
+    const isAppRoute = pathname.startsWith("/dashboard") ||
+      pathname.startsWith("/admin") ||
+      pathname.startsWith("/study-room");
+
+    if (isAppRoute) {
+      setTheme("dark");
+    } else {
+      setTheme("light");
+    }
+  }, [pathname, setTheme]);
+
+  return null;
+};
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
+    <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
       <TooltipProvider>
         <Toaster />
         <Sonner />
         <BrowserRouter>
+          <ThemeHandler />
           <ErrorBoundary>
             <Routes>
               <Route path="/" element={<Index />} />

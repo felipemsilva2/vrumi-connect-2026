@@ -2,7 +2,7 @@ import * as React from "react";
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X, Car } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useContextualNavigation } from "@/utils/navigation";
 import { cn } from "@/lib/utils";
 
@@ -11,6 +11,7 @@ const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
   const menuRef = React.useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
+  const location = useLocation();
   const homeRoute = useContextualNavigation();
 
   const toggleMenu = () => setIsOpen(!isOpen);
@@ -38,6 +39,12 @@ const Navbar = () => {
   }, [isOpen]);
 
   const scrollToSection = (id: string) => {
+    if (location.pathname !== "/") {
+      navigate("/", { state: { scrollTo: id } });
+      setIsOpen(false);
+      return;
+    }
+
     const element = document.getElementById(id);
     if (element) {
       element.scrollIntoView({

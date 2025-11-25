@@ -5,9 +5,9 @@ export default function PoliticaPrivacidade() {
   return (
     <>
       <Navbar />
-      <div className="container mx-auto px-4 py-12 max-w-4xl">
+      <div className="container mx-auto px-4 pt-32 pb-12 max-w-4xl">
         <h1 className="text-4xl font-bold mb-8">Política de Privacidade</h1>
-        
+
         <div className="prose prose-slate dark:prose-invert max-w-none">
           <p className="text-sm text-muted-foreground mb-8">
             Última atualização: {new Date().toLocaleDateString('pt-BR')}
@@ -24,7 +24,7 @@ export default function PoliticaPrivacidade() {
 
           <section className="mb-8">
             <h2 className="text-2xl font-semibold mb-4">2. Informações que Coletamos</h2>
-            
+
             <h3 className="text-xl font-semibold mt-6 mb-3">2.1 Informações Fornecidas por Você</h3>
             <ul className="list-disc pl-6 space-y-2">
               <li>Nome completo</li>

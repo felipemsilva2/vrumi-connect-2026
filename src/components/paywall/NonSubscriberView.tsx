@@ -2,15 +2,18 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Lock, Trophy, Play, History, Calendar, Award } from "lucide-react"
 import { analytics } from "@/utils/studyAnalytics"
+import { useNavigate } from "react-router-dom"
 
 interface NonSubscriberViewProps {
   feature?: string
 }
 
 export const NonSubscriberView = ({ feature }: NonSubscriberViewProps) => {
+  const navigate = useNavigate()
+
   const handleCTA = () => {
     analytics.trackEvent("cta", "click", "pricing")
-    window.location.href = "/#preço"
+    navigate("/", { state: { scrollTo: "preço" } })
   }
 
   return (

@@ -32,7 +32,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
 import { useActivePass } from "@/hooks/useActivePass";
 import { SmartBreadcrumb } from "@/components/SmartBreadcrumb";
-import NotificationSystem from "@/components/notifications/NotificationSystem";
+// import NotificationSystem from "@/components/notifications/NotificationSystem";
 import { useTheme } from "@/components/ThemeProvider";
 
 interface AppLayoutProps {
@@ -151,7 +151,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
     { label: "Simulados", icon: Target, path: "/dashboard?tab=simulados", tooltip: "Teste seus conhecimentos com simulados", notifs: 2 },
     { label: "Sala de Estudos", icon: FileText, path: "/study-room", tooltip: "Estude com IA e visualize materiais", isExternal: true },
     { label: "Estatísticas", icon: BarChart3, path: "/dashboard?tab=estatisticas", tooltip: "Veja seu desempenho" },
-    { label: "Notificações", icon: Bell, path: "/dashboard?tab=notificacoes", tooltip: "Configure suas notificações de estudo" },
+    // { label: "Notificações", icon: Bell, path: "/dashboard?tab=notificacoes", tooltip: "Configure suas notificações de estudo" },
     { label: "Biblioteca de Placas", icon: TrafficCone, path: "/traffic-signs-library", tooltip: "Consulte a biblioteca de placas de trânsito", isExternal: true },
     { label: "Conquistas", icon: Trophy, path: "/dashboard?tab=conquistas", tooltip: "Suas conquistas", notifs: 1 },
   ];
@@ -203,8 +203,8 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
                   key={item.label}
                   onClick={() => navigate(item.path)}
                   className={`relative flex h-12 w-full items-center rounded-md transition-all duration-200 ${isActiveRoute(item.path)
-                      ? "bg-primary/10 text-primary shadow-sm border-l-2 border-primary"
-                      : "text-muted-foreground hover:bg-accent/10 hover:text-foreground"
+                    ? "bg-primary/10 text-primary shadow-sm border-l-2 border-primary"
+                    : "text-muted-foreground hover:bg-accent/10 hover:text-foreground"
                     }`}
                   aria-label={item.label}
                   title={item.tooltip}
@@ -328,8 +328,8 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
                       key={item.label}
                       onClick={() => navigate(item.path)}
                       className={`flex w-full items-center rounded-md p-3 transition-all duration-200 ${isActiveRoute(item.path)
-                          ? "bg-primary/10 text-primary"
-                          : "text-muted-foreground hover:bg-accent/10"
+                        ? "bg-primary/10 text-primary"
+                        : "text-muted-foreground hover:bg-accent/10"
                         }`}
                     >
                       <item.icon className="h-5 w-5 mr-3" />
@@ -409,7 +409,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
                 </div>
               </div>
               <div className="flex items-center gap-3">
-                <NotificationSystem />
+                {/* <NotificationSystem /> */}
                 <button
                   onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
                   className="flex h-10 w-10 items-center justify-center rounded-lg border border-border bg-background text-muted-foreground hover:bg-accent/10"

@@ -33,8 +33,8 @@ import { Car } from "lucide-react";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
 import { useActivePass } from "@/hooks/useActivePass";
 import { SmartBreadcrumb } from "@/components/SmartBreadcrumb";
-import NotificationSystem from "@/components/notifications/NotificationSystem";
-import NotificationSettings from "@/components/notifications/NotificationSettings";
+// import NotificationSystem from "@/components/notifications/NotificationSystem";
+// import NotificationSettings from "@/components/notifications/NotificationSettings";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { ModernCard, ModernCardContent } from "@/components/ui/modern-card";
@@ -198,14 +198,14 @@ const Sidebar = ({ user, selected, setSelected }: SidebarProps) => {
           open={open}
           tooltip="Veja seu desempenho"
         />
-        <Option
+        {/* <Option
           Icon={Bell}
           title="Notificações"
           selected={selected}
           setSelected={setSelected}
           open={open}
           tooltip="Configure suas notificações de estudo"
-        />
+        /> */}
         <Option
           Icon={TrafficCone}
           title="Biblioteca de Placas"
@@ -465,8 +465,8 @@ const MainContent = ({ isDark, setIsDark, user, profile, selected, setSelected, 
         return <LazyMateriaisView />
       case "Estatísticas":
         return <LazyEstatisticasView />
-      case "Notificações":
-        return <NotificationSettings />
+      // case "Notificações":
+      //   return <NotificationSettings />
       case "Conquistas":
         return <LazyConquistasView />
       case "Meu Perfil":
@@ -500,7 +500,7 @@ const MainContent = ({ isDark, setIsDark, user, profile, selected, setSelected, 
                 <ChevronDown className="h-5 w-5" />
               </ModernButton>
             )}
-            <NotificationSystem />
+            {/* <NotificationSystem /> */}
             <ModernButton
               onClick={() => setIsDark(!isDark)}
               variant="outline"

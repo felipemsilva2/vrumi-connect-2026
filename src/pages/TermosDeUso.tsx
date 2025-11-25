@@ -5,9 +5,9 @@ export default function TermosDeUso() {
   return (
     <>
       <Navbar />
-      <div className="container mx-auto px-4 py-12 max-w-4xl">
+      <div className="container mx-auto px-4 pt-32 pb-12 max-w-4xl">
         <h1 className="text-4xl font-bold mb-8">Termos de Uso</h1>
-        
+
         <div className="prose prose-slate dark:prose-invert max-w-none">
           <p className="text-sm text-muted-foreground mb-8">
             Última atualização: {new Date().toLocaleDateString('pt-BR')}
@@ -28,8 +28,9 @@ export default function TermosDeUso() {
               outros recursos para auxiliar candidatos na preparação para o exame teórico de habilitação (CNH).
             </p>
             <p className="mt-4">
-              <strong>Importante:</strong> O Vrumi é um serviço complementar de estudos e não substitui o curso
-              obrigatório em CFC (Centro de Formação de Condutores) credenciado ao DETRAN.
+              <strong>Importante:</strong> Conforme a nova legislação aprovada, em vigor a partir de Dezembro/2025,
+              o curso teórico e prático em CFC (Autoescola) deixou de ser obrigatório para as categorias A e B.
+              O Vrumi oferece todo o suporte necessário para seu estudo autônomo.
             </p>
           </section>
 

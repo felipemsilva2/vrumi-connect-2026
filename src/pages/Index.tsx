@@ -8,10 +8,22 @@ const LazyGovernmentSupport = React.lazy(() => import("@/components/GovernmentSu
 const LazyFooter = React.lazy(() => import("@/components/Footer"));
 import { Navbar } from "@/components/Navbar";
 const LazyPricingSection = React.lazy(() => import("@/components/PricingSection"));
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Display, Lead, Heading2, BodyLarge } from "@/components/ui/typography";
 const Index = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+
+  React.useEffect(() => {
+    if (location.state && location.state.scrollTo) {
+      const element = document.getElementById(location.state.scrollTo);
+      if (element) {
+        setTimeout(() => {
+          element.scrollIntoView({ behavior: 'smooth' });
+        }, 100); // Small delay to ensure DOM is ready
+      }
+    }
+  }, [location]);
   return (
     <main className="min-h-screen pt-20">
       <Navbar />
@@ -20,10 +32,10 @@ const Index = () => {
       <section id="inicio">
         <MinimalModernHero
           logo={<div className="flex items-center gap-2"></div>}
-          badge="A LEI MUDOU: O CURSO TEÓRICO NA AUTOESCOLA NÃO É MAIS OBRIGATÓRIO."
+          badge="A LEI MUDOU: AUTOESCOLA NÃO É MAIS OBRIGATÓRIA"
           title="O novo jeito de tirar sua CNH."
-          subtitle="Troque as 45h de sala de aula por um app inteligente e economize 80% do valor da sua habilitação."
-          description="Para que gastar R$1.000+ com o curso teórico se você pode ter o mesmo conteúdo oficial de forma rápida e interativa? O Vrumi transforma as apostilas do governo em simulados, flashcards e lições que realmente aprovam."
+          subtitle="Nova lei aprovada: troque as aulas obrigatórias pelo estudo autônomo e economize até 80%."
+          description="Não gaste mais com cursos obrigatórios. O Vrumi oferece o conteúdo oficial em simulados, flashcards e lições para você se preparar sozinho e passar de primeira."
           primaryButton={{
             label: "Começar Agora",
             onClick: () => navigate("/auth?mode=register"),
@@ -144,7 +156,7 @@ const Index = () => {
       </section>
 
       {/* 8. Footer */}
-      <Suspense fallback={<div />}> 
+      <Suspense fallback={<div />}>
         <LazyFooter />
       </Suspense>
 
