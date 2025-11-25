@@ -66,18 +66,26 @@ const Footer = () => {
           <div>
             <h3 className="font-semibold text-foreground mb-6">Suporte</h3>
             <ul className="space-y-3">
-              {[
-                "FAQ",
-                "Termos de Uso",
-                "Política de Privacidade",
-                "Contato"
-              ].map((item, i) => (
-                <li key={i}>
-                  <a href="#" className="text-sm text-muted-foreground hover:text-primary transition-colors">
-                    {item}
-                  </a>
-                </li>
-              ))}
+              <li>
+                <Link to="/faq" className="text-sm text-muted-foreground hover:text-primary transition-colors">
+                  FAQ
+                </Link>
+              </li>
+              <li>
+                <Link to="/termos-de-uso" className="text-sm text-muted-foreground hover:text-primary transition-colors">
+                  Termos de Uso
+                </Link>
+              </li>
+              <li>
+                <Link to="/politica-de-privacidade" className="text-sm text-muted-foreground hover:text-primary transition-colors">
+                  Política de Privacidade
+                </Link>
+              </li>
+              <li>
+                <a href="#contato" className="text-sm text-muted-foreground hover:text-primary transition-colors">
+                  Contato
+                </a>
+              </li>
             </ul>
           </div>
 
@@ -106,9 +114,9 @@ const Footer = () => {
             © {currentYear} Vrumi. Todos os direitos reservados.
           </p>
           <div className="flex gap-6">
-            <a href="#" className="text-xs text-muted-foreground hover:text-foreground transition-colors">Privacidade</a>
-            <a href="#" className="text-xs text-muted-foreground hover:text-foreground transition-colors">Termos</a>
-            <a href="#" className="text-xs text-muted-foreground hover:text-foreground transition-colors">Cookies</a>
+            <Link to="/politica-de-privacidade" className="text-xs text-muted-foreground hover:text-foreground transition-colors">Privacidade</Link>
+            <Link to="/termos-de-uso" className="text-xs text-muted-foreground hover:text-foreground transition-colors">Termos</Link>
+            <Link to="/faq" className="text-xs text-muted-foreground hover:text-foreground transition-colors">FAQ</Link>
           </div>
         </div>
       </div>
