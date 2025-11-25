@@ -217,6 +217,16 @@ const Sidebar = ({ user, selected, setSelected }: SidebarProps) => {
           externalPath="/traffic-signs-library"
         />
         <Option
+          Icon={CreditCard}
+          title="CNH Social"
+          selected={selected}
+          setSelected={setSelected}
+          open={open}
+          tooltip="Verifique sua elegibilidade para CNH Social"
+          isExternalLink
+          externalPath="/cnh-social"
+        />
+        <Option
           Icon={Trophy}
           title="Conquistas"
           selected={selected}

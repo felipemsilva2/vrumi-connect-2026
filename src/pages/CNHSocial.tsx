@@ -29,10 +29,10 @@ export default function CNHSocial() {
     return (
         <div className="min-h-screen bg-gray-50 dark:bg-gray-950 pb-20">
             {/* Hero Section */}
-            <div className="bg-indigo-600 dark:bg-indigo-900 text-white py-16 px-4">
+            <div className="bg-emerald-600 dark:bg-emerald-900 text-white py-16 px-4">
                 <div className="max-w-4xl mx-auto text-center space-y-4">
                     <h1 className="text-4xl md:text-5xl font-bold">CNH Social 2026</h1>
-                    <p className="text-xl md:text-2xl text-indigo-100 max-w-2xl mx-auto">
+                    <p className="text-xl md:text-2xl text-emerald-100 max-w-2xl mx-auto">
                         Sua habilitação gratuita pode estar mais perto do que você imagina.
                         Entenda o programa e verifique se você tem direito.
                     </p>
@@ -47,7 +47,7 @@ export default function CNHSocial() {
                     <Card className="shadow-lg border-0">
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2 text-2xl">
-                                <HelpCircle className="text-indigo-600" />
+                                <HelpCircle className="text-emerald-600" />
                                 O que é a CNH Social?
                             </CardTitle>
                         </CardHeader>
@@ -58,14 +58,14 @@ export default function CNHSocial() {
                             <p>
                                 Recentemente, uma nova lei federal foi sancionada para expandir e padronizar o benefício, mas a implementação prática ainda depende dos Detrans de cada estado.
                             </p>
-                            <div className="bg-indigo-50 dark:bg-indigo-900/30 p-4 rounded-lg border border-indigo-100 dark:border-indigo-800">
-                                <h3 className="font-semibold text-indigo-800 dark:text-indigo-300 mb-2">O que o programa cobre?</h3>
+                            <div className="bg-emerald-50 dark:bg-emerald-900/30 p-4 rounded-lg border border-emerald-100 dark:border-emerald-800">
+                                <h3 className="font-semibold text-emerald-800 dark:text-emerald-300 mb-2">O que o programa cobre?</h3>
                                 <ul className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
-                                    <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-green-500" /> Exames médicos e psicológicos</li>
-                                    <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-green-500" /> Aulas teóricas e práticas</li>
-                                    <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-green-500" /> Taxas do Detran</li>
-                                    <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-green-500" /> Provas teóricas e práticas</li>
-                                    <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-green-500" /> Emissão do documento</li>
+                                    <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-emerald-500" /> Exames médicos e psicológicos</li>
+                                    <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-emerald-500" /> Aulas teóricas e práticas</li>
+                                    <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-emerald-500" /> Taxas do Detran</li>
+                                    <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-emerald-500" /> Provas teóricas e práticas</li>
+                                    <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-emerald-500" /> Emissão do documento</li>
                                 </ul>
                             </div>
                         </CardContent>
@@ -75,7 +75,7 @@ export default function CNHSocial() {
                     <Card className="shadow-lg border-0">
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2 text-2xl">
-                                <MapPin className="text-indigo-600" />
+                                <MapPin className="text-emerald-600" />
                                 Estados Participantes
                             </CardTitle>
                             <CardDescription>
@@ -88,11 +88,11 @@ export default function CNHSocial() {
                                     <Button
                                         key={state.uf}
                                         variant="outline"
-                                        className="justify-start h-auto py-3 px-4 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 hover:scale-[1.02] hover:shadow-md transition-transform duration-200"
+                                        className="justify-start h-auto py-3 px-4 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 hover:scale-[1.02] hover:shadow-md transition-transform duration-200"
                                         asChild
                                     >
                                         <a href={state.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3">
-                                            <span className="font-bold text-indigo-600 dark:text-indigo-400 w-8">{state.uf}</span>
+                                            <span className="font-bold text-emerald-600 dark:text-emerald-400 w-8">{state.uf}</span>
                                             <span className="flex-1 text-left truncate">{state.name}</span>
                                             <ExternalLink className="w-4 h-4 text-gray-400" />
                                         </a>
@@ -142,7 +142,7 @@ export default function CNHSocial() {
                             <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
                                 Nossa equipe preparou um guia completo de estudos para te ajudar a passar na prova de primeira.
                             </p>
-                            <Button className="w-full" asChild>
+                            <Button className="w-full bg-emerald-600 hover:bg-emerald-700 text-white" asChild>
                                 <Link to="/dashboard">Ir para o Dashboard</Link>
                             </Button>
                         </div>
