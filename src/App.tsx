@@ -22,6 +22,9 @@ import CheckoutCancel from "@/pages/CheckoutCancel";
 import NotFound from "@/pages/NotFound";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import TrafficSignsLibrary from "@/pages/TrafficSignsLibraryWrapper";
+import FAQPage from "@/pages/FAQ";
+import TermosDeUso from "@/pages/TermosDeUso";
+import PoliticaPrivacidade from "@/pages/PoliticaPrivacidade";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -63,6 +66,9 @@ const App = () => (
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/study-room" element={<StudyRoom />} />
               <Route path="/traffic-signs-library" element={<TrafficSignsLibrary />} />
+              <Route path="/faq" element={<FAQPage />} />
+              <Route path="/termos-de-uso" element={<TermosDeUso />} />
+              <Route path="/politica-de-privacidade" element={<PoliticaPrivacidade />} />
 
               <Route path="/checkout" element={<Checkout />} />
               <Route path="/checkout/success" element={<CheckoutSuccess />} />

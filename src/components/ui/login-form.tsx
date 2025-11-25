@@ -162,6 +162,30 @@ export default function LoginForm({
                         )}
                     </div>
 
+                    {!isLogin && (
+                        <div className="w-full mb-4">
+                            <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                                <input
+                                    type="checkbox"
+                                    id="acceptTerms"
+                                    className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                                    checked={values.acceptedTerms || false}
+                                    onChange={(e) => handleChange('acceptedTerms', e.target.checked)}
+                                />
+                                <label htmlFor="acceptTerms" className="cursor-pointer">
+                                    Eu aceito os{" "}
+                                    <a href="/termos-de-uso" target="_blank" className="text-indigo-500 hover:underline">
+                                        Termos de Uso
+                                    </a>
+                                    {" "}e a{" "}
+                                    <a href="/politica-de-privacidade" target="_blank" className="text-indigo-500 hover:underline">
+                                        Política de Privacidade
+                                    </a>
+                                </label>
+                            </div>
+                        </div>
+                    )}
+
                     <div className="w-full flex items-center justify-between mt-4 text-gray-500 dark:text-gray-400">
                         <div className="flex items-center gap-2">
                             <input

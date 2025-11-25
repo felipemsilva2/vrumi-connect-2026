@@ -32,7 +32,8 @@ const Auth = () => {
   } = useFormValidation({
     email: '',
     password: '',
-    fullName: ''
+    fullName: '',
+    acceptedTerms: ''
   });
 
   useEffect(() => {
@@ -55,8 +56,9 @@ const Auth = () => {
     const emailValid = values.email && !errors.email;
     const passwordValid = values.password && !errors.password;
     const fullNameValid = isLogin || (values.fullName && !errors.fullName);
+    const termsAccepted = isLogin || values.acceptedTerms;
     const envOk = isSupabaseConfigured && navigator.onLine;
-    return envOk && emailValid && passwordValid && fullNameValid;
+    return envOk && emailValid && passwordValid && fullNameValid && termsAccepted;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
