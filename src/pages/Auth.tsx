@@ -21,6 +21,7 @@ const Auth = () => {
   const [loading, setLoading] = useState(false);
   const [showResetPassword, setShowResetPassword] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [termsAccepted, setTermsAccepted] = useState(false);
 
   const {
     values,
@@ -56,9 +57,9 @@ const Auth = () => {
     const emailValid = values.email && !errors.email;
     const passwordValid = values.password && !errors.password;
     const fullNameValid = isLogin || (values.fullName && !errors.fullName);
-    const termsAccepted = isLogin || values.acceptedTerms;
+    const termsValid = isLogin || termsAccepted;
     const envOk = isSupabaseConfigured && navigator.onLine;
-    return envOk && emailValid && passwordValid && fullNameValid && termsAccepted;
+    return envOk && emailValid && passwordValid && fullNameValid && termsValid;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -83,6 +84,15 @@ const Auth = () => {
     }
 
     if (!validateForm()) {
+      if (!isLogin && !termsAccepted) {
+        toast({
+          title: "Termos de uso",
+          description: "Você precisa aceitar os termos de uso para criar uma conta.",
+          variant: "destructive",
+        });
+        return;
+      }
+
       toast({
         title: "Campos inválidos",
         description: "Por favor, corrija os erros antes de continuar.",
@@ -283,6 +293,8 @@ const Auth = () => {
         showPassword={showPassword}
         setShowPassword={setShowPassword}
         onForgotPassword={() => setShowResetPassword(true)}
+        termsAccepted={termsAccepted}
+        setTermsAccepted={setTermsAccepted}
       />
 
       {showResetPassword && (

@@ -20,11 +20,15 @@ import Checkout from "@/pages/Checkout";
 import CheckoutSuccess from "@/pages/CheckoutSuccess";
 import CheckoutCancel from "@/pages/CheckoutCancel";
 import NotFound from "@/pages/NotFound";
+import FAQ from "@/pages/FAQ";
+import Terms from "@/pages/Terms";
+import Privacy from "@/pages/Privacy";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import TrafficSignsLibrary from "@/pages/TrafficSignsLibraryWrapper";
 import FAQPage from "@/pages/FAQ";
 import TermosDeUso from "@/pages/TermosDeUso";
 import PoliticaPrivacidade from "@/pages/PoliticaPrivacidade";
+import CNHSocial from "@/pages/CNHSocial";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -68,7 +72,13 @@ const App = () => (
               <Route path="/traffic-signs-library" element={<TrafficSignsLibrary />} />
               <Route path="/faq" element={<FAQPage />} />
               <Route path="/termos-de-uso" element={<TermosDeUso />} />
+              <Route path="/termos-de-uso" element={<TermosDeUso />} />
               <Route path="/politica-de-privacidade" element={<PoliticaPrivacidade />} />
+              <Route path="/cnh-social" element={<CNHSocial />} />
+
+              <Route path="/faq" element={<FAQ />} />
+              <Route path="/terms" element={<Terms />} />
+              <Route path="/privacy" element={<Privacy />} />
 
               <Route path="/checkout" element={<Checkout />} />
               <Route path="/checkout/success" element={<CheckoutSuccess />} />

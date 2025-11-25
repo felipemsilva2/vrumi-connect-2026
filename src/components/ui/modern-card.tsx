@@ -10,12 +10,12 @@ interface ModernCardProps extends React.HTMLAttributes<HTMLDivElement> {
 const ModernCard = React.forwardRef<HTMLDivElement, ModernCardProps>(
   ({ className, variant = 'default', hover = true, interactive = false, children, ...props }, ref) => {
     const baseClasses = 'rounded-xl border transition-all duration-300';
-    
+
     const variantClasses = {
       default: 'bg-card text-card-foreground border-border shadow-sm hover:shadow-md',
       gradient: 'bg-gradient-to-br from-card to-card/80 text-card-foreground border-border/50 shadow-lg hover:shadow-xl',
       glass: 'bg-white/10 dark:bg-black/10 backdrop-blur-md text-card-foreground border-white/20 dark:border-white/10 shadow-lg hover:shadow-xl',
-      elevated: 'bg-card text-card-foreground border-border shadow-lg hover:shadow-2xl hover:-translate-y-1',
+      elevated: 'bg-card text-card-foreground border-border shadow-lg hover:shadow-2xl transition-transform hover:scale-[1.005]',
     };
 
     const hoverClasses = hover ? 'hover:shadow-lg hover:border-primary/20' : '';
@@ -86,7 +86,7 @@ const ModernCardTitle = React.forwardRef<HTMLParagraphElement, ModernCardTitlePr
 );
 ModernCardTitle.displayName = 'ModernCardTitle';
 
-interface ModernCardDescriptionProps extends React.HTMLAttributes<HTMLParagraphElement> {}
+interface ModernCardDescriptionProps extends React.HTMLAttributes<HTMLParagraphElement> { }
 
 const ModernCardDescription = React.forwardRef<HTMLParagraphElement, ModernCardDescriptionProps>(
   ({ className, children, ...props }, ref) => {
@@ -103,7 +103,7 @@ const ModernCardDescription = React.forwardRef<HTMLParagraphElement, ModernCardD
 );
 ModernCardDescription.displayName = 'ModernCardDescription';
 
-interface ModernCardContentProps extends React.HTMLAttributes<HTMLDivElement> {}
+interface ModernCardContentProps extends React.HTMLAttributes<HTMLDivElement> { }
 
 const ModernCardContent = React.forwardRef<HTMLDivElement, ModernCardContentProps>(
   ({ className, children, ...props }, ref) => {

@@ -92,6 +92,12 @@ const Navbar = () => {
               {item.label}
             </button>
           ))}
+          <button
+            onClick={() => navigate("/cnh-social")}
+            className="px-4 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors font-medium rounded-full hover:bg-secondary/50"
+          >
+            CNH Social
+          </button>
         </nav>
 
         {/* Desktop CTA Button */}
@@ -154,6 +160,22 @@ const Navbar = () => {
                   </button>
                 </motion.div>
               ))}
+
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.3 }}
+              >
+                <button
+                  onClick={() => {
+                    toggleMenu();
+                    navigate("/cnh-social");
+                  }}
+                  className="text-2xl font-semibold text-foreground w-full text-left py-4 border-b border-border/50"
+                >
+                  CNH Social
+                </button>
+              </motion.div>
 
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
