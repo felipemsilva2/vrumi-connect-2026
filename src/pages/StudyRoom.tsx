@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Send, Car, Loader2, Trash2 } from "lucide-react";
+import ReactMarkdown from "react-markdown";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -384,7 +385,13 @@ export default function StudyRoom({ user, profile }: StudyRoomProps) {
                         messages.map((message) => (
                           <div key={message.id} className={cn("flex", message.role === "user" ? "justify-end" : "justify-start")}> 
                             <div className={cn("max-w-[85%] rounded-lg px-3 py-2", message.role === "user" ? "bg-primary text-primary-foreground" : "bg-muted text-foreground")}> 
-                              <p className="text-xs whitespace-pre-wrap break-words">{message.content}</p>
+                              {message.role === "assistant" ? (
+                                <div className="text-xs prose prose-sm max-w-none dark:prose-invert">
+                                  <ReactMarkdown>{message.content}</ReactMarkdown>
+                                </div>
+                              ) : (
+                                <p className="text-xs whitespace-pre-wrap break-words">{message.content}</p>
+                              )}
                               <p className="text-[10px] opacity-70 mt-1">{message.timestamp.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</p>
                             </div>
                           </div>
@@ -446,7 +453,13 @@ export default function StudyRoom({ user, profile }: StudyRoomProps) {
                       messages.map((message) => (
                         <div key={message.id} className={cn("flex", message.role === "user" ? "justify-end" : "justify-start")}> 
                           <div className={cn("max-w-[80%] rounded-lg px-4 py-2", message.role === "user" ? "bg-primary text-primary-foreground" : "bg-muted text-foreground")}> 
-                            <p className="text-sm whitespace-pre-wrap break-words">{message.content}</p>
+                            {message.role === "assistant" ? (
+                              <div className="text-sm prose prose-sm max-w-none dark:prose-invert">
+                                <ReactMarkdown>{message.content}</ReactMarkdown>
+                              </div>
+                            ) : (
+                              <p className="text-sm whitespace-pre-wrap break-words">{message.content}</p>
+                            )}
                             <p className="text-xs opacity-70 mt-1">{message.timestamp.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</p>
                           </div>
                         </div>
