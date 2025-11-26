@@ -30,6 +30,8 @@ import CNHSocial from "@/pages/CNHSocial";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { PWAInstallPrompt } from "@/components/PWAInstallPrompt";
+
 
 const ProtectedAdminRoute = ({ children }: { children: React.ReactNode }) => {
   const [userId, setUserId] = useState<string>();
@@ -82,6 +84,7 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <ThemeHandler />
+          <PWAInstallPrompt />
           <ErrorBoundary>
             <Routes>
               <Route path="/" element={<Index />} />
@@ -150,7 +153,7 @@ const App = () => (
         </BrowserRouter>
       </TooltipProvider>
     </ThemeProvider>
-  </QueryClientProvider >
+  </QueryClientProvider>
 );
 
 export default App;
