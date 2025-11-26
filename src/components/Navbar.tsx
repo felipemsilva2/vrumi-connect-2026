@@ -57,7 +57,9 @@ const Navbar = () => {
   return (
     <div className={cn(
       "fixed top-0 left-0 right-0 z-50 flex justify-center transition-all duration-300",
-      scrolled ? "py-4" : "py-6"
+      scrolled
+        ? "pb-4 pt-[calc(env(safe-area-inset-top)+1.5rem)]"
+        : "pb-6 pt-[calc(env(safe-area-inset-top)+2.5rem)]"
     )}>
       <motion.div
         className={cn(
@@ -134,14 +136,14 @@ const Navbar = () => {
             aria-modal="true"
             aria-label="Menu"
             tabIndex={-1}
-            className="fixed inset-0 bg-background/95 backdrop-blur-xl z-[60] pt-24 pt-safe px-6 md:hidden"
+            className="fixed inset-0 bg-background/95 backdrop-blur-xl z-[60] pt-[calc(env(safe-area-inset-top)+6rem)] px-6 md:hidden"
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
             transition={{ duration: 0.3, ease: "easeInOut" }}
           >
             <button
-              className="absolute top-6 right-6 p-2 z-[70] rounded-full bg-secondary/50"
+              className="absolute top-[calc(env(safe-area-inset-top)+2.5rem)] right-6 p-2 z-[70] rounded-full bg-secondary/50"
               onClick={toggleMenu}
             >
               <X className="h-5 w-5 text-foreground" />
