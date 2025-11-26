@@ -34,8 +34,8 @@ const Index = () => {
           logo={<div className="flex items-center gap-2"></div>}
           badge="A LEI MUDOU: AUTOESCOLA NÃO É MAIS OBRIGATÓRIA"
           title="O novo jeito de tirar sua CNH."
-          subtitle="Nova lei aprovada: troque as aulas obrigatórias pelo estudo autônomo e economize até 80%."
-          description="Não gaste mais com cursos obrigatórios. O Vrumi oferece o conteúdo oficial em simulados, flashcards e lições para você se preparar sozinho e passar de primeira."
+          subtitle="A autoescola do futuro é você quem faz. Mais barato, mais rápido e 100% digital."
+          description="Aproveite a liberdade da nova lei. Troque as salas de aula cansativas pela tecnologia do Vrumi. Domine todas as placas e leis de trânsito com nossa metodologia ativa e conquiste sua CNH sem burocracia."
           primaryButton={{
             label: "Começar Agora",
             onClick: () => navigate("/auth?mode=register"),

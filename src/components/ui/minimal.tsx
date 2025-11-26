@@ -239,7 +239,7 @@ export default function MinimalModernHero({
                 background: accentColor
               }} />
               <div className="pt-4">
-                <div className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black mb-2" style={{
+                <div className={`${stat.value.length > 6 ? "text-xl sm:text-2xl md:text-3xl lg:text-4xl" : "text-2xl sm:text-3xl md:text-4xl lg:text-5xl"} font-black mb-2`} style={{
                   fontFamily: "Inter, sans-serif",
                   color: "#000000"
                 }}>
