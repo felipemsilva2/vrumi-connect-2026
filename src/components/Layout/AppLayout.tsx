@@ -326,24 +326,26 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
                 <div className="flex-1 overflow-y-auto p-4 space-y-6">
                   {/* Navigation Links */}
                   <div className="space-y-1">
-                    {navigationItems.map((item) => (
-                      <button
-                        key={item.label}
-                        onClick={() => navigate(item.path)}
-                        className={`flex w-full items-center rounded-md px-3 py-2.5 transition-all duration-200 ${isActiveRoute(item.path)
-                          ? "bg-primary/10 text-primary font-medium"
-                          : "text-muted-foreground hover:bg-accent/10 hover:text-foreground"
-                          }`}
-                      >
-                        <item.icon className="h-5 w-5 mr-3 shrink-0" />
-                        <span className="text-sm truncate">{item.label}</span>
-                        {item.notifs && (
-                          <span className="ml-auto flex h-5 w-5 items-center justify-center rounded-full bg-primary text-xs text-primary-foreground font-medium shrink-0">
-                            {item.notifs}
-                          </span>
-                        )}
-                      </button>
-                    ))}
+                    {navigationItems
+                      .filter(item => !['/painel', '/painel?tab=flashcards', '/painel?tab=simulados'].includes(item.path))
+                      .map((item) => (
+                        <button
+                          key={item.label}
+                          onClick={() => navigate(item.path)}
+                          className={`flex w-full items-center rounded-md px-3 py-2.5 transition-all duration-200 ${isActiveRoute(item.path)
+                            ? "bg-primary/10 text-primary font-medium"
+                            : "text-muted-foreground hover:bg-accent/10 hover:text-foreground"
+                            }`}
+                        >
+                          <item.icon className="h-5 w-5 mr-3 shrink-0" />
+                          <span className="text-sm truncate">{item.label}</span>
+                          {item.notifs && (
+                            <span className="ml-auto flex h-5 w-5 items-center justify-center rounded-full bg-primary text-xs text-primary-foreground font-medium shrink-0">
+                              {item.notifs}
+                            </span>
+                          )}
+                        </button>
+                      ))}
                   </div>
 
                   {/* Admin Section */}
