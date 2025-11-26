@@ -35,11 +35,12 @@ import { useActivePass } from "@/hooks/useActivePass";
 import { SmartBreadcrumb } from "@/components/SmartBreadcrumb";
 // import NotificationSystem from "@/components/notifications/NotificationSystem";
 // import NotificationSettings from "@/components/notifications/NotificationSettings";
-import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { ModernCard, ModernCardContent } from "@/components/ui/modern-card";
 import { ModernButton } from "@/components/ui/modern-button";
 import { useMateriaisHierarchy } from "@/hooks/useMateriaisHierarchy";
+import { ModernMobileSidebar } from "@/components/Layout/ModernMobileSidebar";
+import { MobileBottomNav } from "@/components/Layout/MobileBottomNav";
 
 interface DashboardProps {
   user: any;
@@ -55,8 +56,66 @@ export const DashboardWithSidebar = ({ user, profile }: DashboardProps) => {
   const [selected, setSelected] = useState("Dashboard");
   const isMobile = useIsMobile();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const { isAdmin } = useIsAdmin(user?.id);
+  const { hasActivePass, activePass } = useActivePass(user?.id);
 
-  // Removed local useEffect for theme management
+  const handleSignOut = async () => {
+    try {
+      const { error } = await supabase.auth.signOut({ scope: 'local' });
+      if (error) throw error;
+
+      toast({
+        title: "Logout realizado",
+        description: "Até logo!",
+      });
+      navigate("/");
+    } catch (error: any) {
+      toast({
+        title: "Erro ao fazer logout",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const formatUserName = (fullName: string | null, email: string | null): string => {
+    if (fullName) {
+      const names = fullName.toLowerCase().split(' ');
+      const firstName = names[0].charAt(0).toUpperCase() + names[0].slice(1);
+
+      if (fullName.length > 15 || names.length > 3) {
+        return firstName;
+      }
+
+      if (names.length === 1) {
+        return firstName;
+      } else {
+        const lastName = names[names.length - 1].charAt(0).toUpperCase() + names[names.length - 1].slice(1);
+        return `${firstName} ${lastName}`;
+      }
+    }
+
+    if (email) {
+      const username = email.split('@')[0];
+      return username.length > 12 ? username.substring(0, 12) + '...' : username;
+    }
+
+    return 'Estudante';
+  };
+
+  const getPlanDisplay = () => {
+    if (hasActivePass && activePass) {
+      const daysRemaining = Math.ceil((new Date(activePass.expires_at).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
+      const planType = activePass.pass_type === 'family_90_days' ? 'Família' :
+        activePass.pass_type === '90_days' ? 'Premium 90 dias' : 'Premium 30 dias';
+      return `${planType} (${daysRemaining}d restantes)`;
+    }
+    return 'Plano Gratuito';
+  };
+
+  const userName = formatUserName(profile?.full_name, user?.email);
 
   return (
     <div className="flex min-h-screen w-full">
@@ -64,13 +123,25 @@ export const DashboardWithSidebar = ({ user, profile }: DashboardProps) => {
         {!isMobile && (
           <Sidebar user={user} selected={selected} setSelected={setSelected} />
         )}
-        {isMobile && (
-          <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
-            <SheetContent side="left" className="p-0 w-3/4 sm:max-w-sm bg-background text-foreground">
-              <Sidebar user={user} selected={selected} setSelected={(v: string) => { setSelected(v); setMobileMenuOpen(false); }} />
-            </SheetContent>
-          </Sheet>
-        )}
+
+        <ModernMobileSidebar
+          isOpen={isMobile && mobileMenuOpen}
+          onClose={() => setMobileMenuOpen(false)}
+          userName={userName}
+          userPlan={getPlanDisplay()}
+          hasActivePass={hasActivePass}
+          isAdmin={isAdmin}
+          onNavigate={(path) => {
+            if (path.startsWith('/')) {
+              navigate(path);
+            } else {
+              setSelected(path);
+            }
+            setMobileMenuOpen(false);
+          }}
+          onLogout={handleSignOut}
+        />
+
         <MainContent
           isDark={theme === 'dark'}
           setIsDark={(isDark: boolean) => setTheme(isDark ? 'dark' : 'light')}
@@ -82,6 +153,8 @@ export const DashboardWithSidebar = ({ user, profile }: DashboardProps) => {
           openMobileMenu={() => setMobileMenuOpen(true)}
         />
       </div>
+
+      {isMobile && <MobileBottomNav onMenuClick={() => setMobileMenuOpen(true)} />}
     </div>
   );
 };
@@ -479,18 +552,6 @@ const MainContent = ({ isDark, setIsDark, user, profile, selected, setSelected, 
             </p>
           </div>
           <div className="flex items-center gap-3 sm:gap-4">
-            {isMobile && (
-              <ModernButton
-                onClick={openMobileMenu}
-                variant="outline"
-                size="lg"
-                className="h-12 w-12 p-0 border-border bg-background text-foreground hover:bg-accent/10"
-                aria-label="Abrir menu"
-                title="Menu"
-              >
-                <ChevronDown className="h-5 w-5" />
-              </ModernButton>
-            )}
             {/* <NotificationSystem /> */}
             <ModernButton
               onClick={() => setIsDark(!isDark)}

@@ -15,11 +15,8 @@ import {
   Trophy,
   Shield,
   TrafficCone,
-  Menu,
-  X,
   Car
 } from "lucide-react";
-import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -28,6 +25,7 @@ import { useActivePass } from "@/hooks/useActivePass";
 import { SmartBreadcrumb } from "@/components/SmartBreadcrumb";
 import { useTheme } from "@/components/ThemeProvider";
 import { MobileBottomNav } from "./MobileBottomNav";
+import { ModernMobileSidebar } from "./ModernMobileSidebar";
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -143,7 +141,6 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
     { label: "Simulados", icon: Target, path: "/painel?tab=simulados", tooltip: "Teste seus conhecimentos com simulados", notifs: 2 },
     { label: "Sala de Estudos", icon: FileText, path: "/sala-de-estudos", tooltip: "Estude com IA e visualize materiais", isExternal: true },
     { label: "Estatísticas", icon: BarChart3, path: "/painel?tab=estatisticas", tooltip: "Veja seu desempenho" },
-    // { label: "Notificações", icon: Bell, path: "/painel?tab=notificacoes", tooltip: "Configure suas notificações de estudo" },
     { label: "Biblioteca de Placas", icon: TrafficCone, path: "/biblioteca-de-placas", tooltip: "Consulte a biblioteca de placas de trânsito", isExternal: true },
     { label: "Conquistas", icon: Trophy, path: "/painel?tab=conquistas", tooltip: "Suas conquistas", notifs: 1 },
   ];
@@ -287,108 +284,17 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
           </div>
         )}
 
-        {/* Mobile Sidebar */}
-        {isMobile && (
-          <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
-            <SheetContent
-              side="left"
-              className="p-0 w-[85vw] sm:max-w-sm bg-background text-foreground border-r-0 [&>button]:hidden"
-              style={{ height: '100dvh' }}
-            >
-              {/* Mobile Sidebar Content */}
-              <div className="flex flex-col h-full pt-[env(safe-area-inset-top)]">
-                {/* Header Section */}
-                <div className="p-4 border-b border-border">
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div className="grid size-10 shrink-0 place-content-center rounded-lg bg-gradient-to-br from-primary to-primary/80 shadow-sm">
-                        <Car className="h-6 w-6 text-primary-foreground" />
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <span className="block text-sm font-semibold text-foreground truncate">
-                          {userName}
-                        </span>
-                        <span className={`block text-xs truncate ${hasActivePass ? 'text-green-600 dark:text-green-400' : 'text-muted-foreground'}`}>
-                          {getPlanDisplay()}
-                        </span>
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => setMobileMenuOpen(false)}
-                      className="p-2 -mr-2 text-muted-foreground hover:text-foreground transition-colors"
-                    >
-                      <X className="h-5 w-5" />
-                    </button>
-                  </div>
-                </div>
-
-                {/* Scrollable Content */}
-                <div className="flex-1 overflow-y-auto p-4 space-y-6">
-                  {/* Navigation Links */}
-                  <div className="space-y-1">
-                    {navigationItems
-                      .filter(item => !['/painel', '/painel?tab=flashcards', '/painel?tab=simulados'].includes(item.path))
-                      .map((item) => (
-                        <button
-                          key={item.label}
-                          onClick={() => navigate(item.path)}
-                          className={`flex w-full items-center rounded-md px-3 py-2.5 transition-all duration-200 ${isActiveRoute(item.path)
-                            ? "bg-primary/10 text-primary font-medium"
-                            : "text-muted-foreground hover:bg-accent/10 hover:text-foreground"
-                            }`}
-                        >
-                          <item.icon className="h-5 w-5 mr-3 shrink-0" />
-                          <span className="text-sm truncate">{item.label}</span>
-                          {item.notifs && (
-                            <span className="ml-auto flex h-5 w-5 items-center justify-center rounded-full bg-primary text-xs text-primary-foreground font-medium shrink-0">
-                              {item.notifs}
-                            </span>
-                          )}
-                        </button>
-                      ))}
-                  </div>
-
-                  {/* Admin Section */}
-                  {isAdmin && (
-                    <div className="space-y-1">
-                      <div className="px-3 text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                        Administração
-                      </div>
-                      <button
-                        onClick={() => navigate("/admin/painel")}
-                        className="flex w-full items-center rounded-md px-3 py-2.5 text-muted-foreground hover:bg-primary/10 hover:text-primary transition-colors"
-                      >
-                        <Shield className="h-5 w-5 mr-3 shrink-0" />
-                        <span className="text-sm font-medium">Área Admin</span>
-                      </button>
-                    </div>
-                  )}
-
-                  {/* Account Section */}
-                  <div className="space-y-1">
-                    <div className="px-3 text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                      Conta
-                    </div>
-                    <button
-                      onClick={() => navigate("/painel?tab=perfil")}
-                      className="flex w-full items-center rounded-md px-3 py-2.5 text-muted-foreground hover:bg-accent/10 hover:text-foreground transition-colors"
-                    >
-                      <User className="h-5 w-5 mr-3 shrink-0" />
-                      <span className="text-sm font-medium">Meu Perfil</span>
-                    </button>
-                    <button
-                      onClick={handleSignOut}
-                      className="flex w-full items-center rounded-md px-3 py-2.5 text-muted-foreground hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 transition-colors"
-                    >
-                      <LogOut className="h-5 w-5 mr-3 shrink-0" />
-                      <span className="text-sm font-medium">Sair</span>
-                    </button>
-                  </div>
-                </div>
-              </div >
-            </SheetContent >
-          </Sheet >
-        )}
+        {/* Modern Mobile Sidebar */}
+        <ModernMobileSidebar
+          isOpen={isMobile && mobileMenuOpen}
+          onClose={() => setMobileMenuOpen(false)}
+          userName={userName}
+          userPlan={getPlanDisplay()}
+          hasActivePass={hasActivePass}
+          isAdmin={isAdmin}
+          onNavigate={(path) => navigate(path)}
+          onLogout={handleSignOut}
+        />
 
         {/* Main Content */}
         <div className="flex-1 flex flex-col pb-20 sm:pb-0">
@@ -396,16 +302,6 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
           <header className="sticky top-0 z-30 bg-background border-b border-border px-4 sm:px-6 py-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
-                {/* Hidden hamburger menu on mobile since we have bottom nav */}
-                {/* {isMobile && (
-                  <button
-                    onClick={() => setMobileMenuOpen(true)}
-                    className="flex h-10 w-10 items-center justify-center rounded-lg border border-border bg-background text-muted-foreground hover:bg-accent/10"
-                    aria-label="Abrir menu"
-                  >
-                    <Menu className="h-5 w-5" />
-                  </button>
-                )} */}
                 <div>
                   <h1 className="text-xl sm:text-2xl font-bold text-foreground">
                     {getPageTitle()}
@@ -418,7 +314,6 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
                 </div>
               </div>
               <div className="flex items-center gap-3">
-                {/* <NotificationSystem /> */}
                 <button
                   onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
                   className="flex h-10 w-10 items-center justify-center rounded-lg border border-border bg-background text-muted-foreground hover:bg-accent/10"
@@ -440,10 +335,10 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
             {children}
           </main>
         </div>
-      </div >
+      </div>
 
       {/* Mobile Bottom Navigation */}
       {isMobile && <MobileBottomNav onMenuClick={() => setMobileMenuOpen(true)} />}
-    </div >
+    </div>
   );
 };
