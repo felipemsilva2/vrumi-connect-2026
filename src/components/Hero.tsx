@@ -5,7 +5,7 @@ import heroBg from "@/assets/hero-bg.jpg";
 
 const Hero = () => {
   return (
-    <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-20">
+    <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-20 pb-10">
       {/* Background Image with Gradient Overlay */}
       <div className="absolute inset-0 z-0">
         <motion.div
@@ -28,7 +28,7 @@ const Hero = () => {
 
       {/* Content */}
       <div className="relative z-10 container mx-auto px-4 text-center">
-        <div className="max-w-5xl mx-auto space-y-8">
+        <div className="max-w-5xl mx-auto space-y-6 md:space-y-8">
 
           {/* Badge */}
           <motion.div
@@ -48,7 +48,7 @@ const Hero = () => {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.4, ease: "easeOut" }}
-            className="text-6xl md:text-8xl font-bold tracking-tight text-foreground leading-[1.1]"
+            className="text-4xl sm:text-5xl md:text-8xl font-bold tracking-tight text-foreground leading-[1.1]"
           >
             Sua CNH, <br className="hidden md:block" />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-primary/60">
@@ -61,7 +61,7 @@ const Hero = () => {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.6, ease: "easeOut" }}
-            className="text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto leading-relaxed font-light"
+            className="text-lg md:text-2xl text-muted-foreground max-w-2xl mx-auto leading-relaxed font-light"
           >
             Domine a teoria e a prática com a metodologia mais moderna do mercado. Flashcards, simulados e suporte em um só lugar.
           </motion.p>
@@ -73,11 +73,11 @@ const Hero = () => {
             transition={{ duration: 0.8, delay: 0.8, ease: "easeOut" }}
             className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-8"
           >
-            <Button size="lg" className="text-lg h-14 px-8 rounded-full shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 bg-primary text-white border-0">
+            <Button size="lg" className="w-full sm:w-auto text-lg h-14 px-8 rounded-full shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 bg-primary text-white border-0">
               Começar Agora
               <ChevronRight className="w-5 h-5 ml-2" />
             </Button>
-            <Button variant="outline" size="lg" className="text-lg h-14 px-8 rounded-full backdrop-blur-sm border-2 hover:bg-secondary/50 transition-all duration-300">
+            <Button variant="outline" size="lg" className="w-full sm:w-auto text-lg h-14 px-8 rounded-full backdrop-blur-sm border-2 hover:bg-secondary/50 transition-all duration-300">
               <BookOpen className="w-5 h-5 mr-2" />
               Ver Conteúdo
             </Button>
@@ -88,7 +88,7 @@ const Hero = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 1, delay: 1.2 }}
-            className="grid grid-cols-2 sm:grid-cols-3 gap-8 pt-16 max-w-3xl mx-auto border-t border-border/50 mt-16"
+            className="grid grid-cols-1 sm:grid-cols-3 gap-8 pt-16 max-w-3xl mx-auto border-t border-border/50 mt-16"
           >
             {[
               { value: "10K+", label: "Alunos Aprovados" },

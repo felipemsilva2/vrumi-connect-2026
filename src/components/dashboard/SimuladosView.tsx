@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react"
-import { Clock, Play, History, Trophy, CheckCircle, XCircle, ArrowLeft, ArrowRight, Lock, Calendar, TrafficCone, FileText, Brain, Award, Users } from "lucide-react"
+import { Clock, Play, History, Trophy, CheckCircle, XCircle, ArrowLeft, ArrowRight, Calendar } from "lucide-react"
 import { supabase } from "@/integrations/supabase/client"
 import { useToast } from "@/hooks/use-toast"
 import { Button } from "@/components/ui/button"
@@ -8,7 +8,6 @@ import { motion, AnimatePresence } from "framer-motion"
 import { ImageWithFallback } from "@/components/ImageWithFallback"
 import { SubscriptionGate } from "@/components/auth/SubscriptionGate"
 import { useNavigate } from "react-router-dom"
-
 
 interface QuizQuestion {
   id: string
@@ -493,21 +492,20 @@ export const SimuladosView = () => {
                             <button
                               key={option}
                               onClick={() => handleAnswerSelect(option)}
-                              className={`w-full text-left rounded-lg border-2 px-4 py-3 flex items-center justify-between transition-all ${isSelected
+                              className={`w-full text-left rounded-lg border-2 px-4 py-4 min-h-[60px] flex items-center justify-between transition-all ${isSelected
                                 ? "bg-green-50 dark:bg-green-950 border-green-300 dark:border-green-700 shadow-md"
                                 : "bg-background border-border hover:shadow-md hover:border-primary/50"
                                 }`}
                             >
-                              <div className="flex items-center gap-3">
-                                <div className={`w-10 h-10 flex items-center justify-center rounded-full border-2 ${isSelected ? 'border-green-500 bg-green-100 dark:bg-green-900' : 'border-border'}`}>
+                              <div className="flex items-center gap-3 w-full">
+                                <div className={`w-10 h-10 flex-shrink-0 flex items-center justify-center rounded-full border-2 ${isSelected ? 'border-green-500 bg-green-100 dark:bg-green-900' : 'border-border'}`}>
                                   <span className="font-bold text-sm">{option}</span>
                                 </div>
-                                <div className="text-sm text-foreground">{optionText}</div>
+                                <div className="text-sm text-foreground flex-1 break-words">{optionText}</div>
                               </div>
                               {isSelected && (
-                                <div className="flex items-center gap-2 text-green-600 dark:text-green-400 font-medium">
-                                  <CheckCircle size={18} />
-                                  <span className="hidden sm:inline">Selecionada</span>
+                                <div className="flex-shrink-0 ml-2 text-green-600 dark:text-green-400">
+                                  <CheckCircle size={20} />
                                 </div>
                               )}
                             </button>
@@ -565,7 +563,7 @@ export const SimuladosView = () => {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-5 sm:grid-cols-6 md:grid-cols-8 gap-2">
+                  <div className="grid grid-cols-5 gap-2">
                     {questions.map((_, idx) => {
                       const status = userAnswers[idx]
                         ? "answered"
@@ -629,17 +627,17 @@ export const SimuladosView = () => {
                       Você respondeu {answeredCount} de {questions.length} questões. Tem certeza que deseja enviar suas respostas e finalizar o simulado?
                     </p>
 
-                    <div className="flex gap-3">
+                    <div className="flex flex-col sm:flex-row gap-3">
                       <Button
                         onClick={() => setShowConfirmFinish(false)}
                         variant="outline"
-                        className="flex-1"
+                        className="w-full sm:flex-1 h-12"
                       >
                         Voltar
                       </Button>
                       <Button
                         onClick={finishQuiz}
-                        className="flex-1 bg-green-500 hover:bg-green-600 flex items-center justify-center gap-2"
+                        className="w-full sm:flex-1 bg-green-500 hover:bg-green-600 flex items-center justify-center gap-2 h-12"
                       >
                         <CheckCircle size={16} /> Enviar e finalizar
                       </Button>
@@ -708,30 +706,6 @@ export const SimuladosView = () => {
       </motion.div>
     )
   }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
   // View: Main Menu
   return (
@@ -805,13 +779,6 @@ export const SimuladosView = () => {
               </div>
             </CardContent>
           </Card>
-        </div>
-
-
-
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-
         </div>
 
         <Card className="shadow-lg border-2">
