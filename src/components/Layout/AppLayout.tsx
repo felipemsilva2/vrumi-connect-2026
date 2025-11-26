@@ -289,88 +289,102 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
         {/* Mobile Sidebar */}
         {isMobile && (
           <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
-            <SheetContent side="left" className="p-0 w-3/4 sm:max-w-sm bg-background text-foreground">
-              {/* Mobile Sidebar Content - Similar to desktop but simplified */}
-              <div className="h-full p-4">
-                <div className="mb-6 border-b border-border pb-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="grid size-10 place-content-center rounded-lg bg-gradient-to-br from-primary to-primary/80 shadow-sm">
+            <SheetContent
+              side="left"
+              className="p-0 w-[85vw] sm:max-w-sm bg-background text-foreground border-r-0 [&>button]:hidden"
+              style={{ height: '100dvh' }}
+            >
+              {/* Mobile Sidebar Content */}
+              <div className="flex flex-col h-full pt-[env(safe-area-inset-top)]">
+                {/* Header Section */}
+                <div className="p-4 border-b border-border">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="grid size-10 shrink-0 place-content-center rounded-lg bg-gradient-to-br from-primary to-primary/80 shadow-sm">
                         <Car className="h-6 w-6 text-primary-foreground" />
                       </div>
-                      <div>
-                        <span className="block text-sm font-semibold text-foreground">
+                      <div className="min-w-0 flex-1">
+                        <span className="block text-sm font-semibold text-foreground truncate">
                           {userName}
                         </span>
-                        <span className={`block text-xs ${hasActivePass ? 'text-green-600 dark:text-green-400' : 'text-muted-foreground'}`}>
+                        <span className={`block text-xs truncate ${hasActivePass ? 'text-green-600 dark:text-green-400' : 'text-muted-foreground'}`}>
                           {getPlanDisplay()}
                         </span>
                       </div>
                     </div>
-                    <button onClick={() => setMobileMenuOpen(false)}>
-                      <X className="h-6 w-6 text-muted-foreground" />
+                    <button
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="p-2 -mr-2 text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      <X className="h-5 w-5" />
                     </button>
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  {navigationItems.map((item) => (
-                    <button
-                      key={item.label}
-                      onClick={() => navigate(item.path)}
-                      className={`flex w-full items-center rounded-md p-3 transition-all duration-200 ${isActiveRoute(item.path)
-                        ? "bg-primary/10 text-primary"
-                        : "text-muted-foreground hover:bg-accent/10"
-                        }`}
-                    >
-                      <item.icon className="h-5 w-5 mr-3" />
-                      <span className="text-sm font-medium">{item.label}</span>
-                      {item.notifs && (
-                        <span className="ml-auto flex h-5 w-5 items-center justify-center rounded-full bg-primary text-xs text-primary-foreground font-medium">
-                          {item.notifs}
-                        </span>
-                      )}
-                    </button>
-                  ))}
-                </div>
+                {/* Scrollable Content */}
+                <div className="flex-1 overflow-y-auto p-4 space-y-6">
+                  {/* Navigation Links */}
+                  <div className="space-y-1">
+                    {navigationItems.map((item) => (
+                      <button
+                        key={item.label}
+                        onClick={() => navigate(item.path)}
+                        className={`flex w-full items-center rounded-md px-3 py-2.5 transition-all duration-200 ${isActiveRoute(item.path)
+                          ? "bg-primary/10 text-primary font-medium"
+                          : "text-muted-foreground hover:bg-accent/10 hover:text-foreground"
+                          }`}
+                      >
+                        <item.icon className="h-5 w-5 mr-3 shrink-0" />
+                        <span className="text-sm truncate">{item.label}</span>
+                        {item.notifs && (
+                          <span className="ml-auto flex h-5 w-5 items-center justify-center rounded-full bg-primary text-xs text-primary-foreground font-medium shrink-0">
+                            {item.notifs}
+                          </span>
+                        )}
+                      </button>
+                    ))}
+                  </div>
 
-                {isAdmin && (
-                  <div className="border-t border-border pt-4 mt-4">
-                    <div className="px-3 py-2 text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                      Administração
+                  {/* Admin Section */}
+                  {isAdmin && (
+                    <div className="space-y-1">
+                      <div className="px-3 text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                        Administração
+                      </div>
+                      <button
+                        onClick={() => navigate("/admin/painel")}
+                        className="flex w-full items-center rounded-md px-3 py-2.5 text-muted-foreground hover:bg-primary/10 hover:text-primary transition-colors"
+                      >
+                        <Shield className="h-5 w-5 mr-3 shrink-0" />
+                        <span className="text-sm font-medium">Área Admin</span>
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Account Section */}
+                  <div className="space-y-1">
+                    <div className="px-3 text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                      Conta
                     </div>
                     <button
-                      onClick={() => navigate("/admin/painel")}
-                      className="flex w-full items-center rounded-md p-3 text-muted-foreground hover:bg-primary/10 hover:text-primary"
+                      onClick={() => navigate("/painel?tab=perfil")}
+                      className="flex w-full items-center rounded-md px-3 py-2.5 text-muted-foreground hover:bg-accent/10 hover:text-foreground transition-colors"
                     >
-                      <Shield className="h-5 w-5 mr-3" />
-                      <span className="text-sm font-medium">Área Admin</span>
+                      <User className="h-5 w-5 mr-3 shrink-0" />
+                      <span className="text-sm font-medium">Meu Perfil</span>
+                    </button>
+                    <button
+                      onClick={handleSignOut}
+                      className="flex w-full items-center rounded-md px-3 py-2.5 text-muted-foreground hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 transition-colors"
+                    >
+                      <LogOut className="h-5 w-5 mr-3 shrink-0" />
+                      <span className="text-sm font-medium">Sair</span>
                     </button>
                   </div>
-                )}
-
-                <div className="border-t border-border pt-4 mt-4">
-                  <div className="px-3 py-2 text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                    Conta
-                  </div>
-                  <button
-                    onClick={() => navigate("/painel?tab=perfil")}
-                    className="flex w-full items-center rounded-md p-3 text-muted-foreground hover:bg-accent/10 hover:text-foreground"
-                  >
-                    <User className="h-5 w-5 mr-3" />
-                    <span className="text-sm font-medium">Meu Perfil</span>
-                  </button>
-                  <button
-                    onClick={handleSignOut}
-                    className="flex w-full items-center rounded-md p-3 text-muted-foreground hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600"
-                  >
-                    <LogOut className="h-5 w-5 mr-3" />
-                    <span className="text-sm font-medium">Sair</span>
-                  </button>
                 </div>
-              </div>
-            </SheetContent>
-          </Sheet>
+              </div >
+            </SheetContent >
+          </Sheet >
         )}
 
         {/* Main Content */}
@@ -422,7 +436,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
             {children}
           </main>
         </div>
-      </div>
-    </div>
+      </div >
+    </div >
   );
 };

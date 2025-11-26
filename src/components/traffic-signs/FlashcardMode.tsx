@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { ModernCard } from '@/components/ui/modern-card';
+import { ModernButton } from '@/components/ui/modern-button';
 import { Badge } from '@/components/ui/badge';
-import { ChevronLeft, ChevronRight, RotateCcw, BookOpen, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, RotateCcw, BookOpen, X, RotateCw, ArrowLeft } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
@@ -74,7 +74,7 @@ export default function FlashcardMode({ signs, initialIndex = 0, onClose, catego
 
   const fetchCategoryProgress = async () => {
     if (!category) return;
-    
+
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
@@ -165,7 +165,7 @@ export default function FlashcardMode({ signs, initialIndex = 0, onClose, catego
           medium: "Entendido! Vamos revisar esta placa novamente em breve.",
           hard: "Vamos praticar mais! Esta placa aparecerá com mais frequência."
         };
-        
+
         toast({
           title: "Progresso salvo!",
           description: messages[response],
@@ -208,11 +208,11 @@ export default function FlashcardMode({ signs, initialIndex = 0, onClose, catego
               {currentIndex + 1} de {signs.length}
             </span>
           </div>
-          
+
           {onClose && (
-            <Button variant="ghost" size="sm" onClick={onClose}>
+            <ModernButton variant="ghost" size="sm" onClick={onClose}>
               <X className="w-4 h-4" />
-            </Button>
+            </ModernButton>
           )}
         </div>
 
@@ -228,7 +228,7 @@ export default function FlashcardMode({ signs, initialIndex = 0, onClose, catego
               </span>
             </div>
             <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3">
-              <div 
+              <div
                 className="bg-gradient-to-r from-red-500 via-yellow-500 to-green-500 h-3 rounded-full transition-all duration-500"
                 style={{ width: `${categoryProgress.progress_percentage}%` }}
               />
@@ -244,10 +244,9 @@ export default function FlashcardMode({ signs, initialIndex = 0, onClose, catego
 
       {/* Flashcard Container */}
       <div className="relative h-[60vh] sm:h-96 mb-6">
-        <div 
-          className={`relative w-full h-full transition-transform duration-600 preserve-3d cursor-pointer ${
-            isFlipped ? 'rotate-y-180' : ''
-          } ${isAnimating ? 'pointer-events-none' : ''}`}
+        <div
+          className={`relative w-full h-full transition-transform duration-600 preserve-3d cursor-pointer ${isFlipped ? 'rotate-y-180' : ''
+            } ${isAnimating ? 'pointer-events-none' : ''}`}
           onClick={handleFlip}
           style={{
             transformStyle: 'preserve-3d',
@@ -256,114 +255,97 @@ export default function FlashcardMode({ signs, initialIndex = 0, onClose, catego
           }}
         >
           {/* Front of card (Image) */}
-          <div 
-            className="absolute inset-0 w-full h-full backface-hidden rounded-xl border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-lg flex items-center justify-center"
+          <ModernCard
+            className="absolute inset-0 w-full h-full backface-hidden flex flex-col items-center justify-center p-6 text-center border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-xl rounded-2xl"
+            variant="elevated"
             style={{
               backfaceVisibility: 'hidden',
             }}
           >
-            <div className="text-center p-8">
-              <div className="aspect-square w-64 h-64 bg-gray-100 dark:bg-gray-700 rounded-lg mb-4 flex items-center justify-center overflow-hidden mx-auto">
-                {currentSign.image_url ? (
-                  <img
-                    src={currentSign.image_url}
-                    alt={currentSign.name}
-                    className="w-full h-full object-cover"
-                    onError={(e) => {
-                      e.currentTarget.src = `https://via.placeholder.com/300x300/e5e7eb/6b7280?text=${encodeURIComponent(currentSign.code)}`;
-                    }}
-                  />
-                ) : (
-                  <div className="text-gray-400 text-6xl font-bold">
-                    {currentSign.code}
-                  </div>
-                )}
-              </div>
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                Clique para ver as informações
-              </p>
+            <div className="mb-6 relative w-48 h-48 mx-auto">
+              {currentSign.image_url ? (
+                <img
+                  src={currentSign.image_url}
+                  alt="Traffic Sign"
+                  className="w-full h-full object-contain"
+                />
+              ) : (
+                <div className="w-full h-full bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center">
+                  <span className="text-4xl font-bold text-gray-400">{currentSign.code}</span>
+                </div>
+              )}
             </div>
-          </div>
+
+            <h3 className="text-xl font-bold text-foreground mb-2">
+              Qual é o significado desta placa?
+            </h3>
+            <p className="text-sm text-muted-foreground">
+              Toque para ver a resposta
+            </p>
+          </ModernCard>
 
           {/* Back of card (Information) */}
-          <div 
-            className="absolute inset-0 w-full h-full backface-hidden rounded-xl border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-lg flex flex-col justify-center p-8"
+          <ModernCard
+            className="absolute inset-0 w-full h-full backface-hidden flex flex-col items-center justify-center p-6 text-center border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-xl rounded-2xl rotate-y-180"
+            variant="elevated"
             style={{
               backfaceVisibility: 'hidden',
               transform: 'rotateY(180deg)',
             }}
           >
-            <div className="space-y-6">
-              {/* Code */}
-              <div className="text-center">
-                <span className="text-2xl font-mono font-bold text-gray-900 dark:text-gray-100">
-                  {currentSign.code}
-                </span>
-              </div>
-
-              {/* Name */}
-              <div className="text-center">
-                <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
-                  {currentSign.name}
-                </h3>
-              </div>
-
-              {/* Description */}
-              <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
-                <p className="text-gray-700 dark:text-gray-300 text-sm leading-relaxed text-center">
-                  {currentSign.description}
-                </p>
-              </div>
-
-              {/* Click hint */}
-              <p className="text-xs text-gray-500 dark:text-gray-400 text-center">
-                Clique para ver a imagem novamente
+            <div className="mb-4">
+              <Badge className="mb-2">{currentSign.category}</Badge>
+              <h3 className="text-2xl font-bold text-foreground mb-4">
+                {currentSign.name}
+              </h3>
+              <p className="text-muted-foreground">
+                {currentSign.description}
               </p>
             </div>
-          </div>
+
+            <div className="mt-8 w-full">
+              <p className="text-sm font-medium text-muted-foreground mb-3">
+                Como foi seu desempenho?
+              </p>
+              <div className="flex gap-2 justify-center">
+                <ModernButton
+                  onClick={(e) => { e.stopPropagation(); handleDifficultyResponse('hard'); }}
+                  disabled={isAnimating}
+                  className="flex-1 bg-red-600 hover:bg-red-700 text-white h-12"
+                  size="lg"
+                  variant="default"
+                >
+                  Errei
+                </ModernButton>
+                <ModernButton
+                  onClick={(e) => { e.stopPropagation(); handleDifficultyResponse('medium'); }}
+                  disabled={isAnimating}
+                  className="flex-1 bg-yellow-500 hover:bg-yellow-600 text-white h-12"
+                  size="lg"
+                  variant="default"
+                >
+                  Dúvida
+                </ModernButton>
+                <ModernButton
+                  onClick={(e) => { e.stopPropagation(); handleDifficultyResponse('easy'); }}
+                  disabled={isAnimating}
+                  className="flex-1 bg-green-600 hover:bg-green-700 text-white h-12"
+                  size="lg"
+                  variant="default"
+                >
+                  Acertei
+                </ModernButton>
+              </div>
+            </div>
+          </ModernCard>
         </div>
       </div>
 
       {/* Navigation Controls */}
       <div className="space-y-4">
-        {/* Assessment Buttons (only show when card is flipped) */}
-        {isFlipped && (
-          <div className="flex flex-col sm:flex-row items-stretch justify-center gap-3">
-            <Button
-              onClick={() => handleDifficultyResponse('hard')}
-              disabled={isAnimating}
-              className="flex-1 bg-red-600 hover:bg-red-700 text-white h-12"
-              size="lg"
-            >
-              <span className="font-semibold">Errei</span>
-              <span className="text-xs ml-1">😅</span>
-            </Button>
-            
-            <Button
-              onClick={() => handleDifficultyResponse('medium')}
-              disabled={isAnimating}
-              className="flex-1 bg-yellow-600 hover:bg-yellow-700 text-white h-12"
-              size="lg"
-            >
-              <span className="font-semibold">Dúvida</span>
-              <span className="text-xs ml-1">🤔</span>
-            </Button>
-            
-            <Button
-              onClick={() => handleDifficultyResponse('easy')}
-              disabled={isAnimating}
-              className="flex-1 bg-green-600 hover:bg-green-700 text-white h-12"
-              size="lg"
-            >
-              <span className="font-semibold">Acertei</span>
-              <span className="text-xs ml-1">😊</span>
-            </Button>
-          </div>
-        )}
-
         {/* Navigation Buttons */}
         <div className="flex flex-col sm:flex-row items-stretch justify-between gap-4">
-          <Button
+          <ModernButton
             onClick={handlePrevious}
             disabled={isAnimating}
             variant="outline"
@@ -371,10 +353,10 @@ export default function FlashcardMode({ signs, initialIndex = 0, onClose, catego
           >
             <ChevronLeft className="w-4 h-4" />
             Anterior
-          </Button>
+          </ModernButton>
 
           <div className="flex items-center gap-2">
-            <Button
+            <ModernButton
               onClick={handleFlip}
               disabled={isAnimating}
               variant="secondary"
@@ -382,9 +364,9 @@ export default function FlashcardMode({ signs, initialIndex = 0, onClose, catego
             >
               <RotateCcw className="w-4 h-4" />
               Virar
-            </Button>
+            </ModernButton>
 
-            <Button
+            <ModernButton
               onClick={handleReset}
               disabled={isAnimating}
               variant="ghost"
@@ -393,10 +375,10 @@ export default function FlashcardMode({ signs, initialIndex = 0, onClose, catego
             >
               <BookOpen className="w-4 h-4" />
               Reiniciar
-            </Button>
+            </ModernButton>
           </div>
 
-          <Button
+          <ModernButton
             onClick={handleNext}
             disabled={isAnimating}
             variant="outline"
@@ -404,7 +386,7 @@ export default function FlashcardMode({ signs, initialIndex = 0, onClose, catego
           >
             Próximo
             <ChevronRight className="w-4 h-4" />
-          </Button>
+          </ModernButton>
         </div>
       </div>
 
@@ -415,7 +397,7 @@ export default function FlashcardMode({ signs, initialIndex = 0, onClose, catego
           <span>{currentIndex + 1} / {signs.length}</span>
         </div>
         <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-          <div 
+          <div
             className="bg-blue-500 h-2 rounded-full transition-all duration-300"
             style={{ width: `${((currentIndex + 1) / signs.length) * 100}%` }}
           />

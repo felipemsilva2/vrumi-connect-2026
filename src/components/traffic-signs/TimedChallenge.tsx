@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { ModernCard, ModernCardContent } from '@/components/ui/modern-card';
+import { ModernButton } from '@/components/ui/modern-button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Trophy, Clock, Play, RotateCcw, Target, Zap, Star, X } from 'lucide-react';
@@ -60,13 +60,13 @@ export default function TimedChallenge({ signs, category, onClose }: TimedChalle
   const [isProcessing, setIsProcessing] = useState(false);
   const [challengeResult, setChallengeResult] = useState<ChallengeResult | null>(null);
   const [flashEffect, setFlashEffect] = useState<'green' | 'red' | null>(null);
-  
+
   const { toast } = useToast();
 
   // Timer effect
   useEffect(() => {
     let timer: NodeJS.Timeout;
-    
+
     if (gameState === 'playing' && timeRemaining > 0 && !isProcessing) {
       timer = setTimeout(() => {
         setTimeRemaining(prev => prev - 1);
@@ -88,7 +88,7 @@ export default function TimedChallenge({ signs, category, onClose }: TimedChalle
 
     // Select random sign as the correct answer
     const correctSign = availableSigns[Math.floor(Math.random() * availableSigns.length)];
-    
+
     // Get other signs for wrong answers
     const wrongSigns = availableSigns
       .filter(sign => sign.id !== correctSign.id)
@@ -127,7 +127,7 @@ export default function TimedChallenge({ signs, category, onClose }: TimedChalle
   const generateRandomWrongAnswer = (category: string): string => {
     const wrongAnswers = {
       'Regulamentação': [
-        'Velocidade Mínima', 'Passagem Livre', 'Siga em Frente', 
+        'Velocidade Mínima', 'Passagem Livre', 'Siga em Frente',
         'Proibido Parar', 'Ultrapassagem Permitida', 'Conversão Obrigatória'
       ],
       'Advertência': [
@@ -162,7 +162,7 @@ export default function TimedChallenge({ signs, category, onClose }: TimedChalle
     setSelectedOption(null);
     setFeedback(null);
     setChallengeResult(null);
-    
+
     // Generate first question
     try {
       const question = generateQuestion(signs);
@@ -181,23 +181,23 @@ export default function TimedChallenge({ signs, category, onClose }: TimedChalle
   // Handle answer selection
   const handleAnswerSelect = async (optionId: string) => {
     if (isProcessing || !currentQuestion) return;
-    
+
     setIsProcessing(true);
     setSelectedOption(optionId);
-    
+
     const selectedOption = currentQuestion.options.find(opt => opt.id === optionId);
     const isCorrect = selectedOption?.isCorrect || false;
-    
+
     if (isCorrect) {
       setCorrectAnswers(prev => prev + 1);
       setFeedback('correct');
       setFlashEffect('green');
-      
+
       // Calculate points with time bonus
       const timeBonus = Math.floor(timeRemaining * TIME_BONUS_MULTIPLIER);
       const questionPoints = POINTS_PER_CORRECT + timeBonus;
       setScore(prev => prev + questionPoints);
-      
+
       toast({
         title: "Correto!",
         description: `+${questionPoints} pontos`,
@@ -205,10 +205,10 @@ export default function TimedChallenge({ signs, category, onClose }: TimedChalle
     } else {
       setFeedback('incorrect');
       setFlashEffect('red');
-      
+
       // Time penalty for wrong answer
       setTimeRemaining(prev => Math.max(0, prev - WRONG_ANSWER_PENALTY));
-      
+
       toast({
         title: "Incorreto!",
         description: `-${WRONG_ANSWER_PENALTY} segundos`,
@@ -230,7 +230,7 @@ export default function TimedChallenge({ signs, category, onClose }: TimedChalle
     setSelectedOption(null);
     setFeedback(null);
     setIsProcessing(false);
-    
+
     if (questionIndex < signs.length - 1) {
       setQuestionIndex(prev => prev + 1);
       try {
@@ -249,13 +249,13 @@ export default function TimedChallenge({ signs, category, onClose }: TimedChalle
   // Finish challenge and save results
   const finishChallenge = async () => {
     setGameState('finished');
-    
+
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      
+
       if (user) {
         const accuracy = questionIndex > 0 ? (correctAnswers / questionIndex) * 100 : 0;
-        
+
         // Save challenge result
         const { data: resultData, error } = await supabase
           .rpc('save_challenge_result', {
@@ -288,7 +288,7 @@ export default function TimedChallenge({ signs, category, onClose }: TimedChalle
   // Get option button styling
   const getOptionButtonClass = (optionId: string) => {
     let baseClass = "w-full p-4 text-left rounded-lg border-2 transition-all duration-200 ";
-    
+
     if (selectedOption === null) {
       baseClass += "border-gray-200 dark:border-gray-700 hover:border-blue-400 dark:hover:border-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20";
     } else if (optionId === selectedOption) {
@@ -305,67 +305,70 @@ export default function TimedChallenge({ signs, category, onClose }: TimedChalle
         baseClass += "border-gray-200 dark:border-gray-700 opacity-50";
       }
     }
-    
+
     return baseClass;
   };
 
   if (gameState === 'menu') {
     return (
       <div className="max-w-2xl mx-auto p-6">
-        <Card className="p-8 text-center">
-          <div className="mb-6">
-            <div className="w-20 h-20 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Zap className="w-10 h-10 text-white" />
+        <ModernCard className="text-center" variant="elevated">
+          <ModernCardContent className="p-8">
+            <div className="mb-6">
+              <div className="w-20 h-20 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
+                <Zap className="w-10 h-10 text-white" />
+              </div>
+              <h2 className="text-3xl font-bold text-foreground mb-2">
+                Desafio Cronometrado
+              </h2>
+              <p className="text-muted-foreground mb-6">
+                Teste seus conhecimentos contra o tempo! Você tem {GAME_DURATION} segundos para acertar o máximo de placas possível.
+              </p>
             </div>
-            <h2 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">
-              Desafio Cronometrado
-            </h2>
-            <p className="text-gray-600 dark:text-gray-400 mb-6">
-              Teste seus conhecimentos contra o tempo! Você tem {GAME_DURATION} segundos para acertar o máximo de placas possível.
-            </p>
-          </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-            <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
-              <Clock className="w-8 h-8 text-blue-500 mx-auto mb-2" />
-              <h3 className="font-semibold text-blue-900 dark:text-blue-100">{GAME_DURATION}s</h3>
-              <p className="text-sm text-blue-700 dark:text-blue-300">Tempo total</p>
-            </div>
-            
-            <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg">
-              <Target className="w-8 h-8 text-green-500 mx-auto mb-2" />
-              <h3 className="font-semibold text-green-900 dark:text-green-100">{POINTS_PER_CORRECT}</h3>
-              <p className="text-sm text-green-700 dark:text-green-300">Pontos por acerto</p>
-            </div>
-            
-            <div className="bg-red-50 dark:bg-red-900/20 p-4 rounded-lg">
-              <Clock className="w-8 h-8 text-red-500 mx-auto mb-2" />
-              <h3 className="font-semibold text-red-900 dark:text-red-100">-{WRONG_ANSWER_PENALTY}s</h3>
-              <p className="text-sm text-red-700 dark:text-red-300">Penalidade por erro</p>
-            </div>
-          </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+              <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-xl border border-blue-100 dark:border-blue-800">
+                <Clock className="w-8 h-8 text-blue-500 mx-auto mb-2" />
+                <h3 className="font-semibold text-blue-900 dark:text-blue-100">{GAME_DURATION}s</h3>
+                <p className="text-sm text-blue-700 dark:text-blue-300">Tempo total</p>
+              </div>
 
-          <div className="space-y-3">
-            <Button
-              onClick={startChallenge}
-              className="w-full bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-white"
-              size="lg"
-            >
-              <Play className="w-5 h-5 mr-2" />
-              Iniciar Desafio
-            </Button>
-            
-            {onClose && (
-              <Button
-                onClick={onClose}
-                variant="outline"
+              <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-xl border border-green-100 dark:border-green-800">
+                <Target className="w-8 h-8 text-green-500 mx-auto mb-2" />
+                <h3 className="font-semibold text-green-900 dark:text-green-100">{POINTS_PER_CORRECT}</h3>
+                <p className="text-sm text-green-700 dark:text-green-300">Pontos por acerto</p>
+              </div>
+
+              <div className="bg-red-50 dark:bg-red-900/20 p-4 rounded-xl border border-red-100 dark:border-red-800">
+                <Clock className="w-8 h-8 text-red-500 mx-auto mb-2" />
+                <h3 className="font-semibold text-red-900 dark:text-red-100">-{WRONG_ANSWER_PENALTY}s</h3>
+                <p className="text-sm text-red-700 dark:text-red-300">Penalidade por erro</p>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <ModernButton
+                onClick={startChallenge}
                 className="w-full"
+                variant="premium"
+                size="lg"
               >
-                Voltar
-              </Button>
-            )}
-          </div>
-        </Card>
+                <Play className="w-5 h-5 mr-2" />
+                Iniciar Desafio
+              </ModernButton>
+
+              {onClose && (
+                <ModernButton
+                  onClick={onClose}
+                  variant="outline"
+                  className="w-full"
+                >
+                  Voltar
+                </ModernButton>
+              )}
+            </div>
+          </ModernCardContent>
+        </ModernCard>
       </div>
     );
   }
@@ -373,117 +376,118 @@ export default function TimedChallenge({ signs, category, onClose }: TimedChalle
   if (gameState === 'finished') {
     return (
       <div className="max-w-2xl mx-auto p-6">
-        <Card className="p-8 text-center">
-          <div className="mb-6">
-            <div className="w-20 h-20 bg-gradient-to-br from-green-400 to-blue-500 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Trophy className="w-10 h-10 text-white" />
+        <ModernCard className="text-center" variant="elevated">
+          <ModernCardContent className="p-8">
+            <div className="mb-6">
+              <div className="w-20 h-20 bg-gradient-to-br from-green-400 to-blue-500 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
+                <Trophy className="w-10 h-10 text-white" />
+              </div>
+              <h2 className="text-3xl font-bold text-foreground mb-2">
+                Desafio Concluído!
+              </h2>
             </div>
-            <h2 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">
-              Desafio Concluído!
-            </h2>
-          </div>
 
-          {challengeResult && (
-            <div className="space-y-6">
-              {/* Score */}
-              <div className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white p-6 rounded-lg">
-                <div className="text-4xl font-bold mb-2">{challengeResult.score}</div>
-                <div className="text-lg">pontos</div>
-                {challengeResult.isPersonalBest && (
-                  <div className="flex items-center justify-center mt-2 text-sm">
-                    <Star className="w-4 h-4 mr-1" />
-                    Novo Recorde Pessoal!
+            {challengeResult && (
+              <div className="space-y-6">
+                {/* Score */}
+                <div className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white p-6 rounded-xl shadow-md">
+                  <div className="text-4xl font-bold mb-2">{challengeResult.score}</div>
+                  <div className="text-lg">pontos</div>
+                  {challengeResult.isPersonalBest && (
+                    <div className="flex items-center justify-center mt-2 text-sm font-medium bg-white/20 py-1 px-3 rounded-full w-fit mx-auto">
+                      <Star className="w-4 h-4 mr-1" />
+                      Novo Recorde Pessoal!
+                    </div>
+                  )}
+                </div>
+
+                {/* Stats */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-muted p-4 rounded-xl">
+                    <div className="text-2xl font-bold text-foreground">
+                      {challengeResult.correctAnswers}/{challengeResult.totalQuestions}
+                    </div>
+                    <div className="text-sm text-muted-foreground">Acertos</div>
+                  </div>
+
+                  <div className="bg-muted p-4 rounded-xl">
+                    <div className="text-2xl font-bold text-foreground">
+                      {challengeResult.accuracy.toFixed(1)}%
+                    </div>
+                    <div className="text-sm text-muted-foreground">Precisão</div>
+                  </div>
+                </div>
+
+                {/* Ranking */}
+                {challengeResult.rankingPosition > 0 && (
+                  <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-xl border border-blue-100 dark:border-blue-800">
+                    <div className="text-lg font-semibold text-blue-900 dark:text-blue-100">
+                      Posição no Ranking: #{challengeResult.rankingPosition}
+                    </div>
+                    <div className="text-sm text-blue-700 dark:text-blue-300">
+                      Hoje em {category}
+                    </div>
                   </div>
                 )}
-              </div>
 
-              {/* Stats */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
-                  <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                    {challengeResult.correctAnswers}/{challengeResult.totalQuestions}
-                  </div>
-                  <div className="text-sm text-gray-600 dark:text-gray-400">Acertos</div>
-                </div>
-                
-                <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
-                  <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                    {challengeResult.accuracy.toFixed(1)}%
-                  </div>
-                  <div className="text-sm text-gray-600 dark:text-gray-400">Precisão</div>
-                </div>
-              </div>
-
-              {/* Ranking */}
-              {challengeResult.rankingPosition > 0 && (
-                <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
-                  <div className="text-lg font-semibold text-blue-900 dark:text-blue-100">
-                    Posição no Ranking: #{challengeResult.rankingPosition}
-                  </div>
-                  <div className="text-sm text-blue-700 dark:text-blue-300">
-                    Hoje em {category}
-                  </div>
-                </div>
-              )}
-
-              {/* Actions */}
-              <div className="space-y-3">
-                <Button
-                  onClick={startChallenge}
-                  className="w-full bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-white"
-                >
-                  <RotateCcw className="w-4 h-4 mr-2" />
-                  Jogar Novamente
-                </Button>
-                
-                {onClose && (
-                  <Button
-                    onClick={onClose}
-                    variant="outline"
+                {/* Actions */}
+                <div className="space-y-3">
+                  <ModernButton
+                    onClick={startChallenge}
                     className="w-full"
+                    variant="premium"
                   >
-                    Voltar
-                  </Button>
-                )}
+                    <RotateCcw className="w-4 h-4 mr-2" />
+                    Jogar Novamente
+                  </ModernButton>
+
+                  {onClose && (
+                    <ModernButton
+                      onClick={onClose}
+                      variant="outline"
+                      className="w-full"
+                    >
+                      Voltar
+                    </ModernButton>
+                  )}
+                </div>
               </div>
-            </div>
-          )}
-        </Card>
+            )}
+          </ModernCardContent>
+        </ModernCard>
       </div>
     );
   }
 
   // Playing state
   return (
-    <div className={`max-w-2xl mx-auto p-6 transition-all duration-300 ${
-      flashEffect === 'green' ? 'bg-green-100 dark:bg-green-900/20' :
-      flashEffect === 'red' ? 'bg-red-100 dark:bg-red-900/20' : ''
-    }`}>
+    <div className={`max-w-2xl mx-auto p-6 transition-all duration-300 ${flashEffect === 'green' ? 'bg-green-100 dark:bg-green-900/20' :
+        flashEffect === 'red' ? 'bg-red-100 dark:bg-red-900/20' : ''
+      }`}>
       {/* Header */}
       <div className="mb-6">
         <div className="flex items-center justify-between mb-4">
           <Badge variant="secondary" className="text-lg">
             {category}
           </Badge>
-          
-          <Button
+
+          <ModernButton
             onClick={onClose}
             variant="ghost"
             size="sm"
           >
             <X className="w-4 h-4" />
-          </Button>
+          </ModernButton>
         </div>
 
         {/* Timer and Score */}
         <div className="flex items-center justify-between">
-          <div className={`flex items-center gap-2 text-2xl font-bold ${
-            timeRemaining <= 10 ? 'text-red-500 animate-pulse' : 'text-gray-900 dark:text-gray-100'
-          }`}>
+          <div className={`flex items-center gap-2 text-2xl font-bold ${timeRemaining <= 10 ? 'text-red-500 animate-pulse' : 'text-foreground'
+            }`}>
             <Clock className="w-6 h-6" />
             {timeRemaining}s
           </div>
-          
+
           <div className="flex items-center gap-2 text-2xl font-bold text-blue-600 dark:text-blue-400">
             <Zap className="w-6 h-6" />
             {score}
@@ -502,44 +506,46 @@ export default function TimedChallenge({ signs, category, onClose }: TimedChalle
 
       {/* Question */}
       {currentQuestion && (
-        <Card className="p-6">
-          <div className="text-center mb-6">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
-              Qual é o nome desta placa?
-            </h3>
-            
-            <div className="aspect-square w-48 h-48 bg-gray-100 dark:bg-gray-800 rounded-lg mx-auto mb-4 flex items-center justify-center overflow-hidden">
-              {currentQuestion.sign.image_url ? (
-                <img
-                  src={currentQuestion.sign.image_url}
-                  alt={currentQuestion.sign.name}
-                  className="w-full h-full object-cover"
-                  onError={(e) => {
-                    e.currentTarget.src = `https://via.placeholder.com/300x300/e5e7eb/6b7280?text=${encodeURIComponent(currentQuestion.sign.code)}`;
-                  }}
-                />
-              ) : (
-                <div className="text-gray-400 text-4xl font-bold">
-                  {currentQuestion.sign.code}
-                </div>
-              )}
-            </div>
-          </div>
+        <ModernCard variant="elevated">
+          <ModernCardContent className="p-6">
+            <div className="text-center mb-6">
+              <h3 className="text-lg font-semibold text-foreground mb-4">
+                Qual é o nome desta placa?
+              </h3>
 
-          {/* Options */}
-          <div className="space-y-3">
-            {currentQuestion.options.map((option) => (
-              <button
-                key={option.id}
-                onClick={() => handleAnswerSelect(option.id)}
-                disabled={isProcessing}
-                className={getOptionButtonClass(option.id)}
-              >
-                {option.text}
-              </button>
-            ))}
-          </div>
-        </Card>
+              <div className="aspect-square w-48 h-48 bg-muted rounded-xl mx-auto mb-4 flex items-center justify-center overflow-hidden border border-border">
+                {currentQuestion.sign.image_url ? (
+                  <img
+                    src={currentQuestion.sign.image_url}
+                    alt={currentQuestion.sign.name}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      e.currentTarget.src = `https://via.placeholder.com/300x300/e5e7eb/6b7280?text=${encodeURIComponent(currentQuestion.sign.code)}`;
+                    }}
+                  />
+                ) : (
+                  <div className="text-muted-foreground text-4xl font-bold">
+                    {currentQuestion.sign.code}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Options */}
+            <div className="space-y-3">
+              {currentQuestion.options.map((option) => (
+                <button
+                  key={option.id}
+                  onClick={() => handleAnswerSelect(option.id)}
+                  disabled={isProcessing}
+                  className={getOptionButtonClass(option.id)}
+                >
+                  {option.text}
+                </button>
+              ))}
+            </div>
+          </ModernCardContent>
+        </ModernCard>
       )}
     </div>
   );

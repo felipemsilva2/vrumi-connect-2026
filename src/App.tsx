@@ -61,7 +61,8 @@ const ThemeHandler = () => {
   useEffect(() => {
     const isAppRoute = pathname.startsWith("/painel") ||
       pathname.startsWith("/admin") ||
-      pathname.startsWith("/sala-de-estudos");
+      pathname.startsWith("/sala-de-estudos") ||
+      pathname.startsWith("/biblioteca-de-placas");
 
     if (isAppRoute) {
       setTheme("dark");

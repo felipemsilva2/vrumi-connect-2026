@@ -2,8 +2,8 @@ import { useState, useEffect, useRef } from "react"
 import { Clock, Play, History, Trophy, CheckCircle, XCircle, ArrowLeft, ArrowRight, Calendar } from "lucide-react"
 import { supabase } from "@/integrations/supabase/client"
 import { useToast } from "@/hooks/use-toast"
-import { Button } from "@/components/ui/button"
-import { Card, CardHeader, CardContent } from "@/components/ui/card"
+import { ModernButton } from "@/components/ui/modern-button"
+import { ModernCard, ModernCardHeader, ModernCardContent } from "@/components/ui/modern-card"
 import { motion, AnimatePresence } from "framer-motion"
 import { ImageWithFallback } from "@/components/ImageWithFallback"
 import { SubscriptionGate } from "@/components/auth/SubscriptionGate"
@@ -317,8 +317,8 @@ export const SimuladosView = () => {
         animate={{ opacity: 1, y: 0 }}
         className="space-y-6"
       >
-        <Card className="shadow-lg border-2">
-          <CardContent className="p-8 text-center">
+        <ModernCard className="shadow-lg" variant="elevated">
+          <ModernCardContent className="p-8 text-center">
             <div className={`w-24 h-24 mx-auto rounded-full flex items-center justify-center mb-4 ${passed ? 'bg-green-50 dark:bg-green-950' : 'bg-red-50 dark:bg-red-950'}`}>
               {passed ? (
                 <CheckCircle className="h-12 w-12 text-green-600 dark:text-green-400" />
@@ -346,29 +346,30 @@ export const SimuladosView = () => {
             )}
 
             <div className="flex gap-3 justify-center">
-              <Button
+              <ModernButton
                 onClick={() => setView("menu")}
                 variant="outline"
                 size="lg"
               >
                 Voltar ao Menu
-              </Button>
-              <Button
+              </ModernButton>
+              <ModernButton
                 onClick={() => startQuiz(questions.length === 30 ? "official" : "practice")}
                 size="lg"
                 className="bg-green-500 hover:bg-green-600"
+                variant="default"
               >
                 Tentar Novamente
-              </Button>
+              </ModernButton>
             </div>
-          </CardContent>
-        </Card>
+          </ModernCardContent>
+        </ModernCard>
 
-        <Card className="shadow-lg">
-          <CardHeader>
+        <ModernCard className="shadow-lg" variant="elevated">
+          <ModernCardHeader>
             <h3 className="text-xl font-bold">Revisão das Questões</h3>
-          </CardHeader>
-          <CardContent className="space-y-4">
+          </ModernCardHeader>
+          <ModernCardContent className="space-y-4">
             {questions.map((q, index) => {
               const userAnswer = userAnswers[index]
               const isCorrect = userAnswer === q.correct_option
@@ -401,427 +402,428 @@ export const SimuladosView = () => {
                 </div>
               )
             })}
-          </CardContent>
-        </Card>
+          </ModernCardContent>
+        </ModernCard>
       </motion.div>
     )
-  }
-
-  // View: Quiz in Progress
-  if (view === "quiz" && questions.length > 0) {
+  }// View: Quiz in Progress
+if (view === "quiz" && questions.length > 0) {
     const currentQ = questions[currentQuestion]
     const answeredCount = Object.keys(userAnswers).length
     const progress = Math.round(((currentQuestion + 1) / questions.length) * 100)
 
     const cardVariants = {
-      enter: { opacity: 0, y: 8 },
-      center: { opacity: 1, y: 0 },
-      exit: { opacity: 0, y: -8 },
+        enter: { opacity: 0, y: 8 },
+        center: { opacity: 1, y: 0 },
+        exit: { opacity: 0, y: -8 },
     }
 
     return (
-      <div className="min-h-screen bg-background p-4 md:p-6 pb-safe">
-        <div className="w-full max-w-6xl mx-auto">
-          {/* Header com timer e progresso */}
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mb-6"
-          >
-            <Card className="shadow-md border-2">
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
-                  <div>
-                    <div className="text-sm text-muted-foreground">Questão</div>
-                    <div className="text-2xl font-bold text-foreground">
-                      {currentQuestion + 1}/{questions.length}
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <div className="flex items-center gap-2 text-foreground">
-                      <Clock size={20} />
-                      <span className="text-lg sm:text-xl font-mono font-bold">{formatTime(timeLeft)}</span>
-                    </div>
-                  </div>
-                </div>
-                <div className="h-2 w-full bg-green-100 dark:bg-green-950 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-green-500 rounded-full transition-all duration-300"
-                    style={{ width: `${progress}%` }}
-                  />
-                </div>
-              </CardContent>
-            </Card>
-          </motion.div>
+        <div className="min-h-screen bg-background p-4 md:p-6 pb-safe">
+            <div className="w-full max-w-6xl mx-auto">
+                {/* Header com timer e progresso */}
+                <motion.div
+                    initial={{ opacity: 0, y: -20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="mb-6"
+                >
+                    <ModernCard className="shadow-md" variant="elevated">
+                        <ModernCardContent className="p-4">
+                            <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+                                <div>
+                                    <div className="text-sm text-muted-foreground">Questão</div>
+                                    <div className="text-2xl font-bold text-foreground">
+                                        {currentQuestion + 1}/{questions.length}
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-3">
+                                    <div className="flex items-center gap-2 text-foreground">
+                                        <Clock size={20} />
+                                        <span className="text-lg sm:text-xl font-mono font-bold">{formatTime(timeLeft)}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="h-2 w-full bg-green-100 dark:bg-green-950 rounded-full overflow-hidden">
+                                <div
+                                    className="h-full bg-green-500 rounded-full transition-all duration-300"
+                                    style={{ width: `${progress}%` }}
+                                />
+                            </div>
+                        </ModernCardContent>
+                    </ModernCard>
+                </motion.div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Questão e alternativas */}
-            <div className="lg:col-span-2">
-              <Card className="shadow-lg border-2">
-                <CardContent className="p-6">
-                  <AnimatePresence mode="wait">
-                    <motion.div
-                      key={currentQuestion}
-                      variants={cardVariants}
-                      initial="enter"
-                      animate="center"
-                      exit="exit"
-                      transition={{ duration: 0.2 }}
-                    >
-                      <h3 className="text-base sm:text-lg font-semibold text-foreground mb-6">
-                        {currentQ.question_text}
-                      </h3>
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    {/* Questão e alternativas */}
+                    <div className="lg:col-span-2">
+                        <ModernCard className="shadow-lg" variant="elevated">
+                            <ModernCardContent className="p-6">
+                                <AnimatePresence mode="wait">
+                                    <motion.div
+                                        key={currentQuestion}
+                                        variants={cardVariants}
+                                        initial="enter"
+                                        animate="center"
+                                        exit="exit"
+                                        transition={{ duration: 0.2 }}
+                                    >
+                                        <h3 className="text-base sm:text-lg font-semibold text-foreground mb-6">
+                                            {currentQ.question_text}
+                                        </h3>
 
-                      {currentQ.image_url && (
-                        <div className="mb-6 flex justify-center">
-                          <ImageWithFallback
-                            src={currentQ.image_url}
-                            alt={`Ilustração para questão: ${currentQ.question_text.substring(0, 50)}${currentQ.question_text.length > 50 ? '...' : ''}`}
-                            className="max-w-md w-full rounded-lg shadow-md"
-                            fallbackClassName="h-64"
-                          />
+                                        {currentQ.image_url && (
+                                            <div className="mb-6 flex justify-center">
+                                                <ImageWithFallback
+                                                    src={currentQ.image_url}
+                                                    alt={`Ilustração para questão: ${currentQ.question_text.substring(0, 50)}${currentQ.question_text.length > 50 ? '...' : ''}`}
+                                                    className="max-w-md w-full rounded-lg shadow-md"
+                                                    fallbackClassName="h-64"
+                                                />
+                                            </div>
+                                        )}
+
+                                        <div className="space-y-3">
+                                            {['A', 'B', 'C', 'D'].map((option) => {
+                                                const isSelected = selectedAnswer === option
+                                                const optionText = currentQ[`option_${option.toLowerCase()}` as keyof QuizQuestion] as string
+
+                                                return (
+                                                    <button
+                                                        key={option}
+                                                        onClick={() => handleAnswerSelect(option)}
+                                                        className={`w-full text-left rounded-lg border-2 px-4 py-4 min-h-[60px] flex items-center justify-between transition-all ${isSelected
+                                                            ? "bg-green-50 dark:bg-green-950 border-green-300 dark:border-green-700 shadow-md"
+                                                            : "bg-background border-border hover:shadow-md hover:border-primary/50"
+                                                            }`}
+                                                    >
+                                                        <div className="flex items-center gap-3 w-full">
+                                                            <div className={`w-10 h-10 flex-shrink-0 flex items-center justify-center rounded-full border-2 ${isSelected ? 'border-green-500 bg-green-100 dark:bg-green-900' : 'border-border'}`}>
+                                                                <span className="font-bold text-sm">{option}</span>
+                                                            </div>
+                                                            <div className="text-sm text-foreground flex-1 break-words">{optionText}</div>
+                                                        </div>
+                                                        {isSelected && (
+                                                            <div className="flex-shrink-0 ml-2 text-green-600 dark:text-green-400">
+                                                                <CheckCircle size={20} />
+                                                            </div>
+                                                        )}
+                                                    </button>
+                                                )
+                                            })}
+                                        </div>
+
+                                        {/* Navegação */}
+                                        <div className="mt-6 flex flex-col sm:flex-row items-stretch gap-3">
+                                            <ModernButton
+                                                onClick={handlePrevious}
+                                                disabled={currentQuestion === 0}
+                                                variant="outline"
+                                                size="lg"
+                                                className="h-12"
+                                            >
+                                                <ArrowLeft size={16} className="mr-2" /> Anterior
+                                            </ModernButton>
+
+                                            <ModernButton
+                                                onClick={() => setShowConfirmFinish(true)}
+                                                variant="outline"
+                                                size="lg"
+                                                className="sm:ml-auto text-red-600 border-red-200 hover:bg-red-50 dark:hover:bg-red-950 h-12"
+                                            >
+                                                Finalizar
+                                            </ModernButton>
+
+                                            <ModernButton
+                                                onClick={handleNext}
+                                                size="lg"
+                                                className="bg-green-500 hover:bg-green-600 h-12"
+                                                variant="default"
+                                            >
+                                                Próxima <ArrowRight size={16} className="ml-2" />
+                                            </ModernButton>
+                                        </div>
+                                    </motion.div>
+                                </AnimatePresence>
+                            </ModernCardContent>
+                        </ModernCard>
+
+                        <div className="mt-4 text-sm text-muted-foreground">
+                            💡 Dica: Selecione a alternativa e navegue usando os botões ou o grid à direita
                         </div>
-                      )}
+                    </div>
 
-                      <div className="space-y-3">
-                        {['A', 'B', 'C', 'D'].map((option) => {
-                          const isSelected = selectedAnswer === option
-                          const optionText = currentQ[`option_${option.toLowerCase()}` as keyof QuizQuestion] as string
-
-                          return (
-                            <button
-                              key={option}
-                              onClick={() => handleAnswerSelect(option)}
-                              className={`w-full text-left rounded-lg border-2 px-4 py-4 min-h-[60px] flex items-center justify-between transition-all ${isSelected
-                                ? "bg-green-50 dark:bg-green-950 border-green-300 dark:border-green-700 shadow-md"
-                                : "bg-background border-border hover:shadow-md hover:border-primary/50"
-                                }`}
-                            >
-                              <div className="flex items-center gap-3 w-full">
-                                <div className={`w-10 h-10 flex-shrink-0 flex items-center justify-center rounded-full border-2 ${isSelected ? 'border-green-500 bg-green-100 dark:bg-green-900' : 'border-border'}`}>
-                                  <span className="font-bold text-sm">{option}</span>
+                    {/* Grid de navegação */}
+                    <aside className="lg:sticky lg:top-6 h-fit">
+                        <ModernCard className="shadow-lg" variant="elevated">
+                            <ModernCardContent className="p-4">
+                                <div className="flex items-center justify-between mb-3">
+                                    <div className="text-sm text-muted-foreground">Progresso</div>
+                                    <div className="text-sm font-semibold text-foreground">
+                                        {answeredCount}/{questions.length}
+                                    </div>
                                 </div>
-                                <div className="text-sm text-foreground flex-1 break-words">{optionText}</div>
-                              </div>
-                              {isSelected && (
-                                <div className="flex-shrink-0 ml-2 text-green-600 dark:text-green-400">
-                                  <CheckCircle size={20} />
+
+                                <div className="grid grid-cols-5 gap-2">
+                                    {questions.map((_, idx) => {
+                                        const status = userAnswers[idx]
+                                            ? "answered"
+                                            : idx === currentQuestion
+                                                ? "current"
+                                                : "unanswered"
+
+                                        const classes = {
+                                            answered: "bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 border-2 border-green-300 dark:border-green-700",
+                                            current: "bg-background text-primary border-2 border-primary shadow-md",
+                                            unanswered: "bg-muted text-muted-foreground border-2 border-border",
+                                        }
+
+                                        return (
+                                            <button
+                                                key={idx}
+                                                onClick={() => jumpTo(idx)}
+                                                className={`h-12 rounded-lg text-sm font-semibold transition-all hover:scale-105 ${classes[status]}`}
+                                            >
+                                                {idx + 1}
+                                            </button>
+                                        )
+                                    })}
                                 </div>
-                              )}
-                            </button>
-                          )
-                        })}
-                      </div>
 
-                      {/* Navegação */}
-                      <div className="mt-6 flex flex-col sm:flex-row items-stretch gap-3">
-                        <Button
-                          onClick={handlePrevious}
-                          disabled={currentQuestion === 0}
-                          variant="outline"
-                          size="lg"
-                          className="h-12"
-                        >
-                          <ArrowLeft size={16} className="mr-2" /> Anterior
-                        </Button>
-
-                        <Button
-                          onClick={() => setShowConfirmFinish(true)}
-                          variant="outline"
-                          size="lg"
-                          className="sm:ml-auto text-red-600 border-red-200 hover:bg-red-50 dark:hover:bg-red-950 h-12"
-                        >
-                          Finalizar
-                        </Button>
-
-                        <Button
-                          onClick={handleNext}
-                          size="lg"
-                          className="bg-green-500 hover:bg-green-600 h-12"
-                        >
-                          Próxima <ArrowRight size={16} className="ml-2" />
-                        </Button>
-                      </div>
-                    </motion.div>
-                  </AnimatePresence>
-                </CardContent>
-              </Card>
-
-              <div className="mt-4 text-sm text-muted-foreground">
-                💡 Dica: Selecione a alternativa e navegue usando os botões ou o grid à direita
-              </div>
+                                <ModernButton
+                                    onClick={() => jumpTo(0)}
+                                    variant="outline"
+                                    className="w-full mt-4"
+                                    size="sm"
+                                >
+                                    Ir para primeira
+                                </ModernButton>
+                            </ModernCardContent>
+                        </ModernCard>
+                    </aside>
+                </div>
             </div>
 
-            {/* Grid de navegação */}
-            <aside className="lg:sticky lg:top-6 h-fit">
-              <Card className="shadow-lg border-2">
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="text-sm text-muted-foreground">Progresso</div>
-                    <div className="text-sm font-semibold text-foreground">
-                      {answeredCount}/{questions.length}
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-5 gap-2">
-                    {questions.map((_, idx) => {
-                      const status = userAnswers[idx]
-                        ? "answered"
-                        : idx === currentQuestion
-                          ? "current"
-                          : "unanswered"
-
-                      const classes = {
-                        answered: "bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 border-2 border-green-300 dark:border-green-700",
-                        current: "bg-background text-primary border-2 border-primary shadow-md",
-                        unanswered: "bg-muted text-muted-foreground border-2 border-border",
-                      }
-
-                      return (
-                        <button
-                          key={idx}
-                          onClick={() => jumpTo(idx)}
-                          className={`h-12 rounded-lg text-sm font-semibold transition-all hover:scale-105 ${classes[status]}`}
-                        >
-                          {idx + 1}
-                        </button>
-                      )
-                    })}
-                  </div>
-
-                  <Button
-                    onClick={() => jumpTo(0)}
-                    variant="outline"
-                    className="w-full mt-4"
-                    size="sm"
-                  >
-                    Ir para primeira
-                  </Button>
-                </CardContent>
-              </Card>
-            </aside>
-          </div>
-        </div>
-
-        {/* Modal de confirmação */}
-        <AnimatePresence>
-          {showConfirmFinish && (
-            <motion.div
-              className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setShowConfirmFinish(false)}
-            >
-              <motion.div
-                className="max-w-md w-full"
-                initial={{ scale: 0.95, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.95, opacity: 0 }}
-                onClick={(e) => e.stopPropagation()}
-              >
-                <Card className="shadow-2xl border-2">
-                  <CardContent className="p-6">
-                    <h4 className="text-xl font-bold text-foreground mb-2">Finalizar simulado?</h4>
-                    <p className="text-sm text-muted-foreground mb-4">
-                      Você respondeu {answeredCount} de {questions.length} questões. Tem certeza que deseja enviar suas respostas e finalizar o simulado?
-                    </p>
-
-                    <div className="flex flex-col sm:flex-row gap-3">
-                      <Button
+            {/* Modal de confirmação */}
+            <AnimatePresence>
+                {showConfirmFinish && (
+                    <motion.div
+                        className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
                         onClick={() => setShowConfirmFinish(false)}
-                        variant="outline"
-                        className="w-full sm:flex-1 h-12"
-                      >
-                        Voltar
-                      </Button>
-                      <Button
-                        onClick={finishQuiz}
-                        className="w-full sm:flex-1 bg-green-500 hover:bg-green-600 flex items-center justify-center gap-2 h-12"
-                      >
-                        <CheckCircle size={16} /> Enviar e finalizar
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
-    )
-  }
+                    >
+                        <motion.div
+                            className="max-w-md w-full"
+                            initial={{ scale: 0.95, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0.95, opacity: 0 }}
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            <ModernCard className="shadow-2xl" variant="elevated">
+                                <ModernCardContent className="p-6">
+                                    <h4 className="text-xl font-bold text-foreground mb-2">Finalizar simulado?</h4>
+                                    <p className="text-sm text-muted-foreground mb-4">
+                                        Você respondeu {answeredCount} de {questions.length} questões. Tem certeza que deseja enviar suas respostas e finalizar o simulado?
+                                    </p>
 
-  // View: History
-  if (view === "history") {
+                                    <div className="flex flex-col sm:flex-row gap-3">
+                                        <ModernButton
+                                            onClick={() => setShowConfirmFinish(false)}
+                                            variant="outline"
+                                            className="w-full sm:flex-1 h-12"
+                                        >
+                                            Voltar
+                                        </ModernButton>
+                                        <ModernButton
+                                            onClick={finishQuiz}
+                                            className="w-full sm:flex-1 bg-green-500 hover:bg-green-600 flex items-center justify-center gap-2 h-12"
+                                            variant="default"
+                                        >
+                                            <CheckCircle size={16} /> Enviar e finalizar
+                                        </ModernButton>
+                                    </div>
+                                </ModernCardContent>
+                            </ModernCard>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+        </div>
+    )
+}
+
+// View: History
+if (view === "history") {
     return (
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="space-y-6"
-      >
-        <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-bold">Histórico de Simulados</h2>
-          <Button onClick={() => setView("menu")} variant="outline">
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Voltar
-          </Button>
-        </div>
-
-        <div className="space-y-3">
-          {attemptHistory.map((attempt) => (
-            <Card key={attempt.id} className="shadow-md hover:shadow-lg transition-shadow">
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-semibold">
-                      {attempt.quiz_type === "official" ? "🏆 Simulado Oficial" : "📝 Simulado de Prática"}
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      {new Date(attempt.completed_at).toLocaleDateString('pt-BR')} às{' '}
-                      {new Date(attempt.completed_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <p className={`text-3xl font-bold ${attempt.score_percentage >= 70 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
-                      {attempt.score_percentage}%
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      {attempt.correct_answers}/{attempt.total_questions} acertos
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-
-          {attemptHistory.length === 0 && (
-            <Card className="shadow-md">
-              <CardContent className="p-8 text-center">
-                <p className="text-muted-foreground">Nenhum simulado realizado ainda</p>
-              </CardContent>
-            </Card>
-          )}
-        </div>
-      </motion.div>
-    )
-  }
-
-  // View: Main Menu
-  return (
-    <SubscriptionGate feature="Simulados">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="space-y-6"
-      >
-        <div>
-          <h2 className="text-3xl font-bold text-foreground">Simulados</h2>
-          <p className="text-muted-foreground mt-1">
-            Teste seus conhecimentos com simulados fiéis ao exame oficial do DETRAN
-          </p>
-          {false && (
-            <div className="mt-3 inline-flex items-center gap-2 px-3 py-1.5 bg-primary/10 text-primary rounded-full text-sm font-medium">
-              <Calendar className="h-4 w-4" />
-              <span>
-                {daysRemaining} {Number(daysRemaining) === 1 ? 'dia restante' : 'dias restantes'} no seu passaporte
-              </span>
-            </div>
-          )}
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <Card className="shadow-lg hover:shadow-xl transition-all border-2 hover:border-primary/50">
-            <CardContent className="p-6">
-              <div className="flex items-start gap-4 mb-4">
-                <div className="p-3 bg-primary/10 rounded-xl">
-                  <Trophy className="h-7 w-7 text-primary" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="text-xl font-bold text-foreground mb-1">Simulado Oficial</h3>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    30 questões • 40 minutos • Idêntico ao exame do DETRAN
-                  </p>
-                  <Button
-                    onClick={() => startQuiz("official")}
-                    className="w-full bg-primary hover:bg-primary/90"
-                    size="lg"
-                  >
-                    <Play className="mr-2 h-5 w-5" />
-                    Iniciar Simulado Oficial
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="shadow-lg hover:shadow-xl transition-all border-2 hover:border-secondary/50">
-            <CardContent className="p-6">
-              <div className="flex items-start gap-4 mb-4">
-                <div className="p-3 bg-secondary/10 rounded-xl">
-                  <Play className="h-7 w-7 text-secondary" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="text-xl font-bold text-foreground mb-1">Simulado de Prática</h3>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    15 questões • 20 minutos • Prática rápida
-                  </p>
-                  <Button
-                    onClick={() => startQuiz("practice")}
-                    className="w-full"
-                    variant="secondary"
-                    size="lg"
-                  >
-                    <Play className="mr-2 h-5 w-5" />
-                    Iniciar Prática Rápida
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        <Card className="shadow-lg border-2">
-          <CardHeader>
+        <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="space-y-6"
+        >
             <div className="flex items-center justify-between">
-              <h3 className="text-xl font-bold">Histórico Recente</h3>
-              <Button
-                onClick={() => setView("history")}
-                variant="ghost"
-                size="sm"
-              >
-                <History className="mr-2 h-4 w-4" />
-                Ver tudo
-              </Button>
+                <h2 className="text-2xl font-bold">Histórico de Simulados</h2>
+                <ModernButton onClick={() => setView("menu")} variant="outline">
+                    <ArrowLeft className="mr-2 h-4 w-4" />
+                    Voltar
+                </ModernButton>
             </div>
-          </CardHeader>
-          <CardContent>
-            {attemptHistory.slice(0, 3).map((attempt) => (
-              <div key={attempt.id} className="flex items-center justify-between py-3 border-b border-border last:border-0">
-                <div>
-                  <p className="font-medium text-sm">
-                    {attempt.quiz_type === "official" ? "Simulado Oficial" : "Prática"}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    {new Date(attempt.completed_at).toLocaleDateString('pt-BR')}
-                  </p>
-                </div>
-                <div className="text-right">
-                  <p className={`text-xl font-bold ${attempt.score_percentage >= 70 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
-                    {attempt.score_percentage}%
-                  </p>
-                </div>
-              </div>
-            ))}
 
-            {attemptHistory.length === 0 && (
-              <p className="text-center py-4 text-muted-foreground text-sm">
-                Nenhum simulado realizado ainda. Comece agora!
-              </p>
-            )}
-          </CardContent>
-        </Card>
-      </motion.div>
+            <div className="space-y-3">
+                {attemptHistory.map((attempt) => (
+                    <ModernCard key={attempt.id} className="shadow-md hover:shadow-lg transition-shadow" variant="elevated">
+                        <ModernCardContent className="p-4">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <p className="font-semibold">
+                                        {attempt.quiz_type === "official" ? "🏆 Simulado Oficial" : "📝 Simulado de Prática"}
+                                    </p>
+                                    <p className="text-sm text-muted-foreground">
+                                        {new Date(attempt.completed_at).toLocaleDateString('pt-BR')} às{' '}
+                                        {new Date(attempt.completed_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                                    </p>
+                                </div>
+                                <div className="text-right">
+                                    <p className={`text-3xl font-bold ${attempt.score_percentage >= 70 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                                        {attempt.score_percentage}%
+                                    </p>
+                                    <p className="text-sm text-muted-foreground">
+                                        {attempt.correct_answers}/{attempt.total_questions} acertos
+                                    </p>
+                                </div>
+                            </div>
+                        </ModernCardContent>
+                    </ModernCard>
+                ))}
+
+                {attemptHistory.length === 0 && (
+                    <ModernCard className="shadow-md" variant="elevated">
+                        <ModernCardContent className="p-8 text-center">
+                            <p className="text-muted-foreground">Nenhum simulado realizado ainda</p>
+                        </ModernCardContent>
+                    </ModernCard>
+                )}
+            </div>
+        </motion.div>
+    )
+}
+
+// View: Main Menu
+return (
+    <SubscriptionGate feature="Simulados">
+        <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="space-y-6"
+        >
+            <div>
+                <h2 className="text-3xl font-bold text-foreground">Simulados</h2>
+                <p className="text-muted-foreground mt-1">
+                    Teste seus conhecimentos com simulados fiéis ao exame oficial do DETRAN
+                </p>
+                {false && (
+                    <div className="mt-3 inline-flex items-center gap-2 px-3 py-1.5 bg-primary/10 text-primary rounded-full text-sm font-medium">
+                        <Calendar className="h-4 w-4" />
+                        <span>
+                            {daysRemaining} {Number(daysRemaining) === 1 ? 'dia restante' : 'dias restantes'} no seu passaporte
+                        </span>
+                    </div>
+                )}
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <ModernCard className="shadow-lg hover:shadow-xl transition-all hover:border-primary/50" variant="elevated">
+                    <ModernCardContent className="p-6">
+                        <div className="flex items-start gap-4 mb-4">
+                            <div className="p-3 bg-primary/10 rounded-xl">
+                                <Trophy className="h-7 w-7 text-primary" />
+                            </div>
+                            <div className="flex-1">
+                                <h3 className="text-xl font-bold text-foreground mb-1">Simulado Oficial</h3>
+                                <p className="text-sm text-muted-foreground mb-4">
+                                    30 questões • 40 minutos • Idêntico ao exame do DETRAN
+                                </p>
+                                <ModernButton
+                                    onClick={() => startQuiz("official")}
+                                    className="w-full bg-primary hover:bg-primary/90"
+                                    size="lg"
+                                    variant="default"
+                                >
+                                    <Play className="mr-2 h-5 w-5" />
+                                    Iniciar Simulado Oficial
+                                </ModernButton>
+                            </div>
+                        </div>
+                    </ModernCardContent>
+                </ModernCard>
+
+                <ModernCard className="shadow-lg hover:shadow-xl transition-all hover:border-secondary/50" variant="elevated">
+                    <ModernCardContent className="p-6">
+                        <div className="flex items-start gap-4 mb-4">
+                            <div className="p-3 bg-secondary/10 rounded-xl">
+                                <Play className="h-7 w-7 text-secondary" />
+                            </div>
+                            <div className="flex-1">
+                                <h3 className="text-xl font-bold text-foreground mb-1">Simulado de Prática</h3>
+                                <p className="text-sm text-muted-foreground mb-4">
+                                    15 questões • 20 minutos • Prática rápida
+                                </p>
+                                <ModernButton
+                                    onClick={() => startQuiz("practice")}
+                                    className="w-full"
+                                    variant="secondary"
+                                    size="lg"
+                                >
+                                    <Play className="mr-2 h-5 w-5" />
+                                    Iniciar Prática Rápida
+                                </ModernButton>
+                            </div>
+                        </div>
+                    </ModernCardContent>
+                </ModernCard>
+            </div>
+
+            <ModernCard className="shadow-lg" variant="elevated">
+                <ModernCardHeader>
+                    <div className="flex items-center justify-between">
+                        <h3 className="text-xl font-bold">Histórico Recente</h3>
+                        <ModernButton
+                            onClick={() => setView("history")}
+                            variant="ghost"
+                            size="sm"
+                        >
+                            <History className="mr-2 h-4 w-4" />
+                            Ver tudo
+                        </ModernButton>
+                    </div>
+                </ModernCardHeader>
+                <ModernCardContent>
+                    {attemptHistory.slice(0, 3).map((attempt) => (
+                        <div key={attempt.id} className="flex items-center justify-between py-3 border-b border-border last:border-0">
+                            <div>
+                                <p className="font-medium text-sm">
+                                    {attempt.quiz_type === "official" ? "Simulado Oficial" : "Prática"}
+                                </p>
+                                <p className="text-xs text-muted-foreground">
+                                    {new Date(attempt.completed_at).toLocaleDateString('pt-BR')}
+                                </p>
+                            </div>
+                            <div className="text-right">
+                                <p className={`text-xl font-bold ${attempt.score_percentage >= 70 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                                    {attempt.score_percentage}%
+                                </p>
+                            </div>
+                        </div>
+                    ))}
+
+                    {attemptHistory.length === 0 && (
+                        <p className="text-center py-4 text-muted-foreground text-sm">
+                            Nenhum simulado realizado ainda. Comece agora!
+                        </p>
+                    )}
+                </ModernCardContent>
+            </ModernCard>
+        </motion.div>
     </SubscriptionGate>
-  )
+)
 }
