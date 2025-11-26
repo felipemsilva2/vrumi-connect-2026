@@ -67,7 +67,7 @@ const Testimonials = () => {
             O que nossos alunos dizem
           </h2>
           <p className="text-lg text-muted-foreground">
-            Mais de 10.000 alunos já conquistaram sua CNH com nossa ajuda
+            Alguns dos feedbacks dos nosso alunos que já estudam com a gente
           </p>
         </motion.div>
 

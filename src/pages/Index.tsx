@@ -46,16 +46,16 @@ const Index = () => {
           }}
           stats={[
             {
-              value: "4K+",
-              label: "Alunos Aprovados",
+              value: "136",
+              label: "Placas Oficiais",
             },
             {
               value: "95%",
               label: "Taxa de Aprovação",
             },
             {
-              value: "500+",
-              label: "Questões",
+              value: "Ilimitados",
+              label: "Simulados",
             },
             {
               value: "4.9★",
