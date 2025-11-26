@@ -61,7 +61,7 @@ export default function NotificationSystem() {
             }, handleNewNotification)
             .subscribe();
         }
-      } catch {}
+      } catch { }
     })();
 
     const interval = setInterval(checkForNewNotifications, 30000);
@@ -98,7 +98,7 @@ export default function NotificationSystem() {
     const newNotification = payload.new as Notification;
     setNotifications(prev => [newNotification, ...prev]);
     setUnreadCount(prev => prev + 1);
-    
+
     // Mostrar toast para nova notificação
     toast({
       title: newNotification.title,
@@ -131,7 +131,7 @@ export default function NotificationSystem() {
           created_at: n.created_at || '',
           user_id: n.user_id
         }));
-        
+
         setNotifications(prev => {
           const newNotifications = mappedData.filter(
             (newNotif) => !prev.some(existing => existing.id === newNotif.id)
@@ -149,10 +149,10 @@ export default function NotificationSystem() {
     try {
       // Usar o sistema de fallback
       await notificationSystemFallback.markAsRead(notificationId);
-      
+
       setNotifications(prev => prev.filter(n => n.id !== notificationId));
       setUnreadCount(prev => Math.max(0, prev - 1));
-      
+
       toast({
         title: 'Notificação marcada como lida',
         description: 'A notificação foi removida da lista.',
@@ -167,7 +167,7 @@ export default function NotificationSystem() {
       // Simplesmente limpar todas as notificações localmente
       setNotifications([]);
       setUnreadCount(0);
-      
+
       toast({
         title: 'Todas as notificações marcadas como lidas',
         description: 'Sua caixa de notificações foi limpa.',
@@ -182,18 +182,18 @@ export default function NotificationSystem() {
     switch (notification.type) {
       case 'study_reminder':
       case 'review_reminder':
-        window.location.href = '/traffic-signs';
+        window.location.href = '/biblioteca-de-placas';
         break;
       case 'study_streak':
-        window.location.href = '/dashboard';
+        window.location.href = '/painel';
         break;
       case 'achievement':
-        window.location.href = '/traffic-signs-stats';
+        window.location.href = '/painel?tab=estatisticas';
         break;
       default:
         break;
     }
-    
+
     markAsRead(notification.id);
     setIsOpen(false);
   };
@@ -202,7 +202,7 @@ export default function NotificationSystem() {
     const date = new Date(dateString);
     const now = new Date();
     const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
-    
+
     if (diffInHours < 1) return 'Agora';
     if (diffInHours < 24) return `Há ${diffInHours}h`;
     return `Há ${Math.floor(diffInHours / 24)}d`;
@@ -268,7 +268,7 @@ export default function NotificationSystem() {
                 {notifications.map((notification) => {
                   const IconComponent = notificationIcons[notification.type];
                   const iconColor = notificationColors[notification.type];
-                  
+
                   return (
                     <div
                       key={notification.id}

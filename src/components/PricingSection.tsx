@@ -11,16 +11,16 @@ const PricingSection = () => {
 
   const handlePurchase = async (passType: string) => {
     setLoading(passType)
-    
+
     try {
       const { data: { session } } = await supabase.auth.getSession()
-      
+
       if (!session) {
         toast({
           title: "Faça login primeiro",
           description: "Você precisa estar logado para comprar um passaporte",
         })
-        navigate("/auth")
+        navigate("/entrar")
         return
       }
 
@@ -122,11 +122,10 @@ const PricingSection = () => {
           {plans.map((plan, index) => (
             <div
               key={index}
-              className={`relative bg-card border rounded-2xl p-6 sm:p-8 transition-all hover:shadow-elegant ${
-                plan.popular
+              className={`relative bg-card border rounded-2xl p-6 sm:p-8 transition-all hover:shadow-elegant ${plan.popular
                   ? "border-primary shadow-card scale-105"
                   : "border-border"
-              }`}
+                }`}
             >
               {plan.popular && (
                 <div className="absolute -top-4 left-1/2 -translate-x-1/2">
@@ -172,11 +171,10 @@ const PricingSection = () => {
               <button
                 onClick={() => plan.passType && handlePurchase(plan.passType)}
                 disabled={loading === plan.passType}
-                className={`w-full h-12 px-6 rounded-lg font-medium transition-colors ${
-                  plan.popular
+                className={`w-full h-12 px-6 rounded-lg font-medium transition-colors ${plan.popular
                     ? "bg-primary text-primary-foreground hover:bg-primary/90"
                     : "bg-card border border-border text-foreground hover:bg-muted"
-                } ${loading === plan.passType ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  } ${loading === plan.passType ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
                 {loading === plan.passType ? "Processando..." : plan.buttonText}
               </button>

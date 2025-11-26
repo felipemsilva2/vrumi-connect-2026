@@ -65,7 +65,7 @@ export default function StudyModesDemo() {
             Melhorias na Biblioteca de Placas
           </h1>
           <p className="text-xl text-gray-600 dark:text-gray-400 max-w-3xl mx-auto">
-            Implementamos melhorias significativas na interface para tornar as modalidades de estudo 
+            Implementamos melhorias significativas na interface para tornar as modalidades de estudo
             mais visíveis e acessíveis, reduzindo a frustração dos usuários.
           </p>
         </div>
@@ -80,7 +80,7 @@ export default function StudyModesDemo() {
               </div>
             </CardContent>
           </Card>
-          
+
           <Card className="text-center">
             <CardContent className="p-6">
               <div className="text-3xl font-bold text-purple-600 mb-2">100%</div>
@@ -89,7 +89,7 @@ export default function StudyModesDemo() {
               </div>
             </CardContent>
           </Card>
-          
+
           <Card className="text-center">
             <CardContent className="p-6">
               <div className="text-3xl font-bold text-green-600 mb-2">+5</div>
@@ -105,7 +105,7 @@ export default function StudyModesDemo() {
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6 text-center">
             Modalidades de Estudo
           </h2>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {studyModes.map((mode, index) => {
               const Icon = mode.icon;
@@ -133,7 +133,7 @@ export default function StudyModesDemo() {
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
             Principais Melhorias Implementadas
           </h2>
-          
+
           <div className="space-y-6">
             {improvements.map((improvement, index) => (
               <Card key={index} className="border-l-4 border-blue-500">
@@ -144,7 +144,7 @@ export default function StudyModesDemo() {
                   <p className="text-gray-600 dark:text-gray-400 mb-4">
                     {improvement.description}
                   </p>
-                  
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                     <div>
                       <Badge variant="outline" className="mb-2">Antes</Badge>
@@ -168,14 +168,14 @@ export default function StudyModesDemo() {
               Teste as Melhorias Agora!
             </h2>
             <p className="mb-6 opacity-90">
-              Navegue até a Biblioteca de Placas e experimente as novas modalidades de estudo 
+              Navegue até a Biblioteca de Placas e experimente as novas modalidades de estudo
               com interface aprimorada e melhor experiência do usuário.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button
                 variant="secondary"
                 size="lg"
-                onClick={() => window.location.href = '/traffic-signs-library'}
+                onClick={() => window.location.href = '/biblioteca-de-placas'}
                 className="bg-white text-blue-600 hover:bg-gray-100"
               >
                 <Target className="w-5 h-5 mr-2" />
@@ -184,7 +184,7 @@ export default function StudyModesDemo() {
               <Button
                 variant="outline"
                 size="lg"
-                onClick={() => window.location.href = '/dashboard'}
+                onClick={() => window.location.href = '/painel'}
                 className="border-white text-white hover:bg-white/10"
               >
                 <TrendingUp className="w-5 h-5 mr-2" />
@@ -199,7 +199,7 @@ export default function StudyModesDemo() {
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
             Detalhes Técnicos
           </h2>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <Card>
               <CardHeader>
@@ -216,7 +216,7 @@ export default function StudyModesDemo() {
                 </ul>
               </CardContent>
             </Card>
-            
+
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">

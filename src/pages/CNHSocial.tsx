@@ -148,7 +148,7 @@ export default function CNHSocial() {
                                 Nossa equipe preparou um guia completo de estudos para te ajudar a passar na prova de primeira.
                             </p>
                             <Button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground" asChild>
-                                <Link to="/dashboard">Ir para o Dashboard</Link>
+                                <Link to="/painel">Ir para o Dashboard</Link>
                             </Button>
                         </div>
                     </div>

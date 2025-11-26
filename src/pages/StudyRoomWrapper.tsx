@@ -32,9 +32,9 @@ const StudyRoomWrapper = () => {
     }
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      
+
       if (!session) {
-        navigate("/auth");
+        navigate("/entrar");
         return;
       }
 
@@ -42,16 +42,16 @@ const StudyRoomWrapper = () => {
       await fetchProfile(session.user.id);
     } catch (error) {
       const errorInfo = getErrorMessage(error);
-      
+
       toast({
         title: errorInfo.title,
         description: errorInfo.message,
         variant: "destructive",
         duration: 5000,
       });
-      
+
       console.error("Error checking user:", error);
-      navigate("/auth");
+      navigate("/entrar");
     } finally {
       setIsLoading(false);
     }
@@ -82,14 +82,14 @@ const StudyRoomWrapper = () => {
       setProfile(data);
     } catch (error) {
       const errorInfo = getErrorMessage(error);
-      
+
       toast({
         title: errorInfo.title,
         description: errorInfo.message,
         variant: "destructive",
         duration: 5000,
       });
-      
+
       console.error("Error fetching profile:", error);
     }
   };
@@ -107,8 +107,8 @@ const StudyRoomWrapper = () => {
   }
 
   return (
-    <AppLayout 
-      user={user} 
+    <AppLayout
+      user={user}
       profile={profile}
       title="Sala de Estudos"
       subtitle="Estude com IA e visualize materiais interativos"

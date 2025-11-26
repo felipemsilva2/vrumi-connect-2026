@@ -110,7 +110,7 @@ const Navbar = () => {
         {/* Desktop CTA Button */}
         <div className="hidden md:block">
           <button
-            onClick={() => navigate("/auth")}
+            onClick={() => navigate("/entrar")}
             className="inline-flex items-center justify-center px-5 py-2 text-sm font-medium text-white bg-primary rounded-full hover:bg-primary/90 transition-all shadow-md hover:shadow-lg hover:scale-105 active:scale-95"
           >
             Entrar
@@ -193,7 +193,7 @@ const Navbar = () => {
                 <button
                   onClick={() => {
                     toggleMenu();
-                    navigate("/auth");
+                    navigate("/entrar");
                   }}
                   className="w-full px-5 py-4 text-lg text-white bg-primary rounded-2xl font-semibold shadow-lg active:scale-95 transition-all"
                 >

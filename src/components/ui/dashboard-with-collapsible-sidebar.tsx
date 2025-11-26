@@ -131,7 +131,7 @@ const Sidebar = ({ user, selected, setSelected }: SidebarProps) => {
   };
 
   const handleAdminAccess = () => {
-    navigate("/admin/dashboard");
+    navigate("/admin/painel");
   };
 
   return (
@@ -177,7 +177,7 @@ const Sidebar = ({ user, selected, setSelected }: SidebarProps) => {
           open={open}
           tooltip="Estude com IA e visualize materiais"
           isExternalLink
-          externalPath="/study-room"
+          externalPath="/sala-de-estudos"
         />
 
         {/* TEMPORARIAMENTE OCULTO - Lançamento futuro
@@ -214,18 +214,9 @@ const Sidebar = ({ user, selected, setSelected }: SidebarProps) => {
           open={open}
           tooltip="Consulte a biblioteca de placas de trânsito"
           isExternalLink
-          externalPath="/traffic-signs-library"
+          externalPath="/biblioteca-de-placas"
         />
-        <Option
-          Icon={CreditCard}
-          title="CNH Social"
-          selected={selected}
-          setSelected={setSelected}
-          open={open}
-          tooltip="Verifique sua elegibilidade para CNH Social"
-          isExternalLink
-          externalPath="/cnh-social"
-        />
+
         <Option
           Icon={Trophy}
           title="Conquistas"
@@ -1039,7 +1030,12 @@ const DashboardHome = ({ user, profile, setSelected }: any) => {
                   <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" />
                 </div>
                 <div>
-                  <p className="font-medium text-foreground">{activePass?.pass_type || 'Plano Ativo'}</p>
+                  <p className="font-medium text-foreground">
+                    {activePass?.pass_type === 'family_90_days' ? 'Plano Família (90 dias)' :
+                      activePass?.pass_type === '90_days' ? 'Premium 90 Dias' :
+                        activePass?.pass_type === '30_days' ? 'Premium 30 Dias' :
+                          'Plano Ativo'}
+                  </p>
                   <p className="text-sm text-muted-foreground">
                     {daysRemaining > 0 ? `${daysRemaining} dias restantes` : 'Expira hoje'}
                   </p>

@@ -38,11 +38,11 @@ const Index = () => {
           description="Aproveite a liberdade da nova lei. Troque as salas de aula cansativas pela tecnologia do Vrumi. Domine todas as placas e leis de trânsito com nossa metodologia ativa e conquiste sua CNH sem burocracia."
           primaryButton={{
             label: "Começar Agora",
-            onClick: () => navigate("/auth?mode=register"),
+            onClick: () => navigate("/entrar?mode=register"),
           }}
           secondaryButton={{
             label: "Já tenho conta",
-            onClick: () => navigate("/auth?mode=login"),
+            onClick: () => navigate("/entrar?mode=login"),
           }}
           stats={[
             {
@@ -107,13 +107,13 @@ const Index = () => {
             </p>
             <div className="flex flex-wrap justify-center gap-4">
               <button
-                onClick={() => navigate("/traffic-signs-library")}
+                onClick={() => navigate("/biblioteca-de-placas")}
                 className="inline-flex items-center justify-center px-8 h-12 text-lg text-primary-foreground bg-primary rounded-full hover:bg-primary/90 transition-colors font-semibold shadow-lg hover:shadow-xl"
               >
                 Explorar Biblioteca de Placas
               </button>
               <button
-                onClick={() => navigate("/auth?mode=register")}
+                onClick={() => navigate("/entrar?mode=register")}
                 className="inline-flex items-center justify-center px-8 h-12 text-lg text-foreground bg-muted rounded-full hover:bg-muted/80 transition-colors font-semibold"
               >
                 Criar Conta Grátis

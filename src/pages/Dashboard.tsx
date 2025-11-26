@@ -36,7 +36,7 @@ const Dashboard = () => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         if (event === "SIGNED_OUT" || !session) {
-          navigate("/auth");
+          navigate("/entrar");
           // Parar o agendador ao fazer logout
           // notificationScheduler.stop();
         } else {
@@ -61,7 +61,7 @@ const Dashboard = () => {
       const { data: { session } } = await supabase.auth.getSession();
 
       if (!session) {
-        navigate("/auth");
+        navigate("/entrar");
         return;
       }
 
@@ -78,7 +78,7 @@ const Dashboard = () => {
       });
 
       console.error("Error checking user:", error);
-      navigate("/auth");
+      navigate("/entrar");
     } finally {
       setIsLoading(false);
     }

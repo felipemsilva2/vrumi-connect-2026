@@ -1,5 +1,13 @@
-import { User, Mail, Calendar, Trophy, BookOpen, Target } from "lucide-react"
+import { useState, useEffect } from "react"
+import { Mail, Calendar, Trophy, BookOpen, Target, Loader2, Save, User } from "lucide-react"
 import { useActivePass } from "@/hooks/useActivePass"
+import { supabase } from "@/integrations/supabase/client"
+import { useToast } from "@/hooks/use-toast"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { AvatarUpload } from "./AvatarUpload"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
 interface PerfilViewProps {
   user: any
@@ -8,158 +16,231 @@ interface PerfilViewProps {
 
 export const PerfilView = ({ user, profile }: PerfilViewProps) => {
   const { hasActivePass, activePass } = useActivePass(user?.id)
-  
-  const successRate = profile?.total_questions_answered 
+  const { toast } = useToast()
+
+  const [fullName, setFullName] = useState(profile?.full_name || "")
+  const [loading, setLoading] = useState(false)
+  const [avatarUrl, setAvatarUrl] = useState(profile?.avatar_url || null)
+
+  useEffect(() => {
+    if (profile?.full_name) {
+      setFullName(profile.full_name)
+    }
+    if (profile?.avatar_url) {
+      setAvatarUrl(profile.avatar_url)
+    }
+  }, [profile])
+
+  const handleSaveProfile = async () => {
+    if (!user?.id) return
+
+    setLoading(true)
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          full_name: fullName,
+          avatar_url: avatarUrl
+        })
+        .eq('id', user.id)
+
+      if (error) throw error
+
+      toast({
+        title: "Perfil atualizado",
+        description: "Suas informações foram salvas com sucesso.",
+      })
+    } catch (error) {
+      console.error('Error updating profile:', error)
+      toast({
+        title: "Erro ao atualizar",
+        description: "Não foi possível salvar suas alterações.",
+        variant: "destructive"
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleAvatarUpload = async (url: string) => {
+    setAvatarUrl(url)
+    // Optionally save immediately
+    if (user?.id) {
+      await supabase
+        .from('profiles')
+        .update({ avatar_url: url })
+        .eq('id', user.id)
+    }
+  }
+
+  const successRate = profile?.total_questions_answered
     ? Math.round((profile.correct_answers / profile.total_questions_answered) * 100)
     : 0
 
   const getPlanDisplay = () => {
     if (hasActivePass && activePass) {
       const daysRemaining = Math.ceil((new Date(activePass.expires_at).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))
-      const planType = activePass.pass_type === 'family_90_days' ? 'Família' : 
-                      activePass.pass_type === '90_days' ? 'Premium 90 dias' : 'Premium 30 dias'
+      const planType = activePass.pass_type === 'family_90_days' ? 'Plano Família (90 dias)' :
+        activePass.pass_type === '90_days' ? 'Premium 90 Dias' :
+          activePass.pass_type === '30_days' ? 'Premium 30 Dias' :
+            'Plano Ativo'
       return `${planType} (${daysRemaining}d restantes)`
     }
     return 'Plano Gratuito'
   }
 
+  const memberSince = user?.created_at
+    ? new Date(user.created_at).toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' })
+    : 'Nov 2024'
+
   return (
-    <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold text-foreground">Meu Perfil</h2>
-        <p className="text-muted-foreground mt-1">
-          Gerencie suas informações e acompanhe seu progresso
+    <div className="max-w-4xl mx-auto space-y-8 animate-fade-in pb-10">
+      <div className="text-center space-y-2">
+        <h2 className="text-3xl font-bold tracking-tight text-foreground">Meu Perfil</h2>
+        <p className="text-muted-foreground">
+          Gerencie suas informações pessoais e acompanhe sua jornada
         </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-1">
-          <div className="bg-card border border-border rounded-xl p-6">
-            <div className="flex flex-col items-center">
-              <div className="w-24 h-24 bg-primary/10 rounded-full flex items-center justify-center mb-4">
-                <User className="h-12 w-12 text-primary" />
-              </div>
-              <h3 className="text-xl font-semibold text-foreground mb-1">
-                {profile?.full_name || "Estudante"}
-              </h3>
-              <p className="text-sm text-muted-foreground mb-4">
-                Plano Gratuito
-              </p>
-              <button 
-                onClick={() => window.location.href = "/#preço"}
-                className="w-full py-2 px-4 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors font-medium"
-              >
-                Ver Planos
-              </button>
-            </div>
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+        {/* Left Column - Profile Card */}
+        <div className="md:col-span-4 space-y-6">
+          <Card className="overflow-hidden border-border/50 shadow-md">
+            <div className="h-32 bg-gradient-to-r from-primary/20 to-secondary/20"></div>
+            <div className="px-6 pb-6 -mt-16 flex flex-col items-center">
+              <AvatarUpload
+                userId={user?.id}
+                url={avatarUrl}
+                onUpload={handleAvatarUpload}
+                fullName={fullName}
+              />
 
-            <div className="mt-6 pt-6 border-t border-border space-y-3">
-              <div className="flex items-center gap-3 text-sm">
-                <Mail className="h-4 w-4 text-muted-foreground" />
-                <span className="text-foreground">{user?.email}</span>
+              <div className="mt-4 text-center w-full">
+                <h3 className="text-xl font-bold text-foreground truncate">
+                  {fullName || "Estudante"}
+                </h3>
+                <p className="text-sm text-muted-foreground mb-3 truncate">
+                  {user?.email}
+                </p>
+                <div className="inline-flex items-center px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-medium">
+                  {getPlanDisplay()}
+                </div>
               </div>
-              <div className="flex items-center gap-3 text-sm">
-                <Calendar className="h-4 w-4 text-muted-foreground" />
-                <span className="text-foreground">
-                  Membro desde Nov 2024
-                </span>
+
+              <div className="w-full mt-6 pt-6 border-t border-border space-y-3">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground flex items-center gap-2">
+                    <Calendar className="h-4 w-4" /> Membro desde
+                  </span>
+                  <span className="font-medium text-foreground">{memberSince}</span>
+                </div>
               </div>
             </div>
-          </div>
+          </Card>
         </div>
 
-        <div className="lg:col-span-2 space-y-6">
-          <div className="bg-card border border-border rounded-xl p-6">
-            <h3 className="text-lg font-semibold text-foreground mb-4">
-              Estatísticas de Estudo
-            </h3>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-              <div className="p-4 bg-primary/5 rounded-lg">
-                <BookOpen className="h-6 w-6 text-primary mb-2" />
-                <p className="text-sm text-muted-foreground">Flashcards</p>
+        {/* Right Column - Stats & Edit Form */}
+        <div className="md:col-span-8 space-y-6">
+          {/* Stats Section */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <Card className="border-border/50 shadow-sm hover:shadow-md transition-all">
+              <CardContent className="p-6 flex flex-col items-center justify-center text-center">
+                <div className="p-3 bg-primary/10 rounded-full mb-3">
+                  <BookOpen className="h-6 w-6 text-primary" />
+                </div>
                 <p className="text-2xl font-bold text-foreground">
                   {profile?.total_flashcards_studied || 0}
                 </p>
-              </div>
-              <div className="p-4 bg-success/5 rounded-lg">
-                <Target className="h-6 w-6 text-success mb-2" />
-                <p className="text-sm text-muted-foreground">Questões</p>
+                <p className="text-xs text-muted-foreground uppercase tracking-wider font-medium mt-1">
+                  Flashcards
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="border-border/50 shadow-sm hover:shadow-md transition-all">
+              <CardContent className="p-6 flex flex-col items-center justify-center text-center">
+                <div className="p-3 bg-green-500/10 rounded-full mb-3">
+                  <Target className="h-6 w-6 text-green-600 dark:text-green-400" />
+                </div>
                 <p className="text-2xl font-bold text-foreground">
                   {profile?.total_questions_answered || 0}
                 </p>
-              </div>
-              <div className="p-4 bg-secondary/5 rounded-lg">
-                <Trophy className="h-6 w-6 text-secondary mb-2" />
-                <p className="text-sm text-muted-foreground">Taxa de Acerto</p>
+                <p className="text-xs text-muted-foreground uppercase tracking-wider font-medium mt-1">
+                  Questões
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="border-border/50 shadow-sm hover:shadow-md transition-all">
+              <CardContent className="p-6 flex flex-col items-center justify-center text-center">
+                <div className="p-3 bg-orange-500/10 rounded-full mb-3">
+                  <Trophy className="h-6 w-6 text-orange-600 dark:text-orange-400" />
+                </div>
                 <p className="text-2xl font-bold text-foreground">{successRate}%</p>
-              </div>
-            </div>
+                <p className="text-xs text-muted-foreground uppercase tracking-wider font-medium mt-1">
+                  Taxa de Acerto
+                </p>
+              </CardContent>
+            </Card>
           </div>
 
-          <div className="bg-card border border-border rounded-xl p-6">
-            <h3 className="text-lg font-semibold text-foreground mb-4">
-              Informações da Conta
-            </h3>
-            <div className="space-y-4">
-              <div>
-                <label className="text-sm font-medium text-foreground mb-1 block">
-                  Nome Completo
-                </label>
-                <input
-                  type="text"
-                  defaultValue={profile?.full_name || ""}
-                  className="w-full px-4 py-2 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-                  placeholder="Seu nome completo"
-                />
+          {/* Edit Profile Form */}
+          <Card className="border-border/50 shadow-md">
+            <CardHeader>
+              <CardTitle className="text-lg font-semibold flex items-center gap-2">
+                <User className="h-5 w-5 text-primary" />
+                Dados Pessoais
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="fullName">Nome Completo</Label>
+                  <Input
+                    id="fullName"
+                    type="text"
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    placeholder="Como você gostaria de ser chamado?"
+                    className="h-11"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={user?.email || ""}
+                    disabled
+                    className="h-11 bg-muted/50"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    O email não pode ser alterado.
+                  </p>
+                </div>
               </div>
-              <div>
-                <label className="text-sm font-medium text-foreground mb-1 block">
-                  Email
-                </label>
-                <input
-                  type="email"
-                  value={user?.email || ""}
-                  disabled
-                  className="w-full px-4 py-2 bg-muted border border-border rounded-lg text-muted-foreground cursor-not-allowed"
-                />
-              </div>
-              <button className="px-6 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors font-medium">
-                Salvar Alterações
-              </button>
-            </div>
-          </div>
 
-          <div className="bg-card border border-border rounded-xl p-6">
-            <h3 className="text-lg font-semibold text-foreground mb-4">
-              Preferências
-            </h3>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-medium text-foreground">Notificações de Estudo</p>
-                  <p className="text-sm text-muted-foreground">
-                    Receba lembretes para estudar
-                  </p>
-                </div>
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input type="checkbox" className="sr-only peer" defaultChecked />
-                  <div className="w-11 h-6 bg-muted peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
-                </label>
+              <div className="pt-4 flex justify-end">
+                <Button
+                  onClick={handleSaveProfile}
+                  disabled={loading}
+                  className="min-w-[140px]"
+                >
+                  {loading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Salvando...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="mr-2 h-4 w-4" />
+                      Salvar Alterações
+                    </>
+                  )}
+                </Button>
               </div>
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-medium text-foreground">Email Semanal</p>
-                  <p className="text-sm text-muted-foreground">
-                    Receba resumo semanal do seu progresso
-                  </p>
-                </div>
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input type="checkbox" className="sr-only peer" defaultChecked />
-                  <div className="w-11 h-6 bg-muted peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
-                </label>
-              </div>
-            </div>
-          </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>

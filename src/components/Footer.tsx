@@ -43,7 +43,7 @@ const Footer = () => {
             <ul className="space-y-3">
               {[
                 { label: "Início", to: "/" },
-                { label: "Entrar", to: "/auth" },
+                { label: "Entrar", to: "/entrar" },
                 { label: "Recursos", href: "#recursos" },
                 { label: "Depoimentos", href: "#depoimentos" }
               ].map((link, i) => (
@@ -67,7 +67,7 @@ const Footer = () => {
             <h3 className="font-semibold text-foreground mb-6">Suporte</h3>
             <ul className="space-y-3">
               <li>
-                <Link to="/faq" className="text-sm text-muted-foreground hover:text-primary transition-colors">
+                <Link to="/perguntas-frequentes" className="text-sm text-muted-foreground hover:text-primary transition-colors">
                   FAQ
                 </Link>
               </li>
@@ -116,7 +116,7 @@ const Footer = () => {
           <div className="flex gap-6">
             <Link to="/politica-de-privacidade" className="text-xs text-muted-foreground hover:text-foreground transition-colors">Privacidade</Link>
             <Link to="/termos-de-uso" className="text-xs text-muted-foreground hover:text-foreground transition-colors">Termos</Link>
-            <Link to="/faq" className="text-xs text-muted-foreground hover:text-foreground transition-colors">FAQ</Link>
+            <Link to="/perguntas-frequentes" className="text-xs text-muted-foreground hover:text-foreground transition-colors">FAQ</Link>
           </div>
         </div>
       </div>

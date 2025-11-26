@@ -32,9 +32,9 @@ const TrafficSignsLibraryWrapper = () => {
     }
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      
+
       if (!session) {
-        navigate("/auth");
+        navigate("/entrar");
         return;
       }
 
@@ -42,16 +42,16 @@ const TrafficSignsLibraryWrapper = () => {
       await fetchProfile(session.user.id);
     } catch (error) {
       const errorInfo = getErrorMessage(error);
-      
+
       toast({
         title: errorInfo.title,
         description: errorInfo.message,
         variant: "destructive",
         duration: 5000,
       });
-      
+
       console.error("Error checking user:", error);
-      navigate("/auth");
+      navigate("/entrar");
     } finally {
       setIsLoading(false);
     }
@@ -82,14 +82,14 @@ const TrafficSignsLibraryWrapper = () => {
       setProfile(data);
     } catch (error) {
       const errorInfo = getErrorMessage(error);
-      
+
       toast({
         title: errorInfo.title,
         description: errorInfo.message,
         variant: "destructive",
         duration: 5000,
       });
-      
+
       console.error("Error fetching profile:", error);
     }
   };
@@ -107,8 +107,8 @@ const TrafficSignsLibraryWrapper = () => {
   }
 
   return (
-    <AppLayout 
-      user={user} 
+    <AppLayout
+      user={user}
       profile={profile}
       title="Biblioteca de Placas"
       subtitle="Consulte todas as placas de trânsito brasileiras"

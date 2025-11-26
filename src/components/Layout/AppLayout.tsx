@@ -11,28 +11,21 @@ import {
   ChevronsRight,
   Moon,
   Sun,
-  TrendingUp,
   LogOut,
   Trophy,
-  Clock,
-  CheckCircle2,
-  Award,
-  Calendar,
   Shield,
   TrafficCone,
-  Bell,
   Menu,
   X,
   Car
 } from "lucide-react";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { supabase, isSupabaseConfigured } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
 import { useActivePass } from "@/hooks/useActivePass";
 import { SmartBreadcrumb } from "@/components/SmartBreadcrumb";
-// import NotificationSystem from "@/components/notifications/NotificationSystem";
 import { useTheme } from "@/components/ThemeProvider";
 
 interface AppLayoutProps {
@@ -90,9 +83,9 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
     if (title) return title;
 
     const path = location.pathname;
-    if (path.includes('/traffic-signs-library')) return 'Biblioteca de Placas';
-    if (path.includes('/study-room')) return 'Sala de Estudos';
-    if (path.includes('/dashboard')) return 'Dashboard';
+    if (path.includes('/biblioteca-de-placas')) return 'Biblioteca de Placas';
+    if (path.includes('/sala-de-estudos')) return 'Sala de Estudos';
+    if (path.includes('/painel')) return 'Dashboard';
     return 'Vrumi';
   };
 
@@ -100,9 +93,9 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
     if (subtitle) return subtitle;
 
     const path = location.pathname;
-    if (path.includes('/traffic-signs-library')) return 'Consulte todas as placas de trânsito brasileiras';
-    if (path.includes('/study-room')) return 'Estude com IA e visualize materiais';
-    if (path.includes('/dashboard')) return 'Continue estudando para sua CNH';
+    if (path.includes('/biblioteca-de-placas')) return 'Consulte todas as placas de trânsito brasileiras';
+    if (path.includes('/sala-de-estudos')) return 'Estude com IA e visualize materiais';
+    if (path.includes('/painel')) return 'Continue estudando para sua CNH';
     return '';
   };
 
@@ -142,18 +135,16 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
   };
 
   const userName = formatUserName(profile?.full_name, user?.email);
-  const greetingTime = new Date().getHours();
-  const greeting = greetingTime < 12 ? 'Bom dia' : greetingTime < 18 ? 'Boa tarde' : 'Boa noite';
 
   const navigationItems = [
-    { label: "Dashboard", icon: Home, path: "/dashboard", tooltip: "Página inicial do dashboard" },
-    { label: "Flashcards", icon: BookOpen, path: "/dashboard?tab=flashcards", tooltip: "Estude com flashcards" },
-    { label: "Simulados", icon: Target, path: "/dashboard?tab=simulados", tooltip: "Teste seus conhecimentos com simulados", notifs: 2 },
-    { label: "Sala de Estudos", icon: FileText, path: "/study-room", tooltip: "Estude com IA e visualize materiais", isExternal: true },
-    { label: "Estatísticas", icon: BarChart3, path: "/dashboard?tab=estatisticas", tooltip: "Veja seu desempenho" },
-    // { label: "Notificações", icon: Bell, path: "/dashboard?tab=notificacoes", tooltip: "Configure suas notificações de estudo" },
-    { label: "Biblioteca de Placas", icon: TrafficCone, path: "/traffic-signs-library", tooltip: "Consulte a biblioteca de placas de trânsito", isExternal: true },
-    { label: "Conquistas", icon: Trophy, path: "/dashboard?tab=conquistas", tooltip: "Suas conquistas", notifs: 1 },
+    { label: "Dashboard", icon: Home, path: "/painel", tooltip: "Página inicial do dashboard" },
+    { label: "Flashcards", icon: BookOpen, path: "/painel?tab=flashcards", tooltip: "Estude com flashcards" },
+    { label: "Simulados", icon: Target, path: "/painel?tab=simulados", tooltip: "Teste seus conhecimentos com simulados", notifs: 2 },
+    { label: "Sala de Estudos", icon: FileText, path: "/sala-de-estudos", tooltip: "Estude com IA e visualize materiais", isExternal: true },
+    { label: "Estatísticas", icon: BarChart3, path: "/painel?tab=estatisticas", tooltip: "Veja seu desempenho" },
+    // { label: "Notificações", icon: Bell, path: "/painel?tab=notificacoes", tooltip: "Configure suas notificações de estudo" },
+    { label: "Biblioteca de Placas", icon: TrafficCone, path: "/biblioteca-de-placas", tooltip: "Consulte a biblioteca de placas de trânsito", isExternal: true },
+    { label: "Conquistas", icon: Trophy, path: "/painel?tab=conquistas", tooltip: "Suas conquistas", notifs: 1 },
   ];
 
   const isActiveRoute = (path: string) => {
@@ -175,7 +166,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
             {/* Logo Section */}
             <div className="mb-6 border-b border-border pb-4">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3 cursor-pointer" onClick={() => navigate("/dashboard")}>
+                <div className="flex items-center gap-3 cursor-pointer" onClick={() => navigate("/painel")}>
                   <div className="grid size-10 shrink-0 place-content-center rounded-lg bg-gradient-to-br from-primary to-primary/80 shadow-sm">
                     <Car className="h-6 w-6 text-primary-foreground" />
                   </div>
@@ -233,7 +224,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
                   Administração
                 </div>
                 <button
-                  onClick={() => navigate("/admin/dashboard")}
+                  onClick={() => navigate("/admin/painel")}
                   className="relative flex h-12 w-full items-center rounded-md transition-all duration-200 text-muted-foreground hover:bg-primary/10 hover:text-primary"
                 >
                   <div className="grid h-full w-12 place-content-center">
@@ -251,7 +242,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
                   Conta
                 </div>
                 <button
-                  onClick={() => navigate("/dashboard?tab=perfil")}
+                  onClick={() => navigate("/painel?tab=perfil")}
                   className="relative flex h-12 w-full items-center rounded-md transition-all duration-200 text-muted-foreground hover:bg-accent/10 hover:text-foreground"
                 >
                   <div className="grid h-full w-12 place-content-center">
@@ -349,7 +340,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
                       Administração
                     </div>
                     <button
-                      onClick={() => navigate("/admin/dashboard")}
+                      onClick={() => navigate("/admin/painel")}
                       className="flex w-full items-center rounded-md p-3 text-muted-foreground hover:bg-primary/10 hover:text-primary"
                     >
                       <Shield className="h-5 w-5 mr-3" />
@@ -363,7 +354,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
                     Conta
                   </div>
                   <button
-                    onClick={() => navigate("/dashboard?tab=perfil")}
+                    onClick={() => navigate("/painel?tab=perfil")}
                     className="flex w-full items-center rounded-md p-3 text-muted-foreground hover:bg-accent/10 hover:text-foreground"
                   >
                     <User className="h-5 w-5 mr-3" />

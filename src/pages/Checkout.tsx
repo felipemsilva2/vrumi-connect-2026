@@ -144,7 +144,7 @@ const Checkout = () => {
     }
 
     setFormData(prev => ({ ...prev, [field]: formattedValue }))
-    
+
     // Clear error when user starts typing
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: undefined }))
@@ -179,7 +179,7 @@ const Checkout = () => {
         description: "Você precisa estar logado para finalizar a compra",
         variant: "destructive",
       })
-      navigate("/auth")
+      navigate("/entrar")
       return
     }
 
@@ -458,7 +458,7 @@ const Checkout = () => {
                         </p>
                       </div>
                     </div>
-                    
+
                     <div className="flex items-center gap-2 text-sm text-muted-foreground mt-3 pt-3 border-t border-primary/10">
                       <Calendar className="h-4 w-4" />
                       <span>{selectedPass.days} dias de acesso total</span>

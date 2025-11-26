@@ -15,7 +15,7 @@ const CheckoutSuccess = () => {
   useEffect(() => {
     const verifyPayment = async () => {
       const sessionId = searchParams.get('session_id');
-      
+
       if (!sessionId) {
         toast({
           title: "Erro",
@@ -75,7 +75,7 @@ const CheckoutSuccess = () => {
             <p className="text-muted-foreground mb-6">
               Seu passe foi ativado com sucesso. Você já pode começar a estudar!
             </p>
-            <Button onClick={() => navigate('/dashboard')} className="w-full">
+            <Button onClick={() => navigate('/painel')} className="w-full">
               Ir para o Dashboard
             </Button>
           </>

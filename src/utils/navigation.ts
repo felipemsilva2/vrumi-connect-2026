@@ -7,12 +7,12 @@ import { useLocation } from 'react-router-dom';
  */
 export const useContextualHomeRoute = (): string => {
   const location = useLocation();
-  const isDashboardContext = location.pathname.startsWith('/dashboard') || 
-                              location.pathname.startsWith('/study-room') ||
-                              location.pathname.startsWith('/admin') ||
-                              location.pathname.startsWith('/perfil');
-  
-  return isDashboardContext ? '/dashboard' : '/';
+  const isDashboardContext = location.pathname.startsWith('/painel') ||
+    location.pathname.startsWith('/sala-de-estudos') ||
+    location.pathname.startsWith('/admin') ||
+    location.pathname.startsWith('/biblioteca-de-placas');
+
+  return isDashboardContext ? '/painel' : '/';
 };
 
 /**

@@ -21,9 +21,6 @@ import Checkout from "@/pages/Checkout";
 import CheckoutSuccess from "@/pages/CheckoutSuccess";
 import CheckoutCancel from "@/pages/CheckoutCancel";
 import NotFound from "@/pages/NotFound";
-import FAQ from "@/pages/FAQ";
-import Terms from "@/pages/Terms";
-import Privacy from "@/pages/Privacy";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import TrafficSignsLibrary from "@/pages/TrafficSignsLibraryWrapper";
 import FAQPage from "@/pages/FAQ";
@@ -49,7 +46,7 @@ const ProtectedAdminRoute = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   if (isLoading) return <div>Loading...</div>;
-  if (!isAdmin) return <Navigate to="/auth" replace />;
+  if (!isAdmin) return <Navigate to="/entrar" replace />;
   return <>{children}</>;
 };
 
@@ -62,9 +59,9 @@ const ThemeHandler = () => {
   const { setTheme } = useTheme();
 
   useEffect(() => {
-    const isAppRoute = pathname.startsWith("/dashboard") ||
+    const isAppRoute = pathname.startsWith("/painel") ||
       pathname.startsWith("/admin") ||
-      pathname.startsWith("/study-room");
+      pathname.startsWith("/sala-de-estudos");
 
     if (isAppRoute) {
       setTheme("dark");
@@ -87,50 +84,45 @@ const App = () => (
           <ErrorBoundary>
             <Routes>
               <Route path="/" element={<Index />} />
-              <Route path="/auth" element={<Auth />} />
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/study-room" element={<StudyRoom />} />
-              <Route path="/traffic-signs-library" element={<TrafficSignsLibrary />} />
-              <Route path="/faq" element={<FAQPage />} />
-              <Route path="/termos-de-uso" element={<TermosDeUso />} />
+              <Route path="/entrar" element={<Auth />} />
+              <Route path="/painel" element={<Dashboard />} />
+              <Route path="/sala-de-estudos" element={<StudyRoom />} />
+              <Route path="/biblioteca-de-placas" element={<TrafficSignsLibrary />} />
+              <Route path="/perguntas-frequentes" element={<FAQPage />} />
               <Route path="/termos-de-uso" element={<TermosDeUso />} />
               <Route path="/politica-de-privacidade" element={<PoliticaPrivacidade />} />
               <Route path="/cnh-social" element={<CNHSocial />} />
 
-              <Route path="/faq" element={<FAQ />} />
-              <Route path="/terms" element={<Terms />} />
-              <Route path="/privacy" element={<Privacy />} />
+              <Route path="/pagamento" element={<Checkout />} />
+              <Route path="/pagamento/sucesso" element={<CheckoutSuccess />} />
+              <Route path="/pagamento/cancelado" element={<CheckoutCancel />} />
 
-              <Route path="/checkout" element={<Checkout />} />
-              <Route path="/checkout/success" element={<CheckoutSuccess />} />
-              <Route path="/checkout/cancel" element={<CheckoutCancel />} />
-
-              <Route path="/admin/dashboard" element={
+              <Route path="/admin/painel" element={
                 <ProtectedAdminRoute>
                   <AdminDashboard />
                 </ProtectedAdminRoute>
               } />
-              <Route path="/admin/users" element={
+              <Route path="/admin/usuarios" element={
                 <ProtectedAdminRoute>
                   <AdminUsers />
                 </ProtectedAdminRoute>
               } />
-              <Route path="/admin/subscriptions" element={
+              <Route path="/admin/assinaturas" element={
                 <ProtectedAdminRoute>
                   <AdminSubscriptions />
                 </ProtectedAdminRoute>
               } />
-              <Route path="/admin/roles" element={
+              <Route path="/admin/funcoes" element={
                 <ProtectedAdminRoute>
                   <AdminRoles />
                 </ProtectedAdminRoute>
               } />
-              <Route path="/admin/audit-logs" element={
+              <Route path="/admin/logs-auditoria" element={
                 <ProtectedAdminRoute>
                   <AdminAuditLogs />
                 </ProtectedAdminRoute>
               } />
-              <Route path="/admin/populate" element={
+              <Route path="/admin/popular" element={
                 <ProtectedAdminRoute>
                   <AdminPopulate />
                 </ProtectedAdminRoute>
@@ -140,12 +132,12 @@ const App = () => (
                   <AdminFlashcards />
                 </ProtectedAdminRoute>
               } />
-              <Route path="/admin/questions" element={
+              <Route path="/admin/questoes" element={
                 <ProtectedAdminRoute>
                   <AdminQuestions />
                 </ProtectedAdminRoute>
               } />
-              <Route path="/admin/traffic-signs" element={
+              <Route path="/admin/placas" element={
                 <ProtectedAdminRoute>
                   <AdminTrafficSignsImport />
                 </ProtectedAdminRoute>
@@ -157,7 +149,7 @@ const App = () => (
         </BrowserRouter>
       </TooltipProvider>
     </ThemeProvider>
-  </QueryClientProvider>
+  </QueryClientProvider >
 );
 
 export default App;

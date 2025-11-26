@@ -12,14 +12,14 @@ interface AdminLayoutProps {
 }
 
 const menuItems = [
-  { path: "/admin/dashboard", label: "Dashboard", icon: Car },
-  { path: "/admin/users", label: "Usuários", icon: Users },
-  { path: "/admin/subscriptions", label: "Assinaturas", icon: CreditCard },
-  { path: "/admin/roles", label: "Permissões", icon: Shield },
-  { path: "/admin/audit-logs", label: "Logs de Auditoria", icon: FileSearch },
+  { path: "/admin/painel", label: "Dashboard", icon: Car },
+  { path: "/admin/usuarios", label: "Usuários", icon: Users },
+  { path: "/admin/assinaturas", label: "Assinaturas", icon: CreditCard },
+  { path: "/admin/funcoes", label: "Permissões", icon: Shield },
+  { path: "/admin/logs-auditoria", label: "Logs de Auditoria", icon: FileSearch },
   { path: "/admin/flashcards", label: "Flashcards", icon: FileText },
-  { path: "/admin/questions", label: "Questões", icon: MessageSquare },
-  { path: "/admin/traffic-signs", label: "Placas de Trânsito", icon: TrafficCone },
+  { path: "/admin/questoes", label: "Questões", icon: MessageSquare },
+  { path: "/admin/placas", label: "Placas de Trânsito", icon: TrafficCone },
 ];
 
 export const AdminLayout = ({ children }: AdminLayoutProps) => {
@@ -30,7 +30,7 @@ export const AdminLayout = ({ children }: AdminLayoutProps) => {
     try {
       await supabase.auth.signOut({ scope: 'local' });
       toast.success("Logout realizado com sucesso");
-      navigate("/auth");
+      navigate("/entrar");
     } catch (error) {
       toast.error("Erro ao fazer logout");
     }
@@ -50,7 +50,7 @@ export const AdminLayout = ({ children }: AdminLayoutProps) => {
           </div>
           <div className="flex items-center gap-4">
             <Button variant="outline" asChild>
-              <Link to="/dashboard">
+              <Link to="/painel">
                 Voltar ao Dashboard
               </Link>
             </Button>
@@ -70,16 +70,15 @@ export const AdminLayout = ({ children }: AdminLayoutProps) => {
               {menuItems.map((item) => {
                 const Icon = item.icon;
                 const isActive = location.pathname === item.path;
-                
+
                 return (
                   <Link
                     key={item.path}
                     to={item.path}
-                    className={`flex items-center gap-3 px-4 py-2.5 rounded-lg transition-colors ${
-                      isActive
+                    className={`flex items-center gap-3 px-4 py-2.5 rounded-lg transition-colors ${isActive
                         ? "bg-primary text-primary-foreground"
                         : "hover:bg-muted text-muted-foreground hover:text-foreground"
-                    }`}
+                      }`}
                   >
                     <Icon className="h-5 w-5" />
                     <span className="font-medium">{item.label}</span>

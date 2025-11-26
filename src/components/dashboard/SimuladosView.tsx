@@ -8,7 +8,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import { ImageWithFallback } from "@/components/ImageWithFallback"
 import { SubscriptionGate } from "@/components/auth/SubscriptionGate"
 import { useNavigate } from "react-router-dom"
- 
+
 
 interface QuizQuestion {
   id: string
@@ -63,7 +63,7 @@ export const SimuladosView = () => {
 
   useEffect(() => {
     if (timerRef.current) window.clearInterval(timerRef.current)
-    
+
     if (quizStarted && timeLeft > 0 && view === "quiz") {
       timerRef.current = window.setInterval(() => {
         setTimeLeft((prev) => {
@@ -104,14 +104,58 @@ export const SimuladosView = () => {
   const startQuiz = async (type: "practice" | "official") => {
     try {
       const limit = type === "official" ? 30 : 15
-      const { data, error } = await supabase
+
+      // Fetch questions
+      const { data: questionsData, error: questionsError } = await supabase
         .from("quiz_questions")
         .select("*")
         .limit(limit)
 
-      if (error) throw error
-      
-      const shuffled = (data || []).sort(() => Math.random() - 0.5)
+      if (questionsError) throw questionsError
+
+      // Fetch traffic signs for image enrichment
+      const { data: signsData } = await supabase
+        .from("traffic_signs")
+        .select("code, image_url")
+
+      let enrichedQuestions = questionsData || []
+
+      // Enrich questions with sign images if missing
+      if (signsData && signsData.length > 0) {
+        enrichedQuestions = enrichedQuestions.map(q => {
+          if (q.image_url) return q // Already has image
+
+          // Regex to find sign codes like R-1, A-10a, R-19, etc.
+          // Captures: 1=Prefix(R/A), 2=Number, 3=Suffix(optional)
+          const signCodeMatch = q.question_text.match(/\b([RA])[- ]?(\d+)([a-z]?)\b/i)
+
+          if (signCodeMatch) {
+            const prefix = signCodeMatch[1].toUpperCase()
+            const number = parseInt(signCodeMatch[2], 10)
+            const suffix = signCodeMatch[3] ? signCodeMatch[3].toUpperCase() : ""
+
+            // Generate variations to match database format (e.g. A-1a vs A-01A)
+            const codeVariations = [
+              `${prefix}-${number}${suffix}`,           // A-1A
+              `${prefix}-${number.toString().padStart(2, '0')}${suffix}`, // A-01A
+              `${prefix}${number}${suffix}`,            // A1A
+              `${prefix}${number.toString().padStart(2, '0')}${suffix}`   // A01A
+            ]
+
+            const sign = signsData.find(s => {
+              const sCode = s.code.toUpperCase()
+              return codeVariations.includes(sCode)
+            })
+
+            if (sign && sign.image_url) {
+              return { ...q, image_url: sign.image_url }
+            }
+          }
+          return q
+        })
+      }
+
+      const shuffled = enrichedQuestions.sort(() => Math.random() - 0.5)
       setQuestions(shuffled)
       setView("quiz")
       setQuizStarted(true)
@@ -287,7 +331,7 @@ export const SimuladosView = () => {
             <h2 className="text-3xl font-bold mb-2">
               {passed ? "Parabéns! Você foi aprovado!" : "Não foi dessa vez"}
             </h2>
-            
+
             <p className={`text-6xl font-bold my-6 ${passed ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
               {score}%
             </p>
@@ -329,7 +373,7 @@ export const SimuladosView = () => {
             {questions.map((q, index) => {
               const userAnswer = userAnswers[index]
               const isCorrect = userAnswer === q.correct_option
-              
+
               return (
                 <div key={q.id} className={`p-4 rounded-lg border-2 ${isCorrect ? 'border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-950' : 'border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950'}`}>
                   <div className="flex items-start gap-3">
@@ -444,16 +488,15 @@ export const SimuladosView = () => {
                         {['A', 'B', 'C', 'D'].map((option) => {
                           const isSelected = selectedAnswer === option
                           const optionText = currentQ[`option_${option.toLowerCase()}` as keyof QuizQuestion] as string
-                          
+
                           return (
                             <button
                               key={option}
                               onClick={() => handleAnswerSelect(option)}
-                              className={`w-full text-left rounded-lg border-2 px-4 py-3 flex items-center justify-between transition-all ${
-                                isSelected
-                                  ? "bg-green-50 dark:bg-green-950 border-green-300 dark:border-green-700 shadow-md"
-                                  : "bg-background border-border hover:shadow-md hover:border-primary/50"
-                              }`}
+                              className={`w-full text-left rounded-lg border-2 px-4 py-3 flex items-center justify-between transition-all ${isSelected
+                                ? "bg-green-50 dark:bg-green-950 border-green-300 dark:border-green-700 shadow-md"
+                                : "bg-background border-border hover:shadow-md hover:border-primary/50"
+                                }`}
                             >
                               <div className="flex items-center gap-3">
                                 <div className={`w-10 h-10 flex items-center justify-center rounded-full border-2 ${isSelected ? 'border-green-500 bg-green-100 dark:bg-green-900' : 'border-border'}`}>
@@ -527,8 +570,8 @@ export const SimuladosView = () => {
                       const status = userAnswers[idx]
                         ? "answered"
                         : idx === currentQuestion
-                        ? "current"
-                        : "unanswered"
+                          ? "current"
+                          : "unanswered"
 
                       const classes = {
                         answered: "bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 border-2 border-green-300 dark:border-green-700",
@@ -666,143 +709,152 @@ export const SimuladosView = () => {
     )
   }
 
-  
 
-  
 
-  
 
-  
 
-  
 
-  
 
-  
 
-  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
   // View: Main Menu
   return (
     <SubscriptionGate feature="Simulados">
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="space-y-6"
-    >
-      <div>
-        <h2 className="text-3xl font-bold text-foreground">Simulados</h2>
-        <p className="text-muted-foreground mt-1">
-          Teste seus conhecimentos com simulados fiéis ao exame oficial do DETRAN
-        </p>
-        {false && (
-          <div className="mt-3 inline-flex items-center gap-2 px-3 py-1.5 bg-primary/10 text-primary rounded-full text-sm font-medium">
-            <Calendar className="h-4 w-4" />
-            <span>
-              {daysRemaining} {Number(daysRemaining) === 1 ? 'dia restante' : 'dias restantes'} no seu passaporte
-            </span>
-          </div>
-        )}
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card className="shadow-lg hover:shadow-xl transition-all border-2 hover:border-primary/50">
-          <CardContent className="p-6">
-            <div className="flex items-start gap-4 mb-4">
-              <div className="p-3 bg-primary/10 rounded-xl">
-                <Trophy className="h-7 w-7 text-primary" />
-              </div>
-              <div className="flex-1">
-                <h3 className="text-xl font-bold text-foreground mb-1">Simulado Oficial</h3>
-                <p className="text-sm text-muted-foreground mb-4">
-                  30 questões • 40 minutos • Idêntico ao exame do DETRAN
-                </p>
-                <Button
-                  onClick={() => startQuiz("official")}
-                  className="w-full bg-primary hover:bg-primary/90"
-                  size="lg"
-                >
-                  <Play className="mr-2 h-5 w-5" />
-                  Iniciar Simulado Oficial
-                </Button>
-              </div>
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="space-y-6"
+      >
+        <div>
+          <h2 className="text-3xl font-bold text-foreground">Simulados</h2>
+          <p className="text-muted-foreground mt-1">
+            Teste seus conhecimentos com simulados fiéis ao exame oficial do DETRAN
+          </p>
+          {false && (
+            <div className="mt-3 inline-flex items-center gap-2 px-3 py-1.5 bg-primary/10 text-primary rounded-full text-sm font-medium">
+              <Calendar className="h-4 w-4" />
+              <span>
+                {daysRemaining} {Number(daysRemaining) === 1 ? 'dia restante' : 'dias restantes'} no seu passaporte
+              </span>
             </div>
-          </CardContent>
-        </Card>
-
-        <Card className="shadow-lg hover:shadow-xl transition-all border-2 hover:border-secondary/50">
-          <CardContent className="p-6">
-            <div className="flex items-start gap-4 mb-4">
-              <div className="p-3 bg-secondary/10 rounded-xl">
-                <Play className="h-7 w-7 text-secondary" />
-              </div>
-              <div className="flex-1">
-                <h3 className="text-xl font-bold text-foreground mb-1">Simulado de Prática</h3>
-                <p className="text-sm text-muted-foreground mb-4">
-                  15 questões • 20 minutos • Prática rápida
-                </p>
-                <Button
-                  onClick={() => startQuiz("practice")}
-                  className="w-full"
-                  variant="secondary"
-                  size="lg"
-                >
-                  <Play className="mr-2 h-5 w-5" />
-                  Iniciar Prática Rápida
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        
-      </div>
-
-      <Card className="shadow-lg border-2">
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <h3 className="text-xl font-bold">Histórico Recente</h3>
-            <Button
-              onClick={() => setView("history")}
-              variant="ghost"
-              size="sm"
-            >
-              <History className="mr-2 h-4 w-4" />
-              Ver tudo
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {attemptHistory.slice(0, 3).map((attempt) => (
-            <div key={attempt.id} className="flex items-center justify-between py-3 border-b border-border last:border-0">
-              <div>
-                <p className="font-medium text-sm">
-                  {attempt.quiz_type === "official" ? "Simulado Oficial" : "Prática"}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {new Date(attempt.completed_at).toLocaleDateString('pt-BR')}
-                </p>
-              </div>
-              <div className="text-right">
-                <p className={`text-xl font-bold ${attempt.score_percentage >= 70 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
-                  {attempt.score_percentage}%
-                </p>
-              </div>
-            </div>
-          ))}
-
-          {attemptHistory.length === 0 && (
-            <p className="text-center py-4 text-muted-foreground text-sm">
-              Nenhum simulado realizado ainda. Comece agora!
-            </p>
           )}
-        </CardContent>
-      </Card>
-    </motion.div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <Card className="shadow-lg hover:shadow-xl transition-all border-2 hover:border-primary/50">
+            <CardContent className="p-6">
+              <div className="flex items-start gap-4 mb-4">
+                <div className="p-3 bg-primary/10 rounded-xl">
+                  <Trophy className="h-7 w-7 text-primary" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-xl font-bold text-foreground mb-1">Simulado Oficial</h3>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    30 questões • 40 minutos • Idêntico ao exame do DETRAN
+                  </p>
+                  <Button
+                    onClick={() => startQuiz("official")}
+                    className="w-full bg-primary hover:bg-primary/90"
+                    size="lg"
+                  >
+                    <Play className="mr-2 h-5 w-5" />
+                    Iniciar Simulado Oficial
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="shadow-lg hover:shadow-xl transition-all border-2 hover:border-secondary/50">
+            <CardContent className="p-6">
+              <div className="flex items-start gap-4 mb-4">
+                <div className="p-3 bg-secondary/10 rounded-xl">
+                  <Play className="h-7 w-7 text-secondary" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-xl font-bold text-foreground mb-1">Simulado de Prática</h3>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    15 questões • 20 minutos • Prática rápida
+                  </p>
+                  <Button
+                    onClick={() => startQuiz("practice")}
+                    className="w-full"
+                    variant="secondary"
+                    size="lg"
+                  >
+                    <Play className="mr-2 h-5 w-5" />
+                    Iniciar Prática Rápida
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+
+
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+        </div>
+
+        <Card className="shadow-lg border-2">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <h3 className="text-xl font-bold">Histórico Recente</h3>
+              <Button
+                onClick={() => setView("history")}
+                variant="ghost"
+                size="sm"
+              >
+                <History className="mr-2 h-4 w-4" />
+                Ver tudo
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {attemptHistory.slice(0, 3).map((attempt) => (
+              <div key={attempt.id} className="flex items-center justify-between py-3 border-b border-border last:border-0">
+                <div>
+                  <p className="font-medium text-sm">
+                    {attempt.quiz_type === "official" ? "Simulado Oficial" : "Prática"}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {new Date(attempt.completed_at).toLocaleDateString('pt-BR')}
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p className={`text-xl font-bold ${attempt.score_percentage >= 70 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                    {attempt.score_percentage}%
+                  </p>
+                </div>
+              </div>
+            ))}
+
+            {attemptHistory.length === 0 && (
+              <p className="text-center py-4 text-muted-foreground text-sm">
+                Nenhum simulado realizado ainda. Comece agora!
+              </p>
+            )}
+          </CardContent>
+        </Card>
+      </motion.div>
     </SubscriptionGate>
   )
 }

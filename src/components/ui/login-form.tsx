@@ -173,7 +173,7 @@ export default function LoginForm({
                                 onChange={(e) => setTermsAccepted?.(e.target.checked)}
                             />
                             <label className="text-sm text-gray-500 dark:text-gray-400" htmlFor="terms">
-                                Eu concordo com os <a href="/terms" target="_blank" className="text-primary hover:underline">Termos de Uso</a> e <a href="/privacy" target="_blank" className="text-primary hover:underline">Política de Privacidade</a>
+                                Eu concordo com os <a href="/termos-de-uso" target="_blank" className="text-primary hover:underline">Termos de Uso</a> e <a href="/politica-de-privacidade" target="_blank" className="text-primary hover:underline">Política de Privacidade</a>
                             </label>
                         </div>
                     )}
