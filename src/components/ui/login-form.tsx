@@ -69,16 +69,13 @@ export default function LoginForm({
                     <button
                         type="button"
                         onClick={handleGoogleLogin}
-                        className="w-full bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700 flex items-center justify-center h-12 rounded-full transition-colors duration-200"
+                        className="w-full bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700 flex items-center justify-center h-16 rounded-full transition-colors duration-200"
                     >
                         <img
                             src="https://raw.githubusercontent.com/prebuiltui/prebuiltui/main/assets/login/googleLogo.svg"
                             alt="Google"
-                            className="w-5 h-5 mr-3"
+                            className="w-12 h-12"
                         />
-                        <span className="text-gray-700 dark:text-gray-300 font-medium">
-                            {isLogin ? "Entrar com Google" : "Cadastrar com Google"}
-                        </span>
                     </button>
 
                     <div className="flex items-center gap-4 w-full my-6">
