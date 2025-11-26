@@ -154,7 +154,7 @@ export const DashboardWithSidebar = ({ user, profile }: DashboardProps) => {
         />
       </div>
 
-      {isMobile && <MobileBottomNav onMenuClick={() => setMobileMenuOpen(true)} />}
+      {isMobile && <MobileBottomNav onMenuClick={() => setMobileMenuOpen(true)} setSelected={setSelected} />}
     </div>
   );
 };

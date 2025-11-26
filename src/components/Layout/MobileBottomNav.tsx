@@ -5,9 +5,10 @@ import { cn } from '@/lib/utils';
 
 interface MobileBottomNavProps {
     onMenuClick: () => void;
+    setSelected?: (value: string) => void;
 }
 
-export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({ onMenuClick }) => {
+export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({ onMenuClick, setSelected }) => {
     const navigate = useNavigate();
     const location = useLocation();
 
@@ -18,9 +19,25 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({ onMenuClick })
         return location.pathname === path && location.search === '';
     };
 
+    const handleNavigation = (path: string, label: string) => {
+        if (path.startsWith('/painel?tab=')) {
+            // Se estamos no dashboard e temos setSelected, use-o
+            if (setSelected && location.pathname === '/painel') {
+                const tab = label; // "Simulados", "Flashcards", etc
+                setSelected(tab);
+            } else {
+                // Caso contrário, navegue normalmente
+                navigate(path);
+            }
+        } else {
+            // Para outras rotas, navegue normalmente
+            navigate(path);
+        }
+    };
+
     const navItems = [
         {
-            label: 'Início',
+            label: 'Dashboard',
             icon: Home,
             path: '/painel',
         },
@@ -44,7 +61,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({ onMenuClick })
                     return (
                         <button
                             key={item.label}
-                            onClick={() => navigate(item.path)}
+                            onClick={() => handleNavigation(item.path, item.label)}
                             className={cn(
                                 "flex flex-col items-center justify-center w-full h-full space-y-1 transition-colors duration-200",
                                 active ? "text-primary" : "text-muted-foreground hover:text-foreground"
