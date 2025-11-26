@@ -24,7 +24,7 @@ import {
   Settings,
   CreditCard,
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useContextualNavigation } from "@/utils/navigation";
 import { supabase, isSupabaseConfigured } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -57,9 +57,32 @@ export const DashboardWithSidebar = ({ user, profile }: DashboardProps) => {
   const isMobile = useIsMobile();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
   const { isAdmin } = useIsAdmin(user?.id);
   const { hasActivePass, activePass } = useActivePass(user?.id);
+
+  // Sincroniza a aba selecionada com a URL
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const tab = params.get('tab');
+    if (tab) {
+      // Mapeia os valores da URL para os nomes dos componentes
+      const tabMap: { [key: string]: string } = {
+        'simulados': 'Simulados',
+        'flashcards': 'Flashcards',
+        'estatisticas': 'Estatísticas',
+        'conquistas': 'Conquistas',
+        'perfil': 'Meu Perfil',
+        'dashboard': 'Dashboard'
+      };
+      if (tabMap[tab]) {
+        setSelected(tabMap[tab]);
+      }
+    } else if (location.pathname === '/painel') {
+      setSelected('Dashboard');
+    }
+  }, [location.search, location.pathname]);
 
   const handleSignOut = async () => {
     try {
@@ -133,7 +156,15 @@ export const DashboardWithSidebar = ({ user, profile }: DashboardProps) => {
           isAdmin={isAdmin}
           onNavigate={(path) => {
             if (path.startsWith('/')) {
-              navigate(path);
+              if (path.includes('?tab=')) {
+                // Se for uma navegação interna via URL, apenas navega
+                navigate(path);
+              } else if (path === '/painel') {
+                navigate(path);
+              } else {
+                // Links externos (sala de estudos, etc)
+                navigate(path);
+              }
             } else {
               setSelected(path);
             }
@@ -154,7 +185,7 @@ export const DashboardWithSidebar = ({ user, profile }: DashboardProps) => {
         />
       </div>
 
-      {isMobile && <MobileBottomNav onMenuClick={() => setMobileMenuOpen(true)} setSelected={setSelected} />}
+      {isMobile && <MobileBottomNav onMenuClick={() => setMobileMenuOpen(true)} />}
     </div>
   );
 };
