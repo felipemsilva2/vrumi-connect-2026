@@ -27,6 +27,7 @@ import { useIsAdmin } from "@/hooks/useIsAdmin";
 import { useActivePass } from "@/hooks/useActivePass";
 import { SmartBreadcrumb } from "@/components/SmartBreadcrumb";
 import { useTheme } from "@/components/ThemeProvider";
+import { MobileBottomNav } from "./MobileBottomNav";
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -388,12 +389,13 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
         )}
 
         {/* Main Content */}
-        <div className="flex-1 flex flex-col">
+        <div className="flex-1 flex flex-col pb-20 sm:pb-0">
           {/* Header */}
           <header className="sticky top-0 z-30 bg-background border-b border-border px-4 sm:px-6 py-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
-                {isMobile && (
+                {/* Hidden hamburger menu on mobile since we have bottom nav */}
+                {/* {isMobile && (
                   <button
                     onClick={() => setMobileMenuOpen(true)}
                     className="flex h-10 w-10 items-center justify-center rounded-lg border border-border bg-background text-muted-foreground hover:bg-accent/10"
@@ -401,7 +403,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
                   >
                     <Menu className="h-5 w-5" />
                   </button>
-                )}
+                )} */}
                 <div>
                   <h1 className="text-xl sm:text-2xl font-bold text-foreground">
                     {getPageTitle()}
@@ -437,6 +439,9 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
           </main>
         </div>
       </div >
+
+      {/* Mobile Bottom Navigation */}
+      {isMobile && <MobileBottomNav onMenuClick={() => setMobileMenuOpen(true)} />}
     </div >
   );
 };
