@@ -42,7 +42,7 @@ export default function LoginForm({
             <div className="hidden w-1/2 lg:block relative">
                 <img
                     className="absolute inset-0 h-full w-full object-cover"
-                    src="https://images.unsplash.com/photo-1449965408869-eaa3f722e40d?q=80&w=1000&auto=format&fit=crop"
+                    src="/login-illustration.png"
                     alt="Driving"
                 />
                 <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
@@ -92,7 +92,7 @@ export default function LoginForm({
                                 "flex items-center w-full bg-transparent border h-12 rounded-full overflow-hidden px-4 gap-2 transition-colors",
                                 errors.fullName && touched.fullName
                                     ? "border-red-500 focus-within:border-red-500"
-                                    : "border-gray-300 dark:border-gray-700 focus-within:border-indigo-500"
+                                    : "border-gray-300 dark:border-gray-700 focus-within:border-primary"
                             )}>
                                 <User className="w-5 h-5 text-gray-400" />
                                 <input
@@ -115,7 +115,7 @@ export default function LoginForm({
                             "flex items-center w-full bg-transparent border h-12 rounded-full overflow-hidden px-4 gap-2 transition-colors",
                             errors.email && touched.email
                                 ? "border-red-500 focus-within:border-red-500"
-                                : "border-gray-300 dark:border-gray-700 focus-within:border-indigo-500"
+                                : "border-gray-300 dark:border-gray-700 focus-within:border-primary"
                         )}>
                             <Mail className="w-5 h-5 text-gray-400" />
                             <input
@@ -138,7 +138,7 @@ export default function LoginForm({
                             "flex items-center w-full bg-transparent border h-12 rounded-full overflow-hidden px-4 gap-2 transition-colors",
                             errors.password && touched.password
                                 ? "border-red-500 focus-within:border-red-500"
-                                : "border-gray-300 dark:border-gray-700 focus-within:border-indigo-500"
+                                : "border-gray-300 dark:border-gray-700 focus-within:border-primary"
                         )}>
                             <Lock className="w-5 h-5 text-gray-400" />
                             <input
@@ -166,14 +166,14 @@ export default function LoginForm({
                     {!isLogin && (
                         <div className="w-full flex items-start gap-2 mt-4">
                             <input
-                                className="mt-1 h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                                className="mt-1 h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
                                 type="checkbox"
                                 id="terms"
                                 checked={termsAccepted}
                                 onChange={(e) => setTermsAccepted?.(e.target.checked)}
                             />
                             <label className="text-sm text-gray-500 dark:text-gray-400" htmlFor="terms">
-                                Eu concordo com os <a href="/terms" target="_blank" className="text-indigo-500 hover:underline">Termos de Uso</a> e <a href="/privacy" target="_blank" className="text-indigo-500 hover:underline">Política de Privacidade</a>
+                                Eu concordo com os <a href="/terms" target="_blank" className="text-primary hover:underline">Termos de Uso</a> e <a href="/privacy" target="_blank" className="text-primary hover:underline">Política de Privacidade</a>
                             </label>
                         </div>
                     )}
@@ -181,7 +181,7 @@ export default function LoginForm({
                     <div className="w-full flex items-center justify-between mt-4 text-gray-500 dark:text-gray-400">
                         <div className="flex items-center gap-2">
                             <input
-                                className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                                className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
                                 type="checkbox"
                                 id="remember"
                             />
@@ -191,7 +191,7 @@ export default function LoginForm({
                             <button
                                 type="button"
                                 onClick={onForgotPassword}
-                                className="text-sm underline hover:text-indigo-500 transition-colors"
+                                className="text-sm underline hover:text-primary transition-colors"
                             >
                                 Esqueceu a senha?
                             </button>
@@ -201,7 +201,7 @@ export default function LoginForm({
                     <Button
                         type="submit"
                         disabled={loading}
-                        className="mt-8 w-full h-12 rounded-full text-white bg-indigo-500 hover:bg-indigo-600 hover:opacity-90 transition-all text-base font-medium disabled:opacity-70 disabled:cursor-not-allowed"
+                        className="mt-8 w-full h-12 rounded-full text-white bg-primary hover:bg-primary/90 hover:opacity-90 transition-all text-base font-medium disabled:opacity-70 disabled:cursor-not-allowed"
                     >
                         {loading ? (
                             <><Loader2 className="w-5 h-5 mr-2 animate-spin" /> Processando...</>
@@ -215,7 +215,7 @@ export default function LoginForm({
                         <button
                             type="button"
                             onClick={toggleMode}
-                            className="text-indigo-500 hover:underline ml-1 font-medium"
+                            className="text-primary hover:underline ml-1 font-medium"
                         >
                             {isLogin ? "Cadastre-se" : "Entre agora"}
                         </button>
