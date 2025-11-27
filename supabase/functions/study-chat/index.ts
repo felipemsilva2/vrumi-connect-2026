@@ -15,7 +15,7 @@ const getCors = (req: Request) => {
 
 serve(async (req) => {
   console.log('study-chat function called');
-  
+
   const { headers: corsHeaders, allowed } = getCors(req);
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders, status: allowed ? 200 : 403 });
@@ -44,9 +44,9 @@ serve(async (req) => {
     const body = await req.json();
     const { message, pdfContext } = schema.parse(body);
     console.log('Message received:', message);
-    
+
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-    
+
     if (!LOVABLE_API_KEY) {
       console.error('LOVABLE_API_KEY is not configured');
       throw new Error('LOVABLE_API_KEY is not configured');
@@ -56,10 +56,16 @@ serve(async (req) => {
 
     const systemPrompt = `Você é um instrutor especialista em legislação de trânsito brasileira (CONTRAN/CTB). Suas respostas devem ser didáticas, curtas e focadas em ajudar o aluno a passar na prova teórica. Use **negrito** para destacar prazos e regras importantes.
 
-CONTEXTO DO MATERIAL DE ESTUDO:
+CONTEXTO ATUAL (O QUE O ALUNO ESTÁ VENDO AGORA):
 ${pdfContext}
 
-Baseie suas respostas no contexto acima quando relevante. Se a pergunta não tiver relação com o conteúdo, responda de forma educada e direcione o aluno para o material correto.`;
+INSTRUÇÕES CRÍTICAS:
+1. O aluno está visualizando uma página específica do PDF. Quando ele diz "nesta página", "aqui", "resuma isso" ou pede para "simplificar", ele se refere EXCLUSIVAMENTE ao conteúdo da página indicada no contexto acima.
+2. Se o contexto diz "O usuário está visualizando o PDF... na página X", mas não fornece o TEXTO da página, você deve responder com base no seu conhecimento GERAL sobre o assunto que costuma estar nessa página do "Manual de Obtenção da CNH" ou pedir para o aluno descrever o que vê se for algo muito específico (como uma imagem).
+3. Porém, o ideal é que você assuma que o aluno está na página indicada. Se a pergunta for "O que diz essa página?", e você não tem o texto exato extraído, faça uma suposição educada baseada na estrutura padrão do manual ou explique que precisa que ele leia um trecho para você.
+4. Se o contexto contiver o texto extraído da página (o que seria o ideal), baseie-se 100% nele.
+
+IMPORTANTE: Se o contexto for apenas "O usuário está visualizando o PDF 'X' na página Y", sem o texto do conteúdo, você DEVE informar ao aluno que não consegue "ler" o PDF diretamente, mas que pode tirar dúvidas sobre qualquer tema se ele disser o título ou o assunto da página.`;
 
     console.log('Calling AI gateway...');
 

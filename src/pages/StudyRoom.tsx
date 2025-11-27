@@ -8,9 +8,9 @@ import { ModernButton } from "@/components/ui/modern-button";
 import { ModernCard, ModernCardContent } from "@/components/ui/modern-card";
 import { cn } from "@/lib/utils";
 import { PDFViewer } from "@/components/study-room/PDFViewer";
-import MobilePDFReader from "@/components/study-room/MobilePDFReader";
 import { QuickActions } from "@/components/study-room/QuickActions";
 import { TextSelectionTooltip } from "@/components/study-room/TextSelectionTooltip";
+import PdfChatPreview from "@/components/study-room/PdfChatPreview";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useContextualNavigation } from "@/utils/navigation";
 import { useNavigate } from "react-router-dom";
@@ -48,10 +48,8 @@ export default function StudyRoom({ user, profile }: StudyRoomProps) {
   const [activeTab, setActiveTab] = useState<'pdf' | 'chat'>('pdf');
   const navigate = useNavigate();
   const homeRoute = useContextualNavigation();
-  const pdfViewerRef = useRef<{ getCurrentFile: () => string | null; getCurrentPage: () => number }>(null);
-  const [mobilePdfPage, setMobilePdfPage] = useState(1);
+  const pdfViewerRef = useRef<{ getCurrentFile: () => string | null; getCurrentPage: () => number; getPageText: () => string }>(null);
   const mobilePdfFile = "/materiais/MANUAL-OBTENCAO_2025.pdf";
-  const [mobilePdfFailed, setMobilePdfFailed] = useState(false);
 
   // Simplified - chat works without automatic PDF context extraction
   // Users can reference their PDF viewing manually
@@ -98,11 +96,12 @@ export default function StudyRoom({ user, profile }: StudyRoomProps) {
 
     try {
       // Note: PDF context extraction simplified - users can reference content manually
-      const currentFile = isMobile ? mobilePdfFile : pdfViewerRef.current?.getCurrentFile();
-      const currentPage = isMobile ? mobilePdfPage : (pdfViewerRef.current?.getCurrentPage() || 1);
-      
-      const pdfContext = currentFile 
-        ? `O usuário está visualizando o PDF "${currentFile}" na página ${currentPage}.`
+      const currentFile = pdfViewerRef.current?.getCurrentFile() || (isMobile ? mobilePdfFile : null);
+      const currentPage = pdfViewerRef.current?.getCurrentPage() || 1;
+      const pageText = pdfViewerRef.current?.getPageText ? pdfViewerRef.current.getPageText() : "";
+
+      const pdfContext = currentFile
+        ? `O usuário está visualizando o PDF "${currentFile}" na página ${currentPage}.\n\nCONTEÚDO DA PÁGINA:\n${pageText}`
         : "Nenhum PDF carregado.";
 
       // Chamar edge function
@@ -129,7 +128,7 @@ export default function StudyRoom({ user, profile }: StudyRoomProps) {
       };
 
       setMessages((prev) => [...prev, aiResponse]);
-      
+
       // Save AI response to database
       await saveMessage(aiResponse);
     } catch (error) {
@@ -137,12 +136,12 @@ export default function StudyRoom({ user, profile }: StudyRoomProps) {
         operation: 'enviar mensagem',
         component: 'StudyRoom'
       });
-      
+
       toast.error(errorInfo.title, {
         description: errorInfo.message,
         duration: 5000,
       });
-      
+
       console.error("Erro ao enviar mensagem:", error);
     } finally {
       setIsLoading(false);
@@ -159,21 +158,21 @@ export default function StudyRoom({ user, profile }: StudyRoomProps) {
   const handleQuickAction = async (prompt: string) => {
     // Set the input value and send the message
     setInputValue(prompt);
-    
+
     // Use setTimeout to ensure the input value is set before sending
     setTimeout(() => {
       // Create a synthetic event to trigger handleSendMessage
-      const syntheticEvent = { preventDefault: () => {} } as React.FormEvent;
+      const syntheticEvent = { preventDefault: () => { } } as React.FormEvent;
       handleSendMessage();
     }, 0);
   };
 
   const handleTextExplanation = async (selectedText: string) => {
     const explanationPrompt = `Me explique este trecho da lei: ${selectedText}`;
-    
+
     // Set the input value and send the message
     setInputValue(explanationPrompt);
-    
+
     // Use setTimeout to ensure the input value is set before sending
     setTimeout(() => {
       handleSendMessage();
@@ -183,9 +182,9 @@ export default function StudyRoom({ user, profile }: StudyRoomProps) {
   // Function to create or get current chat session
   const getOrCreateSession = async (): Promise<string> => {
     if (!userId) throw new Error('User not authenticated');
-    
+
     if (sessionId) return sessionId;
-    
+
     // Create a new session
     const { data, error } = await supabase
       .from('chat_sessions')
@@ -195,9 +194,9 @@ export default function StudyRoom({ user, profile }: StudyRoomProps) {
       })
       .select()
       .single();
-    
+
     if (error) throw error;
-    
+
     setSessionId(data.id);
     return data.id;
   };
@@ -205,10 +204,10 @@ export default function StudyRoom({ user, profile }: StudyRoomProps) {
   // Function to save message to database
   const saveMessage = async (message: Message): Promise<void> => {
     if (!userId) return;
-    
+
     try {
       const session_id = await getOrCreateSession();
-      
+
       const { error } = await supabase
         .from('chat_messages')
         .insert({
@@ -217,7 +216,7 @@ export default function StudyRoom({ user, profile }: StudyRoomProps) {
           role: message.role,
           content: message.content
         });
-      
+
       if (error) throw error;
     } catch (error) {
       console.error('Error saving message:', error);
@@ -231,7 +230,7 @@ export default function StudyRoom({ user, profile }: StudyRoomProps) {
       setIsLoadingHistory(false);
       return;
     }
-    
+
     try {
       // Get the most recent session
       const { data: sessionData, error: sessionError } = await supabase
@@ -241,21 +240,21 @@ export default function StudyRoom({ user, profile }: StudyRoomProps) {
         .order('created_at', { ascending: false })
         .limit(1)
         .maybeSingle();
-      
+
       if (sessionError) throw sessionError;
-      
+
       if (sessionData) {
         setSessionId(sessionData.id);
-        
+
         // Load messages from this session
         const { data: messagesData, error: messagesError } = await supabase
           .from('chat_messages')
           .select('*')
           .eq('session_id', sessionData.id)
           .order('timestamp', { ascending: true });
-        
+
         if (messagesError) throw messagesError;
-        
+
         if (messagesData && messagesData.length > 0) {
           const loadedMessages: Message[] = messagesData.map(msg => ({
             id: msg.id,
@@ -265,7 +264,7 @@ export default function StudyRoom({ user, profile }: StudyRoomProps) {
             session_id: msg.session_id,
             user_id: msg.user_id
           }));
-          
+
           setMessages(loadedMessages);
         }
       }
@@ -280,19 +279,19 @@ export default function StudyRoom({ user, profile }: StudyRoomProps) {
   // Function to clear chat history
   const clearChatHistory = async (): Promise<void> => {
     if (!userId || !sessionId) return;
-    
+
     try {
       // Delete all messages from current session
       const { error } = await supabase
         .from('chat_messages')
         .delete()
         .eq('session_id', sessionId);
-      
+
       if (error) throw error;
-      
+
       // Clear local messages
       setMessages([]);
-      
+
       toast.success('Histórico de chat limpo com sucesso!');
     } catch (error) {
       const errorInfo = getErrorMessage(error, {
@@ -308,188 +307,23 @@ export default function StudyRoom({ user, profile }: StudyRoomProps) {
   return (
     <div className="w-full">
       <SubscriptionGate feature="Sala de Estudos">
-      <div className="min-h-svh bg-muted/30">
-
-      {/* Conteúdo Principal */}
-      <div className="mx-auto max-w-[1400px] w-full px-3 sm:px-4 lg:px-6 py-4 sm:py-6">
-        <ModernCard 
-          className={cn(
-            "overflow-hidden",
-            isMobile ? "flex flex-col min-h-[calc(100svh-140px)]" : "flex gap-4 min-h-[600px] h-[calc(100vh-140px)]"
-          )}
-          variant="elevated"
-        >
-          {isMobile ? (
-            <>
-              <div className="flex gap-2 p-3 border-b">
-                <ModernButton 
-                  variant={activeTab === 'pdf' ? 'default' : 'outline'} 
-                  className="flex-1 h-12" 
-                  onClick={() => setActiveTab('pdf')}
-                  size="lg"
-                >
-                  PDF
-                </ModernButton>
-                <ModernButton 
-                  variant={activeTab === 'chat' ? 'default' : 'outline'} 
-                  className="flex-1 h-12" 
-                  onClick={() => setActiveTab('chat')}
-                  size="lg"
-                >
-                  Chat
-                </ModernButton>
-              </div>
-              {activeTab === 'pdf' ? (
-                <div className="w-full flex-1">
-                  <object data={mobilePdfFile} type="application/pdf" className="w-full h-[80vh]">
-                    <embed src={mobilePdfFile} type="application/pdf" className="w-full h-full" />
-                    <div className="p-4 text-sm text-muted-foreground">
-                      Não foi possível exibir o PDF inline neste navegador.
-                      <a href={mobilePdfFile} target="_blank" rel="noopener noreferrer" className="ml-2 text-primary underline">Abrir em nova guia</a>
-                    </div>
-                  </object>
-                </div>
-              ) : (
-                <div className="flex flex-col bg-background w-full flex-1">
-                  <div className="border-b border-border">
-                    <div className="flex items-center justify-between p-3">
-                      <h3 className="text-sm font-semibold text-muted-foreground">Chat com IA</h3>
-                      {messages.length > 0 && (
-                        <ModernButton 
-                          variant="ghost" 
-                          size="sm" 
-                          onClick={clearChatHistory} 
-                          className="h-8 px-2 text-muted-foreground hover:text-foreground" 
-                          title="Limpar histórico do chat"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </ModernButton>
-                      )}
-                    </div>
-                    <QuickActions onQuickAction={handleQuickAction} className="border-t border-border" />
-                  </div>
-                  <ScrollArea className="flex-1 p-3 study-room-scrollbar">
-                    <div className="space-y-3">
-                      {isLoadingHistory ? (
-                        <div className="flex items-center justify-center h-full text-muted-foreground">
-                          <div className="text-center">
-                            <Loader2 className="h-6 w-6 animate-spin mx-auto mb-2" />
-                            <p className="text-sm">Carregando histórico...</p>
-                          </div>
-                        </div>
-                      ) : messages.length === 0 ? (
-                        <div className="flex items-center justify-center h-full text-muted-foreground">
-                          <p className="text-sm">Faça uma pergunta para começar</p>
-                        </div>
-                      ) : (
-                        messages.map((message) => (
-                          <div key={message.id} className={cn("flex", message.role === "user" ? "justify-end" : "justify-start")}> 
-                            <div className={cn("max-w-[85%] rounded-lg px-3 py-2", message.role === "user" ? "bg-primary text-primary-foreground" : "bg-muted text-foreground")}> 
-                              {message.role === "assistant" ? (
-                                <div className="text-xs prose prose-sm max-w-none dark:prose-invert">
-                                  <ReactMarkdown>{message.content}</ReactMarkdown>
-                                </div>
-                              ) : (
-                                <p className="text-xs whitespace-pre-wrap break-words">{message.content}</p>
-                              )}
-                              <p className="text-[10px] opacity-70 mt-1">{message.timestamp.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</p>
-                            </div>
-                          </div>
-                        ))
-                      )}
-                    </div>
-                  </ScrollArea>
-                  <div className="border-t border-border p-3 bg-background pb-safe">
-                    <div className="flex gap-2">
-                      <Input value={inputValue} onChange={(e) => setInputValue(e.target.value)} onKeyPress={handleKeyPress} placeholder="Digite sua pergunta..." className="flex-1 text-sm" />
-                      <ModernButton 
-                        onClick={handleSendMessage} 
-                        disabled={!inputValue.trim() || isLoading} 
-                        className="bg-primary hover:bg-primary/90 shrink-0 h-12"
-                        size="lg"
-                      >
-                        {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-                      </ModernButton>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </>
-          ) : (
-            <>
-              <PDFViewer ref={pdfViewerRef} className={cn("study-room-scrollbar w-1/2 border-r")} />
-              <div className="flex flex-col bg-background w-1/2">
-                <div className="border-b border-border">
-                  <div className="flex items-center justify-between p-4">
-                    <h3 className="text-sm font-semibold text-muted-foreground">Chat com IA</h3>
-                    {messages.length > 0 && (
-                      <ModernButton 
-                        variant="ghost" 
-                        size="sm" 
-                        onClick={clearChatHistory} 
-                        className="h-8 px-2 text-muted-foreground hover:text-foreground" 
-                        title="Limpar histórico do chat"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </ModernButton>
-                    )}
-                  </div>
-                  <QuickActions onQuickAction={handleQuickAction} className="border-t border-border" />
-                </div>
-                <ScrollArea className="flex-1 p-4 study-room-scrollbar">
-                  <div className="space-y-4">
-                    {isLoadingHistory ? (
-                      <div className="flex items-center justify-center h-full text-muted-foreground">
-                        <div className="text-center">
-                          <Loader2 className="h-6 w-6 animate-spin mx-auto mb-2" />
-                          <p className="text-sm">Carregando histórico...</p>
-                        </div>
-                      </div>
-                    ) : messages.length === 0 ? (
-                      <div className="flex items-center justify-center h-full text-muted-foreground">
-                        <p className="text-base">Faça uma pergunta para começar</p>
-                      </div>
-                    ) : (
-                      messages.map((message) => (
-                        <div key={message.id} className={cn("flex", message.role === "user" ? "justify-end" : "justify-start")}> 
-                          <div className={cn("max-w-[80%] rounded-lg px-4 py-2", message.role === "user" ? "bg-primary text-primary-foreground" : "bg-muted text-foreground")}> 
-                            {message.role === "assistant" ? (
-                              <div className="text-sm prose prose-sm max-w-none dark:prose-invert">
-                                <ReactMarkdown>{message.content}</ReactMarkdown>
-                              </div>
-                            ) : (
-                              <p className="text-sm whitespace-pre-wrap break-words">{message.content}</p>
-                            )}
-                            <p className="text-xs opacity-70 mt-1">{message.timestamp.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</p>
-                          </div>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                </ScrollArea>
-                <div className="border-t border-border p-4 bg-background">
-                  <div className="flex gap-2">
-                    <Input value={inputValue} onChange={(e) => setInputValue(e.target.value)} onKeyPress={handleKeyPress} placeholder="Digite sua pergunta..." className="flex-1" />
-                    <ModernButton 
-                      onClick={handleSendMessage} 
-                      disabled={!inputValue.trim() || isLoading} 
-                      className="bg-primary hover:bg-primary/90 shrink-0 h-12"
-                      size="lg"
-                    >
-                      {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-                    </ModernButton>
-                  </div>
-                </div>
-              </div>
-            </>
-          )}
-        </ModernCard>
-      </div>
-      
-      {/* Tooltip de seleção de texto */}
-      <TextSelectionTooltip onExplain={handleTextExplanation} />
-    </div>
-    </SubscriptionGate>
+        <PdfChatPreview
+          messages={messages}
+          isLoading={isLoading}
+          isLoadingHistory={isLoadingHistory}
+          inputValue={inputValue}
+          setInputValue={setInputValue}
+          handleSendMessage={handleSendMessage}
+          handleKeyPress={handleKeyPress}
+          handleQuickAction={handleQuickAction}
+          clearChatHistory={clearChatHistory}
+          pdfViewerRef={pdfViewerRef}
+          isMobile={isMobile}
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+        />
+        <TextSelectionTooltip onExplain={handleTextExplanation} />
+      </SubscriptionGate>
     </div>
   );
 }
