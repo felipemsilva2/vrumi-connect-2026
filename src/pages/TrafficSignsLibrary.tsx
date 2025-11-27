@@ -19,6 +19,7 @@ import TimedChallenge from '@/components/traffic-signs/TimedChallenge';
 import StudyModeModal from '@/components/study/StudyModeModal';
 import StudyModeButtons from '@/components/study/StudyModeButtons';
 import { SubscriptionGate } from '@/components/auth/SubscriptionGate';
+import LazyImage from '@/components/traffic-signs/LazyImage';
 
 interface TrafficSign {
   id: string;
@@ -111,7 +112,7 @@ export default function TrafficSignsLibrary({ user, profile }: TrafficSignsLibra
     }
 
     if (searchTerm) {
-      filtered = filtered.filter(sign => 
+      filtered = filtered.filter(sign =>
         sign.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         sign.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
         sign.description.toLowerCase().includes(searchTerm.toLowerCase())
@@ -142,11 +143,11 @@ export default function TrafficSignsLibrary({ user, profile }: TrafficSignsLibra
 
       // Get signs for the current category
       let signsToUse = filteredSigns;
-      
+
       if (selectedCategory !== 'Todas') {
         signsToUse = filteredSigns.filter(sign => sign.category === selectedCategory);
       }
-      
+
       setFlashcardSigns(signsToUse);
       setFlashcardMode(true);
     } catch (error) {
@@ -169,16 +170,16 @@ export default function TrafficSignsLibrary({ user, profile }: TrafficSignsLibra
   return (
     <SubscriptionGate feature="Biblioteca de Placas">
       <div className="w-full">
-      {/* Sticky Header */}
-      <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm border-b border-border p-4 sm:p-6 mb-4">
-        <div className="mb-4">
-          <h1 className="text-3xl font-bold text-foreground mb-2">
-            Biblioteca de Placas
-          </h1>
-          <p className="text-muted-foreground">
-            Consulte todas as placas de trânsito brasileiras organizadas por categoria
-          </p>
-        </div>
+        {/* Sticky Header */}
+        <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm border-b border-border p-4 sm:p-6 mb-4">
+          <div className="mb-4">
+            <h1 className="text-3xl font-bold text-foreground mb-2">
+              Biblioteca de Placas
+            </h1>
+            <p className="text-muted-foreground">
+              Consulte todas as placas de trânsito brasileiras organizadas por categoria
+            </p>
+          </div>
 
           {/* Search and Filters */}
           <ModernCard className="mb-6 shadow-lg" variant="elevated">
@@ -368,13 +369,11 @@ export default function TrafficSignsLibrary({ user, profile }: TrafficSignsLibra
                   <ModernCardContent>
                     <div className="aspect-square bg-gradient-to-br from-muted/50 to-muted rounded-xl mb-4 flex items-center justify-center overflow-hidden border border-border/50">
                       {sign.image_url ? (
-                        <img
+                        <LazyImage
                           src={sign.image_url}
                           alt={sign.name}
                           className="w-full h-full object-cover hover:scale-110 transition-transform duration-300"
-                          onError={(e) => {
-                            e.currentTarget.src = `https://via.placeholder.com/300x300/e5e7eb/6b7280?text=${encodeURIComponent(sign.code)}`;
-                          }}
+                          placeholder={`https://via.placeholder.com/300x300/e5e7eb/6b7280?text=${encodeURIComponent(sign.code)}`}
                         />
                       ) : (
                         <div className="text-muted-foreground text-4xl font-bold bg-gradient-to-br from-primary/10 to-primary/5 rounded-lg p-8">
@@ -456,19 +455,17 @@ export default function TrafficSignsLibrary({ user, profile }: TrafficSignsLibra
                 {selectedSign?.name}
               </DialogDescription>
             </DialogHeader>
-            
+
             {selectedSign && (
               <div className="space-y-6">
                 {/* Image */}
                 <div className="aspect-square bg-gradient-to-br from-muted/30 to-muted rounded-2xl flex items-center justify-center overflow-hidden border border-border/50 shadow-lg">
                   {selectedSign.image_url ? (
-                    <img
+                    <LazyImage
                       src={selectedSign.image_url}
                       alt={selectedSign.name}
                       className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
-                      onError={(e) => {
-                        e.currentTarget.src = `https://via.placeholder.com/400x400/e5e7eb/6b7280?text=${encodeURIComponent(selectedSign.code)}`;
-                      }}
+                      placeholder={`https://via.placeholder.com/400x400/e5e7eb/6b7280?text=${encodeURIComponent(selectedSign.code)}`}
                     />
                   ) : (
                     <div className="text-muted-foreground text-7xl font-bold bg-gradient-to-br from-primary/10 to-primary/5 rounded-2xl p-12">
