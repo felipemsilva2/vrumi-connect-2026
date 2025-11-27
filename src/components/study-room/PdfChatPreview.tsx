@@ -127,7 +127,7 @@ export default function PdfChatPreview({
                     <div
                         ref={leftRef}
                         style={{ width: isMobile ? '100%' : `${leftWidth}%`, display: isMobile && activeTab !== 'pdf' ? 'none' : 'block' }}
-                        className="pdf-panel relative h-full overflow-hidden border-r bg-white dark:bg-card"
+                        className="pdf-panel relative h-full overflow-hidden sm:border-r bg-white dark:bg-card"
                         // stop text selection when resizing
                         onMouseDown={(e) => { if (isDragging) e.preventDefault(); }}
                     >
@@ -143,7 +143,7 @@ export default function PdfChatPreview({
                             ref={resizerRef}
                             onMouseDown={() => setIsDragging(true)}
                             onTouchStart={() => setIsDragging(true)}
-                            className={`resizer z-20 flex items-center justify-center cursor-col-resize select-none bg-transparent hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors w-3 -ml-1.5 h-full absolute`}
+                            className={`resizer z-20 hidden sm:flex items-center justify-center cursor-col-resize select-none bg-transparent hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors w-3 -ml-1.5 h-full absolute`}
                             style={{ left: `${leftWidth}%` }}
                         >
                             <div className={`w-[4px] h-16 bg-gray-300 dark:bg-gray-600 rounded-full ${isDragging ? 'bg-indigo-500 dark:bg-indigo-400' : ''}`}></div>
@@ -153,12 +153,16 @@ export default function PdfChatPreview({
                     {/* Right: Chat panel */}
                     <div
                         ref={rightRef}
-                        style={{ width: isMobile ? '100%' : `${100 - leftWidth}%`, display: isMobile && activeTab !== 'chat' ? 'none' : 'flex' }}
-                        className="chat-panel flex-col h-full bg-white dark:bg-card w-full"
+                        style={{
+                            width: isMobile ? '100%' : `${100 - leftWidth}%`,
+                            display: isMobile && activeTab !== 'chat' ? 'none' : 'flex',
+                            maxWidth: '100%'
+                        }}
+                        className="chat-panel flex-col h-full bg-white dark:bg-card w-full overflow-hidden min-w-0"
                     >
-                        <div className="flex flex-col h-full">
+                        <div className="flex flex-col h-full min-w-0 w-full max-w-full">
                             {/* Quick action buttons */}
-                            <div className="border-b dark:border-border shrink-0">
+                            <div className="border-b dark:border-border shrink-0 w-full max-w-full overflow-hidden">
                                 <div className="flex items-center justify-between px-4 pt-3 pb-1">
                                     <h3 className="text-sm font-semibold text-muted-foreground">Chat com IA</h3>
                                     {messages.length > 0 && (
@@ -173,7 +177,7 @@ export default function PdfChatPreview({
                                         </ModernButton>
                                     )}
                                 </div>
-                                <QuickActions onQuickAction={handleQuickAction} className="border-none" />
+                                <QuickActions onQuickAction={handleQuickAction} className="border-none w-full max-w-full" />
                             </div>
 
                             {/* Chat messages */}
@@ -199,11 +203,11 @@ export default function PdfChatPreview({
                                             <div key={message.id} className={cn("flex", message.role === "user" ? "justify-end" : "justify-start")}>
                                                 <div className={cn("max-w-[85%] rounded-2xl px-5 py-3 shadow-sm", message.role === "user" ? "bg-primary text-primary-foreground rounded-br-none" : "bg-muted/50 text-foreground border border-border/50 rounded-bl-none")}>
                                                     {message.role === "assistant" ? (
-                                                        <div className="text-sm prose prose-sm max-w-none dark:prose-invert">
+                                                        <div className="text-sm prose prose-sm max-w-none dark:prose-invert break-words overflow-hidden [&>pre]:overflow-x-auto [&>pre]:max-w-full [&>code]:break-all">
                                                             <ReactMarkdown>{message.content}</ReactMarkdown>
                                                         </div>
                                                     ) : (
-                                                        <p className="text-sm whitespace-pre-wrap break-words">{message.content}</p>
+                                                        <p className="text-sm whitespace-pre-wrap break-words overflow-hidden">{message.content}</p>
                                                     )}
                                                     <p className="text-[10px] opacity-70 mt-1.5 text-right">{message.timestamp.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</p>
                                                 </div>
@@ -260,13 +264,6 @@ export default function PdfChatPreview({
 
         /* Prevent iframe from shifting layout during hover */
         .pdf-panel iframe { pointer-events: auto; }
-
-        /* Responsive: stack panels on small screens */
-        @media (max-width: 900px) {
-          .pdf-panel { width: 100% !important; }
-          .chat-panel { width: 100% !important; }
-          .resizer { display: none; }
-        }
       `}</style>
         </div>
     );

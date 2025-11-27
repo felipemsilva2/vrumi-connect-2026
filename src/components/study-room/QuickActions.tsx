@@ -39,37 +39,39 @@ export function QuickActions({ onQuickAction, className }: QuickActionsProps) {
   ];
 
   return (
-    <div className={cn("p-3 sm:p-4 bg-transparent border-b border-border", className)}>
+    <div className={cn("w-full bg-transparent border-b border-border", className)}>
       {/* Mobile: Horizontal Scroll | Desktop: Flex Wrap */}
-      <div className="flex overflow-x-auto pb-2 sm:pb-0 sm:flex-wrap gap-2 sm:gap-3 snap-x snap-mandatory scrollbar-hide -mx-3 px-3 sm:mx-0 sm:px-0">
-        {actions.map((action, index) => (
-          <Button
-            key={index}
-            onClick={() => onQuickAction(action.prompt)}
-            variant="ghost"
-            className={cn(
-              "snap-center shrink-0 w-[140px] sm:w-auto sm:flex-1 sm:min-w-[140px]", // Mobile fixed width, Desktop flexible
-              "flex flex-col items-start justify-between p-3 sm:p-4 h-auto rounded-xl",
-              "border-b-4 active:border-b-0 active:translate-y-1", // 3D effect
-              "transition-all duration-200 hover:scale-[1.02] shadow-md sm:shadow-lg",
-              action.className
-            )}
-          >
-            <div className="flex flex-col items-start gap-2 w-full">
-              <div className="p-1.5 sm:p-2 rounded-lg bg-white/20 backdrop-blur-sm">
-                <action.icon className={cn("h-4 w-4 sm:h-5 sm:w-5", action.iconClassName)} />
+      <div className="w-full overflow-x-auto pb-2 sm:pb-0 scrollbar-hide">
+        <div className="flex sm:flex-wrap gap-2 sm:gap-3 px-3 sm:px-4 py-3 sm:py-4">
+          {actions.map((action, index) => (
+            <Button
+              key={index}
+              onClick={() => onQuickAction(action.prompt)}
+              variant="ghost"
+              className={cn(
+                "shrink-0 w-[100px] sm:w-auto sm:flex-1 sm:min-w-[140px]", // Mobile fixed width (smaller), Desktop flexible
+                "flex flex-col items-start justify-between p-2 sm:p-4 h-auto rounded-xl",
+                "border-b-4 active:border-b-0 active:translate-y-1", // 3D effect
+                "transition-all duration-200 hover:scale-[1.02] shadow-md sm:shadow-lg",
+                action.className
+              )}
+            >
+              <div className="flex flex-col items-start gap-1.5 w-full">
+                <div className="p-1 sm:p-2 rounded-lg bg-white/20 backdrop-blur-sm">
+                  <action.icon className={cn("h-3.5 w-3.5 sm:h-5 sm:w-5", action.iconClassName)} />
+                </div>
+                <span className="text-[10px] sm:text-base font-black tracking-wide drop-shadow-md uppercase w-full text-left whitespace-normal leading-3 sm:leading-none" style={{ textShadow: '0px 1px 2px rgba(0,0,0,0.3)' }}>
+                  {action.label}
+                </span>
               </div>
-              <span className="text-xs sm:text-base font-black tracking-wide drop-shadow-md uppercase truncate w-full text-left" style={{ textShadow: '0px 1px 2px rgba(0,0,0,0.3)' }}>
-                {action.label}
-              </span>
-            </div>
-            <div className="text-left w-full mt-1 hidden sm:block">
-              <span className="text-xs text-white/90 font-medium line-clamp-2">{action.description}</span>
-            </div>
-          </Button>
-        ))}
+              <div className="text-left w-full mt-1 hidden sm:block">
+                <span className="text-xs text-white/90 font-medium line-clamp-2">{action.description}</span>
+              </div>
+            </Button>
+          ))}
+        </div>
       </div>
-      <p className="text-[10px] sm:text-xs text-muted-foreground text-center mt-2 sm:mt-4 font-medium">
+      <p className="text-[10px] sm:text-xs text-muted-foreground text-center pb-2 sm:pb-4 sm:mt-0 font-medium px-4">
         Ações rápidas baseadas na página atual
       </p>
     </div>
