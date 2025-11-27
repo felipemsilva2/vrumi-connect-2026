@@ -53,7 +53,7 @@ const Dashboard = () => {
   }, [navigate]);
 
   const checkUser = async () => {
-    if (!isSupabaseConfigured || !navigator.onLine) {
+    if (!isSupabaseConfigured) {
       setIsLoading(false);
       return;
     }

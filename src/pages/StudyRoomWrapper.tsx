@@ -26,7 +26,7 @@ const StudyRoomWrapper = () => {
   }, [navigate]);
 
   const checkUser = async () => {
-    if (!isSupabaseConfigured || !navigator.onLine) {
+    if (!isSupabaseConfigured) {
       setIsLoading(false);
       return;
     }
@@ -102,7 +102,7 @@ const StudyRoomWrapper = () => {
     );
   }
 
-  if (!user || !profile) {
+  if (!user) {
     return null;
   }
 
