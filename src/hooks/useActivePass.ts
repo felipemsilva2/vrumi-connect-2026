@@ -12,44 +12,13 @@ export const useActivePass = (userId: string | undefined) => {
   const [hasActivePass, setHasActivePass] = useState(false);
   const [activePass, setActivePass] = useState<ActivePass | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [checkedUserId, setCheckedUserId] = useState<string | undefined>(undefined);
 
-  useEffect(() => {
+  const checkActivePass = async () => {
     if (!userId || !isSupabaseConfigured || !navigator.onLine) {
       setIsLoading(false);
       return;
     }
-
-    checkActivePass();
-
-    // Set up real-time subscription (guard if Realtime not available)
-    let channel: any = null;
-    if (typeof (supabase as any).channel === 'function') {
-      channel = (supabase as any)
-        .channel('user_passes_changes')
-        .on(
-          'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table: 'user_passes',
-            filter: `user_id=eq.${userId}`
-          },
-          () => {
-            checkActivePass();
-          }
-        )
-        .subscribe();
-    }
-
-    return () => {
-      if (channel) {
-        (supabase as any).removeChannel(channel);
-      }
-    };
-  }, [userId]);
-
-  const checkActivePass = async () => {
-    if (!userId || !isSupabaseConfigured || !navigator.onLine) return;
 
     try {
       const query = supabase
@@ -85,6 +54,45 @@ export const useActivePass = (userId: string | undefined) => {
     }
   };
 
+  useEffect(() => {
+    if (!userId || !isSupabaseConfigured || !navigator.onLine) {
+      setIsLoading(false);
+      setCheckedUserId(userId);
+      return;
+    }
+
+    setIsLoading(true);
+    checkActivePass().then(() => {
+      setCheckedUserId(userId);
+    });
+
+    // Set up real-time subscription (guard if Realtime not available)
+    let channel: any = null;
+    if (typeof (supabase as any).channel === 'function') {
+      channel = (supabase as any)
+        .channel('user_passes_changes')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'user_passes',
+            filter: `user_id=eq.${userId}`
+          },
+          () => {
+            checkActivePass();
+          }
+        )
+        .subscribe();
+    }
+
+    return () => {
+      if (channel) {
+        (supabase as any).removeChannel(channel);
+      }
+    };
+  }, [userId]);
+
   const getDaysRemaining = (): number => {
     if (!activePass) return 0;
     const now = new Date();
@@ -94,10 +102,13 @@ export const useActivePass = (userId: string | undefined) => {
     return Math.max(0, diffDays);
   };
 
+  // If the userId prop doesn't match the checkedUserId in state, we are technically loading.
+  const isEffectiveLoading = isLoading || checkedUserId !== userId;
+
   return {
     hasActivePass,
     activePass,
-    isLoading,
+    isLoading: isEffectiveLoading,
     daysRemaining: getDaysRemaining(),
     refresh: checkActivePass
   };

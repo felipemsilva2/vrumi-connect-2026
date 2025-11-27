@@ -14,6 +14,12 @@ const Index = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
+  React.useLayoutEffect(() => {
+    // Force light mode for landing page
+    document.documentElement.classList.remove("dark");
+    document.documentElement.classList.add("light");
+  }, []);
+
   React.useEffect(() => {
     if (location.state && location.state.scrollTo) {
       const element = document.getElementById(location.state.scrollTo);

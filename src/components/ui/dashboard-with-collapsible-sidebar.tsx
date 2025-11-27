@@ -63,6 +63,20 @@ export const DashboardWithSidebar = ({ user, profile }: DashboardProps) => {
   const { isAdmin } = useIsAdmin(user?.id);
   const { hasActivePass, activePass } = useActivePass(user?.id);
 
+  // Restore theme preference when mounting dashboard
+  React.useLayoutEffect(() => {
+    const root = window.document.documentElement;
+    root.classList.remove("light", "dark");
+    if (theme === "system") {
+      const systemTheme = window.matchMedia("(prefers-color-scheme: dark)").matches
+        ? "dark"
+        : "light";
+      root.classList.add(systemTheme);
+    } else {
+      root.classList.add(theme);
+    }
+  }, [theme]);
+
   // Sincroniza a aba selecionada com a URL
   useEffect(() => {
     const params = new URLSearchParams(location.search);
