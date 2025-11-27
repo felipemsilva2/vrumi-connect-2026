@@ -3,309 +3,168 @@
 @tailwind utilities;
 
 @layer base {
-  :root {
-    /* Apple-like Design System Tokens */
+    :root {
+        /* Apple-like Design System Tokens */
 
-    /* Base Colors - Clean White & Soft Grays */
-    --background: 0 0% 100%;
-    --foreground: 240 10% 3.9%;
+        /* Base Colors - Clean White & Soft Grays */
+        --background: 0 0% 100%;
+        --foreground: 240 10% 3.9%;
 
-    /* Card & Surfaces - Subtle distinction */
-    --card: 0 0% 100%;
-    --card-foreground: 240 10% 3.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 240 10% 3.9%;
+        /* Card & Surfaces - Subtle distinction */
+        --card: 0 0% 100%;
+        --card-foreground: 240 10% 3.9%;
+        --popover: 0 0% 100%;
+        --popover-foreground: 240 10% 3.9%;
 
-    /* Primary - Emerald Green (Vrumi Brand) */
-    --primary: 160 84% 39%;
-    /* #10b981 */
-    --primary-foreground: 0 0% 100%;
+        /* Primary - Emerald Green (Vrumi Brand) */
+        --primary: 160 84% 39%;
+        /* #10b981 */
+        --primary-foreground: 0 0% 100%;
 
-    /* Secondary - Subtle Gray */
-    --secondary: 240 4.8% 95.9%;
-    --secondary-foreground: 240 5.9% 10%;
+        /* Secondary - Subtle Gray */
+        --secondary: 240 4.8% 95.9%;
+        --secondary-foreground: 240 5.9% 10%;
 
-    /* Muted - For de-emphasized text */
-    --muted: 240 4.8% 95.9%;
-    --muted-foreground: 240 3.8% 46.1%;
+        /* Muted - For de-emphasized text */
+        --muted: 240 4.8% 95.9%;
+        --muted-foreground: 240 3.8% 46.1%;
 
-    /* Accent - For highlights */
-    --accent: 240 4.8% 95.9%;
-    --accent-foreground: 240 5.9% 10%;
+        /* Accent - For highlights */
+        --accent: 240 4.8% 95.9%;
+        --accent-foreground: 240 5.9% 10%;
 
-    /* Destructive - Error states */
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
+        /* Destructive - Error states */
+        --destructive: 0 84.2% 60.2%;
+        --destructive-foreground: 0 0% 98%;
 
-    /* Borders & Inputs */
-    --border: 240 5.9% 90%;
-    --input: 240 5.9% 90%;
-    --ring: 240 5.9% 10%;
+        /* Borders & Inputs */
+        --border: 240 5.9% 90%;
+        --input: 240 5.9% 90%;
+        --ring: 240 5.9% 10%;
 
-    /* Radius - Larger, softer corners */
-    --radius: 0.75rem;
+        /* Radius - Larger, softer corners */
+        --radius: 0.75rem;
 
-    /* Shadows - Soft, diffused */
-    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-    --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
-    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-  }
+        /* Shadows - Soft, diffused */
+        --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+        --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+        --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+    }
 
-  .dark {
-    /* Dark Mode - Deep Grays, not pure black */
-    --background: 240 10% 3.9%;
-    --foreground: 0 0% 98%;
+    .dark {
+        /* Dark Mode - Deep Grays, not pure black */
+        --background: 240 10% 3.9%;
+        --foreground: 0 0% 98%;
 
-    --card: 240 10% 3.9%;
-    --card-foreground: 0 0% 98%;
+        --card: 240 10% 3.9%;
+        --card-foreground: 0 0% 98%;
 
-    --popover: 240 10% 3.9%;
-    --popover-foreground: 0 0% 98%;
+        --popover: 240 10% 3.9%;
+        --popover-foreground: 0 0% 98%;
 
-    --primary: 160 84% 39%;
-    --primary-foreground: 0 0% 100%;
+        --primary: 160 84% 39%;
+        --primary-foreground: 0 0% 100%;
 
-    --secondary: 240 3.7% 15.9%;
-    --secondary-foreground: 0 0% 98%;
+        --secondary: 240 3.7% 15.9%;
+        --secondary-foreground: 0 0% 98%;
 
-    --muted: 240 3.7% 15.9%;
-    --muted-foreground: 240 5% 64.9%;
+        --muted: 240 3.7% 15.9%;
+        --muted-foreground: 240 5% 64.9%;
 
-    --accent: 240 3.7% 15.9%;
-    --accent-foreground: 0 0% 98%;
+        --accent: 240 3.7% 15.9%;
+        --accent-foreground: 0 0% 98%;
 
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
+        --destructive: 0 62.8% 30.6%;
+        --destructive-foreground: 0 0% 98%;
 
-    --border: 240 3.7% 15.9%;
-    --input: 240 3.7% 15.9%;
-    --ring: 240 4.9% 83.9%;
-  }
+        --border: 240 3.7% 15.9%;
+        --input: 240 3.7% 15.9%;
+        --ring: 240 4.9% 83.9%;
+    }
 }
 
 @layer base {
-  * {
-    @apply border-border;
-  }
+    * {
+        @apply border-border;
+    }
 
-  html {
-    scroll-behavior: smooth;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-    overflow-x: hidden;
-    /* PWA: Prevent text size adjustment on orientation change */
-    -webkit-text-size-adjust: 100%;
-    -moz-text-size-adjust: 100%;
-    text-size-adjust: 100%;
-  }
+    html {
+        scroll-behavior: smooth;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        overflow-x: hidden;
+        /* PWA: Prevent text size adjustment on orientation change */
+        -webkit-text-size-adjust: 100%;
+        -moz-text-size-adjust: 100%;
+        text-size-adjust: 100%;
+    }
 
-  body {
-    @apply bg-background text-foreground font-sans antialiased;
-    font-feature-settings: "rlig" 1, "calt" 1;
-    overflow-x: hidden;
-    min-height: 100vh;
-    min-height: 100dvh;
-    /* Dynamic viewport height for mobile */
-    /* PWA: Safe area insets for notched devices */
-    padding-top: env(safe-area-inset-top);
-    padding-bottom: env(safe-area-inset-bottom);
-    padding-left: env(safe-area-inset-left);
-    padding-right: env(safe-area-inset-right);
-  }
+    body {
+        @apply bg-background text-foreground font-sans antialiased;
+        font-feature-settings: "rlig" 1, "calt" 1;
+        overflow-x: hidden;
+        min-height: 100vh;
+        min-height: 100dvh;
+        /* Dynamic viewport height for mobile */
+        /* PWA: Safe area insets for notched devices */
+        padding-top: env(safe-area-inset-top);
+        padding-bottom: env(safe-area-inset-bottom);
+        padding-left: env(safe-area-inset-left);
+        padding-right: env(safe-area-inset-right);
+    }
 
-  /* PWA: Optimize touch interactions */
-  button,
-  a,
-  input,
-  select,
-  textarea {
-    -webkit-tap-highlight-color: transparent;
-    touch-action: manipulation;
-  }
+    /* PWA: Optimize touch interactions */
+    button,
+    a,
+    input,
+    select,
+    textarea {
+        -webkit-tap-highlight-color: transparent;
+        touch-action: manipulation;
+    }
 
-  /* PWA: Ensure minimum touch target size (44x44px for iOS) */
-  button:not(.icon-only),
-  a[role="button"]:not(.icon-only),
-  input[type="button"],
-  input[type="submit"] {
-    min-height: 44px;
-  }
+    /* PWA: Ensure minimum touch target size (44x44px for iOS) */
+    button:not(.icon-only),
+    a[role="button"]:not(.icon-only),
+    input[type="button"],
+    input[type="submit"] {
+        min-height: 44px;
+    }
 }
 
 @layer utilities {
-  .glass {
-    @apply bg-white/70 dark:bg-black/70 backdrop-blur-lg border border-white/20 dark:border-white/10;
-  }
+    .glass {
+        @apply bg-white/70 dark:bg-black/70 backdrop-blur-lg border border-white/20 dark:border-white/10;
+    }
 
-  .text-balance {
-    text-wrap: balance;
-  }
+    .text-balance {
+        text-wrap: balance;
+    }
 
-  /* Apple-like Design System Tokens */
+    /* PWA: Safe area utilities */
+    .safe-top {
+        padding-top: env(safe-area-inset-top);
+    }
 
-  /* Base Colors - Clean White & Soft Grays */
-  --background: 0 0% 100%;
-  --foreground: 240 10% 3.9%;
+    .safe-bottom {
+        padding-bottom: env(safe-area-inset-bottom);
+    }
 
-  /* Card & Surfaces - Subtle distinction */
-  --card: 0 0% 100%;
-  --card-foreground: 240 10% 3.9%;
-  --popover: 0 0% 100%;
-  --popover-foreground: 240 10% 3.9%;
+    .safe-left {
+        padding-left: env(safe-area-inset-left);
+    }
 
-  /* Primary - Emerald Green (Vrumi Brand) */
-  --primary: 160 84% 39%;
-  /* #10b981 */
-  --primary-foreground: 0 0% 100%;
+    .safe-right {
+        padding-right: env(safe-area-inset-right);
+    }
 
-  /* Secondary - Subtle Gray */
-  --secondary: 240 4.8% 95.9%;
-  --secondary-foreground: 240 5.9% 10%;
+    /* Short aliases */
+    .pt-safe {
+        padding-top: env(safe-area-inset-top);
+    }
 
-  /* Muted - For de-emphasized text */
-  --muted: 240 4.8% 95.9%;
-  --muted-foreground: 240 3.8% 46.1%;
-
-  /* Accent - For highlights */
-  --accent: 240 4.8% 95.9%;
-  --accent-foreground: 240 5.9% 10%;
-
-  /* Destructive - Error states */
-  --destructive: 0 84.2% 60.2%;
-  --destructive-foreground: 0 0% 98%;
-
-  /* Borders & Inputs */
-  --border: 240 5.9% 90%;
-  --input: 240 5.9% 90%;
-  --ring: 240 5.9% 10%;
-
-  /* Radius - Larger, softer corners */
-  --radius: 0.75rem;
-
-  /* Shadows - Soft, diffused */
-  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-  --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1),
-  0 1px 2px -1px rgb(0 0 0 / 0.1);
-  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1),
-  0 2px 4px -2px rgb(0 0 0 / 0.1);
-  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1),
-  0 4px 6px -4px rgb(0 0 0 / 0.1);
-}
-
-.dark {
-  /* Dark Mode - Deep Grays, not pure black */
-  --background: 240 10% 3.9%;
-  --foreground: 0 0% 98%;
-
-  --card: 240 10% 3.9%;
-  --card-foreground: 0 0% 98%;
-
-  --popover: 240 10% 3.9%;
-  --popover-foreground: 0 0% 98%;
-
-  --primary: 160 84% 39%;
-  --primary-foreground: 0 0% 100%;
-
-  --secondary: 240 3.7% 15.9%;
-  --secondary-foreground: 0 0% 98%;
-
-  --muted: 240 3.7% 15.9%;
-  --muted-foreground: 240 5% 64.9%;
-
-  --accent: 240 3.7% 15.9%;
-  --accent-foreground: 0 0% 98%;
-
-  --destructive: 0 62.8% 30.6%;
-  --destructive-foreground: 0 0% 98%;
-
-  --border: 240 3.7% 15.9%;
-  --input: 240 3.7% 15.9%;
-  --ring: 240 4.9% 83.9%;
-}
-}
-
-@layer base {
-  * {
-    @apply border-border;
-  }
-
-  html {
-    scroll-behavior: smooth;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-    overflow-x: hidden;
-    /* PWA: Prevent text size adjustment on orientation change */
-    -webkit-text-size-adjust: 100%;
-    -moz-text-size-adjust: 100%;
-    text-size-adjust: 100%;
-  }
-
-  body {
-    @apply bg-background text-foreground font-sans antialiased;
-    font-feature-settings: "rlig" 1, "calt" 1;
-    overflow-x: hidden;
-    min-height: 100vh;
-    min-height: 100dvh;
-    /* Dynamic viewport height for mobile */
-    /* PWA: Safe area insets for notched devices */
-    padding-top: env(safe-area-inset-top);
-    padding-bottom: env(safe-area-inset-bottom);
-    padding-left: env(safe-area-inset-left);
-    padding-right: env(safe-area-inset-right);
-  }
-
-  /* PWA: Optimize touch interactions */
-  button,
-  a,
-  input,
-  select,
-  textarea {
-    -webkit-tap-highlight-color: transparent;
-    touch-action: manipulation;
-  }
-
-  /* PWA: Ensure minimum touch target size (44x44px for iOS) */
-  button:not(.icon-only),
-  a[role="button"]:not(.icon-only),
-  input[type="button"],
-  input[type="submit"] {
-    min-height: 44px;
-  }
-}
-
-@layer utilities {
-  .glass {
-    @apply bg-white/70 dark:bg-black/70 backdrop-blur-lg border border-white/20 dark:border-white/10;
-  }
-
-  .text-balance {
-    text-wrap: balance;
-  }
-
-  /* PWA: Safe area utilities */
-  .safe-top {
-    padding-top: env(safe-area-inset-top);
-  }
-
-  .safe-bottom {
-    padding-bottom: env(safe-area-inset-bottom);
-  }
-
-  .safe-left {
-    padding-left: env(safe-area-inset-left);
-  }
-
-  .safe-right {
-    padding-right: env(safe-area-inset-right);
-  }
-
-  /* Short aliases */
-  .pt-safe {
-    padding-top: env(safe-area-inset-top);
-  }
-
-  .pb-safe {
-    padding-bottom: env(safe-area-inset-bottom);
-  }
+    .pb-safe {
+        padding-bottom: env(safe-area-inset-bottom);
+    }
 }
