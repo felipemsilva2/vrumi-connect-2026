@@ -42,10 +42,25 @@ export const ModernMobileSidebar: React.FC<ModernMobileSidebarProps> = ({
     const location = useLocation();
 
     const isActiveRoute = (path: string) => {
-        if (path.includes('?')) {
-            return location.pathname === path.split('?')[0];
+        const [targetPath, targetQuery] = path.split('?');
+
+        if (location.pathname !== targetPath) {
+            return false;
         }
-        return location.pathname === path;
+
+        if (targetQuery) {
+            const currentParams = new URLSearchParams(location.search);
+            const targetParams = new URLSearchParams(targetQuery);
+
+            for (const [key, value] of targetParams.entries()) {
+                if (currentParams.get(key) !== value) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        return true;
     };
 
     const handleNavigate = (path: string) => {
