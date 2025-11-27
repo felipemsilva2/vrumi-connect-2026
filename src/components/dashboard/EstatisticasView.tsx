@@ -1,17 +1,9 @@
-import { BarChart3, TrendingUp, Calendar, Award, Loader2, Target, Clock, Brain, Users, TrendingDown, AlertTriangle } from "lucide-react"
+import { BarChart3, TrendingUp, Calendar, Award, Loader2, Target, Clock, Brain, Users } from "lucide-react"
 import { useEffect, useMemo, useState } from "react"
 import { supabase } from "@/integrations/supabase/client"
 import { SubscriptionGate } from "@/components/auth/SubscriptionGate"
 
 export const EstatisticasView = () => {
-  const [categoryProgress, setCategoryProgress] = useState([
-    { name: "Meio Ambiente e Convívio Social", progress: 0, color: "primary", module_code: "PMAC" },
-    { name: "Direção Defensiva", progress: 0, color: "success", module_code: "DD" },
-    { name: "Legislação de Trânsito", progress: 0, color: "secondary", module_code: "LT" },
-    { name: "Mecânica Básica", progress: 0, color: "accent", module_code: "NFV" },
-    { name: "Primeiros Socorros", progress: 0, color: "destructive", module_code: "PS" }
-  ])
-
   const [totalFlashcards, setTotalFlashcards] = useState(0)
   const [studyStreak, setStudyStreak] = useState(0)
   const [totalStudyDays, setTotalStudyDays] = useState(0)
@@ -32,39 +24,6 @@ export const EstatisticasView = () => {
   const [studyPattern, setStudyPattern] = useState<{ peakHour: string; consistency: number; recommendedHours: number } | null>(null)
   const [trafficSignsAnalytics, setTrafficSignsAnalytics] = useState<{ totalSigns: number; studiedSigns: number; confidenceByCategory: any[]; studyModes: any[]; recentProgress: any[] } | null>(null)
 
-  // Função para calcular sequência de dias (streak)
-  const calculateStreak = (activities: { study_date: string }[]) => {
-    if (!activities || activities.length === 0) return 0
-
-    // Ordenar por data decrescente
-    const sortedActivities = activities.sort((a, b) =>
-      new Date(b.study_date).getTime() - new Date(a.study_date).getTime()
-    )
-
-    let streak = 0
-    const currentDate = new Date()
-    currentDate.setHours(0, 0, 0, 0)
-
-    for (const activity of sortedActivities) {
-      const activityDate = new Date(activity.study_date)
-      activityDate.setHours(0, 0, 0, 0)
-
-      const diffDays = Math.floor((currentDate.getTime() - activityDate.getTime()) / (1000 * 60 * 60 * 24))
-
-      if (diffDays === streak) {
-        streak++
-      } else {
-        break
-      }
-
-      // Se a diferença for maior que o streak atual, quebrar a sequência
-      if (diffDays > streak) break
-    }
-
-    return streak
-  }
-
-  // Removido: efeito e estados de métricas SRS (due_date, ease_factor)
   useEffect(() => {
     const loadStats = async () => {
       setIsLoading(true)
@@ -86,58 +45,18 @@ export const EstatisticasView = () => {
           .eq("id", user.id)
           .maybeSingle()
         if (profileError) throw profileError
+
+        let currentCorrectRate = 0
         if (profileRow) {
           setProfileStats(profileRow)
+          const total = profileRow.total_questions_answered || 0
+          const correct = profileRow.correct_answers || 0
+          currentCorrectRate = total > 0 ? Math.round((correct / total) * 100) : 0
         }
 
         // Buscar dados para análise de padrões de estudo (últimos 30 dias)
         const today = new Date()
         const lastMonth = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000)
-
-        // Buscar progresso por módulo/categoria
-        const { data: modules } = await supabase
-          .from("study_modules")
-          .select("id, code, title")
-
-        if (modules) {
-          const moduleProgress = await Promise.all(
-            modules.map(async (module) => {
-              // Total de capítulos no módulo
-              const { data: totalChapters } = await supabase
-                .from("study_chapters")
-                .select("id")
-                .eq("module_id", module.id)
-
-              // Capítulos completados pelo usuário
-              const { data: completedChapters } = await supabase
-                .from("user_progress")
-                .select("id")
-                .eq("user_id", user.id)
-                .eq("completed", true)
-
-              const total = totalChapters?.length || 0
-              const completed = completedChapters?.length || 0
-              const progress = total > 0 ? Math.round((completed / total) * 100) : 0
-
-              const colorMap: { [key: string]: string } = {
-                'PMAC': 'primary',
-                'DD': 'success',
-                'LT': 'secondary',
-                'NFV': 'accent',
-                'PS': 'destructive'
-              }
-
-              return {
-                name: module.title,
-                progress,
-                color: colorMap[module.code] || 'primary',
-                module_code: module.code
-              }
-            })
-          )
-
-          setCategoryProgress(moduleProgress.filter(m => m.progress > 0))
-        }
 
         // Calcular sequência de dias (simplificado - baseado em dias com atividade)
         const allAttempts = await supabase
@@ -146,13 +65,15 @@ export const EstatisticasView = () => {
           .eq("user_id", user.id)
           .order("completed_at", { ascending: false })
 
+        let calculatedStudyDays = 0
         if (allAttempts.data) {
           const uniqueDays = new Set(
             allAttempts.data.map(attempt =>
               new Date(attempt.completed_at).toISOString().split('T')[0]
             )
           )
-          setTotalStudyDays(uniqueDays.size)
+          calculatedStudyDays = uniqueDays.size
+          setTotalStudyDays(calculatedStudyDays)
 
           // Calcular sequência atual (simplificado)
           let streak = 0
@@ -204,7 +125,7 @@ export const EstatisticasView = () => {
                 .eq("user_id", user.id)
 
               // Estimar acerto por dificuldade baseado na taxa geral
-              const userCorrectRate = correctRate / 100
+              const userCorrectRate = currentCorrectRate / 100
               const difficultyMultiplier = difficulty === 'easy' ? 1.2 : difficulty === 'medium' ? 1.0 : 0.8
               const estimatedAccuracy = Math.round(Math.min(100, userCorrectRate * difficultyMultiplier * 100))
 
@@ -249,54 +170,13 @@ export const EstatisticasView = () => {
           })
         }
 
-        // 📈 Tendências por Categoria (últimas 4 semanas)
-        const fourWeeksAgo = new Date(today.getTime() - 28 * 24 * 60 * 60 * 1000)
-
-        // Buscar capítulos para análise de tendências
-        const { data: chapters } = await supabase
-          .from("study_chapters")
-          .select("id, module_id")
-
-        const { data: weeklyProgress } = await supabase
-          .from("user_progress")
-          .select("lesson_id, completed, completion_date")
-          .eq("user_id", user.id)
-          .eq("completed", true)
-          .gte("completion_date", fourWeeksAgo.toISOString())
-
-        if (weeklyProgress && modules && chapters) {
-          const trends = modules.map(module => {
-            const moduleChapters = chapters.filter(ch => ch.module_id === module.id)
-            const weeklyData = [0, 0, 0, 0] // 4 semanas
-
-            weeklyProgress.forEach(progress => {
-              if (progress.lesson_id && moduleChapters.some(ch => ch.id === progress.lesson_id)) {
-                const weeksAgo = Math.floor((today.getTime() - new Date(progress.completion_date).getTime()) / (7 * 24 * 60 * 60 * 1000))
-                if (weeksAgo < 4) {
-                  weeklyData[3 - weeksAgo]++
-                }
-              }
-            })
-
-            const trend = weeklyData[3] > weeklyData[2] ? 'up' :
-              weeklyData[3] < weeklyData[2] ? 'down' : 'stable'
-
-            return {
-              name: module.title,
-              weeklyData,
-              trend,
-              totalRecent: weeklyData.reduce((sum, val) => sum + val, 0)
-            }
-          }).filter(t => t.totalRecent > 0)
-
-          setCategoryTrends(trends)
-        }
+        // 📈 Tendências por Categoria (Removido pois depende de módulos)
+        setCategoryTrends([])
 
         // 🎯 Prepar para Prova
-        const totalQuestionsAnswered = profileStats?.total_questions_answered || 0
-        const flashcardsStudied = profileStats?.total_flashcards_studied || 0
-        const studyDays = totalStudyDays
-        const currentCorrectRate = correctRate
+        const totalQuestionsAnswered = profileRow?.total_questions_answered || 0
+        const flashcardsStudied = profileRow?.total_flashcards_studied || 0
+        const studyDays = calculatedStudyDays
 
         // Calcular pontuação de preparação (0-100)
         let readinessScore = 0
@@ -376,117 +256,118 @@ export const EstatisticasView = () => {
         setIsLoading(false)
       }
     }
+
+    // 📋 Análise Avançada de Placas de Trânsito
+    const fetchTrafficSignsAnalytics = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) return
+
+        // Buscar total de placas disponíveis
+        const { data: totalSignsData } = await supabase
+          .from("traffic_signs")
+          .select("id, category, name")
+          .eq("is_active", true)
+
+        // Buscar progresso do usuário
+        const { data: userProgressData } = await supabase
+          .from("user_sign_progress")
+          .select("sign_id, times_reviewed, times_correct, confidence_level, last_reviewed")
+          .eq("user_id", user.id)
+
+        // Buscar modos de estudo utilizados
+        const { data: studyModesData } = await supabase
+          .from("user_activities")
+          .select("activity_type, created_at, metadata")
+          .eq("user_id", user.id)
+          .gte("created_at", new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()) // Últimos 30 dias
+
+        // Análise por categoria
+        const confidenceByCategory: any[] = []
+        if (totalSignsData && userProgressData) {
+          const categories = [...new Set(totalSignsData.map(sign => sign.category))]
+
+          categories.forEach(category => {
+            const categorySigns = totalSignsData.filter(sign => sign.category === category)
+            const categoryProgress = userProgressData.filter(progress =>
+              categorySigns.some(sign => sign.id === progress.sign_id)
+            )
+
+            const avgConfidence = categoryProgress.length > 0
+              ? Math.round(categoryProgress.reduce((sum, p) => sum + (p.confidence_level || 0), 0) / categoryProgress.length)
+              : 0
+
+            const studiedCount = categoryProgress.length
+            const totalCount = categorySigns.length
+            const progress = totalCount > 0 ? Math.round((studiedCount / totalCount) * 100) : 0
+
+            confidenceByCategory.push({
+              category,
+              studiedCount,
+              totalCount,
+              progress,
+              avgConfidence,
+              signs: categorySigns.map(sign => ({
+                name: sign.name,
+                studied: categoryProgress.some(p => p.sign_id === sign.id),
+                confidence: categoryProgress.find(p => p.sign_id === sign.id)?.confidence_level || 0
+              }))
+            })
+          })
+        }
+
+        // Análise de modos de estudo
+        const studyModes = [
+          { name: 'Estudo Linear', count: 0, percentage: 0 },
+          { name: 'Estudo Inteligente', count: 0, percentage: 0 },
+          { name: 'Desafio 60s', count: 0, percentage: 0 }
+        ]
+
+        if (studyModesData) {
+          const totalActivities = studyModesData.length
+          studyModes[0].count = studyModesData.filter(a => a.activity_type === 'linear_study').length
+          studyModes[1].count = studyModesData.filter(a => a.activity_type === 'smart_study').length
+          studyModes[2].count = studyModesData.filter(a => a.activity_type === 'challenge_60s').length
+
+          studyModes.forEach(mode => {
+            mode.percentage = totalActivities > 0 ? Math.round((mode.count / totalActivities) * 100) : 0
+          })
+        }
+
+        // Progresso recente (últimos 7 dias)
+        const recentProgress: any[] = []
+        for (let i = 6; i >= 0; i--) {
+          const date = new Date()
+          date.setDate(date.getDate() - i)
+          const dateStr = date.toISOString().split('T')[0]
+
+          const dayActivities = studyModesData?.filter(a =>
+            a.created_at.startsWith(dateStr)
+          ) || []
+
+          recentProgress.push({
+            date: dateStr,
+            label: date.toLocaleDateString('pt-BR', { weekday: 'short' }),
+            activities: dayActivities.length
+          })
+        }
+
+        setTrafficSignsAnalytics({
+          totalSigns: totalSignsData?.length || 0,
+          studiedSigns: userProgressData?.length || 0,
+          confidenceByCategory,
+          studyModes,
+          recentProgress
+        })
+
+      } catch (e) {
+        console.error("Erro ao carregar análise de placas de trânsito:", e)
+      }
+    }
+
     loadStats()
     fetchTrafficSignsAnalytics()
   }, [])
-
-  // 📋 Análise Avançada de Placas de Trânsito
-  const fetchTrafficSignsAnalytics = async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
-
-      // Buscar total de placas disponíveis
-      const { data: totalSignsData } = await supabase
-        .from("traffic_signs")
-        .select("id, category, name")
-        .eq("is_active", true)
-
-      // Buscar progresso do usuário
-      const { data: userProgressData } = await supabase
-        .from("user_sign_progress")
-        .select("sign_id, times_reviewed, times_correct, confidence_level, last_reviewed")
-        .eq("user_id", user.id)
-
-      // Buscar modos de estudo utilizados
-      const { data: studyModesData } = await supabase
-        .from("user_activities")
-        .select("activity_type, created_at, metadata")
-        .eq("user_id", user.id)
-        .gte("created_at", new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()) // Últimos 30 dias
-
-      // Análise por categoria
-      const confidenceByCategory: any[] = []
-      if (totalSignsData && userProgressData) {
-        const categories = [...new Set(totalSignsData.map(sign => sign.category))]
-
-        categories.forEach(category => {
-          const categorySigns = totalSignsData.filter(sign => sign.category === category)
-          const categoryProgress = userProgressData.filter(progress =>
-            categorySigns.some(sign => sign.id === progress.sign_id)
-          )
-
-          const avgConfidence = categoryProgress.length > 0
-            ? Math.round(categoryProgress.reduce((sum, p) => sum + (p.confidence_level || 0), 0) / categoryProgress.length)
-            : 0
-
-          const studiedCount = categoryProgress.length
-          const totalCount = categorySigns.length
-          const progress = totalCount > 0 ? Math.round((studiedCount / totalCount) * 100) : 0
-
-          confidenceByCategory.push({
-            category,
-            studiedCount,
-            totalCount,
-            progress,
-            avgConfidence,
-            signs: categorySigns.map(sign => ({
-              name: sign.name,
-              studied: categoryProgress.some(p => p.sign_id === sign.id),
-              confidence: categoryProgress.find(p => p.sign_id === sign.id)?.confidence_level || 0
-            }))
-          })
-        })
-      }
-
-      // Análise de modos de estudo
-      const studyModes = [
-        { name: 'Estudo Linear', count: 0, percentage: 0 },
-        { name: 'Estudo Inteligente', count: 0, percentage: 0 },
-        { name: 'Desafio 60s', count: 0, percentage: 0 }
-      ]
-
-      if (studyModesData) {
-        const totalActivities = studyModesData.length
-        studyModes[0].count = studyModesData.filter(a => a.activity_type === 'linear_study').length
-        studyModes[1].count = studyModesData.filter(a => a.activity_type === 'smart_study').length
-        studyModes[2].count = studyModesData.filter(a => a.activity_type === 'challenge_60s').length
-
-        studyModes.forEach(mode => {
-          mode.percentage = totalActivities > 0 ? Math.round((mode.count / totalActivities) * 100) : 0
-        })
-      }
-
-      // Progresso recente (últimos 7 dias)
-      const recentProgress: any[] = []
-      for (let i = 6; i >= 0; i--) {
-        const date = new Date()
-        date.setDate(date.getDate() - i)
-        const dateStr = date.toISOString().split('T')[0]
-
-        const dayActivities = studyModesData?.filter(a =>
-          a.created_at.startsWith(dateStr)
-        ) || []
-
-        recentProgress.push({
-          date: dateStr,
-          label: date.toLocaleDateString('pt-BR', { weekday: 'short' }),
-          activities: dayActivities.length
-        })
-      }
-
-      setTrafficSignsAnalytics({
-        totalSigns: totalSignsData?.length || 0,
-        studiedSigns: userProgressData?.length || 0,
-        confidenceByCategory,
-        studyModes,
-        recentProgress
-      })
-
-    } catch (e) {
-      console.error("Erro ao carregar análise de placas de trânsito:", e)
-    }
-  }
 
   return (
     <SubscriptionGate feature="Estatísticas">
@@ -501,9 +382,9 @@ export const EstatisticasView = () => {
           {isLoading && <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />}
         </div>
 
-        {/* Métricas Avançadas - Removidas duplicações do dashboard */}
+        {/* Métricas Avançadas */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-          {/* Total de Cartões - Mantido pois é estatística geral */}
+          {/* Total de Cartões */}
           <div className="bg-card border border-border rounded-xl p-4">
             <div className="flex items-center justify-between mb-2">
               <Brain className="h-4 w-4 text-primary" />
@@ -541,7 +422,7 @@ export const EstatisticasView = () => {
               <div className="flex items-center justify-between mb-2">
                 <Target className="h-4 w-4 text-destructive" />
                 <span className={`text-[10px] font-medium ${examReadiness.score >= 80 ? 'text-success' :
-                    examReadiness.score >= 60 ? 'text-warning' : 'text-destructive'
+                  examReadiness.score >= 60 ? 'text-warning' : 'text-destructive'
                   }`}>
                   {examReadiness.status}
                 </span>
@@ -563,7 +444,7 @@ export const EstatisticasView = () => {
               <div className="flex items-center justify-between mb-2">
                 <Clock className="h-4 w-4 text-accent" />
                 <span className={`text-[10px] font-medium ${studyPattern.consistency >= 70 ? 'text-success' :
-                    studyPattern.consistency >= 40 ? 'text-warning' : 'text-destructive'
+                  studyPattern.consistency >= 40 ? 'text-warning' : 'text-destructive'
                   }`}>
                   {studyPattern.consistency}% consistente
                 </span>
@@ -594,7 +475,7 @@ export const EstatisticasView = () => {
                   <div className="w-full bg-muted rounded-full h-1.5">
                     <div
                       className={`h-1.5 rounded-full transition-all duration-300 ${type.accuracy >= 80 ? 'bg-success' :
-                          type.accuracy >= 60 ? 'bg-warning' : 'bg-destructive'
+                        type.accuracy >= 60 ? 'bg-warning' : 'bg-destructive'
                         }`}
                       style={{ width: `${type.accuracy}%` }}
                     />
@@ -620,7 +501,7 @@ export const EstatisticasView = () => {
                     <span className="text-sm font-medium text-foreground">{trend.name}</span>
                     <div className="flex items-center gap-2">
                       <span className={`text-xs ${trend.trend === 'up' ? 'text-success' :
-                          trend.trend === 'down' ? 'text-destructive' : 'text-muted-foreground'
+                        trend.trend === 'down' ? 'text-destructive' : 'text-muted-foreground'
                         }`}>
                         {trend.trend === 'up' ? '↗' : trend.trend === 'down' ? '↘' : '→'}
                       </span>
@@ -648,101 +529,6 @@ export const EstatisticasView = () => {
             </div>
           </div>
         )}
-
-        {/* 📊 Progresso por Categoria - Versão Avançada */}
-        <div className="bg-card border border-border rounded-xl p-4">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-foreground">Análise Detalhada por Categoria</h3>
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <span>📊</span>
-              <span>Comparativo com metas</span>
-            </div>
-          </div>
-
-          {isLoading ? (
-            <div className="flex items-center justify-center py-8">
-              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-            </div>
-          ) : categoryProgress.filter(m => m.progress > 0).length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              <div className="text-4xl mb-4">📚</div>
-              <p className="font-medium">Nenhum progresso ainda</p>
-              <p className="text-sm mt-2">Comece a estudar para ver suas estatísticas detalhadas!</p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {categoryProgress.filter(m => m.progress > 0).map((category, i) => {
-                const targetProgress = 85 // Meta ideal para prova
-                const performance = category.progress >= targetProgress ? 'excellent' :
-                  category.progress >= 70 ? 'good' :
-                    category.progress >= 50 ? 'average' : 'needs_improvement'
-
-                const performanceText = {
-                  excellent: 'Excelente! 🎯',
-                  good: 'Bom progresso 👍',
-                  average: 'Na média 📊',
-                  needs_improvement: 'Precisa de atenção ⚠️'
-                }
-
-                const performanceColor = {
-                  excellent: 'text-success',
-                  good: 'text-info',
-                  average: 'text-warning',
-                  needs_improvement: 'text-destructive'
-                }
-
-                return (
-                  <div key={i} className="space-y-3 p-3 bg-muted/30 rounded-lg">
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm font-medium text-foreground">{category.name}</span>
-                      <div className="text-right">
-                        <span className="text-sm font-bold text-foreground">{category.progress}%</span>
-                        <div className={`text-[10px] ${performanceColor[performance]}`}>
-                          {performanceText[performance]}
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Barra de progresso com meta */}
-                    <div className="relative">
-                      <div className="w-full bg-muted rounded-full h-2">
-                        <div
-                          className={`h-2 rounded-full transition-all duration-500 ${category.color === 'primary' ? 'bg-primary' :
-                              category.color === 'success' ? 'bg-success' :
-                                category.color === 'secondary' ? 'bg-secondary' :
-                                  category.color === 'accent' ? 'bg-accent' :
-                                    'bg-destructive'
-                            }`}
-                          style={{ width: `${Math.min(category.progress, 100)}%` }}
-                        />
-                      </div>
-                      {/* Marcador da meta */}
-                      <div
-                        className="absolute top-0 w-0.5 h-2 bg-yellow-500 border-l-2 border-yellow-500"
-                        style={{ left: `${targetProgress}%` }}
-                        title="Meta ideal: 85%"
-                      />
-                    </div>
-
-                    {/* Informações adicionais */}
-                    <div className="flex justify-between text-[10px] text-muted-foreground">
-                      <span>Sua meta: 85%</span>
-                      <span>Faltam: {Math.max(0, targetProgress - category.progress)}%</span>
-                    </div>
-
-                    {/* Sugestão personalizada */}
-                    <div className="text-[10px] text-muted-foreground bg-muted/50 p-2 rounded">
-                      {performance === 'excellent' && 'Parabéns! Você está pronto para esta categoria.'}
-                      {performance === 'good' && 'Ótimo progresso! Mais um pouco e atinge a meta.'}
-                      {performance === 'average' && 'Continue estudando! Você está no caminho certo.'}
-                      {performance === 'needs_improvement' && 'Dê mais atenção a esta categoria para melhorar.'}
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-          )}
-        </div>
 
         {/* 📋 Análise Avançada de Placas de Trânsito */}
         {trafficSignsAnalytics && (

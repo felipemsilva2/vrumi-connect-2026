@@ -456,45 +456,36 @@ export default function TimedChallenge({ signs, category, onClose }: TimedChalle
           </ModernCardContent>
         </ModernCard>
       </div>
-          </Badge >
+    );
+  }
 
-      <ModernButton
-        onClick={onClose}
-        variant="ghost"
-        size="sm"
-      >
-        <X className="w-4 h-4" />
-      </ModernButton>
-        </div >
+  return (
+    <div className="max-w-2xl mx-auto p-6">
+      {/* Timer and Score */}
+      <div className="flex items-center justify-between">
+        <div className={`flex items-center gap-2 text-2xl font-bold ${timeRemaining <= 10 ? 'text-red-500 animate-pulse' : 'text-foreground'}`}>
+          <Clock className="w-6 h-6" />
+          {timeRemaining}s
+        </div>
 
-      {/* Timer and Score */ }
-      < div className = "flex items-center justify-between" >
-          <div className={`flex items-center gap-2 text-2xl font-bold ${timeRemaining <= 10 ? 'text-red-500 animate-pulse' : 'text-foreground'
-            }`}>
-            <Clock className="w-6 h-6" />
-            {timeRemaining}s
-          </div>
+        <div className="flex items-center gap-2 text-2xl font-bold text-blue-600 dark:text-blue-400">
+          <Zap className="w-6 h-6" />
+          {score}
+        </div>
+      </div>
 
-          <div className="flex items-center gap-2 text-2xl font-bold text-blue-600 dark:text-blue-400">
-            <Zap className="w-6 h-6" />
-            {score}
-          </div>
-        </div >
+      {/* Progress */}
+      <div className="mt-4">
+        <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400 mb-2">
+          <span>Pergunta {questionIndex + 1}</span>
+          <span>{correctAnswers} acertos</span>
+        </div>
+        <Progress value={(questionIndex / signs.length) * 100} className="h-2" />
+      </div>
 
-      {/* Progress */ }
-      < div className = "mt-4" >
-          <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400 mb-2">
-            <span>Pergunta {questionIndex + 1}</span>
-            <span>{correctAnswers} acertos</span>
-          </div>
-          <Progress value={(questionIndex / signs.length) * 100} className="h-2" />
-        </div >
-      </div >
-
-      {/* Question */ }
-    {
-      currentQuestion && (
-        <ModernCard variant="elevated">
+      {/* Question */}
+      {currentQuestion && (
+        <ModernCard variant="elevated" className="mt-6">
           <ModernCardContent className="p-6">
             <div className="text-center mb-6">
               <h3 className="text-lg font-semibold text-foreground mb-4">
@@ -534,8 +525,7 @@ export default function TimedChallenge({ signs, category, onClose }: TimedChalle
             </div>
           </ModernCardContent>
         </ModernCard>
-      )
-    }
-    </div >
+      )}
+    </div>
   );
-  }
+}

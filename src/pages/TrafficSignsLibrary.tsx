@@ -278,6 +278,26 @@ export default function TrafficSignsLibrary({ user, profile }: TrafficSignsLibra
           </div>
         )}
 
+        {/* Study Modes */}
+        {flashcardMode && (
+          <div data-study-modes className="mb-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <FlashcardMode
+              signs={flashcardSigns}
+              onClose={() => setFlashcardMode(false)}
+            />
+          </div>
+        )}
+
+        {timedChallengeMode && (
+          <div data-study-modes className="mb-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <TimedChallenge
+              signs={filteredSigns}
+              category={selectedCategory}
+              onClose={() => setTimedChallengeMode(false)}
+            />
+          </div>
+        )}
+
         {/* Traffic Signs Grid */}
         {!loading && !flashcardMode && !timedChallengeMode && (
           <div className="px-4 sm:px-6">

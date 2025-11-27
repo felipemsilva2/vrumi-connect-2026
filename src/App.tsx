@@ -56,26 +56,6 @@ const ProtectedAdminRoute = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
-const ThemeHandler = () => {
-  const { pathname } = useLocation();
-  const { setTheme } = useTheme();
-
-  useEffect(() => {
-    const isAppRoute = pathname.startsWith("/painel") ||
-      pathname.startsWith("/admin") ||
-      pathname.startsWith("/sala-de-estudos") ||
-      pathname.startsWith("/biblioteca-de-placas");
-
-    if (isAppRoute) {
-      setTheme("dark");
-    } else {
-      setTheme("light");
-    }
-  }, [pathname, setTheme]);
-
-  return null;
-};
-
 const PageLoader = () => (
   <div className="flex items-center justify-center min-h-screen">
     <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -92,7 +72,6 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
-          <ThemeHandler />
           <PWAInstallPrompt />
           <ErrorBoundary>
             <Suspense fallback={<PageLoader />}>

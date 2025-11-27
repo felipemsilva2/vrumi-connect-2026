@@ -243,7 +243,7 @@ export default function FlashcardMode({ signs, initialIndex = 0, onClose, catego
       </div>
 
       {/* Flashcard Container */}
-      <div className="relative h-[60vh] sm:h-96 mb-6">
+      <div className="relative h-[60vh] sm:h-96 mb-8">
         <div
           className={`relative w-full h-full transition-transform duration-600 preserve-3d cursor-pointer ${isFlipped ? 'rotate-y-180' : ''
             } ${isAnimating ? 'pointer-events-none' : ''}`}
@@ -303,13 +303,61 @@ export default function FlashcardMode({ signs, initialIndex = 0, onClose, catego
               </p>
             </div>
             <span>{currentIndex + 1} / {signs.length}</span>
+          </ModernCard>
         </div>
-        <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-          <div
-            className="bg-blue-500 h-2 rounded-full transition-all duration-300"
-            style={{ width: `${((currentIndex + 1) / signs.length) * 100}%` }}
-          />
-        </div>
+      </div>
+
+      {/* Controls */}
+      <div className="flex justify-center gap-4 mb-8">
+        {!isFlipped ? (
+          <div className="flex gap-3">
+            <ModernButton onClick={handlePrevious} variant="outline" size="lg" disabled={currentIndex === 0}>
+              <ChevronLeft className="w-5 h-5" />
+            </ModernButton>
+            <ModernButton onClick={handleFlip} variant="premium" size="lg" className="min-w-[140px]">
+              <RotateCw className="w-5 h-5 mr-2" />
+              Ver Resposta
+            </ModernButton>
+            <ModernButton onClick={handleNext} variant="outline" size="lg" disabled={currentIndex === signs.length - 1}>
+              <ChevronRight className="w-5 h-5" />
+            </ModernButton>
+          </div>
+        ) : (
+          <div className="grid grid-cols-3 gap-3 w-full max-w-md px-4">
+            <ModernButton
+              onClick={(e) => { e.stopPropagation(); handleDifficultyResponse('hard'); }}
+              className="bg-red-100 text-red-700 hover:bg-red-200 border-red-200 hover:border-red-300"
+              variant="outline"
+              size="lg"
+            >
+              Errei
+            </ModernButton>
+            <ModernButton
+              onClick={(e) => { e.stopPropagation(); handleDifficultyResponse('medium'); }}
+              className="bg-yellow-100 text-yellow-700 hover:bg-yellow-200 border-yellow-200 hover:border-yellow-300"
+              variant="outline"
+              size="lg"
+            >
+              Dúvida
+            </ModernButton>
+            <ModernButton
+              onClick={(e) => { e.stopPropagation(); handleDifficultyResponse('easy'); }}
+              className="bg-green-100 text-green-700 hover:bg-green-200 border-green-200 hover:border-green-300"
+              variant="outline"
+              size="lg"
+            >
+              Acertei
+            </ModernButton>
+          </div>
+        )}
+      </div>
+
+      {/* Progress Bar */}
+      <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 mb-6">
+        <div
+          className="bg-blue-500 h-2 rounded-full transition-all duration-300"
+          style={{ width: `${((currentIndex + 1) / signs.length) * 100}%` }}
+        />
       </div>
 
       {/* Keyboard Shortcuts */}
