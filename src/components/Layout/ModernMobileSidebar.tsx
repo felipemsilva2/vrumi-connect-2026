@@ -1,5 +1,5 @@
 import React from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, Variants } from 'framer-motion';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
     Home,
@@ -105,12 +105,12 @@ export const ModernMobileSidebar: React.FC<ModernMobileSidebarProps> = ({
         },
     ];
 
-    const overlayVariants = {
+    const overlayVariants: Variants = {
         hidden: { opacity: 0 },
         visible: { opacity: 1 },
     };
 
-    const sidebarVariants = {
+    const sidebarVariants: Variants = {
         hidden: { x: '-100%' },
         visible: {
             x: '0%',

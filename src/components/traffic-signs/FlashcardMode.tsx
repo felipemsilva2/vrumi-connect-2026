@@ -196,9 +196,9 @@ export default function FlashcardMode({ signs, initialIndex = 0, onClose, catego
   }
 
   return (
-    <div className="max-w-4xl mx-auto p-6 pb-safe">
+    <div className="max-w-4xl mx-auto w-full px-0 sm:px-6 pb-safe">
       {/* Header with Progress */}
-      <div className="mb-6">
+      <div className="mb-6 px-4 sm:px-0">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
             <Badge className={categoryColors[currentSign.category as keyof typeof categoryColors]}>
@@ -308,25 +308,46 @@ export default function FlashcardMode({ signs, initialIndex = 0, onClose, catego
       </div>
 
       {/* Controls */}
-      <div className="flex justify-center gap-4 mb-8">
+      <div className="flex justify-center mb-8 w-full">
         {!isFlipped ? (
-          <div className="flex gap-3">
-            <ModernButton onClick={handlePrevious} variant="outline" size="lg" disabled={currentIndex === 0}>
-              <ChevronLeft className="w-5 h-5" />
+          <div className="flex items-center justify-between w-full max-w-md px-4 gap-3">
+            <ModernButton
+              onClick={handlePrevious}
+              variant="outline"
+              size="lg"
+              disabled={currentIndex === 0}
+              className="w-14 px-0 shrink-0"
+            >
+              <ChevronLeft className="w-6 h-6" />
             </ModernButton>
-            <ModernButton onClick={handleFlip} variant="premium" size="lg" className="min-w-[140px]">
-              <RotateCw className="w-5 h-5 mr-2" />
-              Ver Resposta
+
+            <ModernButton
+              onClick={handleFlip}
+              variant="premium"
+              size="lg"
+              className="flex-1 min-w-0"
+            >
+              <span className="flex items-center justify-center gap-2 truncate">
+                <RotateCw className="w-5 h-5 shrink-0" />
+                <span className="truncate">Ver Resposta</span>
+              </span>
             </ModernButton>
-            <ModernButton onClick={handleNext} variant="outline" size="lg" disabled={currentIndex === signs.length - 1}>
-              <ChevronRight className="w-5 h-5" />
+
+            <ModernButton
+              onClick={handleNext}
+              variant="outline"
+              size="lg"
+              disabled={currentIndex === signs.length - 1}
+              className="w-14 px-0 shrink-0"
+            >
+              <ChevronRight className="w-6 h-6" />
             </ModernButton>
           </div>
         ) : (
           <div className="grid grid-cols-3 gap-3 w-full max-w-md px-4">
             <ModernButton
               onClick={(e) => { e.stopPropagation(); handleDifficultyResponse('hard'); }}
-              className="bg-red-100 text-red-700 hover:bg-red-200 border-red-200 hover:border-red-300"
+              className="bg-red-100 text-red-700 hover:bg-red-200 border-red-200 hover:border-red-300 px-2 sm:px-8"
               variant="outline"
               size="lg"
             >
@@ -334,7 +355,7 @@ export default function FlashcardMode({ signs, initialIndex = 0, onClose, catego
             </ModernButton>
             <ModernButton
               onClick={(e) => { e.stopPropagation(); handleDifficultyResponse('medium'); }}
-              className="bg-yellow-100 text-yellow-700 hover:bg-yellow-200 border-yellow-200 hover:border-yellow-300"
+              className="bg-yellow-100 text-yellow-700 hover:bg-yellow-200 border-yellow-200 hover:border-yellow-300 px-2 sm:px-8"
               variant="outline"
               size="lg"
             >
@@ -342,7 +363,7 @@ export default function FlashcardMode({ signs, initialIndex = 0, onClose, catego
             </ModernButton>
             <ModernButton
               onClick={(e) => { e.stopPropagation(); handleDifficultyResponse('easy'); }}
-              className="bg-green-100 text-green-700 hover:bg-green-200 border-green-200 hover:border-green-300"
+              className="bg-green-100 text-green-700 hover:bg-green-200 border-green-200 hover:border-green-300 px-2 sm:px-8"
               variant="outline"
               size="lg"
             >
@@ -353,7 +374,7 @@ export default function FlashcardMode({ signs, initialIndex = 0, onClose, catego
       </div>
 
       {/* Progress Bar */}
-      <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 mb-6">
+      <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 mb-6 px-4 sm:px-0">
         <div
           className="bg-blue-500 h-2 rounded-full transition-all duration-300"
           style={{ width: `${((currentIndex + 1) / signs.length) * 100}%` }}
@@ -361,7 +382,7 @@ export default function FlashcardMode({ signs, initialIndex = 0, onClose, catego
       </div>
 
       {/* Keyboard Shortcuts */}
-      <div className="mt-6 text-center text-xs text-gray-500 dark:text-gray-400">
+      <div className="mt-6 text-center text-xs text-gray-500 dark:text-gray-400 hidden sm:block">
         <p>Atalhos do teclado:</p>
         <p>Espaço: Virar carta | ← → : Navegar | Esc: Fechar</p>
       </div>
