@@ -153,12 +153,12 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
   };
 
   return (
-    <div className="flex min-h-screen w-full">
+    <div className="flex min-h-[100dvh] w-full">
       <div className="flex w-full bg-background text-foreground">
         {/* Desktop Sidebar */}
         {!isMobile && (
           <div
-            className={`sticky top-0 h-screen shrink-0 border-r transition-all duration-300 ease-in-out ${sidebarOpen ? 'w-64' : 'w-16'
+            className={`sticky top-0 h-[100dvh] shrink-0 border-r transition-all duration-300 ease-in-out ${sidebarOpen ? 'w-64' : 'w-16'
               } border-border bg-background p-2 shadow-sm z-40`}
           >
             {/* Logo Section */}

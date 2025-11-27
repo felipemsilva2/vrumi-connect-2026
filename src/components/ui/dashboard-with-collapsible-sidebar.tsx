@@ -156,7 +156,7 @@ export const DashboardWithSidebar = ({ user, profile }: DashboardProps) => {
   const userName = formatUserName(profile?.full_name, user?.email);
 
   return (
-    <div className="flex min-h-screen w-full">
+    <div className="flex min-h-[100dvh] w-full">
       <div className="flex w-full bg-background text-foreground">
         {!isMobile && (
           <Sidebar user={user} selected={selected} setSelected={setSelected} />
@@ -632,7 +632,7 @@ const MainContent = ({ isDark, setIsDark, user, profile, selected, setSelected, 
   }
 
   return (
-    <div className="flex-1 flex flex-col h-screen overflow-hidden bg-background">
+    <div className="flex-1 flex flex-col h-[100dvh] overflow-hidden bg-background">
       {!isMobile && (
         <TopBar
           isMobile={isMobile}

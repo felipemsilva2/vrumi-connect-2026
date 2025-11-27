@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Home, Target, BookOpen, Menu } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -10,6 +10,50 @@ interface MobileBottomNavProps {
 export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({ onMenuClick }) => {
     const navigate = useNavigate();
     const location = useLocation();
+    const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
+
+    useEffect(() => {
+        // Initial check
+        let initialHeight = window.visualViewport?.height || window.innerHeight;
+
+        const handleResize = () => {
+            const currentHeight = window.visualViewport?.height || window.innerHeight;
+            // If height shrinks by more than 20%, it's likely the keyboard
+            if (currentHeight < initialHeight * 0.8) {
+                setIsKeyboardOpen(true);
+            } else {
+                setIsKeyboardOpen(false);
+                // Update initial height if it grew (e.g. address bar collapsed)
+                if (currentHeight > initialHeight) {
+                    initialHeight = currentHeight;
+                }
+            }
+        };
+
+        const handleOrientationChange = () => {
+            setTimeout(() => {
+                initialHeight = window.visualViewport?.height || window.innerHeight;
+                handleResize();
+            }, 100);
+        };
+
+        if (window.visualViewport) {
+            window.visualViewport.addEventListener('resize', handleResize);
+        } else {
+            window.addEventListener('resize', handleResize);
+        }
+
+        window.addEventListener('orientationchange', handleOrientationChange);
+
+        return () => {
+            if (window.visualViewport) {
+                window.visualViewport.removeEventListener('resize', handleResize);
+            } else {
+                window.removeEventListener('resize', handleResize);
+            }
+            window.removeEventListener('orientationchange', handleOrientationChange);
+        };
+    }, []);
 
     const isActive = (path: string) => {
         if (path.includes('?')) {
@@ -37,7 +81,10 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({ onMenuClick })
     ];
 
     return (
-        <div className="fixed bottom-0 left-0 right-0 z-[9999] bg-background/80 backdrop-blur-lg border-t border-border bottom-nav pb-safe transition-all duration-300">
+        <div className={cn(
+            "fixed bottom-0 left-0 right-0 z-[9999] bg-background/80 backdrop-blur-lg border-t border-border bottom-nav pb-safe transition-all duration-300",
+            isKeyboardOpen ? "translate-y-full opacity-0 pointer-events-none" : "translate-y-0 opacity-100"
+        )}>
             <div className="flex items-center justify-around h-16 px-2">
                 {navItems.map((item) => {
                     const active = isActive(item.path);
