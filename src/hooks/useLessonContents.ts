@@ -13,11 +13,12 @@ export const useLessonContents = (lessonId: string | null) => {
         .select("*")
         .eq("lesson_id", lessonId)
         .order("order_position");
-      
+
       if (error) throw error;
-      
+
       return data as unknown as LessonContent[];
     },
-    enabled: !!lessonId
+    enabled: !!lessonId,
+    staleTime: 1000 * 60 * 30, // 30 minutes
   });
 };

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -52,7 +53,20 @@ interface TrafficSignsLibraryProps {
 }
 
 export default function TrafficSignsLibrary({ user, profile }: TrafficSignsLibraryProps) {
-  const [signs, setSigns] = useState<TrafficSign[]>([]);
+  const { data: signs = [], isLoading: loading } = useQuery({
+    queryKey: ['traffic-signs'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('traffic_signs')
+        .select('*')
+        .order('code');
+
+      if (error) throw error;
+      return data as TrafficSign[];
+    },
+    staleTime: Infinity,
+  });
+
   const [filteredSigns, setFilteredSigns] = useState<TrafficSign[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>('Todas');
   const [searchTerm, setSearchTerm] = useState('');
@@ -60,15 +74,9 @@ export default function TrafficSignsLibrary({ user, profile }: TrafficSignsLibra
   const [flashcardMode, setFlashcardMode] = useState(false);
   const [timedChallengeMode, setTimedChallengeMode] = useState(false);
   const [flashcardSigns, setFlashcardSigns] = useState<TrafficSign[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [studyModeModalOpen, setStudyModeModalOpen] = useState(false);
   const [displayedCount, setDisplayedCount] = useState(24);
 
   const categories = ['Todas', 'Regulamentação', 'Advertência', 'Serviços Auxiliares', 'Indicação', 'Obras'];
-
-  useEffect(() => {
-    fetchTrafficSigns();
-  }, []);
 
   useEffect(() => {
     filterSigns();
@@ -83,26 +91,6 @@ export default function TrafficSignsLibrary({ user, profile }: TrafficSignsLibra
       }
     }
   }, [flashcardMode, timedChallengeMode]);
-
-  const fetchTrafficSigns = async () => {
-    try {
-      setLoading(true);
-      const { data, error } = await supabase
-        .from('traffic_signs')
-        .select('*')
-        .order('code');
-
-      if (error) {
-        console.error('Erro ao buscar placas:', error);
-      } else {
-        setSigns(data || []);
-      }
-    } catch (error) {
-      console.error('Erro ao carregar placas:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const filterSigns = () => {
     let filtered = signs;

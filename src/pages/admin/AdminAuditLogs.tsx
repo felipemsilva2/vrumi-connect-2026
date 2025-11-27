@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -38,6 +38,8 @@ export default function AdminAuditLogs() {
       if (error) throw error;
       return data;
     },
+    staleTime: 1000 * 60 * 1, // 1 minute
+    placeholderData: keepPreviousData,
   });
 
   const getActionBadgeVariant = (action: string) => {
