@@ -54,7 +54,8 @@ const ProtectedAdminRoute = ({ children }: { children: React.ReactNode }) => {
 
 
 
-const queryClient = new QueryClient();
+import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
+import { queryClient, persister } from "@/lib/query-client";
 
 const ThemeHandler = () => {
   const { pathname } = useLocation();
@@ -77,7 +78,10 @@ const ThemeHandler = () => {
 };
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
+  <PersistQueryClientProvider
+    client={queryClient}
+    persistOptions={{ persister }}
+  >
     <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
       <TooltipProvider>
         <Toaster />
@@ -153,7 +157,7 @@ const App = () => (
         </BrowserRouter>
       </TooltipProvider>
     </ThemeProvider>
-  </QueryClientProvider>
+  </PersistQueryClientProvider>
 );
 
 export default App;

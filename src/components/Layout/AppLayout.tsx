@@ -314,17 +314,19 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
                 </div>
               </div>
               <div className="flex items-center gap-3">
-                <button
-                  onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-                  className="flex h-10 w-10 items-center justify-center rounded-lg border border-border bg-background text-muted-foreground hover:bg-accent/10"
-                  aria-label={theme === "dark" ? "Ativar modo claro" : "Ativar modo escuro"}
-                >
-                  {theme === "dark" ? (
-                    <Sun className="h-5 w-5" />
-                  ) : (
-                    <Moon className="h-5 w-5" />
-                  )}
-                </button>
+                {!location.pathname.includes('/biblioteca-de-placas') && (
+                  <button
+                    onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+                    className="flex h-10 w-10 items-center justify-center rounded-lg border border-border bg-background text-muted-foreground hover:bg-accent/10"
+                    aria-label={theme === "dark" ? "Ativar modo claro" : "Ativar modo escuro"}
+                  >
+                    {theme === "dark" ? (
+                      <Sun className="h-5 w-5" />
+                    ) : (
+                      <Moon className="h-5 w-5" />
+                    )}
+                  </button>
+                )}
               </div>
             </div>
             {showBreadcrumb && <SmartBreadcrumb />}
