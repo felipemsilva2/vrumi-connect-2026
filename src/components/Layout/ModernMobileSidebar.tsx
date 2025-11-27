@@ -98,7 +98,7 @@ export const ModernMobileSidebar: React.FC<ModernMobileSidebarProps> = ({
     const sidebarVariants = {
         hidden: { x: '-100%' },
         visible: {
-            x: 0,
+            x: '0%',
             transition: {
                 type: 'spring',
                 damping: 30,
@@ -135,11 +135,7 @@ export const ModernMobileSidebar: React.FC<ModernMobileSidebarProps> = ({
                         initial="hidden"
                         animate="visible"
                         exit="exit"
-                        className="fixed top-0 left-0 bottom-0 w-[85vw] max-w-sm bg-background z-[101] shadow-2xl"
-                        style={{
-                            paddingTop: 'env(safe-area-inset-top)',
-                            paddingBottom: 'env(safe-area-inset-bottom)'
-                        }}
+                        className="fixed top-0 left-0 bottom-0 w-[85vw] max-w-sm bg-background z-[101] shadow-2xl pt-safe pb-safe"
                     >
                         {/* Content Container */}
                         <div className="flex flex-col h-full">
