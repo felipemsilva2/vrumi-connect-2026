@@ -385,19 +385,19 @@ export const EstatisticasView = () => {
         {/* Métricas Avançadas */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           {/* Total de Cartões */}
-          <div className="bg-card border border-border rounded-xl p-4">
+          <div className="bg-card border border-border rounded-xl p-4 overflow-hidden">
             <div className="flex items-center justify-between mb-2">
               <Brain className="h-4 w-4 text-primary" />
               <TrendingUp className="h-3 w-3 text-success" />
             </div>
             <p className="text-xs text-muted-foreground">Base de Conhecimento</p>
-            <p className="text-xl font-bold text-foreground">{totalFlashcards}</p>
+            <p className="text-xl font-bold text-foreground truncate">{totalFlashcards}</p>
             <p className="text-[10px] text-success mt-0.5">Cartões disponíveis</p>
           </div>
 
           {/* Comparação com Plataforma */}
           {platformAverages && (
-            <div className="bg-card border border-border rounded-xl p-4">
+            <div className="bg-card border border-border rounded-xl p-4 overflow-hidden">
               <div className="flex items-center justify-between mb-2">
                 <Users className="h-4 w-4 text-info" />
                 <span className={`text-[10px] font-medium ${correctRate > platformAverages.correctRate ? 'text-success' : 'text-warning'
@@ -406,7 +406,7 @@ export const EstatisticasView = () => {
                 </span>
               </div>
               <p className="text-xs text-muted-foreground">vs Média Plataforma</p>
-              <p className="text-xl font-bold text-foreground">
+              <p className="text-xl font-bold text-foreground truncate">
                 {correctRate > platformAverages.correctRate ? '+' : ''}
                 {correctRate - platformAverages.correctRate}%
               </p>
@@ -418,7 +418,7 @@ export const EstatisticasView = () => {
 
           {/* Prepar para Prova */}
           {examReadiness && (
-            <div className="bg-card border border-border rounded-xl p-4">
+            <div className="bg-card border border-border rounded-xl p-4 overflow-hidden">
               <div className="flex items-center justify-between mb-2">
                 <Target className="h-4 w-4 text-destructive" />
                 <span className={`text-[10px] font-medium ${examReadiness.score >= 80 ? 'text-success' :
@@ -428,7 +428,7 @@ export const EstatisticasView = () => {
                 </span>
               </div>
               <p className="text-xs text-muted-foreground">Prepar para Prova</p>
-              <p className="text-xl font-bold text-foreground">{examReadiness.score}%</p>
+              <p className="text-xl font-bold text-foreground truncate">{examReadiness.score}%</p>
               <p className="text-[10px] text-muted-foreground mt-0.5">
                 {examReadiness.weakAreas.length > 0 ?
                   `${examReadiness.weakAreas.length} áreas a melhorar` :
@@ -440,7 +440,7 @@ export const EstatisticasView = () => {
 
           {/* Padrão de Estudo */}
           {studyPattern && (
-            <div className="bg-card border border-border rounded-xl p-4">
+            <div className="bg-card border border-border rounded-xl p-4 overflow-hidden">
               <div className="flex items-center justify-between mb-2">
                 <Clock className="h-4 w-4 text-accent" />
                 <span className={`text-[10px] font-medium ${studyPattern.consistency >= 70 ? 'text-success' :
@@ -450,7 +450,7 @@ export const EstatisticasView = () => {
                 </span>
               </div>
               <p className="text-xs text-muted-foreground">Pico de Estudo</p>
-              <p className="text-xl font-bold text-foreground">{studyPattern.peakHour}</p>
+              <p className="text-xl font-bold text-foreground truncate">{studyPattern.peakHour}</p>
               <p className="text-[10px] text-muted-foreground mt-0.5">
                 {studyPattern.recommendedHours > 0 ?
                   `Faltam ${studyPattern.recommendedHours}h esta semana` :
@@ -463,7 +463,7 @@ export const EstatisticasView = () => {
 
         {/* 📊 Análise de Desempenho por Tipo de Questão */}
         {questionTypeStats.length > 0 && (
-          <div className="bg-card border border-border rounded-xl p-4">
+          <div className="bg-card border border-border rounded-xl p-4 overflow-hidden">
             <h3 className="text-lg font-semibold text-foreground mb-4">Desempenho por Tipo de Questão</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {questionTypeStats.map((type, index) => (
@@ -492,7 +492,7 @@ export const EstatisticasView = () => {
 
         {/* 📈 Tendências de Progresso */}
         {categoryTrends.length > 0 && (
-          <div className="bg-card border border-border rounded-xl p-4">
+          <div className="bg-card border border-border rounded-xl p-4 overflow-hidden">
             <h3 className="text-lg font-semibold text-foreground mb-4">Tendências de Progresso (4 semanas)</h3>
             <div className="space-y-4">
               {categoryTrends.map((trend, index) => (
@@ -532,7 +532,7 @@ export const EstatisticasView = () => {
 
         {/* 📋 Análise Avançada de Placas de Trânsito */}
         {trafficSignsAnalytics && (
-          <div className="bg-card border border-border rounded-xl p-4">
+          <div className="bg-card border border-border rounded-xl p-4 overflow-hidden">
             <h3 className="text-lg font-semibold text-foreground mb-4">Análise de Placas de Trânsito</h3>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
@@ -545,7 +545,7 @@ export const EstatisticasView = () => {
                   </span>
                 </div>
                 <p className="text-xs text-muted-foreground">Progresso Total</p>
-                <p className="text-xl font-bold text-foreground">
+                <p className="text-xl font-bold text-foreground truncate">
                   {trafficSignsAnalytics.studiedSigns} / {trafficSignsAnalytics.totalSigns}
                 </p>
                 <p className="text-[10px] text-muted-foreground mt-0.5">Placas estudadas</p>
@@ -577,7 +577,7 @@ export const EstatisticasView = () => {
                   </span>
                 </div>
                 <p className="text-xs text-muted-foreground">Atividade Recente</p>
-                <p className="text-xl font-bold text-foreground">
+                <p className="text-xl font-bold text-foreground truncate">
                   {trafficSignsAnalytics.recentProgress.reduce((sum, day) => sum + day.activities, 0)}
                 </p>
                 <p className="text-[10px] text-muted-foreground mt-0.5">Atividades realizadas</p>

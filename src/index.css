@@ -91,15 +91,27 @@
 }
 
 @layer base {
+
+    /* Reset básico */
     * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
         @apply border-border;
+    }
+
+    /* Container principal */
+    body,
+    html {
+        width: 100%;
+        overflow-x: hidden;
+        position: relative;
     }
 
     html {
         scroll-behavior: smooth;
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
-        overflow-x: hidden;
         /* PWA: Prevent text size adjustment on orientation change */
         -webkit-text-size-adjust: 100%;
         -moz-text-size-adjust: 100%;
@@ -109,7 +121,6 @@
     body {
         @apply bg-background text-foreground font-sans antialiased;
         font-feature-settings: "rlig" 1, "calt" 1;
-        overflow-x: hidden;
         min-height: 100vh;
         min-height: 100dvh;
         /* Dynamic viewport height for mobile */
@@ -172,5 +183,14 @@
 
     .pb-safe {
         padding-bottom: env(safe-area-inset-bottom);
+    }
+
+    /* PWA Specific Class */
+    .bottom-nav {
+        padding-bottom: env(safe-area-inset-bottom);
+    }
+
+    .pb-safe-offset-nav {
+        padding-bottom: calc(env(safe-area-inset-bottom) + 4rem);
     }
 }

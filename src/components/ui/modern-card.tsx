@@ -9,7 +9,7 @@ interface ModernCardProps extends React.HTMLAttributes<HTMLDivElement> {
 
 const ModernCard = React.forwardRef<HTMLDivElement, ModernCardProps>(
   ({ className, variant = 'default', hover = true, interactive = false, children, ...props }, ref) => {
-    const baseClasses = 'rounded-2xl border transition-all duration-300';
+    const baseClasses = 'rounded-2xl border transition-all duration-300 overflow-hidden';
 
     const variantClasses = {
       default: 'bg-card text-card-foreground border-border shadow-sm hover:shadow-md',
