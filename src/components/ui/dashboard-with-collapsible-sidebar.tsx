@@ -23,6 +23,7 @@ import {
   Bell,
   Settings,
   CreditCard,
+  Search,
 } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useContextualNavigation } from "@/utils/navigation";
@@ -240,8 +241,8 @@ const Sidebar = ({ user, selected, setSelected }: SidebarProps) => {
 
   return (
     <nav
-      className={`sticky top-0 h-screen shrink-0 border-r transition-all duration-300 ease-in-out ${open ? 'w-64' : 'w-16'
-        } border-border bg-background p-2 shadow-sm`}
+      className={`sticky top-0 h-screen shrink-0 border-r transition-all duration-300 ease-in-out ${open ? 'w-[280px]' : 'w-[80px]'
+        } border-border bg-card p-2 shadow-sm`}
     >
       <TitleSection open={open} user={user} hasActivePass={hasActivePass} activePass={activePass} />
 
@@ -511,6 +512,51 @@ const LazyEstatisticasView = React.lazy(() => import("@/components/dashboard/Est
 const LazyConquistasView = React.lazy(() => import("@/components/dashboard/ConquistasView").then(m => ({ default: m.ConquistasView })));
 const LazyPerfilView = React.lazy(() => import("@/components/dashboard/PerfilView").then(m => ({ default: m.PerfilView })));
 
+const TopBar = ({ isMobile, openMobileMenu, isDark, setIsDark, user, profile }: any) => {
+  return (
+    <header className="h-[72px] bg-card border-b border-border flex items-center justify-between px-8 shrink-0 transition-all duration-300">
+      {/* Search Bar */}
+      <div className="flex-1 max-w-[400px] hidden md:block">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <input
+            type="text"
+            placeholder="Buscar..."
+            className="w-full h-10 pl-10 pr-4 rounded-xl border border-input bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+          />
+        </div>
+      </div>
+
+      {/* Right Actions */}
+      <div className="flex items-center gap-4 ml-auto">
+        <ModernButton
+          onClick={() => setIsDark(!isDark)}
+          variant="ghost"
+          size="icon"
+          className="rounded-full h-10 w-10"
+          aria-label={isDark ? "Ativar modo claro" : "Ativar modo escuro"}
+        >
+          {isDark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+        </ModernButton>
+
+        <div className="flex items-center gap-3 pl-4 border-l border-border">
+          <div className="text-right hidden md:block">
+            <p className="text-sm font-semibold text-foreground leading-none">
+              {profile?.full_name || user?.email?.split('@')[0]}
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">
+              Estudante
+            </p>
+          </div>
+          <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold border border-primary/20">
+            {profile?.full_name?.[0] || user?.email?.[0]?.toUpperCase()}
+          </div>
+        </div>
+      </div>
+    </header>
+  )
+}
+
 const MainContent = ({ isDark, setIsDark, user, profile, selected, setSelected, isMobile, openMobileMenu }: any) => {
   const successRate = profile?.total_questions_answered
     ? Math.round((profile.correct_answers / profile.total_questions_answered) * 100)
@@ -572,39 +618,55 @@ const MainContent = ({ isDark, setIsDark, user, profile, selected, setSelected, 
   }
 
   return (
-    <div className={`flex-1 bg-background p-4 sm:p-6 overflow-auto overscroll-y-contain ${isMobile ? 'pb-safe-offset-nav' : 'pb-safe'}`}>
-      <SmartBreadcrumb />
-      {selected === "Dashboard" && (
-        <div className="flex items-center justify-between mb-6 sm:mb-8">
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Dashboard</h1>
-            <p className="text-muted-foreground mt-1">
-              Olá, {profile?.full_name || user?.email?.split('@')[0]}! Continue estudando para sua CNH
-            </p>
-          </div>
-          <div className="flex items-center gap-3 sm:gap-4">
-            {/* <NotificationSystem /> */}
-            <ModernButton
-              onClick={() => setIsDark(!isDark)}
-              variant="outline"
-              size="lg"
-              className="h-12 w-12 p-0 border-border bg-background text-foreground hover:bg-accent/10"
-              aria-label={isDark ? "Ativar modo claro" : "Ativar modo escuro"}
-              title={isDark ? "Modo claro" : "Modo escuro"}
-            >
-              {isDark ? (
-                <Sun className="h-5 w-5" />
-              ) : (
-                <Moon className="h-5 w-5" />
-              )}
-            </ModernButton>
-          </div>
-        </div>
+    <div className="flex-1 flex flex-col h-screen overflow-hidden bg-background">
+      {!isMobile && (
+        <TopBar
+          isMobile={isMobile}
+          openMobileMenu={openMobileMenu}
+          isDark={isDark}
+          setIsDark={setIsDark}
+          user={user}
+          profile={profile}
+        />
       )}
 
-      <Suspense fallback={<div className="p-4 text-sm text-muted-foreground">Carregando…</div>}>
-        {renderContent()}
-      </Suspense>
+      <div className={`flex-1 overflow-auto overscroll-y-contain p-4 sm:p-6 ${isMobile ? 'pb-safe-offset-nav' : 'pb-safe'}`}>
+        <SmartBreadcrumb />
+        {selected === "Dashboard" && (
+          <div className="flex items-center justify-between mb-6 sm:mb-8">
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Dashboard</h1>
+              <p className="text-muted-foreground mt-1">
+                Olá, {profile?.full_name || user?.email?.split('@')[0]}! Continue estudando para sua CNH
+              </p>
+            </div>
+            {/* Theme toggle moved to TopBar for desktop, keep here for mobile if needed or remove if TopBar covers it. 
+                Since TopBar is hidden on mobile, we might want to keep a mobile header or rely on Sidebar/MobileNav.
+                For now, let's hide the duplicate theme toggle on desktop since it's in TopBar.
+            */}
+            {isMobile && (
+              <div className="flex items-center gap-3 sm:gap-4">
+                <ModernButton
+                  onClick={() => setIsDark(!isDark)}
+                  variant="outline"
+                  size="lg"
+                  className="h-12 w-12 p-0 border-border bg-background text-foreground hover:bg-accent/10"
+                >
+                  {isDark ? (
+                    <Sun className="h-5 w-5" />
+                  ) : (
+                    <Moon className="h-5 w-5" />
+                  )}
+                </ModernButton>
+              </div>
+            )}
+          </div>
+        )}
+
+        <Suspense fallback={<div className="p-4 text-sm text-muted-foreground">Carregando…</div>}>
+          {renderContent()}
+        </Suspense>
+      </div>
     </div>
   )
 }
@@ -937,81 +999,81 @@ const DashboardHome = ({ user, profile, setSelected }: any) => {
     <>
       {/* Cards de Métricas Principais */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 lg:gap-6 mb-6 lg:mb-8" data-tutorial="dashboard">
-        <ModernCard variant="elevated" interactive={true} className="p-4 sm:p-6 h-full">
+        <ModernCard variant="elevated" interactive={true} className="p-4 sm:p-6 h-full bg-[#FEF3E2] border-none shadow-none">
           <div className="flex items-center justify-between mb-4">
-            <div className="p-2 bg-primary/10 dark:bg-primary/20 rounded-lg">
-              <BookOpen className="h-5 w-5 text-primary" />
+            <div className="p-2 bg-white rounded-full">
+              <BookOpen className="h-5 w-5 text-orange-700" />
             </div>
-            <TrendingUp className="h-4 w-4 text-success" />
+            <TrendingUp className="h-4 w-4 text-orange-700" />
           </div>
-          <h3 className="font-medium text-muted-foreground mb-1">Flashcards Estudados</h3>
-          <p className="text-2xl font-bold text-foreground">
+          <h3 className="font-semibold text-orange-800 mb-1 drop-shadow-sm">Flashcards Estudados</h3>
+          <p className="text-2xl font-bold text-orange-700 drop-shadow-sm">
             {aggregates?.total_flashcards_studied || 0}
           </p>
-          <p className="text-sm text-success mt-1">Continue estudando!</p>
+          <p className="text-sm text-orange-800/90 font-medium mt-1">Continue estudando!</p>
         </ModernCard>
 
-        <ModernCard variant="elevated" interactive={true} className="p-4 sm:p-6 h-full">
+        <ModernCard variant="elevated" interactive={true} className="p-4 sm:p-6 h-full bg-[#D1FAE5] border-none shadow-none">
           <div className="flex items-center justify-between mb-4">
-            <div className="p-2 bg-success/10 dark:bg-success/20 rounded-lg">
-              <Trophy className="h-5 w-5 text-success" />
+            <div className="p-2 bg-white rounded-full">
+              <Trophy className="h-5 w-5 text-emerald-700" />
             </div>
-            <TrendingUp className="h-4 w-4 text-success" />
+            <TrendingUp className="h-4 w-4 text-emerald-700" />
           </div>
-          <h3 className="font-medium text-muted-foreground mb-1">Taxa de Acerto</h3>
-          <p className="text-2xl font-bold text-foreground">{successRate}%</p>
-          <p className="text-sm text-success mt-1">Excelente desempenho!</p>
+          <h3 className="font-semibold text-emerald-800 mb-1 drop-shadow-sm">Taxa de Acerto</h3>
+          <p className="text-2xl font-bold text-emerald-700 drop-shadow-sm">{successRate}%</p>
+          <p className="text-sm text-emerald-800/90 font-medium mt-1">Excelente desempenho!</p>
         </ModernCard>
 
-        <ModernCard variant="elevated" interactive={true} className="p-4 sm:p-6 h-full">
+        <ModernCard variant="elevated" interactive={true} className="p-4 sm:p-6 h-full bg-[#FCE7F3] border-none shadow-none">
           <div className="flex items-center justify-between mb-4">
-            <div className="p-2 bg-accent/10 dark:bg-accent/20 rounded-lg">
-              <Target className="h-5 w-5 text-accent" />
+            <div className="p-2 bg-white rounded-full">
+              <Target className="h-5 w-5 text-pink-700" />
             </div>
-            <TrendingUp className="h-4 w-4 text-success" />
+            <TrendingUp className="h-4 w-4 text-pink-700" />
           </div>
-          <h3 className="font-medium text-muted-foreground mb-1">Questões Respondidas</h3>
-          <p className="text-2xl font-bold text-foreground">
+          <h3 className="font-semibold text-pink-800 mb-1 drop-shadow-sm">Questões Respondidas</h3>
+          <p className="text-2xl font-bold text-pink-700 drop-shadow-sm">
             {aggregates?.total_questions_answered || 0}
           </p>
-          <p className="text-sm text-success mt-1">Meta: 500 questões</p>
+          <p className="text-sm text-pink-800/90 font-medium mt-1">Meta: 500 questões</p>
         </ModernCard>
 
-        <ModernCard variant="elevated" interactive={true} className="p-4 sm:p-6 h-full">
+        <ModernCard variant="elevated" interactive={true} className="p-4 sm:p-6 h-full bg-[#DBEAFE] border-none shadow-none">
           <div className="flex items-center justify-between mb-4">
-            <div className="p-2 bg-secondary/10 dark:bg-secondary/20 rounded-lg">
-              <BarChart3 className="h-5 w-5 text-secondary" />
+            <div className="p-2 bg-white rounded-full">
+              <BarChart3 className="h-5 w-5 text-blue-700" />
             </div>
-            <TrendingUp className="h-4 w-4 text-success" />
+            <TrendingUp className="h-4 w-4 text-blue-700" />
           </div>
-          <h3 className="font-medium text-muted-foreground mb-1">Progresso Geral</h3>
-          <p className="text-2xl font-bold text-foreground">
+          <h3 className="font-semibold text-blue-800 mb-1 drop-shadow-sm">Progresso Geral</h3>
+          <p className="text-2xl font-bold text-blue-700 drop-shadow-sm">
             {aggregates?.study_progress || 0}%
           </p>
-          <p className="text-sm text-success mt-1">Continue assim!</p>
+          <p className="text-sm text-blue-800/90 font-medium mt-1">Continue assim!</p>
         </ModernCard>
 
         {/* Placas de Trânsito */}
         <ModernCard
           variant="elevated"
           interactive={true}
-          className="p-4 sm:p-6 h-full cursor-pointer"
+          className="p-4 sm:p-6 h-full cursor-pointer bg-[#FEF3C7] border-none shadow-none"
           onClick={() => {
             console.log('Navigating to Biblioteca de Placas...')
             setSelected("Biblioteca de Placas")
           }}
         >
           <div className="flex items-center justify-between mb-4">
-            <div className="p-2 bg-yellow-500/10 dark:bg-yellow-500/20 rounded-lg">
-              <TrafficCone className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
+            <div className="p-2 bg-white rounded-full">
+              <TrafficCone className="h-5 w-5 text-amber-700" />
             </div>
-            <TrendingUp className="h-4 w-4 text-success" />
+            <TrendingUp className="h-4 w-4 text-amber-700" />
           </div>
-          <h3 className="font-medium text-muted-foreground mb-1">Placas Estudadas</h3>
-          <p className="text-2xl font-bold text-foreground">
+          <h3 className="font-semibold text-amber-800 mb-1 drop-shadow-sm">Placas Estudadas</h3>
+          <p className="text-2xl font-bold text-amber-700 drop-shadow-sm">
             {trafficSignsStats.studied} de {trafficSignsStats.total}
           </p>
-          <p className="text-sm text-muted-foreground mt-1">
+          <p className="text-sm text-amber-800/90 font-medium mt-1">
             Confiança: {trafficSignsStats.confidence}%
           </p>
         </ModernCard>
