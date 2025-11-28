@@ -15,7 +15,8 @@ import {
   Trophy,
   Shield,
   TrafficCone,
-  Car
+  Car,
+  Sparkles
 } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { supabase } from "@/integrations/supabase/client";
@@ -26,6 +27,7 @@ import { SmartBreadcrumb } from "@/components/SmartBreadcrumb";
 import { useTheme } from "@/components/ThemeProvider";
 import { MobileBottomNav } from "./MobileBottomNav";
 import { ModernMobileSidebar } from "./ModernMobileSidebar";
+import { cn } from "@/lib/utils";
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -136,20 +138,31 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
   const userName = formatUserName(profile?.full_name, user?.email);
 
   const navigationItems = [
-    { label: "Dashboard", icon: Home, path: "/painel", tooltip: "Página inicial do dashboard" },
-    { label: "Flashcards", icon: BookOpen, path: "/painel?tab=flashcards", tooltip: "Estude com flashcards" },
-    { label: "Simulados", icon: Target, path: "/painel?tab=simulados", tooltip: "Teste seus conhecimentos com simulados", notifs: 2 },
-    { label: "Sala de Estudos", icon: FileText, path: "/sala-de-estudos", tooltip: "Estude com IA e visualize materiais", isExternal: true },
-    { label: "Estatísticas", icon: BarChart3, path: "/painel?tab=estatisticas", tooltip: "Veja seu desempenho" },
-    { label: "Biblioteca de Placas", icon: TrafficCone, path: "/biblioteca-de-placas", tooltip: "Consulte a biblioteca de placas de trânsito", isExternal: true },
-    { label: "Conquistas", icon: Trophy, path: "/painel?tab=conquistas", tooltip: "Suas conquistas", notifs: 1 },
+    { label: "Dashboard", icon: Home, path: "/painel", tooltip: "Página inicial do dashboard", description: "Visão geral" },
+    { label: "Flashcards", icon: BookOpen, path: "/painel?tab=flashcards", tooltip: "Estude com flashcards", description: "Memorização" },
+    { label: "Simulados", icon: Target, path: "/painel?tab=simulados", tooltip: "Teste seus conhecimentos com simulados", notifs: 2, description: "Pratique agora" },
+    { label: "Sala de Estudos", icon: FileText, path: "/sala-de-estudos", tooltip: "Estude com IA e visualize materiais", isExternal: true, description: "IA e Materiais" },
+    { label: "Estatísticas", icon: BarChart3, path: "/painel?tab=estatisticas", tooltip: "Veja seu desempenho", description: "Seu progresso" },
+    { label: "Biblioteca de Placas", icon: TrafficCone, path: "/biblioteca-de-placas", tooltip: "Consulte a biblioteca de placas de trânsito", isExternal: true, description: "Consulta rápida" },
+    { label: "Conquistas", icon: Trophy, path: "/painel?tab=conquistas", tooltip: "Suas conquistas", notifs: 1, description: "Suas medalhas" },
   ];
 
   const isActiveRoute = (path: string) => {
-    if (path.includes('?')) {
-      return location.pathname === path.split('?')[0];
+    const [targetPath, targetQuery] = path.split('?');
+
+    // Check if pathnames match
+    if (location.pathname !== targetPath) {
+      return false;
     }
-    return location.pathname === path;
+
+    // If the navigation item has a query string (e.g. tab=flashcards)
+    if (targetQuery) {
+      return location.search === `?${targetQuery}`;
+    }
+
+    // If the navigation item has NO query string (e.g. /painel)
+    // It should only be active if the current URL also has NO query string
+    return location.search === '';
   };
 
   return (
@@ -158,129 +171,209 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
         {/* Desktop Sidebar */}
         {!isMobile && (
           <div
-            className={`sticky top-0 h-[100dvh] shrink-0 border-r transition-all duration-300 ease-in-out ${sidebarOpen ? 'w-64' : 'w-16'
-              } border-border bg-background p-2 shadow-sm z-40`}
+            className={cn(
+              "sticky top-0 h-[100dvh] shrink-0 border-r border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 transition-all duration-300 ease-in-out z-40 flex flex-col",
+              sidebarOpen ? "w-[280px]" : "w-[80px]"
+            )}
           >
-            {/* Logo Section */}
-            <div className="mb-6 border-b border-border pb-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3 cursor-pointer" onClick={() => navigate("/painel")}>
-                  <div className="grid size-10 shrink-0 place-content-center rounded-lg bg-gradient-to-br from-primary to-primary/80 shadow-sm">
-                    <Car className="h-6 w-6 text-primary-foreground" />
-                  </div>
-                  {sidebarOpen && (
-                    <div>
-                      <span className="block text-sm font-semibold text-foreground">
-                        {userName}
-                      </span>
-                      <span className={`block text-xs ${hasActivePass ? 'text-green-600 dark:text-green-400' : 'text-muted-foreground'}`}>
-                        {getPlanDisplay()}
-                      </span>
+            {/* Logo & User Section */}
+            <div className="p-6 pb-2">
+              <div
+                className={cn(
+                  "flex items-center gap-3 cursor-pointer transition-all duration-200",
+                  !sidebarOpen && "justify-center"
+                )}
+                onClick={() => navigate("/painel")}
+              >
+                <div className="relative grid size-10 shrink-0 place-content-center rounded-xl bg-gradient-to-br from-primary to-primary/80 shadow-lg shadow-primary/20">
+                  <Car className="h-5 w-5 text-primary-foreground" />
+                  {hasActivePass && (
+                    <div className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-yellow-400 ring-2 ring-background">
+                      <Sparkles className="h-2.5 w-2.5 text-yellow-900" />
                     </div>
                   )}
                 </div>
-                {sidebarOpen && (
-                  <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                )}
+
+                <div className={cn(
+                  "flex flex-col overflow-hidden transition-all duration-300",
+                  sidebarOpen ? "opacity-100 w-auto" : "opacity-0 w-0"
+                )}>
+                  <span className="truncate text-sm font-bold text-foreground">
+                    {userName}
+                  </span>
+                  <span className={cn(
+                    "truncate text-xs font-medium",
+                    hasActivePass ? "text-primary" : "text-muted-foreground"
+                  )}>
+                    {getPlanDisplay().split('(')[0]}
+                  </span>
+                </div>
               </div>
             </div>
 
             {/* Navigation */}
-            <div className="space-y-1 mb-8">
-              {navigationItems.map((item) => (
-                <button
-                  key={item.label}
-                  onClick={() => navigate(item.path)}
-                  className={`relative flex h-12 w-full items-center rounded-md transition-all duration-200 ${isActiveRoute(item.path)
-                    ? "bg-primary/10 text-primary shadow-sm border-l-2 border-primary"
-                    : "text-muted-foreground hover:bg-accent/10 hover:text-foreground"
-                    }`}
-                  aria-label={item.label}
-                  title={item.tooltip}
-                >
-                  <div className="grid h-full w-12 place-content-center">
-                    <item.icon className="h-5 w-5" />
-                  </div>
-                  {sidebarOpen && (
-                    <span className="text-sm font-medium">
-                      {item.label}
-                    </span>
-                  )}
-                  {item.notifs && sidebarOpen && (
-                    <span className="absolute right-3 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-xs text-primary-foreground font-medium">
-                      {item.notifs}
-                    </span>
-                  )}
-                </button>
-              ))}
-            </div>
+            <div className="flex-1 overflow-y-auto py-6 px-3 space-y-6 scrollbar-none">
+              <div className="space-y-1">
+                {navigationItems.map((item) => {
+                  const active = isActiveRoute(item.path);
+                  return (
+                    <button
+                      key={item.label}
+                      onClick={() => navigate(item.path)}
+                      className={cn(
+                        "group relative flex w-full items-center rounded-xl transition-all duration-200 outline-none hover:bg-accent/50",
+                        active ? "bg-primary/10 text-primary font-medium" : "text-muted-foreground",
+                        sidebarOpen ? "px-3 py-3" : "justify-center py-3 px-0"
+                      )}
+                      title={!sidebarOpen ? item.label : undefined}
+                    >
+                      {active && (
+                        <div className="absolute left-0 top-1/2 -translate-y-1/2 h-8 w-1 rounded-r-full bg-primary" />
+                      )}
 
-            {/* Admin Section */}
-            {isAdmin && sidebarOpen && (
-              <div className="border-t border-border pt-4 space-y-1 mb-4">
-                <div className="px-3 py-2 text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                  Administração
-                </div>
-                <button
-                  onClick={() => navigate("/admin/painel")}
-                  className="relative flex h-12 w-full items-center rounded-md transition-all duration-200 text-muted-foreground hover:bg-primary/10 hover:text-primary"
-                >
-                  <div className="grid h-full w-12 place-content-center">
-                    <Shield className="h-4 w-4" />
-                  </div>
-                  <span className="text-sm font-medium">Área Admin</span>
-                </button>
+                      <div className={cn(
+                        "flex shrink-0 items-center justify-center rounded-lg transition-colors duration-200",
+                        sidebarOpen ? "mr-3 h-8 w-8" : "h-10 w-10",
+                        active ? "bg-primary/20" : "bg-transparent group-hover:bg-accent"
+                      )}>
+                        <item.icon className={cn("h-5 w-5", active && "text-primary")} />
+                      </div>
+
+                      <div className={cn(
+                        "flex flex-col items-start overflow-hidden transition-all duration-300",
+                        sidebarOpen ? "opacity-100 w-auto" : "opacity-0 w-0 hidden"
+                      )}>
+                        <span className="text-sm leading-none">{item.label}</span>
+                        {item.description && (
+                          <span className="mt-1 text-[10px] text-muted-foreground/80 font-normal">
+                            {item.description}
+                          </span>
+                        )}
+                      </div>
+
+                      {item.notifs && sidebarOpen && (
+                        <span className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1.5 text-[10px] font-bold text-primary-foreground">
+                          {item.notifs}
+                        </span>
+                      )}
+
+                      {item.notifs && !sidebarOpen && (
+                        <span className="absolute top-2 right-2 h-2.5 w-2.5 rounded-full bg-primary ring-2 ring-background" />
+                      )}
+                    </button>
+                  );
+                })}
               </div>
-            )}
 
-            {/* Account Section */}
-            {sidebarOpen && (
-              <div className="border-t border-border pt-4 space-y-1">
-                <div className="px-3 py-2 text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                  Conta
+              {/* Admin Section */}
+              {isAdmin && (
+                <div className="space-y-1">
+                  {sidebarOpen && (
+                    <div className="px-3 text-[10px] font-bold uppercase tracking-wider text-muted-foreground/70">
+                      Administração
+                    </div>
+                  )}
+                  <button
+                    onClick={() => navigate("/admin/painel")}
+                    className={cn(
+                      "group relative flex w-full items-center rounded-xl transition-all duration-200 outline-none hover:bg-accent/50 text-muted-foreground hover:text-primary",
+                      sidebarOpen ? "px-3 py-3" : "justify-center py-3 px-0"
+                    )}
+                    title={!sidebarOpen ? "Área Admin" : undefined}
+                  >
+                    <div className={cn(
+                      "flex shrink-0 items-center justify-center rounded-lg transition-colors duration-200 bg-purple-500/10 group-hover:bg-purple-500/20",
+                      sidebarOpen ? "mr-3 h-8 w-8" : "h-10 w-10"
+                    )}>
+                      <Shield className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                    </div>
+                    <div className={cn(
+                      "flex flex-col items-start overflow-hidden transition-all duration-300",
+                      sidebarOpen ? "opacity-100 w-auto" : "opacity-0 w-0 hidden"
+                    )}>
+                      <span className="text-sm font-medium">Área Admin</span>
+                    </div>
+                  </button>
                 </div>
+              )}
+
+              {/* Account Section */}
+              <div className="space-y-1">
+                {sidebarOpen && (
+                  <div className="px-3 text-[10px] font-bold uppercase tracking-wider text-muted-foreground/70">
+                    Conta
+                  </div>
+                )}
+
                 <button
                   onClick={() => navigate("/painel?tab=perfil")}
-                  className="relative flex h-12 w-full items-center rounded-md transition-all duration-200 text-muted-foreground hover:bg-accent/10 hover:text-foreground"
+                  className={cn(
+                    "group relative flex w-full items-center rounded-xl transition-all duration-200 outline-none hover:bg-accent/50 text-muted-foreground hover:text-foreground",
+                    sidebarOpen ? "px-3 py-3" : "justify-center py-3 px-0"
+                  )}
+                  title={!sidebarOpen ? "Meu Perfil" : undefined}
                 >
-                  <div className="grid h-full w-12 place-content-center">
+                  <div className={cn(
+                    "flex shrink-0 items-center justify-center rounded-lg transition-colors duration-200 bg-accent/50 group-hover:bg-accent",
+                    sidebarOpen ? "mr-3 h-8 w-8" : "h-10 w-10"
+                  )}>
                     <User className="h-4 w-4" />
                   </div>
-                  <span className="text-sm font-medium">Meu Perfil</span>
+                  <div className={cn(
+                    "flex flex-col items-start overflow-hidden transition-all duration-300",
+                    sidebarOpen ? "opacity-100 w-auto" : "opacity-0 w-0 hidden"
+                  )}>
+                    <span className="text-sm font-medium">Meu Perfil</span>
+                  </div>
                 </button>
+
                 <button
                   onClick={handleSignOut}
-                  className="relative flex h-12 w-full items-center rounded-md transition-all duration-200 text-muted-foreground hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-400"
+                  className={cn(
+                    "group relative flex w-full items-center rounded-xl transition-all duration-200 outline-none hover:bg-red-500/10 text-muted-foreground hover:text-red-600 dark:hover:text-red-400",
+                    sidebarOpen ? "px-3 py-3" : "justify-center py-3 px-0"
+                  )}
+                  title={!sidebarOpen ? "Sair" : undefined}
                 >
-                  <div className="grid h-full w-12 place-content-center">
+                  <div className={cn(
+                    "flex shrink-0 items-center justify-center rounded-lg transition-colors duration-200 bg-red-500/5 group-hover:bg-red-500/10",
+                    sidebarOpen ? "mr-3 h-8 w-8" : "h-10 w-10"
+                  )}>
                     <LogOut className="h-4 w-4" />
                   </div>
-                  <span className="text-sm font-medium">Sair</span>
+                  <div className={cn(
+                    "flex flex-col items-start overflow-hidden transition-all duration-300",
+                    sidebarOpen ? "opacity-100 w-auto" : "opacity-0 w-0 hidden"
+                  )}>
+                    <span className="text-sm font-medium">Sair</span>
+                  </div>
                 </button>
               </div>
-            )}
+            </div>
 
             {/* Toggle Sidebar */}
-            <button
-              onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="absolute bottom-0 left-0 right-0 border-t border-border transition-colors hover:bg-accent/10"
-              aria-label={sidebarOpen ? "Ocultar sidebar" : "Mostrar sidebar"}
-              title={sidebarOpen ? "Ocultar menu lateral" : "Mostrar menu lateral"}
-            >
-              <div className="flex items-center p-4">
-                <div className="grid size-12 place-content-center">
-                  <ChevronsRight
-                    className={`h-5 w-5 transition-transform duration-300 text-muted-foreground ${sidebarOpen ? "rotate-180" : ""
-                      }`}
-                  />
-                </div>
+            <div className="p-3 border-t border-border/40">
+              <button
+                onClick={() => setSidebarOpen(!sidebarOpen)}
+                className={cn(
+                  "flex w-full items-center rounded-xl border border-border/50 bg-accent/20 p-2 transition-all hover:bg-accent/40 hover:border-border",
+                  !sidebarOpen && "justify-center"
+                )}
+                aria-label={sidebarOpen ? "Ocultar sidebar" : "Mostrar sidebar"}
+              >
+                <ChevronsRight
+                  className={cn(
+                    "h-4 w-4 text-muted-foreground transition-transform duration-300",
+                    sidebarOpen ? "rotate-180" : ""
+                  )}
+                />
                 {sidebarOpen && (
-                  <span className="text-sm font-medium text-muted-foreground">
-                    Ocultar
+                  <span className="ml-2 text-xs font-medium text-muted-foreground">
+                    Recolher menu
                   </span>
                 )}
-              </div>
-            </button>
+              </button>
+            </div>
           </div>
         )}
 
