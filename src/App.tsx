@@ -9,6 +9,7 @@ import { useIsAdmin } from "@/hooks/useIsAdmin";
 import { useEffect, useState, Suspense, lazy } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { PWAInstallPrompt } from "@/components/PWAInstallPrompt";
+import { ReloadPrompt } from "@/components/ReloadPrompt";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import { queryClient, persister } from "@/lib/query-client";
 import { Loader2 } from "lucide-react";
@@ -71,6 +72,7 @@ const App = () => (
       <TooltipProvider>
         <Toaster />
         <Sonner />
+        <ReloadPrompt />
         <BrowserRouter>
           <PWAInstallPrompt />
           <ErrorBoundary>
