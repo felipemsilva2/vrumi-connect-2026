@@ -29,8 +29,10 @@ const Checkout = () => {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(false)
   const [paymentMethod, setPaymentMethod] = useState<"credit_card" | "pix" | null>(null)
-  const [pixData, setPixData] = useState<{ qrCodeUrl: string, copyPaste: string } | null>(null)
+  const [pixData, setPixData] = useState<{ qrCodeUrl: string, copyPaste: string, pixId: string, expiresAt: string } | null>(null)
   const [errors, setErrors] = useState<Partial<Record<keyof PixForm, string>>>({})
+  const [verifying, setVerifying] = useState(false)
+  const [paymentConfirmed, setPaymentConfirmed] = useState(false)
 
   const [formData, setFormData] = useState<PixForm>({
     fullName: "",
@@ -228,10 +230,12 @@ const Checkout = () => {
 
       if (error) throw error
 
-      // Assuming the function returns the QR code URL and Copy Paste code
+      // Set PIX data with all necessary information
       setPixData({
-        qrCodeUrl: data.qrCodeUrl, // URL to the image of the QR Code
-        copyPaste: data.copyPaste, // The Pix Copy Paste string
+        qrCodeUrl: data.qrCodeUrl,
+        copyPaste: data.copyPaste,
+        pixId: data.pixId,
+        expiresAt: data.expiresAt,
       })
 
     } catch (error) {
@@ -252,6 +256,46 @@ const Checkout = () => {
       title: "Copiado!",
       description: "Código Pix copiado para a área de transferência.",
     })
+  }
+
+  const handleVerifyPayment = async () => {
+    if (!pixData) return
+
+    setVerifying(true)
+    try {
+      const { data, error } = await supabase.functions.invoke('verify-abacate-pix', {
+        body: {
+          pixId: pixData.pixId,
+          passType: passType,
+          secondUserEmail: passType === 'family_90_days' ? secondUserEmail : null,
+        },
+      })
+
+      if (error) throw error
+
+      if (data?.success && data?.status === 'COMPLETED') {
+        setPaymentConfirmed(true)
+        toast({
+          title: "Pagamento confirmado!",
+          description: "Seu passaporte foi ativado com sucesso.",
+        })
+      } else {
+        toast({
+          title: "Pagamento não confirmado",
+          description: "O pagamento ainda não foi processado. Aguarde alguns instantes e tente novamente.",
+          variant: "destructive",
+        })
+      }
+    } catch (error) {
+      console.error('Erro ao verificar pagamento:', error)
+      toast({
+        title: "Erro ao verificar pagamento",
+        description: "Tente novamente mais tarde.",
+        variant: "destructive",
+      })
+    } finally {
+      setVerifying(false)
+    }
   }
 
   if (!selectedPass) return null
@@ -286,10 +330,25 @@ const Checkout = () => {
                 </p>
               </CardHeader>
               <CardContent>
-                {pixData ? (
+                {paymentConfirmed ? (
+                  <div className="flex flex-col items-center space-y-6 py-12">
+                    <div className="w-20 h-20 rounded-full bg-green-500/10 flex items-center justify-center">
+                      <Check className="h-10 w-10 text-green-500" />
+                    </div>
+                    <div className="text-center space-y-2">
+                      <h2 className="text-3xl font-bold text-foreground">Vrumm! 🎉</h2>
+                      <p className="text-xl font-semibold text-foreground">Seu acesso está liberado</p>
+                      <p className="text-muted-foreground">
+                        Agora você pode aproveitar todos os benefícios do seu passaporte.
+                      </p>
+                    </div>
+                    <Button onClick={() => navigate('/painel')} size="lg" className="w-full max-w-md">
+                      Ir para o Dashboard
+                    </Button>
+                  </div>
+                ) : pixData ? (
                   <div className="flex flex-col items-center space-y-6 py-4">
                     <div className="bg-white p-4 rounded-lg shadow-sm border">
-                      {/* Assuming qrCodeUrl is a direct image URL */}
                       <img src={pixData.qrCodeUrl} alt="QR Code Pix" className="w-64 h-64 object-contain" />
                     </div>
 
@@ -303,9 +362,18 @@ const Checkout = () => {
                       </div>
                     </div>
 
-                    <div className="text-center text-sm text-muted-foreground">
-                      <p>Após o pagamento, seu acesso será liberado automaticamente em alguns instantes.</p>
+                    <div className="text-center text-sm text-muted-foreground mb-4">
+                      <p>Após o pagamento, clique no botão abaixo para verificar.</p>
                     </div>
+
+                    <Button 
+                      onClick={handleVerifyPayment} 
+                      className="w-full max-w-md" 
+                      size="lg"
+                      disabled={verifying}
+                    >
+                      {verifying ? "Verificando..." : "Já efetuei o pagamento"}
+                    </Button>
                   </div>
                 ) : !paymentMethod ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
