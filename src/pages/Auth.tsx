@@ -8,100 +8,79 @@ import LoginForm from "@/components/ui/login-form";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-variant: "destructive",
-    });
-return;
-  }
+import { Button } from "@/components/ui/button";
 
-if (!validateForm()) {
-  if (!isLogin && !termsAccepted) {
-    toast({
-      title: "Termos de uso",
-      description: "Você precisa aceitar os termos de uso para criar uma conta.",
-      variant: "destructive",
-    });
-    return;
-  }
+const Auth = () => {
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const [searchParams] = useSearchParams();
 
-  toast({
-    title: "Campos inválidos",
-    description: "Por favor, corrija os erros antes de continuar.",
-    variant: "destructive",
+  const [isLogin, setIsLogin] = useState(() => {
+    const mode = searchParams.get('mode');
+    return mode !== 'register';
   });
-  return;
-}
+  const [loading, setLoading] = useState(false);
+  const [showResetPassword, setShowResetPassword] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [termsAccepted, setTermsAccepted] = useState(false);
 
-setLoading(true);
-
-try {
-  if (isLogin) {
-    const { error } = await supabase.auth.signInWithPassword({
-      email: values.email,
-      password: values.password,
-    });
-
-    if (error) {
-      const errorInfo = getErrorMessage(error);
-
-      toast({
-        title: errorInfo.title,
-        description: errorInfo.message,
-        variant: "destructive",
-        duration: 5000,
-      });
-      return;
-    }
-
-    toast({
-      title: "Bem-vindo de volta!",
-      description: "Login realizado com sucesso.",
-    });
-  } else {
-    const { error } = await supabase.auth.signUp({
-      email: values.email,
-      password: values.password,
-      options: {
-        emailRedirectTo: `${window.location.origin}/entrar`,
-        data: {
-          full_name: values.fullName,
-        },
-      },
-    });
-
-    if (error) {
-      const errorInfo = getErrorMessage(error);
-
-      toast({
-        title: errorInfo.title,
-        description: errorInfo.message,
-        variant: "destructive",
-        duration: 5000,
-      });
-      return;
-    }
-
-    toast({
-      title: "Conta criada!",
-      description: "Bem-vindo à plataforma Vrumi. Verifique seu email para confirmar sua conta.",
-    });
-    resetForm();
-  }
-} catch (error) {
-  const errorInfo = getErrorMessage(error);
-
-  toast({
-    title: errorInfo.title,
-    description: errorInfo.message,
-    variant: "destructive",
-    duration: 5000,
+  const {
+    values,
+    errors,
+    touched,
+    handleChange,
+    handleBlur,
+    resetForm,
+  } = useFormValidation({
+    email: '',
+    password: '',
+    fullName: '',
+    acceptedTerms: ''
   });
-} finally {
-  setLoading(false);
-}
-};
 
-const handleGoogleLogin = async () => {
-  try {
+  useEffect(() => {
+    const redirectTo = searchParams.get('redirect_to');
+
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
+        if (redirectTo) {
+          navigate(redirectTo);
+        } else {
+          navigate("/painel");
+        }
+      }
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (session && event === "SIGNED_IN") {
+        if (redirectTo) {
+          navigate(redirectTo);
+        } else {
+          navigate("/painel");
+        }
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [navigate, searchParams]);
+
+  useLayoutEffect(() => {
+    document.documentElement.classList.remove("dark");
+    document.documentElement.classList.add("light");
+  }, []);
+
+  const validateForm = () => {
+    const emailValid = values.email && !errors.email;
+    const passwordValid = values.password && !errors.password;
+    const fullNameValid = isLogin || (values.fullName && !errors.fullName);
+    const termsValid = isLogin || termsAccepted;
+    const envOk = isSupabaseConfigured && navigator.onLine;
+    return envOk && emailValid && passwordValid && fullNameValid && termsValid;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
     if (!isSupabaseConfigured) {
       toast({
         title: "Configuração ausente",
@@ -110,6 +89,7 @@ const handleGoogleLogin = async () => {
       });
       return;
     }
+
     if (!navigator.onLine) {
       toast({
         title: "Sem conexão",
@@ -118,161 +98,267 @@ const handleGoogleLogin = async () => {
       });
       return;
     }
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: `${window.location.origin}/entrar`,
+
+    if (!validateForm()) {
+      if (!isLogin && !termsAccepted) {
+        toast({
+          title: "Termos de uso",
+          description: "Você precisa aceitar os termos de uso para criar uma conta.",
+          variant: "destructive",
+        });
+        return;
       }
-    });
 
-    if (error) throw error;
-  } catch (error) {
-    const errorInfo = getErrorMessage(error);
+      toast({
+        title: "Campos inválidos",
+        description: "Por favor, corrija os erros antes de continuar.",
+        variant: "destructive",
+      });
+      return;
+    }
 
-    toast({
-      title: errorInfo.title,
-      description: errorInfo.message,
-      variant: "destructive",
-      duration: 5000,
-    });
-  }
-};
+    setLoading(true);
 
-const handleResetPassword = async () => {
-  if (!values.email) {
-    toast({
-      title: "Email necessário",
-      description: "Por favor, insira seu email para redefinir a senha.",
-      variant: "destructive",
-    });
-    return;
-  }
+    try {
+      if (isLogin) {
+        const { error } = await supabase.auth.signInWithPassword({
+          email: values.email,
+          password: values.password,
+        });
 
-  if (errors.email) {
-    toast({
-      title: "Email inválido",
-      description: "Por favor, insira um email válido.",
-      variant: "destructive",
-    });
-    return;
-  }
+        if (error) {
+          const errorInfo = getErrorMessage(error);
 
-  setLoading(true);
-  try {
-    const { error } = await supabase.auth.resetPasswordForEmail(values.email, {
-      redirectTo: `${window.location.origin}/entrar`,
-    });
+          toast({
+            title: errorInfo.title,
+            description: errorInfo.message,
+            variant: "destructive",
+            duration: 5000,
+          });
+          return;
+        }
 
-    if (error) throw error;
+        toast({
+          title: "Bem-vindo de volta!",
+          description: "Login realizado com sucesso.",
+        });
+      } else {
+        const { error } = await supabase.auth.signUp({
+          email: values.email,
+          password: values.password,
+          options: {
+            emailRedirectTo: `${window.location.origin}/entrar`,
+            data: {
+              full_name: values.fullName,
+            },
+          },
+        });
 
-    toast({
-      title: "Email enviado!",
-      description: "Verifique sua caixa de entrada para redefinir sua senha.",
-    });
-    setShowResetPassword(false);
-  } catch (error) {
-    const errorInfo = getErrorMessage(error);
+        if (error) {
+          const errorInfo = getErrorMessage(error);
 
-    toast({
-      title: errorInfo.title,
-      description: errorInfo.message,
-      variant: "destructive",
-      duration: 5000,
-    });
-  } finally {
-    setLoading(false);
-  }
-};
+          toast({
+            title: errorInfo.title,
+            description: errorInfo.message,
+            variant: "destructive",
+            duration: 5000,
+          });
+          return;
+        }
 
-const toggleMode = () => {
-  setIsLogin(!isLogin);
-  resetForm();
-};
+        toast({
+          title: "Conta criada!",
+          description: "Bem-vindo à plataforma Vrumi. Verifique seu email para confirmar sua conta.",
+        });
+        resetForm();
+      }
+    } catch (error) {
+      const errorInfo = getErrorMessage(error);
 
-const onFieldChange = (field: string, value: any) => {
-  const rules = {
-    email: { required: true, email: true },
-    password: { required: true, minLength: 6 },
-    fullName: { required: true, minLength: 3 }
+      toast({
+        title: errorInfo.title,
+        description: errorInfo.message,
+        variant: "destructive",
+        duration: 5000,
+      });
+    } finally {
+      setLoading(false);
+    }
   };
-  handleChange(field, value, rules[field as keyof typeof rules]);
-};
 
-const onFieldBlur = (field: string) => {
-  const rules = {
-    email: { required: true, email: true },
-    password: { required: true, minLength: 6 },
-    fullName: { required: true, minLength: 3 }
+  const handleGoogleLogin = async () => {
+    try {
+      if (!isSupabaseConfigured) {
+        toast({
+          title: "Configuração ausente",
+          description: "Supabase não está configurado. Verifique variáveis de ambiente.",
+          variant: "destructive",
+        });
+        return;
+      }
+      if (!navigator.onLine) {
+        toast({
+          title: "Sem conexão",
+          description: "Você está offline. Conecte-se para continuar.",
+          variant: "destructive",
+        });
+        return;
+      }
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/entrar`,
+        }
+      });
+
+      if (error) throw error;
+    } catch (error) {
+      const errorInfo = getErrorMessage(error);
+
+      toast({
+        title: errorInfo.title,
+        description: errorInfo.message,
+        variant: "destructive",
+        duration: 5000,
+      });
+    }
   };
-  handleBlur(field, rules[field as keyof typeof rules]);
-};
 
-return (
-  <>
-    <LoginForm
-      isLogin={isLogin}
-      loading={loading}
-      values={values}
-      errors={errors}
-      touched={touched}
-      handleChange={onFieldChange}
-      handleBlur={onFieldBlur}
-      handleSubmit={handleSubmit}
-      handleGoogleLogin={handleGoogleLogin}
-      toggleMode={toggleMode}
-      showPassword={showPassword}
-      setShowPassword={setShowPassword}
-      onForgotPassword={() => setShowResetPassword(true)}
-      termsAccepted={termsAccepted}
-      setTermsAccepted={setTermsAccepted}
-    />
+  const handleResetPassword = async () => {
+    if (!values.email) {
+      toast({
+        title: "Email necessário",
+        description: "Por favor, insira seu email para redefinir a senha.",
+        variant: "destructive",
+      });
+      return;
+    }
 
-    {showResetPassword && (
-      <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-        <Card className="w-full max-w-md p-6">
-          <h2 className="text-xl font-bold mb-4">Redefinir Senha</h2>
-          <p className="text-muted-foreground mb-4">
-            Insira seu email para receber o link de redefinição de senha.
-          </p>
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="resetEmail">Email</Label>
-              <Input
-                id="resetEmail"
-                type="email"
-                value={values.email}
-                onChange={(e) => onFieldChange('email', e.target.value)}
-                placeholder="seu@email.com"
-                className={errors.email && touched.email ? "border-destructive" : ""}
-              />
-              {errors.email && touched.email && (
-                <p className="text-sm text-destructive">{errors.email}</p>
-              )}
+    if (errors.email) {
+      toast({
+        title: "Email inválido",
+        description: "Por favor, insira um email válido.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(values.email, {
+        redirectTo: `${window.location.origin}/entrar`,
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Email enviado!",
+        description: "Verifique sua caixa de entrada para redefinir sua senha.",
+      });
+      setShowResetPassword(false);
+    } catch (error) {
+      const errorInfo = getErrorMessage(error);
+
+      toast({
+        title: errorInfo.title,
+        description: errorInfo.message,
+        variant: "destructive",
+        duration: 5000,
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const toggleMode = () => {
+    setIsLogin(!isLogin);
+    resetForm();
+  };
+
+  const onFieldChange = (field: string, value: any) => {
+    const rules = {
+      email: { required: true, email: true },
+      password: { required: true, minLength: 6 },
+      fullName: { required: true, minLength: 3 }
+    };
+    handleChange(field, value, rules[field as keyof typeof rules]);
+  };
+
+  const onFieldBlur = (field: string) => {
+    const rules = {
+      email: { required: true, email: true },
+      password: { required: true, minLength: 6 },
+      fullName: { required: true, minLength: 3 }
+    };
+    handleBlur(field, rules[field as keyof typeof rules]);
+  };
+
+  return (
+    <>
+      <LoginForm
+        isLogin={isLogin}
+        loading={loading}
+        values={values}
+        errors={errors}
+        touched={touched}
+        handleChange={onFieldChange}
+        handleBlur={onFieldBlur}
+        handleSubmit={handleSubmit}
+        handleGoogleLogin={handleGoogleLogin}
+        toggleMode={toggleMode}
+        showPassword={showPassword}
+        setShowPassword={setShowPassword}
+        onForgotPassword={() => setShowResetPassword(true)}
+        termsAccepted={termsAccepted}
+        setTermsAccepted={setTermsAccepted}
+      />
+
+      {showResetPassword && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <Card className="w-full max-w-md p-6">
+            <h2 className="text-xl font-bold mb-4">Redefinir Senha</h2>
+            <p className="text-muted-foreground mb-4">
+              Insira seu email para receber o link de redefinição de senha.
+            </p>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="resetEmail">Email</Label>
+                <Input
+                  id="resetEmail"
+                  type="email"
+                  value={values.email}
+                  onChange={(e) => onFieldChange('email', e.target.value)}
+                  placeholder="seu@email.com"
+                  className={errors.email && touched.email ? "border-destructive" : ""}
+                />
+                {errors.email && touched.email && (
+                  <p className="text-sm text-destructive">{errors.email}</p>
+                )}
+              </div>
+              <div className="flex gap-3">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setShowResetPassword(false)}
+                  className="flex-1"
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  type="button"
+                  onClick={handleResetPassword}
+                  disabled={loading || !values.email || !!errors.email}
+                  className="flex-1"
+                >
+                  {loading ? "Enviando..." : "Enviar Email"}
+                </Button>
+              </div>
             </div>
-            <div className="flex gap-3">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setShowResetPassword(false)}
-                className="flex-1"
-              >
-                Cancelar
-              </Button>
-              <Button
-                type="button"
-                onClick={handleResetPassword}
-                disabled={loading || !values.email || !!errors.email}
-                className="flex-1"
-              >
-                {loading ? "Enviando..." : "Enviar Email"}
-              </Button>
-            </div>
-          </div>
-        </Card>
-      </div>
-    )}
-  </>
-);
+          </Card>
+        </div>
+      )}
+    </>
+  );
 };
 
 export default Auth;
