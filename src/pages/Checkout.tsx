@@ -145,7 +145,8 @@ const Checkout = () => {
 
   const handleCreditCardSubmit = async () => {
     if (!user) {
-      navigate("/entrar")
+      const currentPath = window.location.pathname + window.location.search
+      navigate(`/entrar?redirect_to=${encodeURIComponent(currentPath)}`)
       return
     }
 
@@ -185,7 +186,8 @@ const Checkout = () => {
   const handlePixSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!user) {
-      navigate("/entrar")
+      const currentPath = window.location.pathname + window.location.search
+      navigate(`/entrar?redirect_to=${encodeURIComponent(currentPath)}`)
       return
     }
 
@@ -366,9 +368,9 @@ const Checkout = () => {
                       <p>Após o pagamento, clique no botão abaixo para verificar.</p>
                     </div>
 
-                    <Button 
-                      onClick={handleVerifyPayment} 
-                      className="w-full max-w-md" 
+                    <Button
+                      onClick={handleVerifyPayment}
+                      className="w-full max-w-md"
                       size="lg"
                       disabled={verifying}
                     >

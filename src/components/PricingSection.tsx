@@ -15,14 +15,8 @@ const PricingSection = () => {
     try {
       const { data: { session } } = await supabase.auth.getSession()
 
-      if (!session) {
-        toast({
-          title: "Faça login primeiro",
-          description: "Você precisa estar logado para comprar um passaporte",
-        })
-        navigate("/entrar")
-        return
-      }
+      // Removed immediate auth check to allow deferred authentication in Checkout
+
 
       navigate(`/pagamento?pass=${passType}`)
     } catch (error) {
