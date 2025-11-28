@@ -3,25 +3,22 @@ import { useNavigate, useSearchParams } from "react-router-dom"
 import { supabase } from "@/integrations/supabase/client"
 import { useToast } from "@/hooks/use-toast"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
-import { Check, CreditCard, ShieldCheck, ArrowLeft, Calendar, Lock } from "lucide-react"
+import { Check, CreditCard, ShieldCheck, ArrowLeft, Calendar, Lock, Smartphone, QrCode, Copy } from "lucide-react"
 import { z } from "zod"
 import type { User } from "@supabase/supabase-js"
 
-const checkoutSchema = z.object({
+const pixSchema = z.object({
   fullName: z.string().trim().min(3, "Nome completo deve ter ao menos 3 caracteres").max(100),
   email: z.string().trim().email("Email inválido").max(255),
   cpf: z.string().trim().regex(/^\d{3}\.\d{3}\.\d{3}-\d{2}$/, "CPF inválido (use formato: 000.000.000-00)"),
-  cardNumber: z.string().trim().regex(/^\d{4}\s\d{4}\s\d{4}\s\d{4}$/, "Número do cartão inválido"),
-  cardName: z.string().trim().min(3, "Nome no cartão deve ter ao menos 3 caracteres").max(100),
-  cardExpiry: z.string().trim().regex(/^\d{2}\/\d{2}$/, "Validade inválida (use MM/AA)"),
-  cardCvv: z.string().trim().regex(/^\d{3,4}$/, "CVV inválido"),
+  phone: z.string().trim().min(10, "Telefone inválido"),
 })
 
-type CheckoutForm = z.infer<typeof checkoutSchema>
+type PixForm = z.infer<typeof pixSchema>
 
 const Checkout = () => {
   const [searchParams] = useSearchParams()
@@ -31,16 +28,15 @@ const Checkout = () => {
   const { toast } = useToast()
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(false)
-  const [errors, setErrors] = useState<Partial<Record<keyof CheckoutForm, string>>>({})
+  const [paymentMethod, setPaymentMethod] = useState<"credit_card" | "pix" | null>(null)
+  const [pixData, setPixData] = useState<{ qrCodeUrl: string, copyPaste: string } | null>(null)
+  const [errors, setErrors] = useState<Partial<Record<keyof PixForm, string>>>({})
 
-  const [formData, setFormData] = useState<CheckoutForm>({
+  const [formData, setFormData] = useState<PixForm>({
     fullName: "",
     email: "",
     cpf: "",
-    cardNumber: "",
-    cardName: "",
-    cardExpiry: "",
-    cardCvv: "",
+    phone: "",
   })
 
   const passDetails = {
@@ -119,89 +115,49 @@ const Checkout = () => {
     return value
   }
 
-  const formatCardNumber = (value: string) => {
+  const formatPhone = (value: string) => {
     const numbers = value.replace(/\D/g, "")
-    return numbers.replace(/(\d{4})(?=\d)/g, "$1 ").trim()
+    if (numbers.length <= 11) {
+      return numbers
+        .replace(/^(\d{2})(\d)/, "($1) $2")
+        .replace(/(\d{5})(\d{4})$/, "$1-$2")
+    }
+    return value
   }
 
-  const formatExpiry = (value: string) => {
-    const numbers = value.replace(/\D/g, "")
-    if (numbers.length <= 2) return numbers
-    return `${numbers.slice(0, 2)}/${numbers.slice(2, 4)}`
-  }
-
-  const handleInputChange = (field: keyof CheckoutForm, value: string) => {
+  const handleInputChange = (field: keyof PixForm, value: string) => {
     let formattedValue = value
 
     if (field === "cpf") {
       formattedValue = formatCPF(value)
-    } else if (field === "cardNumber") {
-      formattedValue = formatCardNumber(value)
-    } else if (field === "cardExpiry") {
-      formattedValue = formatExpiry(value)
-    } else if (field === "cardCvv") {
-      formattedValue = value.replace(/\D/g, "").slice(0, 4)
+    } else if (field === "phone") {
+      formattedValue = formatPhone(value)
     }
 
     setFormData(prev => ({ ...prev, [field]: formattedValue }))
 
-    // Clear error when user starts typing
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: undefined }))
     }
   }
 
-  const validateForm = (): boolean => {
-    try {
-      checkoutSchema.parse(formData)
-      setErrors({})
-      return true
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        const newErrors: Partial<Record<keyof CheckoutForm, string>> = {}
-        error.errors.forEach((err) => {
-          if (err.path[0]) {
-            newErrors[err.path[0] as keyof CheckoutForm] = err.message
-          }
-        })
-        setErrors(newErrors)
-      }
-      return false
-    }
-  }
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-
+  const handleCreditCardSubmit = async () => {
     if (!user) {
-      toast({
-        title: "Faça login primeiro",
-        description: "Você precisa estar logado para finalizar a compra",
-        variant: "destructive",
-      })
       navigate("/entrar")
       return
     }
 
-    if (!selectedPass || !passType) return
-
-    // Validar email do segundo usuário se for plano família
-    if (passType === "family_90_days") {
-      if (!secondUserEmail || !secondUserEmail.includes("@")) {
-        toast({
-          title: "Email inválido",
-          description: "Por favor, informe o email do segundo usuário.",
-          variant: "destructive",
-        })
-        setLoading(false)
-        return
-      }
+    if (passType === "family_90_days" && (!secondUserEmail || !secondUserEmail.includes("@"))) {
+      toast({
+        title: "Email inválido",
+        description: "Por favor, informe o email do segundo usuário.",
+        variant: "destructive",
+      })
+      return
     }
 
     setLoading(true)
-
     try {
-      // Criar sessão de checkout no Stripe
       const { data, error } = await supabase.functions.invoke('create-checkout', {
         body: {
           passType: passType,
@@ -210,56 +166,210 @@ const Checkout = () => {
       })
 
       if (error) throw error
+      if (!data?.url) throw new Error('URL de checkout não recebida')
 
-      if (!data?.url) {
-        throw new Error('URL de checkout não recebida')
-      }
-
-      // Redirecionar para o Stripe Checkout
       window.location.href = data.url
     } catch (error) {
       console.error('Erro ao criar checkout:', error)
       toast({
         title: "Erro ao processar pagamento",
-        description: "Ocorreu um erro ao iniciar o pagamento. Tente novamente.",
+        description: "Tente novamente mais tarde.",
         variant: "destructive",
       })
       setLoading(false)
     }
   }
 
-  if (!selectedPass) {
-    return null
+  const handlePixSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!user) {
+      navigate("/entrar")
+      return
+    }
+
+    try {
+      pixSchema.parse(formData)
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        const newErrors: Partial<Record<keyof PixForm, string>> = {}
+        error.errors.forEach((err) => {
+          if (err.path[0]) {
+            newErrors[err.path[0] as keyof PixForm] = err.message
+          }
+        })
+        setErrors(newErrors)
+      }
+      return
+    }
+
+    if (passType === "family_90_days" && (!secondUserEmail || !secondUserEmail.includes("@"))) {
+      toast({
+        title: "Email inválido",
+        description: "Por favor, informe o email do segundo usuário.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    setLoading(true)
+    try {
+      const { data, error } = await supabase.functions.invoke('create-abacate-pix', {
+        body: {
+          passType: passType,
+          secondUserEmail: passType === 'family_90_days' ? secondUserEmail : null,
+          customer: {
+            name: formData.fullName,
+            email: formData.email,
+            taxId: formData.cpf.replace(/\D/g, ""),
+            phone: formData.phone.replace(/\D/g, ""),
+          }
+        },
+      })
+
+      if (error) throw error
+
+      // Assuming the function returns the QR code URL and Copy Paste code
+      setPixData({
+        qrCodeUrl: data.qrCodeUrl, // URL to the image of the QR Code
+        copyPaste: data.copyPaste, // The Pix Copy Paste string
+      })
+
+    } catch (error) {
+      console.error('Erro ao criar Pix:', error)
+      toast({
+        title: "Erro ao gerar Pix",
+        description: "Tente novamente mais tarde.",
+        variant: "destructive",
+      })
+    } finally {
+      setLoading(false)
+    }
   }
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text)
+    toast({
+      title: "Copiado!",
+      description: "Código Pix copiado para a área de transferência.",
+    })
+  }
+
+  if (!selectedPass) return null
 
   return (
     <div className="min-h-screen bg-muted py-12 px-4">
       <div className="container mx-auto max-w-6xl">
         <Button
-          onClick={() => navigate("/#preço")}
+          onClick={() => {
+            if (pixData) {
+              setPixData(null)
+            } else if (paymentMethod) {
+              setPaymentMethod(null)
+            } else {
+              navigate("/#preço")
+            }
+          }}
           variant="ghost"
           className="mb-6"
         >
           <ArrowLeft className="mr-2 h-4 w-4" />
-          Voltar para preços
+          Voltar
         </Button>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Main Form */}
           <div className="lg:col-span-2 space-y-6">
             <Card className="shadow-lg">
               <CardHeader>
                 <h1 className="text-3xl font-bold text-foreground">Finalizar Compra</h1>
-                <p className="text-muted-foreground">Complete seus dados para ativar o passaporte</p>
+                <p className="text-muted-foreground">
+                  {pixData ? "Escaneie o QR Code para pagar" : "Escolha como deseja pagar"}
+                </p>
               </CardHeader>
               <CardContent>
-                <form onSubmit={handleSubmit} className="space-y-6">
-                  {/* Personal Info */}
-                  <div>
-                    <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                      <div className="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center text-sm font-bold">1</div>
-                      Dados Pessoais
-                    </h3>
+                {pixData ? (
+                  <div className="flex flex-col items-center space-y-6 py-4">
+                    <div className="bg-white p-4 rounded-lg shadow-sm border">
+                      {/* Assuming qrCodeUrl is a direct image URL */}
+                      <img src={pixData.qrCodeUrl} alt="QR Code Pix" className="w-64 h-64 object-contain" />
+                    </div>
+
+                    <div className="w-full max-w-md space-y-2">
+                      <Label>Pix Copia e Cola</Label>
+                      <div className="flex gap-2">
+                        <Input value={pixData.copyPaste} readOnly />
+                        <Button onClick={() => copyToClipboard(pixData.copyPaste)} variant="outline">
+                          <Copy className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+
+                    <div className="text-center text-sm text-muted-foreground">
+                      <p>Após o pagamento, seu acesso será liberado automaticamente em alguns instantes.</p>
+                    </div>
+                  </div>
+                ) : !paymentMethod ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div
+                      onClick={() => setPaymentMethod("credit_card")}
+                      className="cursor-pointer border-2 border-transparent hover:border-primary rounded-xl p-6 bg-card shadow-sm transition-all hover:shadow-md flex flex-col items-center text-center gap-4"
+                    >
+                      <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
+                        <CreditCard className="h-8 w-8 text-primary" />
+                      </div>
+                      <div>
+                        <h3 className="font-bold text-lg">Cartão de Crédito</h3>
+                        <p className="text-sm text-muted-foreground">Aprovação imediata</p>
+                      </div>
+                    </div>
+
+                    <div
+                      onClick={() => setPaymentMethod("pix")}
+                      className="cursor-pointer border-2 border-transparent hover:border-primary rounded-xl p-6 bg-card shadow-sm transition-all hover:shadow-md flex flex-col items-center text-center gap-4"
+                    >
+                      <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
+                        <QrCode className="h-8 w-8 text-primary" />
+                      </div>
+                      <div>
+                        <h3 className="font-bold text-lg">Pix</h3>
+                        <p className="text-sm text-muted-foreground">Aprovação imediata</p>
+                      </div>
+                    </div>
+                  </div>
+                ) : paymentMethod === "credit_card" ? (
+                  <div className="space-y-6">
+                    <div className="bg-primary/5 p-4 rounded-lg border border-primary/10">
+                      <p className="text-sm text-muted-foreground">
+                        Você será redirecionado para o ambiente seguro do Stripe para concluir o pagamento com seu cartão de crédito.
+                      </p>
+                    </div>
+
+                    {passType === "family_90_days" && (
+                      <div className="space-y-2">
+                        <Label htmlFor="secondUserEmail">Email do Segundo Usuário</Label>
+                        <Input
+                          id="secondUserEmail"
+                          type="email"
+                          value={secondUserEmail}
+                          onChange={(e) => setSecondUserEmail(e.target.value)}
+                          placeholder="email@exemplo.com"
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          Digite o email da pessoa que vai estudar junto com você.
+                        </p>
+                      </div>
+                    )}
+
+                    <Button
+                      onClick={handleCreditCardSubmit}
+                      className="w-full"
+                      size="lg"
+                      disabled={loading}
+                    >
+                      {loading ? "Processando..." : "Ir para Pagamento Seguro"}
+                    </Button>
+                  </div>
+                ) : (
+                  <form onSubmit={handlePixSubmit} className="space-y-6">
                     <div className="space-y-4">
                       <div>
                         <Label htmlFor="fullName">Nome Completo</Label>
@@ -268,11 +378,9 @@ const Checkout = () => {
                           value={formData.fullName}
                           onChange={(e) => handleInputChange("fullName", e.target.value)}
                           className={errors.fullName ? "border-red-500" : ""}
-                          placeholder="João da Silva"
+                          placeholder="Seu nome completo"
                         />
-                        {errors.fullName && (
-                          <p className="text-red-500 text-sm mt-1">{errors.fullName}</p>
-                        )}
+                        {errors.fullName && <p className="text-red-500 text-sm mt-1">{errors.fullName}</p>}
                       </div>
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -284,161 +392,68 @@ const Checkout = () => {
                             value={formData.email}
                             onChange={(e) => handleInputChange("email", e.target.value)}
                             className={errors.email ? "border-red-500" : ""}
-                            placeholder="joao@email.com"
-                            disabled={!!user}
+                            placeholder="seu@email.com"
                           />
-                          {errors.email && (
-                            <p className="text-red-500 text-sm mt-1">{errors.email}</p>
-                          )}
+                          {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
                         </div>
 
                         <div>
-                          <Label htmlFor="cpf">CPF</Label>
+                          <Label htmlFor="phone">Telefone</Label>
                           <Input
-                            id="cpf"
-                            value={formData.cpf}
-                            onChange={(e) => handleInputChange("cpf", e.target.value)}
-                            className={errors.cpf ? "border-red-500" : ""}
-                            placeholder="000.000.000-00"
-                            maxLength={14}
+                            id="phone"
+                            value={formData.phone}
+                            onChange={(e) => handleInputChange("phone", e.target.value)}
+                            className={errors.phone ? "border-red-500" : ""}
+                            placeholder="(00) 00000-0000"
+                            maxLength={15}
                           />
-                          {errors.cpf && (
-                            <p className="text-red-500 text-sm mt-1">{errors.cpf}</p>
-                          )}
+                          {errors.phone && <p className="text-red-500 text-sm mt-1">{errors.phone}</p>}
                         </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {passType === "family_90_days" && (
-                    <>
-                      <Separator />
-                      <div>
-                        <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                          <div className="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center text-sm font-bold">2</div>
-                          Segundo Usuário
-                        </h3>
-                        <div>
-                          <Label htmlFor="secondUserEmail">Email do Segundo Usuário</Label>
-                          <Input
-                            id="secondUserEmail"
-                            type="email"
-                            value={secondUserEmail}
-                            onChange={(e) => setSecondUserEmail(e.target.value)}
-                            placeholder="email@exemplo.com"
-                          />
-                          <p className="text-xs text-muted-foreground mt-2">
-                            Digite o email da pessoa que vai estudar junto com você. Um passaporte será criado para cada um.
-                          </p>
-                        </div>
-                      </div>
-                    </>
-                  )}
-
-                  <Separator />
-
-                  {/* Payment Info */}
-                  <div>
-                    <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                      <div className="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center text-sm font-bold">
-                        {passType === "family_90_days" ? "3" : "2"}
-                      </div>
-                      Pagamento
-                    </h3>
-                    <div className="space-y-4">
-                      <div>
-                        <Label htmlFor="cardNumber">Número do Cartão</Label>
-                        <div className="relative">
-                          <Input
-                            id="cardNumber"
-                            value={formData.cardNumber}
-                            onChange={(e) => handleInputChange("cardNumber", e.target.value)}
-                            className={errors.cardNumber ? "border-red-500" : ""}
-                            placeholder="0000 0000 0000 0000"
-                            maxLength={19}
-                          />
-                          <CreditCard className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                        </div>
-                        {errors.cardNumber && (
-                          <p className="text-red-500 text-sm mt-1">{errors.cardNumber}</p>
-                        )}
                       </div>
 
                       <div>
-                        <Label htmlFor="cardName">Nome no Cartão</Label>
+                        <Label htmlFor="cpf">CPF</Label>
                         <Input
-                          id="cardName"
-                          value={formData.cardName}
-                          onChange={(e) => handleInputChange("cardName", e.target.value)}
-                          className={errors.cardName ? "border-red-500" : ""}
-                          placeholder="JOÃO DA SILVA"
+                          id="cpf"
+                          value={formData.cpf}
+                          onChange={(e) => handleInputChange("cpf", e.target.value)}
+                          className={errors.cpf ? "border-red-500" : ""}
+                          placeholder="000.000.000-00"
+                          maxLength={14}
                         />
-                        {errors.cardName && (
-                          <p className="text-red-500 text-sm mt-1">{errors.cardName}</p>
-                        )}
+                        {errors.cpf && <p className="text-red-500 text-sm mt-1">{errors.cpf}</p>}
                       </div>
 
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <Label htmlFor="cardExpiry">Validade</Label>
-                          <Input
-                            id="cardExpiry"
-                            value={formData.cardExpiry}
-                            onChange={(e) => handleInputChange("cardExpiry", e.target.value)}
-                            className={errors.cardExpiry ? "border-red-500" : ""}
-                            placeholder="MM/AA"
-                            maxLength={5}
-                          />
-                          {errors.cardExpiry && (
-                            <p className="text-red-500 text-sm mt-1">{errors.cardExpiry}</p>
-                          )}
-                        </div>
-
-                        <div>
-                          <Label htmlFor="cardCvv">CVV</Label>
-                          <Input
-                            id="cardCvv"
-                            type="password"
-                            value={formData.cardCvv}
-                            onChange={(e) => handleInputChange("cardCvv", e.target.value)}
-                            className={errors.cardCvv ? "border-red-500" : ""}
-                            placeholder="123"
-                            maxLength={4}
-                          />
-                          {errors.cardCvv && (
-                            <p className="text-red-500 text-sm mt-1">{errors.cardCvv}</p>
-                          )}
-                        </div>
-                      </div>
+                      {passType === "family_90_days" && (
+                        <>
+                          <Separator />
+                          <div>
+                            <Label htmlFor="secondUserEmail">Email do Segundo Usuário</Label>
+                            <Input
+                              id="secondUserEmail"
+                              type="email"
+                              value={secondUserEmail}
+                              onChange={(e) => setSecondUserEmail(e.target.value)}
+                              placeholder="email@exemplo.com"
+                              className="mt-1"
+                            />
+                            <p className="text-xs text-muted-foreground mt-1">
+                              Digite o email da pessoa que vai estudar junto com você.
+                            </p>
+                          </div>
+                        </>
+                      )}
                     </div>
-                  </div>
 
-                  <Button
-                    type="submit"
-                    size="lg"
-                    className="w-full"
-                    disabled={loading}
-                  >
-                    {loading ? (
-                      "Processando..."
-                    ) : (
-                      <>
-                        <ShieldCheck className="mr-2 h-5 w-5" />
-                        Finalizar Pagamento - R$ {selectedPass.price.toFixed(2)}
-                      </>
-                    )}
-                  </Button>
-
-                  <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
-                    <Lock className="h-4 w-4" />
-                    <span>Pagamento 100% seguro e criptografado</span>
-                  </div>
-                </form>
+                    <Button type="submit" size="lg" className="w-full" disabled={loading}>
+                      {loading ? "Gerando Pix..." : "Gerar QR Code Pix"}
+                    </Button>
+                  </form>
+                )}
               </CardContent>
             </Card>
           </div>
 
-          {/* Order Summary */}
           <div className="lg:col-span-1">
             <Card className="shadow-lg sticky top-6">
               <CardHeader>
@@ -500,7 +515,8 @@ const Checkout = () => {
 
                 <div className="bg-muted rounded-lg p-4 text-sm">
                   <p className="text-muted-foreground">
-                    💡 <strong>Pagamento único.</strong> Sem renovação automática. Você sabe exatamente o que está pagando.
+                    <ShieldCheck className="inline-block w-4 h-4 mr-1 mb-0.5" />
+                    Pagamento 100% seguro.
                   </p>
                 </div>
               </CardContent>

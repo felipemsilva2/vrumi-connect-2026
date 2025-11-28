@@ -24,27 +24,9 @@ const PricingSection = () => {
         return
       }
 
-      const { data, error } = await supabase.functions.invoke('create-checkout', {
-        body: {
-          passType: passType,
-          secondUserEmail: null,
-        },
-      })
-
-      if (error) throw error
-
-      if (!data?.url) {
-        throw new Error('URL de checkout não recebida')
-      }
-
-      window.open(data.url, '_blank')
+      navigate(`/pagamento?pass=${passType}`)
     } catch (error) {
-      console.error('Erro ao criar checkout:', error)
-      toast({
-        title: "Erro ao processar pagamento",
-        description: "Ocorreu um erro ao iniciar o pagamento. Tente novamente.",
-        variant: "destructive",
-      })
+      console.error('Erro ao redirecionar:', error)
     } finally {
       setLoading(null)
     }
@@ -123,8 +105,8 @@ const PricingSection = () => {
             <div
               key={index}
               className={`relative bg-card border rounded-2xl p-6 sm:p-8 transition-all hover:shadow-elegant ${plan.popular
-                  ? "border-primary shadow-card scale-105"
-                  : "border-border"
+                ? "border-primary shadow-card scale-105"
+                : "border-border"
                 }`}
             >
               {plan.popular && (
@@ -172,8 +154,8 @@ const PricingSection = () => {
                 onClick={() => plan.passType && handlePurchase(plan.passType)}
                 disabled={loading === plan.passType}
                 className={`w-full h-12 px-6 rounded-lg font-medium transition-colors ${plan.popular
-                    ? "bg-primary text-primary-foreground hover:bg-primary/90"
-                    : "bg-card border border-border text-foreground hover:bg-muted"
+                  ? "bg-primary text-primary-foreground hover:bg-primary/90"
+                  : "bg-card border border-border text-foreground hover:bg-muted"
                   } ${loading === plan.passType ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
                 {loading === plan.passType ? "Processando..." : plan.buttonText}
