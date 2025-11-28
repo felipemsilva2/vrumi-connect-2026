@@ -26,3 +26,9 @@ verify_jwt = true
 
 [functions.stripe-webhook]
 verify_jwt = false
+
+[functions.create-abacate-pix]
+verify_jwt = true
+
+[functions.verify-abacate-pix]
+verify_jwt = true
