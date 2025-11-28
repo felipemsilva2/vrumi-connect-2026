@@ -5,6 +5,7 @@ import { Menu, X, Car } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useContextualNavigation } from "@/utils/navigation";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -53,6 +54,22 @@ const Navbar = () => {
     }
     setIsOpen(false);
   };
+
+  const [user, setUser] = useState<any>(null);
+
+  useEffect(() => {
+    // Check initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+    });
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   return (
     <div className={cn(
@@ -112,10 +129,10 @@ const Navbar = () => {
         {/* Desktop CTA Button */}
         <div className="hidden md:block">
           <button
-            onClick={() => navigate("/entrar")}
+            onClick={() => navigate(user ? "/painel" : "/entrar")}
             className="inline-flex items-center justify-center px-5 py-2 text-sm font-medium text-white bg-primary rounded-full hover:bg-primary/90 transition-all shadow-md hover:shadow-lg hover:scale-105 active:scale-95"
           >
-            Entrar
+            {user ? "Dashboard" : "Entrar"}
           </button>
         </div>
 
@@ -195,11 +212,11 @@ const Navbar = () => {
                 <button
                   onClick={() => {
                     toggleMenu();
-                    navigate("/entrar");
+                    navigate(user ? "/painel" : "/entrar");
                   }}
                   className="w-full px-5 py-4 text-lg text-white bg-primary rounded-2xl font-semibold shadow-lg active:scale-95 transition-all"
                 >
-                  Entrar
+                  {user ? "Dashboard" : "Entrar"}
                 </button>
               </motion.div>
             </div>

@@ -8,117 +8,96 @@ import LoginForm from "@/components/ui/login-form";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
+variant: "destructive",
+    });
+return;
+  }
 
-const Auth = () => {
-  const navigate = useNavigate();
-  const { toast } = useToast();
-  const [searchParams] = useSearchParams();
-  const [isLogin, setIsLogin] = useState(() => {
-    const mode = searchParams.get('mode');
-    return mode !== 'register';
+if (!validateForm()) {
+  if (!isLogin && !termsAccepted) {
     toast({
-      title: "Configuração ausente",
-      description: "Supabase não está configurado. Verifique variáveis de ambiente.",
+      title: "Termos de uso",
+      description: "Você precisa aceitar os termos de uso para criar uma conta.",
       variant: "destructive",
     });
     return;
   }
 
-  if (!navigator.onLine) {
-    toast({
-      title: "Sem conexão",
-      description: "Você está offline. Conecte-se para continuar.",
-      variant: "destructive",
-    });
-    return;
-  }
+  toast({
+    title: "Campos inválidos",
+    description: "Por favor, corrija os erros antes de continuar.",
+    variant: "destructive",
+  });
+  return;
+}
 
-  if (!validateForm()) {
-    if (!isLogin && !termsAccepted) {
+setLoading(true);
+
+try {
+  if (isLogin) {
+    const { error } = await supabase.auth.signInWithPassword({
+      email: values.email,
+      password: values.password,
+    });
+
+    if (error) {
+      const errorInfo = getErrorMessage(error);
+
       toast({
-        title: "Termos de uso",
-        description: "Você precisa aceitar os termos de uso para criar uma conta.",
+        title: errorInfo.title,
+        description: errorInfo.message,
         variant: "destructive",
+        duration: 5000,
       });
       return;
     }
 
     toast({
-      title: "Campos inválidos",
-      description: "Por favor, corrija os erros antes de continuar.",
-      variant: "destructive",
+      title: "Bem-vindo de volta!",
+      description: "Login realizado com sucesso.",
     });
-    return;
-  }
-
-  setLoading(true);
-
-  try {
-    if (isLogin) {
-      const { error } = await supabase.auth.signInWithPassword({
-        email: values.email,
-        password: values.password,
-      });
-
-      if (error) {
-        const errorInfo = getErrorMessage(error);
-
-        toast({
-          title: errorInfo.title,
-          description: errorInfo.message,
-          variant: "destructive",
-          duration: 5000,
-        });
-        return;
-      }
-
-      toast({
-        title: "Bem-vindo de volta!",
-        description: "Login realizado com sucesso.",
-      });
-    } else {
-      const { error } = await supabase.auth.signUp({
-        email: values.email,
-        password: values.password,
-        options: {
-          emailRedirectTo: `${window.location.origin}/entrar`,
-          data: {
-            full_name: values.fullName,
-          },
+  } else {
+    const { error } = await supabase.auth.signUp({
+      email: values.email,
+      password: values.password,
+      options: {
+        emailRedirectTo: `${window.location.origin}/entrar`,
+        data: {
+          full_name: values.fullName,
         },
-      });
+      },
+    });
 
-      if (error) {
-        const errorInfo = getErrorMessage(error);
-
-        toast({
-          title: errorInfo.title,
-          description: errorInfo.message,
-          variant: "destructive",
-          duration: 5000,
-        });
-        return;
-      }
+    if (error) {
+      const errorInfo = getErrorMessage(error);
 
       toast({
-        title: "Conta criada!",
-        description: "Bem-vindo à plataforma Vrumi. Verifique seu email para confirmar sua conta.",
+        title: errorInfo.title,
+        description: errorInfo.message,
+        variant: "destructive",
+        duration: 5000,
       });
-      resetForm();
+      return;
     }
-  } catch (error) {
-    const errorInfo = getErrorMessage(error);
 
     toast({
-      title: errorInfo.title,
-      description: errorInfo.message,
-      variant: "destructive",
-      duration: 5000,
+      title: "Conta criada!",
+      description: "Bem-vindo à plataforma Vrumi. Verifique seu email para confirmar sua conta.",
     });
-  } finally {
-    setLoading(false);
+    resetForm();
   }
+} catch (error) {
+  const errorInfo = getErrorMessage(error);
+
+  toast({
+    title: errorInfo.title,
+    description: errorInfo.message,
+    variant: "destructive",
+    duration: 5000,
+  });
+} finally {
+  setLoading(false);
+}
 };
 
 const handleGoogleLogin = async () => {

@@ -457,7 +457,9 @@ const TitleSection = ({ open, user, hasActivePass, activePass }: any) => {
     <div className="mb-6 border-b border-border pb-4">
       <div className="flex cursor-pointer items-center justify-between rounded-md p-2 transition-colors hover:bg-accent/10">
         <div className="flex items-center gap-3">
-          <Logo />
+          <div onClick={() => window.location.href = "/"} className="cursor-pointer">
+            <Logo />
+          </div>
           {open && (
             <div className={`transition-opacity duration-200 ${open ? 'opacity-100' : 'opacity-0'}`}>
               <div className="flex items-center gap-2">
