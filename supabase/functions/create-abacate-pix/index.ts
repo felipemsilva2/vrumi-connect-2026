@@ -23,6 +23,12 @@ const PASS_DETAILS_MAP: Record<string, { price: number, name: string }> = {
     'family_90_days': { price: 8490, name: 'Passaporte Família' },
 };
 
+const PASS_EXPIRY_MAP: Record<string, number> = {
+    'individual_30_days': 30,
+    'individual_90_days': 90,
+    'family_90_days': 90,
+};
+
 serve(async (req) => {
     const { headers: corsHeaders, allowed } = getCors(req);
     if (req.method === "OPTIONS") {
@@ -60,38 +66,29 @@ serve(async (req) => {
             throw new Error("ABACATE_PAY_API_KEY not configured");
         }
 
-        logStep("Creating Abacate Pay billing", { passType, amount: passDetails.price });
+        logStep("Creating Abacate Pay PIX QR Code", { passType, amount: passDetails.price });
 
-        const returnUrl = `${req.headers.get("origin")}/pagamento/sucesso`;
+        const expiresInDays = PASS_EXPIRY_MAP[passType] || 30;
 
         const body = {
-            frequency: "ONE_TIME",
-            methods: ["PIX"],
-            products: [
-                {
-                    externalId: passType,
-                    name: passDetails.name,
-                    quantity: 1,
-                    price: passDetails.price,
-                    description: `Acesso ao RoadWiz - ${passDetails.name}`
-                }
-            ],
-            returnUrl: returnUrl,
-            completionUrl: returnUrl,
+            amount: passDetails.price,
+            expiresIn: expiresInDays * 24 * 60, // Convert days to minutes
+            description: `${passDetails.name} - RoadWiz`,
             customer: {
                 name: customer.name,
+                cellphone: customer.phone,
                 email: customer.email,
-                taxId: customer.taxId,
-                cellphone: customer.phone // Abacate Pay uses 'cellphone' usually, checking docs... search result said 'cellphone'
+                taxId: customer.taxId
             },
             metadata: {
+                externalId: user.id,
                 user_id: user.id,
                 pass_type: passType,
                 second_user_email: secondUserEmail || ''
             }
         };
 
-        const response = await fetch("https://api.abacatepay.com/v1/billing/create", {
+        const response = await fetch("https://api.abacatepay.com/v1/pixQrCode/create", {
             method: "POST",
             headers: {
                 "Authorization": `Bearer ${abacateApiKey}`,
@@ -107,39 +104,28 @@ serve(async (req) => {
         }
 
         const result = await response.json();
-        logStep("Billing created", { id: result.data?.id });
+        logStep("PIX QR Code created", { id: result.data?.id, status: result.data?.status });
 
-        // Extract Pix info. Structure depends on API.
-        // Usually result.data.pix.code or similar.
-        // Based on common patterns: result.data.paymentMethods.pix...
-        // Or result.data.url (billing url)
-        // Search result said: "returns a billing object".
-        // I'll assume the response contains the necessary info.
-        // If I can't find the exact structure, I'll return the whole data for debugging or try to extract what I can.
-        // However, for the frontend to work, I need `qrCodeUrl` and `copyPaste`.
+        if (result.error) {
+            throw new Error(`Abacate Pay Error: ${JSON.stringify(result.error)}`);
+        }
 
-        // Let's assume the standard response structure for these modern APIs.
-        // Often: data.pix.qrcode (image url) and data.pix.code (copy paste)
+        // Response format from Abacate Pay:
+        // { data: { id, amount, status, brCode, brCodeBase64, ... }, error: null }
+        const qrCodeUrl = result.data?.brCodeBase64; // Base64 image for QR code
+        const copyPaste = result.data?.brCode; // PIX copy/paste code
+        const pixId = result.data?.id;
 
-        // If I'm unsure, I'll return the whole data object and let the frontend log it if it fails, 
-        // but I need to map it to what the frontend expects: { qrCodeUrl, copyPaste }
-
-        // Let's try to map from likely fields.
-        // If the API returns a billing URL, maybe we just redirect there?
-        // But the user asked for a "popup" (modal) with QR code.
-        // So I need the raw QR code data.
-
-        // I'll try to extract it from `result.data.pix`.
-
-        const pixInfo = result.data?.pix;
-        // Fallback if structure is different
-        const qrCodeUrl = pixInfo?.qrcode || pixInfo?.qr_code_url || result.data?.url;
-        const copyPaste = pixInfo?.code || pixInfo?.copy_paste || result.data?.id; // Fallback to ID if code missing? No, that won't work.
+        if (!qrCodeUrl || !copyPaste) {
+            logStep("Missing PIX data", { qrCodeUrl: !!qrCodeUrl, copyPaste: !!copyPaste });
+            throw new Error("Incomplete PIX data received from Abacate Pay");
+        }
 
         return new Response(JSON.stringify({
-            qrCodeUrl: qrCodeUrl,
-            copyPaste: copyPaste,
-            raw: result // Return raw data just in case for debugging
+            qrCodeUrl,
+            copyPaste,
+            pixId,
+            expiresAt: result.data?.expiresAt
         }), {
             headers: { ...corsHeaders, "Content-Type": "application/json" },
             status: 200,
