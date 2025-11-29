@@ -75,8 +75,8 @@ const Navbar = () => {
     <div className={cn(
       "fixed top-0 left-0 right-0 z-50 flex justify-center transition-all duration-300",
       scrolled
-        ? "pb-4 pt-[calc(env(safe-area-inset-top)+1.5rem)]"
-        : "pb-6 pt-[calc(env(safe-area-inset-top)+2.5rem)]"
+        ? "pb-4 pt-[calc(env(safe-area-inset-top)+1.5rem)] md:pt-4"
+        : "pb-6 pt-[calc(env(safe-area-inset-top)+2.5rem)] md:pt-6"
     )}>
       <motion.div
         className={cn(
