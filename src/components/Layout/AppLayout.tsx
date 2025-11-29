@@ -183,7 +183,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
                   "flex items-center gap-3 cursor-pointer transition-all duration-200",
                   !sidebarOpen && "justify-center"
                 )}
-                onClick={() => navigate("/painel")}
+                onClick={() => navigate("/")}
               >
                 <div className="relative grid size-10 shrink-0 place-content-center rounded-xl bg-gradient-to-br from-primary to-primary/80 shadow-lg shadow-primary/20">
                   <Car className="h-5 w-5 text-primary-foreground" />

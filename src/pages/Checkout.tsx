@@ -90,18 +90,21 @@ const Checkout = () => {
 
   useEffect(() => {
     const checkUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (user) {
-        setUser(user)
+      const { data: { session } } = await supabase.auth.getSession()
+      if (session?.user) {
+        setUser(session.user)
         setFormData(prev => ({
           ...prev,
-          email: user.email || "",
-          fullName: user.user_metadata?.full_name || ""
+          email: session.user.email || "",
+          fullName: session.user.user_metadata?.full_name || ""
         }))
+      } else {
+        const currentPath = window.location.pathname + window.location.search
+        navigate(`/entrar?redirect_to=${encodeURIComponent(currentPath)}`)
       }
     }
     checkUser()
-  }, [])
+  }, [navigate])
 
   useEffect(() => {
     if (!passType || !selectedPass) {
@@ -121,11 +124,14 @@ const Checkout = () => {
 
       if (selectedLevel <= currentLevel) {
         toast({
-          title: "Plano já ativo",
-          description: "Você já possui um plano igual ou superior ativo.",
-          variant: "destructive"
+          title: "Assinatura Ativa",
+          description: "Opa! Você já possui uma assinatura ativa. Estamos te redirecionando para o dashboard agora.",
+          duration: 5000,
         })
-        navigate("/painel")
+        // Small delay to let the user read the toast
+        setTimeout(() => {
+          navigate("/painel")
+        }, 2000)
       }
     }
   }, [passType, selectedPass, navigate, hasActivePass, activePass])

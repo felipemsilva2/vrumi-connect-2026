@@ -138,10 +138,12 @@ const Auth = () => {
           return;
         }
 
-        toast({
-          title: "Bem-vindo de volta!",
-          description: "Login realizado com sucesso.",
-        });
+        if (!searchParams.get('redirect_to')) {
+          toast({
+            title: "Bem-vindo de volta!",
+            description: "Login realizado com sucesso.",
+          });
+        }
       } else {
         const { error } = await supabase.auth.signUp({
           email: values.email,
