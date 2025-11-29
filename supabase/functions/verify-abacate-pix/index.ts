@@ -14,6 +14,8 @@ serve(async (req) => {
   try {
     const { pixId, passType, secondUserEmail } = await req.json();
 
+    console.log('[VERIFY-PIX] Request received:', { pixId, passType, secondUserEmail });
+
     if (!pixId) {
       throw new Error('pixId is required');
     }
@@ -34,10 +36,11 @@ serve(async (req) => {
 
     const result = await abacateResponse.json();
     
-    console.log('Payment check result:', result);
+    console.log('[VERIFY-PIX] Payment check result:', JSON.stringify(result));
 
     // If payment is completed, create the pass
     if (result.data?.status === 'PAID' || result.data?.status === 'COMPLETED') {
+      console.log('[VERIFY-PIX] Payment confirmed, creating pass...');
       const supabaseAdmin = createClient(
         Deno.env.get('SUPABASE_URL') ?? '',
         Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
@@ -80,40 +83,63 @@ serve(async (req) => {
       expiresAt.setDate(expiresAt.getDate() + passInfo.days);
 
       // Create pass for main user
-      const { error: passError } = await supabaseAdmin
+      console.log('[VERIFY-PIX] Creating pass for user:', { 
+        userId: user.id, 
+        passType: passInfo.type, 
+        price: passInfo.price,
+        expiresAt: expiresAt.toISOString()
+      });
+
+      const { data: passData, error: passError } = await supabaseAdmin
         .from('user_passes')
         .insert({
           user_id: user.id,
           pass_type: passInfo.type,
           expires_at: expiresAt.toISOString(),
-          payment_status: 'paid',
+          payment_status: 'completed',
           price: passInfo.price,
-        });
+        })
+        .select()
+        .single();
 
       if (passError) {
-        console.error('Error creating pass:', passError);
-        throw new Error('Failed to create pass');
+        console.error('[VERIFY-PIX] Error creating pass:', passError);
+        throw new Error(`Failed to create pass: ${passError.message}`);
       }
+
+      console.log('[VERIFY-PIX] Pass created successfully:', passData);
 
       // If family pass, create pass for second user
       if (passType === 'family_90_days' && secondUserEmail) {
+        console.log('[VERIFY-PIX] Checking for second user:', secondUserEmail);
+        
         // Check if second user exists
-        const { data: secondUserData } = await supabaseAdmin
+        const { data: secondUserData, error: secondUserError } = await supabaseAdmin
           .from('profiles')
           .select('id')
           .eq('email', secondUserEmail)
           .single();
 
-        if (secondUserData) {
-          await supabaseAdmin
+        if (secondUserError) {
+          console.log('[VERIFY-PIX] Second user not found or error:', secondUserError);
+        } else if (secondUserData) {
+          console.log('[VERIFY-PIX] Creating pass for second user:', secondUserData.id);
+          
+          const { error: secondPassError } = await supabaseAdmin
             .from('user_passes')
             .insert({
               user_id: secondUserData.id,
               pass_type: '90_days',
               expires_at: expiresAt.toISOString(),
-              payment_status: 'paid',
+              payment_status: 'completed',
               price: 0, // Secondary user in family pass
             });
+
+          if (secondPassError) {
+            console.error('[VERIFY-PIX] Error creating second pass:', secondPassError);
+          } else {
+            console.log('[VERIFY-PIX] Second pass created successfully');
+          }
         }
       }
 
