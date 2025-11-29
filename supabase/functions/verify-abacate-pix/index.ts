@@ -37,7 +37,7 @@ serve(async (req) => {
     console.log('Payment check result:', result);
 
     // If payment is completed, create the pass
-    if (result.data?.status === 'COMPLETED') {
+    if (result.data?.status === 'PAID' || result.data?.status === 'COMPLETED') {
       const supabaseAdmin = createClient(
         Deno.env.get('SUPABASE_URL') ?? '',
         Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
