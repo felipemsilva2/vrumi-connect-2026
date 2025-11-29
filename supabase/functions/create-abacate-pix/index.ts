@@ -1,9 +1,14 @@
+// @ts-ignore
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+// @ts-ignore
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
+
+declare const Deno: any;
+
 
 const getCors = (req: Request) => {
     const origin = req.headers.get('origin') || '';
-    const allowedList = (Deno.env.get('ALLOWED_ORIGINS') || '').split(',').map(s => s.trim()).filter(Boolean);
+    const allowedList = (Deno.env.get('ALLOWED_ORIGINS') || '').split(',').map((s: string) => s.trim()).filter(Boolean);
     const allowed = allowedList.length === 0 || allowedList.includes(origin);
     const headers = {
         'Access-Control-Allow-Origin': allowed ? origin : '',
@@ -29,7 +34,7 @@ const PASS_EXPIRY_MAP: Record<string, number> = {
     'family_90_days': 90,
 };
 
-serve(async (req) => {
+serve(async (req: Request) => {
     const { headers: corsHeaders, allowed } = getCors(req);
     if (req.method === "OPTIONS") {
         return new Response(null, { headers: corsHeaders, status: allowed ? 200 : 403 });
