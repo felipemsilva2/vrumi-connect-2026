@@ -1,13 +1,30 @@
 import { Check } from "lucide-react"
 import { useNavigate } from "react-router-dom"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { supabase } from "@/integrations/supabase/client"
 import { useToast } from "@/hooks/use-toast"
+import { useActivePass } from "@/hooks/useActivePass"
 
 const PricingSection = () => {
   const navigate = useNavigate()
   const [loading, setLoading] = useState<string | null>(null)
+  const [userId, setUserId] = useState<string | undefined>(undefined)
   const { toast } = useToast()
+
+  // Fetch user ID for active pass check
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUserId(session?.user?.id)
+    })
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUserId(session?.user?.id)
+    })
+
+    return () => subscription.unsubscribe()
+  }, [])
+
+  const { activePass, hasActivePass, isLoading: isSubscriptionLoading } = useActivePass(userId)
 
   const handlePurchase = async (passType: string) => {
     setLoading(passType)
@@ -24,6 +41,39 @@ const PricingSection = () => {
     } finally {
       setLoading(null)
     }
+  }
+
+  const PLAN_LEVELS: Record<string, number> = {
+    'individual_30_days': 1,
+    'individual_90_days': 2,
+    'family_90_days': 3
+  }
+
+  const getButtonState = (planPassType: string) => {
+    if (isSubscriptionLoading) {
+      return { disabled: true, text: "Carregando..." }
+    }
+
+    if (!hasActivePass || !activePass) {
+      return { disabled: false, text: null } // Use default button text
+    }
+
+    const currentLevel = PLAN_LEVELS[activePass.pass_type] || 0
+    const planLevel = PLAN_LEVELS[planPassType] || 0
+
+    if (activePass.pass_type === planPassType) {
+      return { disabled: true, text: "Plano Atual" }
+    }
+
+    if (planLevel > currentLevel) {
+      return { disabled: false, text: "Fazer Upgrade" }
+    }
+
+    if (planLevel < currentLevel) {
+      return { disabled: true, text: "Plano Inferior" }
+    }
+
+    return { disabled: false, text: null }
   }
 
   const plans = [
@@ -95,67 +145,71 @@ const PricingSection = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8 max-w-6xl mx-auto">
-          {plans.map((plan, index) => (
-            <div
-              key={index}
-              className={`relative bg-card border rounded-2xl p-6 sm:p-8 transition-all hover:shadow-elegant ${plan.popular
-                ? "border-primary shadow-card scale-105"
-                : "border-border"
-                }`}
-            >
-              {plan.popular && (
-                <div className="absolute -top-4 left-1/2 -translate-x-1/2">
-                  <span className="bg-primary text-primary-foreground px-4 py-1 rounded-full text-sm font-medium">
-                    Mais Popular
-                  </span>
-                </div>
-              )}
+          {plans.map((plan, index) => {
+            const buttonState = getButtonState(plan.passType)
 
-              <div className="text-center mb-6">
-                <h3 className="text-xl sm:text-2xl font-bold text-foreground mb-2">
-                  {plan.name}
-                </h3>
-                {plan.subtitle && (
-                  <p className="text-sm text-muted-foreground font-medium mb-3">
-                    {plan.subtitle}
-                  </p>
-                )}
-                <div className="flex items-baseline justify-center gap-1 mb-2">
-                  <span className="text-3xl sm:text-4xl font-bold text-foreground">
-                    {plan.price}
-                  </span>
-                </div>
-                <span className="text-sm text-muted-foreground">{plan.period}</span>
-                {plan.description && (
-                  <p className="text-sm text-muted-foreground mt-4 italic">
-                    "{plan.description}"
-                  </p>
-                )}
-              </div>
-
-              <ul className="space-y-3 mb-8">
-                {plan.features.map((feature, i) => (
-                  <li key={i} className="flex items-center gap-3">
-                    <div className="flex-shrink-0 w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center">
-                      <Check className="h-3 w-3 text-primary" />
-                    </div>
-                    <span className="text-foreground">{feature}</span>
-                  </li>
-                ))}
-              </ul>
-
-              <button
-                onClick={() => plan.passType && handlePurchase(plan.passType)}
-                disabled={loading === plan.passType}
-                className={`w-full h-12 px-6 rounded-lg font-medium transition-colors ${plan.popular
-                  ? "bg-primary text-primary-foreground hover:bg-primary/90"
-                  : "bg-card border border-border text-foreground hover:bg-muted"
-                  } ${loading === plan.passType ? 'opacity-50 cursor-not-allowed' : ''}`}
+            return (
+              <div
+                key={index}
+                className={`relative bg-card border rounded-2xl p-6 sm:p-8 transition-all hover:shadow-elegant ${plan.popular
+                  ? "border-primary shadow-card scale-105"
+                  : "border-border"
+                  }`}
               >
-                {loading === plan.passType ? "Processando..." : plan.buttonText}
-              </button>
-            </div>
-          ))}
+                {plan.popular && (
+                  <div className="absolute -top-4 left-1/2 -translate-x-1/2">
+                    <span className="bg-primary text-primary-foreground px-4 py-1 rounded-full text-sm font-medium">
+                      Mais Popular
+                    </span>
+                  </div>
+                )}
+
+                <div className="text-center mb-6">
+                  <h3 className="text-xl sm:text-2xl font-bold text-foreground mb-2">
+                    {plan.name}
+                  </h3>
+                  {plan.subtitle && (
+                    <p className="text-sm text-muted-foreground font-medium mb-3">
+                      {plan.subtitle}
+                    </p>
+                  )}
+                  <div className="flex items-baseline justify-center gap-1 mb-2">
+                    <span className="text-3xl sm:text-4xl font-bold text-foreground">
+                      {plan.price}
+                    </span>
+                  </div>
+                  <span className="text-sm text-muted-foreground">{plan.period}</span>
+                  {plan.description && (
+                    <p className="text-sm text-muted-foreground mt-4 italic">
+                      "{plan.description}"
+                    </p>
+                  )}
+                </div>
+
+                <ul className="space-y-3 mb-8">
+                  {plan.features.map((feature, i) => (
+                    <li key={i} className="flex items-center gap-3">
+                      <div className="flex-shrink-0 w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center">
+                        <Check className="h-3 w-3 text-primary" />
+                      </div>
+                      <span className="text-foreground">{feature}</span>
+                    </li>
+                  ))}
+                </ul>
+
+                <button
+                  onClick={() => plan.passType && handlePurchase(plan.passType)}
+                  disabled={loading === plan.passType || buttonState.disabled}
+                  className={`w-full h-12 px-6 rounded-lg font-medium transition-colors ${plan.popular
+                    ? "bg-primary text-primary-foreground hover:bg-primary/90"
+                    : "bg-card border border-border text-foreground hover:bg-muted"
+                    } ${loading === plan.passType || buttonState.disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+                >
+                  {loading === plan.passType ? "Processando..." : (buttonState.text || plan.buttonText)}
+                </button>
+              </div>
+            )
+          })}
         </div>
 
         <div className="text-center mt-12 space-y-2">

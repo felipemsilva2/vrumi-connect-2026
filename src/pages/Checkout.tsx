@@ -10,6 +10,7 @@ import { Separator } from "@/components/ui/separator"
 import { Check, CreditCard, ShieldCheck, ArrowLeft, Calendar, Lock, Smartphone, QrCode, Copy } from "lucide-react"
 import { z } from "zod"
 import type { User } from "@supabase/supabase-js"
+import { useActivePass } from "@/hooks/useActivePass"
 
 const pixSchema = z.object({
   fullName: z.string().trim().min(3, "Nome completo deve ter ao menos 3 caracteres").max(100),
@@ -33,6 +34,8 @@ const Checkout = () => {
   const [errors, setErrors] = useState<Partial<Record<keyof PixForm, string>>>({})
   const [verifying, setVerifying] = useState(false)
   const [paymentConfirmed, setPaymentConfirmed] = useState(false)
+
+  const { activePass, hasActivePass } = useActivePass(user?.id)
 
   const [formData, setFormData] = useState<PixForm>({
     fullName: "",
@@ -103,8 +106,29 @@ const Checkout = () => {
   useEffect(() => {
     if (!passType || !selectedPass) {
       navigate("/#preço")
+      return
     }
-  }, [passType, selectedPass, navigate])
+
+    if (hasActivePass && activePass && passType) {
+      const PLAN_LEVELS: Record<string, number> = {
+        'individual_30_days': 1,
+        'individual_90_days': 2,
+        'family_90_days': 3
+      }
+
+      const currentLevel = PLAN_LEVELS[activePass.pass_type] || 0
+      const selectedLevel = PLAN_LEVELS[passType] || 0
+
+      if (selectedLevel <= currentLevel) {
+        toast({
+          title: "Plano já ativo",
+          description: "Você já possui um plano igual ou superior ativo.",
+          variant: "destructive"
+        })
+        navigate("/painel")
+      }
+    }
+  }, [passType, selectedPass, navigate, hasActivePass, activePass])
 
   const formatCPF = (value: string) => {
     const numbers = value.replace(/\D/g, "")
