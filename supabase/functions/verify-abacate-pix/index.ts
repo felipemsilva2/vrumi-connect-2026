@@ -19,16 +19,17 @@ serve(async (req) => {
     }
 
     // Check payment status with Abacate Pay
-    const abacateResponse = await fetch(`https://api.abacatepay.com/v1/pixQrCode/check/${pixId}`, {
+    const abacateResponse = await fetch(`https://api.abacatepay.com/v1/pixQrCode/check?pixId=${pixId}`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${Deno.env.get('ABACATE_PAY_API_KEY')}`,
-        'Content-Type': 'application/json',
       },
     });
 
     if (!abacateResponse.ok) {
-      throw new Error('Failed to check payment status');
+      const errorText = await abacateResponse.text();
+      console.error('Abacate Pay API error:', errorText);
+      throw new Error(`Failed to check payment status: ${abacateResponse.status}`);
     }
 
     const result = await abacateResponse.json();
