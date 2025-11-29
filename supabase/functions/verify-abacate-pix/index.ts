@@ -19,7 +19,7 @@ serve(async (req) => {
     }
 
     // Check payment status with Abacate Pay
-    const abacateResponse = await fetch(`https://api.abacatepay.com/v1/pixQrCode/check?pixId=${pixId}`, {
+    const abacateResponse = await fetch(`https://api.abacatepay.com/v1/pixQrCode/check?id=${pixId}`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${Deno.env.get('ABACATE_PAY_API_KEY')}`,
