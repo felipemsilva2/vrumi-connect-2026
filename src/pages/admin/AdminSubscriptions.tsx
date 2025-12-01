@@ -49,14 +49,21 @@ const AdminSubscriptions = () => {
 
       if (passesError) throw passesError;
 
-      // Buscar emails dos usuários
-      const { data: { users: authUsers } } = await supabase.auth.admin.listUsers();
+      // Buscar emails dos usuários na tabela profiles
+      const userIds = (passesData || []).map(p => p.user_id);
+      const { data: profilesData } = await supabase
+        .from("profiles")
+        .select("id, email, full_name")
+        .in("id", userIds);
 
       const subscriptionsWithEmails = (passesData || []).map((pass) => {
-        const user = authUsers?.find((u: any) => u.id === pass.user_id);
+        const profile = profilesData?.find((p) => p.id === pass.user_id);
+        // Se não tiver email no profile (antigos), tenta usar o full_name ou fallback
+        const displayEmail = profile?.email || profile?.full_name || "Usuário não encontrado";
+
         return {
           ...pass,
-          user_email: user?.email || "N/A",
+          user_email: displayEmail,
         };
       });
 
@@ -84,10 +91,9 @@ const AdminSubscriptions = () => {
     if (!passToDelete) return;
 
     try {
-      const { error } = await supabase
-        .from("user_passes")
-        .delete()
-        .eq("id", passToDelete);
+      const { error } = await supabase.functions.invoke('delete-subscription', {
+        body: { subscription_id: passToDelete }
+      });
 
       if (error) throw error;
 
@@ -95,7 +101,7 @@ const AdminSubscriptions = () => {
       fetchSubscriptions();
     } catch (error) {
       console.error("Error deleting pass:", error);
-      toast.error("Erro ao remover assinatura");
+      toast.error(`Erro ao remover assinatura: ${error.message || "Erro desconhecido"}`);
     } finally {
       setDeleteDialogOpen(false);
       setPassToDelete(null);
