@@ -19,15 +19,6 @@ const Index = lazy(() => import("@/pages/Index"));
 const Auth = lazy(() => import("@/pages/Auth"));
 const Dashboard = lazy(() => import("@/pages/Dashboard"));
 const StudyRoom = lazy(() => import("@/pages/StudyRoomWrapper"));
-const AdminDashboard = lazy(() => import("@/pages/admin/AdminDashboard"));
-const AdminUsers = lazy(() => import("@/pages/admin/AdminUsers"));
-const AdminRoles = lazy(() => import("@/pages/admin/AdminRoles"));
-const AdminSubscriptions = lazy(() => import("@/pages/admin/AdminSubscriptions"));
-const AdminAuditLogs = lazy(() => import("@/pages/admin/AdminAuditLogs"));
-const AdminQuestions = lazy(() => import("@/pages/AdminQuestions"));
-const AdminFlashcards = lazy(() => import("@/pages/AdminFlashcards"));
-const AdminPopulate = lazy(() => import("@/pages/AdminPopulate"));
-const AdminTrafficSignsImport = lazy(() => import("@/pages/admin/AdminTrafficSignsImport"));
 const Checkout = lazy(() => import("@/pages/Checkout"));
 const CheckoutSuccess = lazy(() => import("@/pages/CheckoutSuccess"));
 const CheckoutCancel = lazy(() => import("@/pages/CheckoutCancel"));
@@ -92,51 +83,6 @@ const App = () => (
                 <Route path="/pagamento/sucesso" element={<CheckoutSuccess />} />
                 <Route path="/pagamento/cancelado" element={<CheckoutCancel />} />
 
-                <Route path="/admin/painel" element={
-                  <ProtectedAdminRoute>
-                    <AdminDashboard />
-                  </ProtectedAdminRoute>
-                } />
-                <Route path="/admin/usuarios" element={
-                  <ProtectedAdminRoute>
-                    <AdminUsers />
-                  </ProtectedAdminRoute>
-                } />
-                <Route path="/admin/assinaturas" element={
-                  <ProtectedAdminRoute>
-                    <AdminSubscriptions />
-                  </ProtectedAdminRoute>
-                } />
-                <Route path="/admin/funcoes" element={
-                  <ProtectedAdminRoute>
-                    <AdminRoles />
-                  </ProtectedAdminRoute>
-                } />
-                <Route path="/admin/logs-auditoria" element={
-                  <ProtectedAdminRoute>
-                    <AdminAuditLogs />
-                  </ProtectedAdminRoute>
-                } />
-                <Route path="/admin/popular" element={
-                  <ProtectedAdminRoute>
-                    <AdminPopulate />
-                  </ProtectedAdminRoute>
-                } />
-                <Route path="/admin/flashcards" element={
-                  <ProtectedAdminRoute>
-                    <AdminFlashcards />
-                  </ProtectedAdminRoute>
-                } />
-                <Route path="/admin/questoes" element={
-                  <ProtectedAdminRoute>
-                    <AdminQuestions />
-                  </ProtectedAdminRoute>
-                } />
-                <Route path="/admin/placas" element={
-                  <ProtectedAdminRoute>
-                    <AdminTrafficSignsImport />
-                  </ProtectedAdminRoute>
-                } />
 
                 <Route path="*" element={<NotFound />} />
               </Routes>

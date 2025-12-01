@@ -265,90 +265,49 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
                 })}
               </div>
 
-              {/* Admin Section */}
-              {isAdmin && (
-                <div className="space-y-1">
-                  {sidebarOpen && (
-                    <div className="px-3 text-[10px] font-bold uppercase tracking-wider text-muted-foreground/70">
-                      Administração
-                    </div>
-                  )}
-                  <button
-                    onClick={() => navigate("/admin/painel")}
-                    className={cn(
-                      "group relative flex w-full items-center rounded-xl transition-all duration-200 outline-none hover:bg-accent/50 text-muted-foreground hover:text-primary",
-                      sidebarOpen ? "px-3 py-3" : "justify-center py-3 px-0"
-                    )}
-                    title={!sidebarOpen ? "Área Admin" : undefined}
-                  >
-                    <div className={cn(
-                      "flex shrink-0 items-center justify-center rounded-lg transition-colors duration-200 bg-purple-500/10 group-hover:bg-purple-500/20",
-                      sidebarOpen ? "mr-3 h-8 w-8" : "h-10 w-10"
-                    )}>
-                      <Shield className="h-4 w-4 text-purple-600 dark:text-purple-400" />
-                    </div>
-                    <div className={cn(
-                      "flex flex-col items-start overflow-hidden transition-all duration-300",
-                      sidebarOpen ? "opacity-100 w-auto" : "opacity-0 w-0 hidden"
-                    )}>
-                      <span className="text-sm font-medium">Área Admin</span>
-                    </div>
-                  </button>
-                </div>
-              )}
-
-              {/* Account Section */}
-              <div className="space-y-1">
-                {sidebarOpen && (
-                  <div className="px-3 text-[10px] font-bold uppercase tracking-wider text-muted-foreground/70">
-                    Conta
-                  </div>
+              <button
+                onClick={() => navigate("/painel?tab=perfil")}
+                className={cn(
+                  "group relative flex w-full items-center rounded-xl transition-all duration-200 outline-none hover:bg-accent/50 text-muted-foreground hover:text-foreground",
+                  sidebarOpen ? "px-3 py-3" : "justify-center py-3 px-0"
                 )}
+                title={!sidebarOpen ? "Meu Perfil" : undefined}
+              >
+                <div className={cn(
+                  "flex shrink-0 items-center justify-center rounded-lg transition-colors duration-200 bg-accent/50 group-hover:bg-accent",
+                  sidebarOpen ? "mr-3 h-8 w-8" : "h-10 w-10"
+                )}>
+                  <User className="h-4 w-4" />
+                </div>
+                <div className={cn(
+                  "flex flex-col items-start overflow-hidden transition-all duration-300",
+                  sidebarOpen ? "opacity-100 w-auto" : "opacity-0 w-0 hidden"
+                )}>
+                  <span className="text-sm font-medium">Meu Perfil</span>
+                </div>
+              </button>
 
-                <button
-                  onClick={() => navigate("/painel?tab=perfil")}
-                  className={cn(
-                    "group relative flex w-full items-center rounded-xl transition-all duration-200 outline-none hover:bg-accent/50 text-muted-foreground hover:text-foreground",
-                    sidebarOpen ? "px-3 py-3" : "justify-center py-3 px-0"
-                  )}
-                  title={!sidebarOpen ? "Meu Perfil" : undefined}
-                >
-                  <div className={cn(
-                    "flex shrink-0 items-center justify-center rounded-lg transition-colors duration-200 bg-accent/50 group-hover:bg-accent",
-                    sidebarOpen ? "mr-3 h-8 w-8" : "h-10 w-10"
-                  )}>
-                    <User className="h-4 w-4" />
-                  </div>
-                  <div className={cn(
-                    "flex flex-col items-start overflow-hidden transition-all duration-300",
-                    sidebarOpen ? "opacity-100 w-auto" : "opacity-0 w-0 hidden"
-                  )}>
-                    <span className="text-sm font-medium">Meu Perfil</span>
-                  </div>
-                </button>
-
-                <button
-                  onClick={handleSignOut}
-                  className={cn(
-                    "group relative flex w-full items-center rounded-xl transition-all duration-200 outline-none hover:bg-red-500/10 text-muted-foreground hover:text-red-600 dark:hover:text-red-400",
-                    sidebarOpen ? "px-3 py-3" : "justify-center py-3 px-0"
-                  )}
-                  title={!sidebarOpen ? "Sair" : undefined}
-                >
-                  <div className={cn(
-                    "flex shrink-0 items-center justify-center rounded-lg transition-colors duration-200 bg-red-500/5 group-hover:bg-red-500/10",
-                    sidebarOpen ? "mr-3 h-8 w-8" : "h-10 w-10"
-                  )}>
-                    <LogOut className="h-4 w-4" />
-                  </div>
-                  <div className={cn(
-                    "flex flex-col items-start overflow-hidden transition-all duration-300",
-                    sidebarOpen ? "opacity-100 w-auto" : "opacity-0 w-0 hidden"
-                  )}>
-                    <span className="text-sm font-medium">Sair</span>
-                  </div>
-                </button>
-              </div>
+              <button
+                onClick={handleSignOut}
+                className={cn(
+                  "group relative flex w-full items-center rounded-xl transition-all duration-200 outline-none hover:bg-red-500/10 text-muted-foreground hover:text-red-600 dark:hover:text-red-400",
+                  sidebarOpen ? "px-3 py-3" : "justify-center py-3 px-0"
+                )}
+                title={!sidebarOpen ? "Sair" : undefined}
+              >
+                <div className={cn(
+                  "flex shrink-0 items-center justify-center rounded-lg transition-colors duration-200 bg-red-500/5 group-hover:bg-red-500/10",
+                  sidebarOpen ? "mr-3 h-8 w-8" : "h-10 w-10"
+                )}>
+                  <LogOut className="h-4 w-4" />
+                </div>
+                <div className={cn(
+                  "flex flex-col items-start overflow-hidden transition-all duration-300",
+                  sidebarOpen ? "opacity-100 w-auto" : "opacity-0 w-0 hidden"
+                )}>
+                  <span className="text-sm font-medium">Sair</span>
+                </div>
+              </button>
             </div>
 
             {/* Toggle Sidebar */}
@@ -407,33 +366,14 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
                 </div>
               </div>
               <div className="flex items-center gap-3">
-                {!location.pathname.includes('/biblioteca-de-placas') && (
-                  <button
-                    onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-                    className="flex h-10 w-10 items-center justify-center rounded-lg border border-border bg-background text-muted-foreground hover:bg-accent/10"
-                    aria-label={theme === "dark" ? "Ativar modo claro" : "Ativar modo escuro"}
-                  >
-                    {theme === "dark" ? (
-                      <Sun className="h-5 w-5" />
-                    ) : (
-                      <Moon className="h-5 w-5" />
-                    )}
-                  </button>
-                )}
               </div>
             </div>
-            {showBreadcrumb && <SmartBreadcrumb />}
           </header>
 
-          {/* Page Content */}
-          <main className="flex-1 p-4 sm:p-6 overflow-auto">
-            {children}
-          </main>
+          {/* Mobile Bottom Navigation */}
+          {isMobile && <MobileBottomNav onMenuClick={() => setMobileMenuOpen(true)} />}
         </div>
       </div>
-
-      {/* Mobile Bottom Navigation */}
-      {isMobile && <MobileBottomNav onMenuClick={() => setMobileMenuOpen(true)} />}
     </div>
   );
 };

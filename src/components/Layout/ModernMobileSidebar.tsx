@@ -208,36 +208,17 @@ export const ModernMobileSidebar: React.FC<ModernMobileSidebarProps> = ({
                                                         : "text-foreground hover:bg-accent/10"
                                                 )}
                                             >
-                                                {/* Active Indicator */}
-                                                {isActive && (
-                                                    <motion.div
-                                                        layoutId="activeIndicator"
-                                                        className="absolute left-0 top-0 bottom-0 w-1 bg-primary rounded-r-full"
-                                                        transition={{ type: "spring", damping: 30, stiffness: 300 }}
-                                                    />
-                                                )}
-
-                                                {/* Icon */}
                                                 <div className={cn(
                                                     "p-2 rounded-lg transition-colors",
-                                                    isActive
-                                                        ? "bg-primary/20"
-                                                        : "bg-accent/50 group-hover:bg-accent"
+                                                    isActive ? "bg-primary/20 text-primary" : "bg-accent/50 group-hover:bg-accent"
                                                 )}>
                                                     <item.icon className="h-5 w-5" />
                                                 </div>
-
-                                                {/* Text */}
                                                 <div className="flex-1 text-left">
-                                                    <div className="font-medium text-sm">
-                                                        {item.label}
-                                                    </div>
-                                                    <div className="text-xs text-muted-foreground">
-                                                        {item.description}
-                                                    </div>
+                                                    <div className="font-medium text-sm">{item.label}</div>
+                                                    <div className="text-xs text-muted-foreground">{item.description}</div>
                                                 </div>
 
-                                                {/* Notification Badge */}
                                                 {item.notif && (
                                                     <div className="h-6 w-6 rounded-full bg-primary flex items-center justify-center">
                                                         <span className="text-xs font-bold text-primary-foreground">
@@ -246,7 +227,6 @@ export const ModernMobileSidebar: React.FC<ModernMobileSidebarProps> = ({
                                                     </div>
                                                 )}
 
-                                                {/* Arrow */}
                                                 <ChevronRight className={cn(
                                                     "h-4 w-4 transition-transform",
                                                     isActive ? "opacity-100" : "opacity-0 group-hover:opacity-50"
@@ -257,27 +237,28 @@ export const ModernMobileSidebar: React.FC<ModernMobileSidebarProps> = ({
                                 </nav>
 
                                 {/* Admin Section */}
-                                {isAdmin && (
-                                    <div className="space-y-2">
-                                        <div className="px-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                                            Administração
-                                        </div>
-                                        <motion.button
-                                            onClick={() => handleNavigate('/admin/painel')}
-                                            whileTap={{ scale: 0.98 }}
-                                            className="w-full flex items-center gap-4 px-4 py-3.5 rounded-xl text-foreground hover:bg-accent/10 transition-all duration-200 group"
-                                        >
-                                            <div className="p-2 rounded-lg bg-purple-500/20">
-                                                <Shield className="h-5 w-5 text-purple-600 dark:text-purple-400" />
-                                            </div>
-                                            <div className="flex-1 text-left">
-                                                <div className="font-medium text-sm">Área Admin</div>
-                                                <div className="text-xs text-muted-foreground">Gerenciar sistema</div>
-                                            </div>
-                                            <ChevronRight className="h-4 w-4 opacity-0 group-hover:opacity-50 transition-opacity" />
-                                        </motion.button>
+                                {/* Admin Section - Commented out as Admin is now separate
+                            {isAdmin && (
+                                <div className="space-y-2">
+                                    <div className="px-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                                        Administração
                                     </div>
-                                )}
+                                    <motion.button
+                                        onClick={() => handleNavigate('/admin/painel')}
+                                        whileTap={{ scale: 0.98 }}
+                                        className="w-full flex items-center gap-4 px-4 py-3.5 rounded-xl text-foreground hover:bg-accent/10 transition-all duration-200 group"
+                                    >
+                                        <div className="p-2 rounded-lg bg-purple-500/20">
+                                            <Shield className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                                        </div>
+                                        <div className="flex-1 text-left">
+                                            <div className="font-medium text-sm">Área Admin</div>
+                                            <div className="text-xs text-muted-foreground">Gerenciar sistema</div>
+                                        </div>
+                                        <ChevronRight className="h-4 w-4 opacity-0 group-hover:opacity-50 transition-opacity" />
+                                    </motion.button>
+                                </div>
+                            )} */}
 
                                 {/* Account Section */}
                                 <div className="space-y-2">
@@ -323,7 +304,8 @@ export const ModernMobileSidebar: React.FC<ModernMobileSidebarProps> = ({
                         </div>
                     </motion.div>
                 </>
-            )}
-        </AnimatePresence>
+            )
+            }
+        </AnimatePresence >
     );
 };

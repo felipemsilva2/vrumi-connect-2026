@@ -347,25 +347,6 @@ const Sidebar = ({ user, selected, setSelected }: SidebarProps) => {
           <div className="px-3 py-2 text-xs font-medium text-muted-foreground uppercase tracking-wide">
             Administração
           </div>
-          <Button
-            onClick={handleAdminAccess}
-            variant="ghost"
-            size="lg"
-            className="w-full justify-start text-muted-foreground hover:bg-primary/10 hover:text-primary"
-          >
-            <div className="grid h-full w-12 place-content-center">
-              <Shield className="h-4 w-4" />
-            </div>
-            <span className="text-sm font-medium">Área Admin</span>
-          </Button>
-        </div>
-      )}
-
-      {open && (
-        <div className="border-t border-border pt-4 space-y-1">
-          <div className="px-3 py-2 text-xs font-medium text-muted-foreground uppercase tracking-wide">
-            Conta
-          </div>
           <Option
             Icon={User}
             title="Meu Perfil"
