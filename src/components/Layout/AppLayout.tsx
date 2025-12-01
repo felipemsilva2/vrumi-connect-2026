@@ -370,6 +370,11 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
             </div>
           </header>
 
+          {/* Main Content */}
+          <main className="flex-1">
+            {children}
+          </main>
+
           {/* Mobile Bottom Navigation */}
           {isMobile && <MobileBottomNav onMenuClick={() => setMobileMenuOpen(true)} />}
         </div>
