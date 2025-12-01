@@ -1,26 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { ModernCard, ModernCardContent, ModernCardHeader } from '@/components/ui/modern-card';
-import { ModernButton } from '@/components/ui/modern-button';
-import { Search, Filter, X, BookOpen, Play, Zap, Clock, Trophy, RotateCcw, Eye } from 'lucide-react';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from '@/components/ui/dialog';
-import FlashcardMode from '@/components/traffic-signs/FlashcardMode';
-import TimedChallenge from '@/components/traffic-signs/TimedChallenge';
-import StudyModeModal from '@/components/study/StudyModeModal';
-import StudyModeButtons from '@/components/study/StudyModeButtons';
-import { SubscriptionGate } from '@/components/auth/SubscriptionGate';
-import LazyImage from '@/components/traffic-signs/LazyImage';
+import { supabase } from "@/integrations/supabase/client";
+import { Search, Filter, RotateCcw, BookOpen, Zap, Eye, X } from 'lucide-react';
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import FlashcardMode from "@/components/traffic-signs/FlashcardMode";
+import TimedChallenge from "@/components/traffic-signs/TimedChallenge";
+import { SubscriptionGate } from "@/components/auth/SubscriptionGate";
+import { LazyImage } from "@/components/ui/lazy-image";
+import { FeatureExplanationButton } from "@/components/ui/feature-explanation-button";
 
 interface TrafficSign {
   id: string;
@@ -154,88 +145,89 @@ export default function TrafficSignsLibrary({ user, profile }: TrafficSignsLibra
 
   const displayedSigns = filteredSigns.slice(0, displayedCount);
   const hasMore = displayedCount < filteredSigns.length;
-
   return (
-    <SubscriptionGate feature="Biblioteca de Placas">
-      <div className="w-full">
-        {/* Sticky Header */}
-        <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm border-b border-border p-4 sm:p-6 mb-4">
-          <div className="mb-4">
-            <h1 className="text-3xl font-bold text-foreground mb-2">
-              Biblioteca de Placas
-            </h1>
-            <p className="text-muted-foreground">
-              Consulte todas as placas de trânsito brasileiras organizadas por categoria
+    <SubscriptionGate>
+      <div className="container mx-auto p-4 space-y-6 pb-24 md:pb-8 animate-in fade-in duration-500">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div>
+            <div className="flex items-center gap-2">
+              <h1 className="text-3xl font-bold text-foreground">Biblioteca de Placas</h1>
+              <FeatureExplanationButton
+                title="Biblioteca de Placas"
+                description="Explore todas as placas de trânsito. Use os filtros para encontrar categorias específicas ou estude com o modo Flashcards para memorização."
+              />
+            </div>
+            <p className="text-muted-foreground mt-1">
+              Consulte e estude todas as placas de trânsito oficiais
             </p>
           </div>
-
-          {/* Search and Filters */}
-          <ModernCard className="mb-6 shadow-lg" variant="elevated">
-            <ModernCardContent className="p-6">
-              <div className="flex flex-col lg:flex-row gap-4">
-                {/* Search Input */}
-                <div className="relative flex-1">
-                  <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5" />
-                  <Input
-                    type="text"
-                    placeholder="Buscar por código, nome ou descrição..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-12 pr-4 py-3 text-base border-2 border-border focus:border-primary focus:ring-2 focus:ring-primary/20 rounded-xl transition-all duration-200"
-                  />
-                </div>
-
-                {/* Category Filter */}
-                <div className="flex items-center gap-3">
-                  <Filter className="text-muted-foreground w-5 h-5" />
-                  <select
-                    value={selectedCategory}
-                    onChange={(e) => setSelectedCategory(e.target.value)}
-                    className="px-4 py-3 border-2 border-border rounded-xl bg-background text-foreground focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-200 min-w-[180px]"
-                  >
-                    {categories.map(category => (
-                      <option key={category} value={category}>
-                        {categoryIcons[category as keyof typeof categoryIcons]} {category}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Clear Filters */}
-                {(selectedCategory !== 'Todas' || searchTerm) && (
-                  <ModernButton
-                    variant="outline"
-                    size="lg"
-                    onClick={clearFilters}
-                    className="flex items-center gap-2 px-4"
-                  >
-                    <RotateCcw className="w-4 h-4" />
-                    Limpar Filtros
-                  </ModernButton>
-                )}
-              </div>
-
-              {/* Results Count and Quick Actions */}
-              <div className="mt-6 flex items-center justify-between p-4 bg-gradient-to-r from-primary/5 to-primary/10 rounded-xl">
-                <div className="text-sm text-muted-foreground">
-                  <span className="font-semibold text-foreground">{filteredSigns.length}</span> placa{filteredSigns.length !== 1 ? 's' : ''} encontrada{filteredSigns.length !== 1 ? 's' : ''}
-                </div>
-              </div>
-            </ModernCardContent>
-          </ModernCard>
         </div>
+
+        <Card className="shadow-lg border-none bg-card/50 backdrop-blur-sm">
+          <CardContent className="p-6">
+            <div className="flex flex-col lg:flex-row gap-4">
+              {/* Search Input */}
+              <div className="relative flex-1">
+                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5" />
+                <Input
+                  type="text"
+                  placeholder="Buscar por código, nome ou descrição..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-12 pr-4 py-3 text-base border-2 border-border focus:border-primary focus:ring-2 focus:ring-primary/20 rounded-xl transition-all duration-200"
+                />
+              </div>
+
+              {/* Category Filter */}
+              <div className="flex items-center gap-3">
+                <Filter className="text-muted-foreground w-5 h-5" />
+                <select
+                  value={selectedCategory}
+                  onChange={(e) => setSelectedCategory(e.target.value)}
+                  className="px-4 py-3 border-2 border-border rounded-xl bg-background text-foreground focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-200 min-w-[180px]"
+                >
+                  {categories.map(category => (
+                    <option key={category} value={category}>
+                      {categoryIcons[category as keyof typeof categoryIcons]} {category}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Clear Filters */}
+              {(selectedCategory !== 'Todas' || searchTerm) && (
+                <Button
+                  variant="outline"
+                  size="lg"
+                  onClick={clearFilters}
+                  className="flex items-center gap-2 px-4"
+                >
+                  <RotateCcw className="w-4 h-4" />
+                  Limpar Filtros
+                </Button>
+              )}
+            </div>
+
+            {/* Results Count and Quick Actions */}
+            <div className="mt-6 flex items-center justify-between p-4 bg-gradient-to-r from-primary/5 to-primary/10 rounded-xl">
+              <div className="text-sm text-muted-foreground">
+                <span className="font-semibold text-foreground">{filteredSigns.length}</span> placa{filteredSigns.length !== 1 ? 's' : ''} encontrada{filteredSigns.length !== 1 ? 's' : ''}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Study Actions - Always visible */}
         {filteredSigns.length > 0 && (
           <div className="mt-6">
-            <ModernCard className="shadow-lg" variant="gradient">
-              <ModernCardContent className="p-6">
+            <Card className="shadow-lg" variant="gradient">
+              <CardContent className="p-6">
                 <h3 className="text-lg font-semibold text-foreground mb-3 flex items-center gap-2">
                   <BookOpen className="w-5 h-5" />
                   Comece a Estudar
                 </h3>
                 <div className="flex flex-wrap gap-3">
-                  <ModernButton
+                  <Button
                     onClick={startFlashcardMode}
                     variant="outline"
                     size="sm"
@@ -243,8 +235,8 @@ export default function TrafficSignsLibrary({ user, profile }: TrafficSignsLibra
                   >
                     <BookOpen className="w-4 h-4" />
                     Estudo Linear
-                  </ModernButton>
-                  <ModernButton
+                  </Button>
+                  <Button
                     onClick={startSmartFlashcardMode}
                     variant="premium"
                     size="sm"
@@ -252,8 +244,8 @@ export default function TrafficSignsLibrary({ user, profile }: TrafficSignsLibra
                   >
                     <BookOpen className="w-4 h-4" />
                     Estudo Inteligente
-                  </ModernButton>
-                  <ModernButton
+                  </Button>
+                  <Button
                     onClick={startTimedChallenge}
                     variant="success"
                     size="sm"
@@ -261,10 +253,10 @@ export default function TrafficSignsLibrary({ user, profile }: TrafficSignsLibra
                   >
                     <Zap className="w-4 h-4" />
                     Desafio 60s
-                  </ModernButton>
+                  </Button>
                 </div>
-              </ModernCardContent>
-            </ModernCard>
+              </CardContent>
+            </Card>
           </div>
         )}
 
@@ -303,14 +295,14 @@ export default function TrafficSignsLibrary({ user, profile }: TrafficSignsLibra
           <div className="px-4 sm:px-6">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {displayedSigns.map((sign) => (
-                <ModernCard
+                <Card
                   key={sign.id}
                   variant="elevated"
                   interactive={true}
                   className="cursor-pointer hover:shadow-2xl transition-all duration-300 hover:scale-105 transform hover:border-primary/30"
                   onClick={() => setSelectedSign(sign)}
                 >
-                  <ModernCardHeader className="pb-3">
+                  <CardHeader className="pb-3">
                     <div className="flex items-center justify-between">
                       <Badge className={`${categoryColors[sign.category as keyof typeof categoryColors]} text-xs font-medium px-3 py-1 rounded-full`}>
                         {categoryIcons[sign.category as keyof typeof categoryIcons]} {sign.category}
@@ -319,8 +311,8 @@ export default function TrafficSignsLibrary({ user, profile }: TrafficSignsLibra
                         {sign.code}
                       </span>
                     </div>
-                  </ModernCardHeader>
-                  <ModernCardContent>
+                  </CardHeader>
+                  <CardContent>
                     <div className="aspect-square bg-gradient-to-br from-muted/50 to-muted rounded-xl mb-4 flex items-center justify-center overflow-hidden border border-border/50">
                       {sign.image_url ? (
                         <LazyImage
@@ -339,31 +331,31 @@ export default function TrafficSignsLibrary({ user, profile }: TrafficSignsLibra
                       {sign.name}
                     </h3>
                     <div className="flex justify-center mt-3">
-                      <ModernButton
+                      <Button
                         variant="ghost"
                         size="sm"
                         className="flex items-center gap-2 text-primary hover:text-primary/80"
                       >
                         <Eye className="w-4 h-4" />
                         Ver Detalhes
-                      </ModernButton>
+                      </Button>
                     </div>
-                  </ModernCardContent>
-                </ModernCard>
+                  </CardContent>
+                </Card>
               ))}
             </div>
 
             {/* Load More Button */}
             {hasMore && (
               <div className="flex justify-center mt-8 mb-4">
-                <ModernButton
+                <Button
                   onClick={loadMore}
                   variant="secondary"
                   size="lg"
                   className="min-w-[200px] shadow-lg hover:shadow-xl"
                 >
                   Carregar Mais ({filteredSigns.length - displayedCount} restantes)
-                </ModernButton>
+                </Button>
               </div>
             )}
           </div>
@@ -371,8 +363,8 @@ export default function TrafficSignsLibrary({ user, profile }: TrafficSignsLibra
 
         {/* Empty State */}
         {!loading && filteredSigns.length === 0 && !flashcardMode && !timedChallengeMode && (
-          <ModernCard className="mx-4 sm:mx-6" variant="glass">
-            <ModernCardContent className="p-12 text-center">
+          <Card className="mx-4 sm:mx-6" variant="glass">
+            <CardContent className="p-12 text-center">
               <div className="text-6xl mb-6 bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent">🚦</div>
               <h3 className="text-2xl font-bold text-foreground mb-3">
                 Nenhuma placa encontrada
@@ -380,7 +372,7 @@ export default function TrafficSignsLibrary({ user, profile }: TrafficSignsLibra
               <p className="text-muted-foreground text-lg max-w-md mx-auto">
                 Tente ajustar seus filtros de busca ou explore outras categorias.
               </p>
-              <ModernButton
+              <Button
                 variant="outline"
                 size="lg"
                 onClick={clearFilters}
@@ -388,9 +380,9 @@ export default function TrafficSignsLibrary({ user, profile }: TrafficSignsLibra
               >
                 <RotateCcw className="w-4 h-4 mr-2" />
                 Limpar todos os filtros
-              </ModernButton>
-            </ModernCardContent>
-          </ModernCard>
+              </Button>
+            </CardContent>
+          </Card>
         )}
 
         {/* Modal */}
@@ -462,7 +454,7 @@ export default function TrafficSignsLibrary({ user, profile }: TrafficSignsLibra
 
                 {/* Action Buttons */}
                 <div className="flex gap-3 pt-6">
-                  <ModernButton
+                  <Button
                     variant="secondary"
                     onClick={() => setSelectedSign(null)}
                     className="flex-1"
@@ -470,7 +462,7 @@ export default function TrafficSignsLibrary({ user, profile }: TrafficSignsLibra
                   >
                     <X className="w-4 h-4 mr-2" />
                     Fechar
-                  </ModernButton>
+                  </Button>
                 </div>
               </div>
             )}

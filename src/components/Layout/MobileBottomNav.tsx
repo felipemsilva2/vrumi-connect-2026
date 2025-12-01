@@ -82,7 +82,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({ onMenuClick })
 
     return (
         <div className={cn(
-            "fixed bottom-0 left-0 right-0 z-[9999] bg-background/80 backdrop-blur-lg border-t border-border bottom-nav pb-safe transition-all duration-300",
+            "fixed bottom-0 left-0 right-0 z-40 bg-background/80 backdrop-blur-lg border-t border-border bottom-nav pb-safe transition-all duration-300",
             isKeyboardOpen ? "translate-y-full opacity-0 pointer-events-none" : "translate-y-0 opacity-100"
         )}>
             <div className="flex items-center justify-around h-16 px-2">

@@ -1,26 +1,14 @@
-import React, { useState, useRef, useEffect } from "react";
-import { Send, Car, Loader2, Trash2 } from "lucide-react";
-import ReactMarkdown from "react-markdown";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { ModernButton } from "@/components/ui/modern-button";
-import { ModernCard, ModernCardContent } from "@/components/ui/modern-card";
-import { cn } from "@/lib/utils";
-import { PDFViewer } from "@/components/study-room/PDFViewer";
-import { QuickActions } from "@/components/study-room/QuickActions";
-import { TextSelectionTooltip } from "@/components/study-room/TextSelectionTooltip";
-import PdfChatPreview from "@/components/study-room/PdfChatPreview";
+import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useIsMobile } from "@/hooks/use-mobile";
-import { useContextualNavigation } from "@/utils/navigation";
-import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
-// PDF context extraction removed - using simpler chat approach
-import { AppLayout } from '@/components/Layout/AppLayout';
-import { getErrorMessage } from "@/utils/errorMessages";
+import { useToast } from "@/hooks/use-toast";
+import { useContextualNavigation } from "@/utils/navigation";
 import { SubscriptionGate } from "@/components/auth/SubscriptionGate";
-import { SmartBreadcrumb } from "@/components/SmartBreadcrumb";
+import PdfChatPreview from "@/components/study-room/PdfChatPreview";
+import { TextSelectionTooltip } from "@/components/study-room/TextSelectionTooltip";
+import { getErrorMessage } from "@/utils/errorMessages";
+import { FeatureExplanationButton } from "@/components/ui/feature-explanation-button";
 
 interface Message {
   id: string;
@@ -31,18 +19,13 @@ interface Message {
   user_id?: string;
 }
 
-interface StudyRoomProps {
-  user: any;
-  profile: any;
-}
-
-export default function StudyRoom({ user, profile }: StudyRoomProps) {
+export default function StudyRoom() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [pdfText, setPdfText] = useState<string>("");
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
+  const { toast } = useToast();
   const [isLoadingHistory, setIsLoadingHistory] = useState(true);
   const isMobile = useIsMobile();
   const [activeTab, setActiveTab] = useState<'pdf' | 'chat'>('pdf');
@@ -137,7 +120,9 @@ export default function StudyRoom({ user, profile }: StudyRoomProps) {
         component: 'StudyRoom'
       });
 
-      toast.error(errorInfo.title, {
+      toast({
+        variant: "destructive",
+        title: errorInfo.title,
         description: errorInfo.message,
         duration: 5000,
       });
@@ -292,13 +277,18 @@ export default function StudyRoom({ user, profile }: StudyRoomProps) {
       // Clear local messages
       setMessages([]);
 
-      toast.success('Histórico de chat limpo com sucesso!');
+      toast({
+        title: 'Sucesso',
+        description: 'Histórico de chat limpo com sucesso!',
+      });
     } catch (error) {
       const errorInfo = getErrorMessage(error, {
         operation: 'limpar histórico',
         component: 'StudyRoom'
       });
-      toast.error(errorInfo.title, {
+      toast({
+        variant: "destructive",
+        title: errorInfo.title,
         description: errorInfo.message
       });
     }
@@ -307,6 +297,15 @@ export default function StudyRoom({ user, profile }: StudyRoomProps) {
   return (
     <div className="w-full">
       <SubscriptionGate feature="Sala de Estudos">
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl font-bold">Sala de Estudos</h1>
+            <FeatureExplanationButton
+              title="Sala de Estudos"
+              description="Aqui você pode estudar com materiais em PDF e tirar dúvidas com a IA. Selecione um texto para pedir explicação ou use o chat para perguntas gerais."
+            />
+          </div>
+        </div>
         <PdfChatPreview
           messages={messages}
           isLoading={isLoading}

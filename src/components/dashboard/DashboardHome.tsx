@@ -9,16 +9,21 @@ import {
     Trophy,
     Award,
     Calendar,
+    Shield,
     TrafficCone,
-    CreditCard
+    PieChart,
+    Bell,
+    Settings,
+    CreditCard,
+    Search,
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
-import { supabase, isSupabaseConfigured } from "@/integrations/supabase/client";
-import { Badge } from "@/components/ui/badge";
-import { useActivePass } from "@/hooks/useActivePass";
-import { ModernCard, ModernCardContent } from "@/components/ui/modern-card";
-import { ModernButton } from "@/components/ui/modern-button";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useMateriaisHierarchy } from "@/hooks/useMateriaisHierarchy";
+import { supabase, isSupabaseConfigured } from "@/integrations/supabase/client";
+import { useActivePass } from "@/hooks/useActivePass";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 
 interface DashboardHomeProps {
     user: any;
@@ -38,6 +43,7 @@ export const DashboardHome = ({ user, profile, setSelected }: DashboardHomeProps
     const successRate = aggregates?.total_questions_answered
         ? Math.round((aggregates.correct_answers / aggregates.total_questions_answered) * 100)
         : 0
+    const [flashcardStats, setFlashcardStats] = useState({ studied: 0, total: 0 })
 
     // Hooks para dados de assinatura e hierarquia
     const { hasActivePass, activePass, daysRemaining } = useActivePass(user?.id)
@@ -55,7 +61,86 @@ export const DashboardHome = ({ user, profile, setSelected }: DashboardHomeProps
         fetchCategoryProgress()
         fetchQuizStats()
         fetchTrafficSignsStats()
+        fetchFlashcardStats()
     }, [user, refreshKey])
+
+    // Calculate and update global progress whenever stats change
+    useEffect(() => {
+        if (categoryProgress.length > 0 || trafficSignsStats.total > 0 || flashcardStats.total > 0) {
+            calculateAndSaveGlobalProgress()
+        }
+    }, [categoryProgress, trafficSignsStats, flashcardStats])
+
+    const calculateAndSaveGlobalProgress = async () => {
+        if (!user?.id) return
+
+        // 1. Calculate Lessons Progress (Average of all modules)
+        // If no modules, assume 0. If modules exist but no progress, it's 0.
+        const lessonsProgress = categoryProgress.length > 0
+            ? categoryProgress.reduce((acc, curr) => acc + curr.progress, 0) / (modules.length || 1)
+            : 0
+
+        // 2. Calculate Traffic Signs Progress
+        const signsProgress = trafficSignsStats.total > 0
+            ? (trafficSignsStats.studied / trafficSignsStats.total) * 100
+            : 0
+
+        // 3. Calculate Flashcards Progress
+        const flashcardsProgress = flashcardStats.total > 0
+            ? (flashcardStats.studied / flashcardStats.total) * 100
+            : 0
+
+        // Global Average (weighted equally for now)
+        // We divide by the number of active components (e.g., if no flashcards exist, don't penalize?)
+        // For simplicity and consistency, we'll divide by 3, assuming all features are core.
+        const globalProgress = Math.round((lessonsProgress + signsProgress + flashcardsProgress) / 3)
+
+        // Only update if different from current to avoid loops/unnecessary writes
+        if (aggregates?.study_progress !== globalProgress) {
+            // Update local state immediately for UI
+            setAggregates((prev: any) => ({ ...prev, study_progress: globalProgress }))
+
+            // Update database
+            try {
+                const { error } = await supabase
+                    .from("profiles")
+                    .update({ study_progress: globalProgress, updated_at: new Date().toISOString() })
+                    .eq("id", user.id)
+
+                if (error) console.error("Error updating global progress:", error)
+            } catch (err) {
+                console.error("Error saving global progress:", err)
+            }
+        }
+    }
+
+    const fetchFlashcardStats = async () => {
+        if (!user?.id || !isSupabaseConfigured || !navigator.onLine) return
+
+        try {
+            // Get total flashcards
+            const { count: totalCount, error: totalError } = await supabase
+                .from("flashcards")
+                .select("*", { count: 'exact', head: true })
+
+            if (totalError) throw totalError
+
+            // Get unique studied flashcards
+            const { count: studiedCount, error: studiedError } = await supabase
+                .from("user_flashcard_stats")
+                .select("*", { count: 'exact', head: true })
+                .eq("user_id", user.id)
+
+            if (studiedError) throw studiedError
+
+            setFlashcardStats({
+                studied: studiedCount || 0,
+                total: totalCount || 0
+            })
+        } catch (error) {
+            console.error("Error fetching flashcard stats:", error)
+        }
+    }
 
     const fetchPendingReviews = async () => {
         if (!user?.id || !isSupabaseConfigured || !navigator.onLine) return
@@ -355,7 +440,7 @@ export const DashboardHome = ({ user, profile, setSelected }: DashboardHomeProps
         <>
             {/* Cards de Métricas Principais */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 lg:gap-6 mb-6 lg:mb-8" data-tutorial="dashboard">
-                <ModernCard variant="elevated" interactive={true} className="p-4 sm:p-6 h-full bg-[#FEF3E2] border-none shadow-none">
+                <Card variant="elevated" interactive={true} className="p-4 sm:p-6 h-full bg-[#FEF3E2] border-none shadow-none">
                     <div className="flex items-center justify-between mb-4">
                         <div className="p-2 bg-white rounded-full">
                             <BookOpen className="h-5 w-5 text-orange-700" />
@@ -367,9 +452,9 @@ export const DashboardHome = ({ user, profile, setSelected }: DashboardHomeProps
                         {aggregates?.total_flashcards_studied || 0}
                     </p>
                     <p className="text-sm text-orange-800/90 font-medium mt-1">Continue estudando!</p>
-                </ModernCard>
+                </Card>
 
-                <ModernCard variant="elevated" interactive={true} className="p-4 sm:p-6 h-full bg-[#D1FAE5] border-none shadow-none">
+                <Card variant="elevated" interactive={true} className="p-4 sm:p-6 h-full bg-[#D1FAE5] border-none shadow-none">
                     <div className="flex items-center justify-between mb-4">
                         <div className="p-2 bg-white rounded-full">
                             <Trophy className="h-5 w-5 text-emerald-700" />
@@ -379,9 +464,9 @@ export const DashboardHome = ({ user, profile, setSelected }: DashboardHomeProps
                     <h3 className="font-semibold text-emerald-800 mb-1 drop-shadow-sm">Taxa de Acerto</h3>
                     <p className="text-2xl font-bold text-emerald-700 drop-shadow-sm">{successRate}%</p>
                     <p className="text-sm text-emerald-800/90 font-medium mt-1">Excelente desempenho!</p>
-                </ModernCard>
+                </Card>
 
-                <ModernCard variant="elevated" interactive={true} className="p-4 sm:p-6 h-full bg-[#FCE7F3] border-none shadow-none">
+                <Card variant="elevated" interactive={true} className="p-4 sm:p-6 h-full bg-[#FCE7F3] border-none shadow-none">
                     <div className="flex items-center justify-between mb-4">
                         <div className="p-2 bg-white rounded-full">
                             <Target className="h-5 w-5 text-pink-700" />
@@ -393,9 +478,9 @@ export const DashboardHome = ({ user, profile, setSelected }: DashboardHomeProps
                         {aggregates?.total_questions_answered || 0}
                     </p>
                     <p className="text-sm text-pink-800/90 font-medium mt-1">Meta: 500 questões</p>
-                </ModernCard>
+                </Card>
 
-                <ModernCard variant="elevated" interactive={true} className="p-4 sm:p-6 h-full bg-[#DBEAFE] border-none shadow-none">
+                <Card variant="elevated" interactive={true} className="p-4 sm:p-6 h-full bg-[#DBEAFE] border-none shadow-none">
                     <div className="flex items-center justify-between mb-4">
                         <div className="p-2 bg-white rounded-full">
                             <BarChart3 className="h-5 w-5 text-blue-700" />
@@ -407,16 +492,24 @@ export const DashboardHome = ({ user, profile, setSelected }: DashboardHomeProps
                         {aggregates?.study_progress || 0}%
                     </p>
                     <p className="text-sm text-blue-800/90 font-medium mt-1">Continue assim!</p>
-                </ModernCard>
+                </Card>
 
                 {/* Placas de Trânsito */}
-                <ModernCard
+                <Card
                     variant="elevated"
                     interactive={true}
                     className="p-4 sm:p-6 h-full cursor-pointer bg-[#FEF3C7] border-none shadow-none"
                     onClick={() => {
                         console.log('Navigating to Biblioteca de Placas...')
                         setSelected("Biblioteca de Placas")
+                    }}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            setSelected("Biblioteca de Placas");
+                        }
                     }}
                 >
                     <div className="flex items-center justify-between mb-4">
@@ -432,13 +525,14 @@ export const DashboardHome = ({ user, profile, setSelected }: DashboardHomeProps
                     <p className="text-sm text-amber-800/90 font-medium mt-1">
                         Confiança: {trafficSignsStats.confidence}%
                     </p>
-                </ModernCard>
+                </Card>
             </div>
 
             {/* Seção de Revisões e Progresso */}
+            {/* Seção de Revisões e Progresso */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6 lg:mb-8">
                 {/* Revisões Pendentes SRS */}
-                <ModernCard variant="elevated" className="p-6 h-full">
+                <Card variant="elevated" className="p-6 h-full">
                     <div className="flex items-center justify-between mb-4">
                         <h3 className="text-lg font-semibold text-foreground">Revisões Pendentes</h3>
                         <Clock className="h-5 w-5 text-muted-foreground" />
@@ -456,7 +550,7 @@ export const DashboardHome = ({ user, profile, setSelected }: DashboardHomeProps
                                         <p className="text-sm text-muted-foreground">{pendingReviews} flashcards pendentes</p>
                                     </div>
                                 </div>
-                                <ModernButton
+                                <Button
                                     variant="default"
                                     size="sm"
                                     onClick={() => {
@@ -465,7 +559,7 @@ export const DashboardHome = ({ user, profile, setSelected }: DashboardHomeProps
                                     }}
                                 >
                                     Revisar
-                                </ModernButton>
+                                </Button>
                             </div>
                         ) : (
                             <div className="text-center py-4">
@@ -475,10 +569,10 @@ export const DashboardHome = ({ user, profile, setSelected }: DashboardHomeProps
                             </div>
                         )}
                     </div>
-                </ModernCard>
+                </Card>
 
                 {/* Progresso por Categoria */}
-                <ModernCard variant="elevated" className="p-6 h-full">
+                <Card variant="elevated" className="p-6 h-full">
                     <div className="flex items-center justify-between mb-4">
                         <h3 className="text-lg font-semibold text-foreground">Progresso por Categoria</h3>
                         <Target className="h-5 w-5 text-muted-foreground" />
@@ -509,7 +603,7 @@ export const DashboardHome = ({ user, profile, setSelected }: DashboardHomeProps
                     )}
 
                     <div className="mt-4 pt-4 border-t border-border">
-                        <ModernButton
+                        <Button
                             variant="outline"
                             size="sm"
                             className="w-full"
@@ -519,15 +613,15 @@ export const DashboardHome = ({ user, profile, setSelected }: DashboardHomeProps
                             }}
                         >
                             Ver Detalhes
-                        </ModernButton>
+                        </Button>
                     </div>
-                </ModernCard>
+                </Card>
             </div>
 
             {/* Cards de Assinatura e Simulados */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6 lg:mb-8">
                 {/* Status da Assinatura */}
-                <ModernCard variant="elevated" className="p-6 h-full">
+                <Card variant="elevated" className="p-6 h-full">
                     <div className="flex items-center justify-between mb-4">
                         <h3 className="text-lg font-semibold text-foreground">Status da Assinatura</h3>
                         <CreditCard className="h-5 w-5 text-muted-foreground" />
@@ -555,7 +649,7 @@ export const DashboardHome = ({ user, profile, setSelected }: DashboardHomeProps
                             <div className="text-center py-4">
                                 <div className="text-4xl mb-2">🔒</div>
                                 <p className="text-sm text-muted-foreground mb-2">Assinatura não ativa</p>
-                                <ModernButton
+                                <Button
                                     variant="default"
                                     size="sm"
                                     onClick={() => {
@@ -564,57 +658,59 @@ export const DashboardHome = ({ user, profile, setSelected }: DashboardHomeProps
                                     }}
                                 >
                                     Ativar Plano
-                                </ModernButton>
+                                </Button>
                             </div>
                         )}
                     </div>
-                </ModernCard>
+                </Card>
 
                 {/* Resumo de Simulados */}
-                <ModernCard variant="elevated" className="p-6 h-full">
+                <Card variant="elevated" className="p-6 h-full">
                     <div className="flex items-center justify-between mb-4">
                         <h3 className="text-lg font-semibold text-foreground">Resumo de Simulados</h3>
                         <BarChart3 className="h-5 w-5 text-muted-foreground" />
                     </div>
 
-                    {quizStats.totalAttempts > 0 ? (
-                        <div className="space-y-3">
-                            <div className="flex justify-between items-center">
-                                <span className="text-sm text-muted-foreground">Última Pontuação</span>
-                                <span className="font-semibold">{quizStats.lastScore}%</span>
+                    {
+                        quizStats.totalAttempts > 0 ? (
+                            <div className="space-y-3">
+                                <div className="flex justify-between items-center">
+                                    <span className="text-sm text-muted-foreground">Última Pontuação</span>
+                                    <span className="font-semibold">{quizStats.lastScore}%</span>
+                                </div>
+                                <div className="flex justify-between items-center">
+                                    <span className="text-sm text-muted-foreground">Média 7 dias</span>
+                                    <span className="font-semibold">{quizStats.weekAverage}%</span>
+                                </div>
+                                <div className="flex justify-between items-center">
+                                    <span className="text-sm text-muted-foreground">Total de Tentativas</span>
+                                    <span className="font-semibold">{quizStats.totalAttempts}</span>
+                                </div>
                             </div>
-                            <div className="flex justify-between items-center">
-                                <span className="text-sm text-muted-foreground">Média 7 dias</span>
-                                <span className="font-semibold">{quizStats.weekAverage}%</span>
+                        ) : (
+                            <div className="text-center py-4">
+                                <div className="text-4xl mb-2">📝</div>
+                                <p className="text-sm text-muted-foreground">Nenhum simulado realizado</p>
                             </div>
-                            <div className="flex justify-between items-center">
-                                <span className="text-sm text-muted-foreground">Total de Tentativas</span>
-                                <span className="font-semibold">{quizStats.totalAttempts}</span>
-                            </div>
-                        </div>
-                    ) : (
-                        <div className="text-center py-4">
-                            <div className="text-4xl mb-2">📝</div>
-                            <p className="text-sm text-muted-foreground">Nenhum simulado realizado</p>
-                        </div>
-                    )}
+                        )
+                    }
 
                     <div className="mt-4 pt-4 border-t border-border">
-                        <ModernButton
+                        <Button
                             variant="outline"
                             size="sm"
                             className="w-full"
                             onClick={() => setSelected("Simulados")}
                         >
                             Ver Detalhes
-                        </ModernButton>
+                        </Button>
                     </div>
-                </ModernCard>
+                </Card>
             </div>
 
             {/* Atividades Recentes */}
-            <ModernCard variant="glass" className="mb-6 lg:mb-8">
-                <ModernCardContent className="p-6">
+            <Card variant="glass" className="mb-6 lg:mb-8">
+                <CardContent className="p-6">
                     <div className="flex items-center justify-between mb-4">
                         <h3 className="text-lg font-semibold text-foreground">Atividades Recentes</h3>
                         <Clock className="h-5 w-5 text-muted-foreground" />
@@ -669,7 +765,7 @@ export const DashboardHome = ({ user, profile, setSelected }: DashboardHomeProps
                         <div className="text-center py-8">
                             <div className="text-4xl mb-4">📚</div>
                             <p className="text-muted-foreground">Nenhuma atividade recente. Comece a estudar!</p>
-                            <ModernButton
+                            <Button
                                 variant="outline"
                                 size="sm"
                                 className="mt-4"
@@ -679,11 +775,11 @@ export const DashboardHome = ({ user, profile, setSelected }: DashboardHomeProps
                                 }}
                             >
                                 Ver Flashcards
-                            </ModernButton>
+                            </Button>
                         </div>
                     )}
-                </ModernCardContent>
-            </ModernCard>
+                </CardContent>
+            </Card>
         </>
     )
 }

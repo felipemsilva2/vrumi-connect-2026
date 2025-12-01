@@ -1,11 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { ModernCard, ModernCardContent } from '@/components/ui/modern-card';
-import { ModernButton } from '@/components/ui/modern-button';
-import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
-import { Trophy, Clock, Play, RotateCcw, Target, Zap, Star, X } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
+import { Clock, Zap, Target, Play, RotateCcw, Trophy, Star } from "lucide-react";
 
 interface TrafficSign {
   id: string;
@@ -43,17 +42,17 @@ interface TimedChallengeProps {
   onClose?: () => void;
 }
 
-const GAME_DURATION = 60; // 60 seconds
-const POINTS_PER_CORRECT = 10;
-const TIME_BONUS_MULTIPLIER = 0.5; // Extra points based on time remaining
-const WRONG_ANSWER_PENALTY = 3; // Seconds penalty for wrong answer
+const GAME_DURATION = 60;
+const POINTS_PER_CORRECT = 100;
+const WRONG_ANSWER_PENALTY = 5;
+const TIME_BONUS_MULTIPLIER = 2;
 
 export default function TimedChallenge({ signs, category, onClose }: TimedChallengeProps) {
   const [gameState, setGameState] = useState<'menu' | 'playing' | 'finished'>('menu');
   const [currentQuestion, setCurrentQuestion] = useState<ChallengeQuestion | null>(null);
   const [questionIndex, setQuestionIndex] = useState(0);
-  const [timeRemaining, setTimeRemaining] = useState(GAME_DURATION);
   const [score, setScore] = useState(0);
+  const [timeRemaining, setTimeRemaining] = useState(GAME_DURATION);
   const [correctAnswers, setCorrectAnswers] = useState(0);
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<'correct' | 'incorrect' | null>(null);
@@ -79,6 +78,35 @@ export default function TimedChallenge({ signs, category, onClose }: TimedChalle
       if (timer) clearTimeout(timer);
     };
   }, [gameState, timeRemaining, isProcessing]);
+
+  // Generate random wrong answers
+  const generateRandomWrongAnswer = (category: string): string => {
+    const wrongAnswers = {
+      'Regulamentação': [
+        'Velocidade Mínima', 'Passagem Livre', 'Siga em Frente',
+        'Proibido Parar', 'Ultrapassagem Permitida', 'Conversão Obrigatória'
+      ],
+      'Advertência': [
+        'Pista Escorregadia', 'Curva Perigosa', 'Cruzamento à Direita',
+        'Passagem de Nível', 'Trânsito de Pedestres', 'Animais na Pista'
+      ],
+      'Serviços Auxiliares': [
+        'Posto Policial', 'Restaurante', 'Hotel',
+        'Hospital', 'Telefone', 'Oficina Mecânica'
+      ],
+      'Indicação': [
+        'Direção Obrigatória', 'Sentido Único', 'Velocidade Máxima',
+        'Distância', 'Fim de Restrição', 'Via de Pedestres'
+      ],
+      'Obras': [
+        'Trabalhadores', 'Desvio à Direita', 'Desvio à Esquerda',
+        'Pista Estreita', 'Pavimentação', 'Obras à Frente'
+      ]
+    };
+
+    const categoryAnswers = wrongAnswers[category as keyof typeof wrongAnswers] || wrongAnswers['Regulamentação'];
+    return categoryAnswers[Math.floor(Math.random() * categoryAnswers.length)];
+  };
 
   // Generate question
   const generateQuestion = useCallback((availableSigns: TrafficSign[]): ChallengeQuestion => {
@@ -122,35 +150,6 @@ export default function TimedChallenge({ signs, category, onClose }: TimedChalle
       options
     };
   }, []);
-
-  // Generate random wrong answers
-  const generateRandomWrongAnswer = (category: string): string => {
-    const wrongAnswers = {
-      'Regulamentação': [
-        'Velocidade Mínima', 'Passagem Livre', 'Siga em Frente',
-        'Proibido Parar', 'Ultrapassagem Permitida', 'Conversão Obrigatória'
-      ],
-      'Advertência': [
-        'Pista Escorregadia', 'Curva Perigosa', 'Cruzamento à Direita',
-        'Passagem de Nível', 'Trânsito de Pedestres', 'Animais na Pista'
-      ],
-      'Serviços Auxiliares': [
-        'Posto Policial', 'Restaurante', 'Hotel',
-        'Hospital', 'Telefone', 'Oficina Mecânica'
-      ],
-      'Indicação': [
-        'Direção Obrigatória', 'Sentido Único', 'Velocidade Máxima',
-        'Distância', 'Fim de Restrição', 'Via de Pedestres'
-      ],
-      'Obras': [
-        'Trabalhadores', 'Desvio à Direita', 'Desvio à Esquerda',
-        'Pista Estreita', 'Pavimentação', 'Obras à Frente'
-      ]
-    };
-
-    const categoryAnswers = wrongAnswers[category as keyof typeof wrongAnswers] || wrongAnswers['Regulamentação'];
-    return categoryAnswers[Math.floor(Math.random() * categoryAnswers.length)];
-  };
 
   // Start challenge
   const startChallenge = () => {
@@ -200,7 +199,7 @@ export default function TimedChallenge({ signs, category, onClose }: TimedChalle
 
       toast({
         title: "Correto!",
-        description: `+${questionPoints} pontos`,
+        description: `+ ${questionPoints} pontos`,
       });
     } else {
       setFeedback('incorrect');
@@ -211,7 +210,7 @@ export default function TimedChallenge({ signs, category, onClose }: TimedChalle
 
       toast({
         title: "Incorreto!",
-        description: `-${WRONG_ANSWER_PENALTY} segundos`,
+        description: `- ${WRONG_ANSWER_PENALTY} segundos`,
         variant: "destructive",
       });
     }
@@ -312,8 +311,8 @@ export default function TimedChallenge({ signs, category, onClose }: TimedChalle
   if (gameState === 'menu') {
     return (
       <div className="max-w-2xl mx-auto p-6">
-        <ModernCard className="text-center" variant="elevated">
-          <ModernCardContent className="p-8">
+        <Card className="text-center" variant="elevated">
+          <CardContent className="p-8">
             <div className="mb-6">
               <div className="w-20 h-20 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
                 <Zap className="w-10 h-10 text-white" />
@@ -347,7 +346,7 @@ export default function TimedChallenge({ signs, category, onClose }: TimedChalle
             </div>
 
             <div className="space-y-3">
-              <ModernButton
+              <Button
                 onClick={startChallenge}
                 className="w-full"
                 variant="premium"
@@ -355,20 +354,20 @@ export default function TimedChallenge({ signs, category, onClose }: TimedChalle
               >
                 <Play className="w-5 h-5 mr-2" />
                 Iniciar Desafio
-              </ModernButton>
+              </Button>
 
               {onClose && (
-                <ModernButton
+                <Button
                   onClick={onClose}
                   variant="outline"
                   className="w-full"
                 >
                   Voltar
-                </ModernButton>
+                </Button>
               )}
             </div>
-          </ModernCardContent>
-        </ModernCard>
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -376,8 +375,8 @@ export default function TimedChallenge({ signs, category, onClose }: TimedChalle
   if (gameState === 'finished') {
     return (
       <div className="max-w-2xl mx-auto p-6">
-        <ModernCard className="text-center" variant="elevated">
-          <ModernCardContent className="p-8">
+        <Card className="text-center" variant="elevated">
+          <CardContent className="p-8">
             <div className="mb-6">
               <div className="w-20 h-20 bg-gradient-to-br from-green-400 to-blue-500 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
                 <Trophy className="w-10 h-10 text-white" />
@@ -432,29 +431,29 @@ export default function TimedChallenge({ signs, category, onClose }: TimedChalle
 
                 {/* Actions */}
                 <div className="space-y-3">
-                  <ModernButton
+                  <Button
                     onClick={startChallenge}
                     className="w-full"
                     variant="premium"
                   >
                     <RotateCcw className="w-4 h-4 mr-2" />
                     Jogar Novamente
-                  </ModernButton>
+                  </Button>
 
                   {onClose && (
-                    <ModernButton
+                    <Button
                       onClick={onClose}
                       variant="outline"
                       className="w-full"
                     >
                       Voltar
-                    </ModernButton>
+                    </Button>
                   )}
                 </div>
               </div>
             )}
-          </ModernCardContent>
-        </ModernCard>
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -485,8 +484,8 @@ export default function TimedChallenge({ signs, category, onClose }: TimedChalle
 
       {/* Question */}
       {currentQuestion && (
-        <ModernCard variant="elevated" className="mt-6">
-          <ModernCardContent className="p-6">
+        <Card variant="elevated" className="mt-6">
+          <CardContent className="p-6">
             <div className="text-center mb-6">
               <h3 className="text-lg font-semibold text-foreground mb-4">
                 Qual é o nome desta placa?
@@ -523,8 +522,8 @@ export default function TimedChallenge({ signs, category, onClose }: TimedChalle
                 </button>
               ))}
             </div>
-          </ModernCardContent>
-        </ModernCard>
+          </CardContent>
+        </Card>
       )}
     </div>
   );

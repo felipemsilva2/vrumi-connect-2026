@@ -73,7 +73,7 @@ const Hero = () => {
             transition={{ duration: 0.8, delay: 0.8, ease: "easeOut" }}
             className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-8"
           >
-            <Button size="lg" className="w-full sm:w-auto text-lg h-14 px-8 rounded-full shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 bg-primary text-white border-0">
+            <Button size="lg" className="w-full sm:w-auto text-lg h-14 px-8 rounded-full shadow-lg hover:shadow-xl hover:brightness-110 transition-all duration-300 bg-primary text-white border-0">
               Começar Agora
               <ChevronRight className="w-5 h-5 ml-2" />
             </Button>

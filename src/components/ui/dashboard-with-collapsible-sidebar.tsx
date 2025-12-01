@@ -31,26 +31,21 @@ import { supabase, isSupabaseConfigured } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { Car } from "lucide-react";
-import { useIsAdmin } from "@/hooks/useIsAdmin";
-import { useActivePass } from "@/hooks/useActivePass";
-import { SmartBreadcrumb } from "@/components/SmartBreadcrumb";
-// import NotificationSystem from "@/components/notifications/NotificationSystem";
-// import NotificationSettings from "@/components/notifications/NotificationSettings";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { ModernCard, ModernCardContent } from "@/components/ui/modern-card";
-import { ModernButton } from "@/components/ui/modern-button";
-import { useMateriaisHierarchy } from "@/hooks/useMateriaisHierarchy";
+import { useActivePass } from "@/hooks/useActivePass";
+import { useIsAdmin } from "@/hooks/useIsAdmin";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { ModernMobileSidebar } from "@/components/Layout/ModernMobileSidebar";
 import { MobileBottomNav } from "@/components/Layout/MobileBottomNav";
+import { SmartBreadcrumb } from "@/components/SmartBreadcrumb";
+import { useMateriaisHierarchy } from "@/hooks/useMateriaisHierarchy";
+import { useTheme } from "@/components/ThemeProvider";
 
 interface DashboardProps {
   user: any;
   profile: any;
 }
-
-import { useTheme } from "@/components/ThemeProvider";
-
-// ... (imports remain the same)
 
 export const DashboardWithSidebar = ({ user, profile }: DashboardProps) => {
   const { theme, setTheme } = useTheme();
@@ -352,7 +347,7 @@ const Sidebar = ({ user, selected, setSelected }: SidebarProps) => {
           <div className="px-3 py-2 text-xs font-medium text-muted-foreground uppercase tracking-wide">
             Administração
           </div>
-          <ModernButton
+          <Button
             onClick={handleAdminAccess}
             variant="ghost"
             size="lg"
@@ -362,7 +357,7 @@ const Sidebar = ({ user, selected, setSelected }: SidebarProps) => {
               <Shield className="h-4 w-4" />
             </div>
             <span className="text-sm font-medium">Área Admin</span>
-          </ModernButton>
+          </Button>
         </div>
       )}
 
@@ -378,7 +373,7 @@ const Sidebar = ({ user, selected, setSelected }: SidebarProps) => {
             setSelected={setSelected}
             open={open}
           />
-          <ModernButton
+          <Button
             onClick={handleSignOut}
             variant="ghost"
             size="lg"
@@ -388,7 +383,7 @@ const Sidebar = ({ user, selected, setSelected }: SidebarProps) => {
               <LogOut className="h-4 w-4" />
             </div>
             <span className="text-sm font-medium">Sair</span>
-          </ModernButton>
+          </Button>
         </div>
       )}
 
@@ -493,7 +488,7 @@ const Logo = () => {
 
 const ToggleClose = ({ open, setOpen }: any) => {
   return (
-    <ModernButton
+    <Button
       onClick={() => setOpen(!open)}
       variant="ghost"
       size="lg"
@@ -517,7 +512,7 @@ const ToggleClose = ({ open, setOpen }: any) => {
           </span>
         )}
       </div>
-    </ModernButton>
+    </Button>
   );
 };
 
@@ -545,7 +540,7 @@ const TopBar = ({ isMobile, openMobileMenu, isDark, setIsDark, user, profile }: 
 
       {/* Right Actions */}
       <div className="flex items-center gap-4 ml-auto">
-        <ModernButton
+        <Button
           onClick={() => setIsDark(!isDark)}
           variant="ghost"
           size="icon"
@@ -553,7 +548,7 @@ const TopBar = ({ isMobile, openMobileMenu, isDark, setIsDark, user, profile }: 
           aria-label={isDark ? "Ativar modo claro" : "Ativar modo escuro"}
         >
           {isDark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
-        </ModernButton>
+        </Button>
 
         <div className="flex items-center gap-3 pl-4 border-l border-border">
           <div className="text-right hidden md:block">
@@ -662,7 +657,7 @@ const MainContent = ({ isDark, setIsDark, user, profile, selected, setSelected, 
             */}
             {isMobile && (
               <div className="flex items-center gap-3 sm:gap-4">
-                <ModernButton
+                <Button
                   onClick={() => setIsDark(!isDark)}
                   variant="outline"
                   size="lg"
@@ -673,7 +668,7 @@ const MainContent = ({ isDark, setIsDark, user, profile, selected, setSelected, 
                   ) : (
                     <Moon className="h-5 w-5" />
                   )}
-                </ModernButton>
+                </Button>
               </div>
             )}
           </div>
@@ -1015,7 +1010,7 @@ const DashboardHome = ({ user, profile, setSelected }: any) => {
     <>
       {/* Cards de Métricas Principais */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 lg:gap-6 mb-6 lg:mb-8" data-tutorial="dashboard">
-        <ModernCard variant="elevated" interactive={true} className="p-4 sm:p-6 h-full bg-[#FEF3E2] border-none shadow-none">
+        <Card variant="elevated" interactive={true} className="p-4 sm:p-6 h-full bg-[#FEF3E2] border-none shadow-none">
           <div className="flex items-center justify-between mb-4">
             <div className="p-2 bg-white rounded-full">
               <BookOpen className="h-5 w-5 text-orange-700" />
@@ -1027,9 +1022,9 @@ const DashboardHome = ({ user, profile, setSelected }: any) => {
             {aggregates?.total_flashcards_studied || 0}
           </p>
           <p className="text-sm text-orange-800/90 font-medium mt-1">Continue estudando!</p>
-        </ModernCard>
+        </Card>
 
-        <ModernCard variant="elevated" interactive={true} className="p-4 sm:p-6 h-full bg-[#D1FAE5] border-none shadow-none">
+        <Card variant="elevated" interactive={true} className="p-4 sm:p-6 h-full bg-[#D1FAE5] border-none shadow-none">
           <div className="flex items-center justify-between mb-4">
             <div className="p-2 bg-white rounded-full">
               <Trophy className="h-5 w-5 text-emerald-700" />
@@ -1039,9 +1034,9 @@ const DashboardHome = ({ user, profile, setSelected }: any) => {
           <h3 className="font-semibold text-emerald-800 mb-1 drop-shadow-sm">Taxa de Acerto</h3>
           <p className="text-2xl font-bold text-emerald-700 drop-shadow-sm">{successRate}%</p>
           <p className="text-sm text-emerald-800/90 font-medium mt-1">Excelente desempenho!</p>
-        </ModernCard>
+        </Card>
 
-        <ModernCard variant="elevated" interactive={true} className="p-4 sm:p-6 h-full bg-[#FCE7F3] border-none shadow-none">
+        <Card variant="elevated" interactive={true} className="p-4 sm:p-6 h-full bg-[#FCE7F3] border-none shadow-none">
           <div className="flex items-center justify-between mb-4">
             <div className="p-2 bg-white rounded-full">
               <Target className="h-5 w-5 text-pink-700" />
@@ -1053,9 +1048,9 @@ const DashboardHome = ({ user, profile, setSelected }: any) => {
             {aggregates?.total_questions_answered || 0}
           </p>
           <p className="text-sm text-pink-800/90 font-medium mt-1">Meta: 500 questões</p>
-        </ModernCard>
+        </Card>
 
-        <ModernCard variant="elevated" interactive={true} className="p-4 sm:p-6 h-full bg-[#DBEAFE] border-none shadow-none">
+        <Card variant="elevated" interactive={true} className="p-4 sm:p-6 h-full bg-[#DBEAFE] border-none shadow-none">
           <div className="flex items-center justify-between mb-4">
             <div className="p-2 bg-white rounded-full">
               <BarChart3 className="h-5 w-5 text-blue-700" />
@@ -1067,10 +1062,10 @@ const DashboardHome = ({ user, profile, setSelected }: any) => {
             {aggregates?.study_progress || 0}%
           </p>
           <p className="text-sm text-blue-800/90 font-medium mt-1">Continue assim!</p>
-        </ModernCard>
+        </Card>
 
         {/* Placas de Trânsito */}
-        <ModernCard
+        <Card
           variant="elevated"
           interactive={true}
           className="p-4 sm:p-6 h-full cursor-pointer bg-[#FEF3C7] border-none shadow-none"
@@ -1092,13 +1087,13 @@ const DashboardHome = ({ user, profile, setSelected }: any) => {
           <p className="text-sm text-amber-800/90 font-medium mt-1">
             Confiança: {trafficSignsStats.confidence}%
           </p>
-        </ModernCard>
+        </Card>
       </div>
 
       {/* Seção de Revisões e Progresso */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6 lg:mb-8">
         {/* Revisões Pendentes SRS */}
-        <ModernCard variant="elevated" className="p-6 h-full">
+        <Card variant="elevated" className="p-6 h-full">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold text-foreground">Revisões Pendentes</h3>
             <Clock className="h-5 w-5 text-muted-foreground" />
@@ -1116,7 +1111,7 @@ const DashboardHome = ({ user, profile, setSelected }: any) => {
                     <p className="text-sm text-muted-foreground">{pendingReviews} flashcards pendentes</p>
                   </div>
                 </div>
-                <ModernButton
+                <Button
                   variant="default"
                   size="sm"
                   onClick={() => {
@@ -1125,7 +1120,7 @@ const DashboardHome = ({ user, profile, setSelected }: any) => {
                   }}
                 >
                   Revisar
-                </ModernButton>
+                </Button>
               </div>
             ) : (
               <div className="text-center py-4">
@@ -1135,10 +1130,10 @@ const DashboardHome = ({ user, profile, setSelected }: any) => {
               </div>
             )}
           </div>
-        </ModernCard>
+        </Card>
 
         {/* Progresso por Categoria */}
-        <ModernCard variant="elevated" className="p-6 h-full">
+        <Card variant="elevated" className="p-6 h-full">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold text-foreground">Progresso por Categoria</h3>
             <Target className="h-5 w-5 text-muted-foreground" />
@@ -1169,7 +1164,7 @@ const DashboardHome = ({ user, profile, setSelected }: any) => {
           )}
 
           <div className="mt-4 pt-4 border-t border-border">
-            <ModernButton
+            <Button
               variant="outline"
               size="sm"
               className="w-full"
@@ -1179,15 +1174,15 @@ const DashboardHome = ({ user, profile, setSelected }: any) => {
               }}
             >
               Ver Detalhes
-            </ModernButton>
+            </Button>
           </div>
-        </ModernCard>
+        </Card>
       </div>
 
       {/* Cards de Assinatura e Simulados */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6 lg:mb-8">
         {/* Status da Assinatura */}
-        <ModernCard variant="elevated" className="p-6 h-full">
+        <Card variant="elevated" className="p-6 h-full">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold text-foreground">Status da Assinatura</h3>
             <CreditCard className="h-5 w-5 text-muted-foreground" />
@@ -1215,7 +1210,7 @@ const DashboardHome = ({ user, profile, setSelected }: any) => {
               <div className="text-center py-4">
                 <div className="text-4xl mb-2">🔒</div>
                 <p className="text-sm text-muted-foreground mb-2">Assinatura não ativa</p>
-                <ModernButton
+                <Button
                   variant="default"
                   size="sm"
                   onClick={() => {
@@ -1224,14 +1219,14 @@ const DashboardHome = ({ user, profile, setSelected }: any) => {
                   }}
                 >
                   Ativar Plano
-                </ModernButton>
+                </Button>
               </div>
             )}
           </div>
-        </ModernCard>
+        </Card>
 
         {/* Resumo de Simulados */}
-        <ModernCard variant="elevated" className="p-6 h-full">
+        <Card variant="elevated" className="p-6 h-full">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold text-foreground">Resumo de Simulados</h3>
             <BarChart3 className="h-5 w-5 text-muted-foreground" />
@@ -1260,21 +1255,21 @@ const DashboardHome = ({ user, profile, setSelected }: any) => {
           )}
 
           <div className="mt-4 pt-4 border-t border-border">
-            <ModernButton
+            <Button
               variant="outline"
               size="sm"
               className="w-full"
               onClick={() => setSelected("Simulados")}
             >
               Ver Detalhes
-            </ModernButton>
+            </Button>
           </div>
-        </ModernCard>
+        </Card>
       </div>
 
       {/* Atividades Recentes */}
-      <ModernCard variant="glass" className="mb-6 lg:mb-8">
-        <ModernCardContent className="p-6">
+      <Card variant="glass" className="mb-6 lg:mb-8">
+        <CardContent className="p-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold text-foreground">Atividades Recentes</h3>
             <Clock className="h-5 w-5 text-muted-foreground" />
@@ -1329,7 +1324,7 @@ const DashboardHome = ({ user, profile, setSelected }: any) => {
             <div className="text-center py-8">
               <div className="text-4xl mb-4">📚</div>
               <p className="text-muted-foreground">Nenhuma atividade recente. Comece a estudar!</p>
-              <ModernButton
+              <Button
                 variant="outline"
                 size="sm"
                 className="mt-4"
@@ -1339,11 +1334,11 @@ const DashboardHome = ({ user, profile, setSelected }: any) => {
                 }}
               >
                 Ver Flashcards
-              </ModernButton>
+              </Button>
             </div>
           )}
-        </ModernCardContent>
-      </ModernCard>
+        </CardContent>
+      </Card>
     </>
   )
 }

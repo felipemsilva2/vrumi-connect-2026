@@ -1,6 +1,6 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { cn } from "@/lib/utils";
-import { ModernButton } from "@/components/ui/modern-button";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Loader2, Send, Trash2 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
@@ -102,22 +102,22 @@ export default function PdfChatPreview({
                 {/* Mobile Tabs */}
                 {isMobile && (
                     <div className="flex gap-2 p-2 border-b bg-white dark:bg-card shrink-0">
-                        <ModernButton
+                        <Button
                             variant={activeTab === 'pdf' ? 'default' : 'outline'}
                             className="flex-1 h-10"
                             onClick={() => setActiveTab('pdf')}
                             size="sm"
                         >
                             PDF
-                        </ModernButton>
-                        <ModernButton
+                        </Button>
+                        <Button
                             variant={activeTab === 'chat' ? 'default' : 'outline'}
                             className="flex-1 h-10"
                             onClick={() => setActiveTab('chat')}
                             size="sm"
                         >
                             Chat
-                        </ModernButton>
+                        </Button>
                     </div>
                 )}
 
@@ -166,7 +166,7 @@ export default function PdfChatPreview({
                                 <div className="flex items-center justify-between px-4 pt-3 pb-1">
                                     <h3 className="text-sm font-semibold text-muted-foreground">Chat com IA</h3>
                                     {messages.length > 0 && (
-                                        <ModernButton
+                                        <Button
                                             variant="ghost"
                                             size="sm"
                                             onClick={clearChatHistory}
@@ -174,7 +174,7 @@ export default function PdfChatPreview({
                                             title="Limpar histórico do chat"
                                         >
                                             <Trash2 className="h-4 w-4" />
-                                        </ModernButton>
+                                        </Button>
                                     )}
                                 </div>
                                 <QuickActions onQuickAction={handleQuickAction} className="border-none w-full max-w-full" />
@@ -235,14 +235,14 @@ export default function PdfChatPreview({
                                         placeholder="Digite sua pergunta sobre o manual..."
                                         className="flex-1 h-12 rounded-xl border-gray-200 dark:border-gray-800 focus-visible:ring-indigo-500"
                                     />
-                                    <ModernButton
+                                    <Button
                                         onClick={handleSendMessage}
                                         disabled={!inputValue.trim() || isLoading}
                                         className="bg-primary hover:bg-primary/90 shrink-0 h-12 w-12 rounded-xl p-0"
                                         size="lg"
                                     >
                                         {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" />}
-                                    </ModernButton>
+                                    </Button>
                                 </div>
                             </div>
 

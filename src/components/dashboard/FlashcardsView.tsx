@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react"
-import { BookOpen, ArrowRight, ArrowLeft, RotateCcw, CheckCircle, XCircle } from "lucide-react"
+import { BookOpen, ArrowRight, ArrowLeft, RotateCcw, CheckCircle, XCircle, HelpCircle } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import { supabase, isSupabaseConfigured } from "@/integrations/supabase/client"
 import { useToast } from "@/hooks/use-toast"
@@ -28,20 +28,66 @@ export const FlashcardsView = () => {
   const [direction, setDirection] = useState(0)
   const [stats, setStats] = useState<FlashcardStats>({ times_reviewed: 0, times_correct: 0, times_incorrect: 0 })
   const [loading, setLoading] = useState(true)
+  const [globalStats, setGlobalStats] = useState({
+    total_studied: 0,
+    total_correct: 0
+  })
   const { toast } = useToast()
 
   useEffect(() => {
     fetchFlashcards()
+    fetchGlobalStats()
   }, [])
+
+  useEffect(() => {
+    const handleKeyPress = (event: KeyboardEvent) => {
+      if (event.code === 'Space') {
+        event.preventDefault()
+        if (!isFlipped) setIsFlipped(true)
+      } else if (event.code === 'ArrowLeft') {
+        event.preventDefault()
+        handlePrevious()
+      } else if (event.code === 'ArrowRight') {
+        event.preventDefault()
+        handleNext()
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyPress)
+    return () => window.removeEventListener('keydown', handleKeyPress)
+  }, [currentCard, isFlipped, flashcards.length])
 
   // Embaralhamento Fisher-Yates
   const shuffleArray = <T,>(arr: T[]): T[] => {
     const a = [...arr]
     for (let i = a.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1))
-      ;[a[i], a[j]] = [a[j], a[i]]
+        ;[a[i], a[j]] = [a[j], a[i]]
     }
     return a
+  }
+
+  const fetchGlobalStats = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("total_flashcards_studied, correct_answers")
+        .eq("id", user.id)
+        .maybeSingle()
+
+      if (error) throw error
+      if (data) {
+        setGlobalStats({
+          total_studied: data.total_flashcards_studied || 0,
+          total_correct: data.correct_answers || 0
+        })
+      }
+    } catch (error) {
+      console.error("Error fetching global stats:", error)
+    }
   }
 
   const fetchFlashcards = async () => {
@@ -99,8 +145,16 @@ export const FlashcardsView = () => {
     }
   }
 
-  const updateCardStats = async (isCorrect: boolean) => {
+  const updateCardStats = async (difficulty: 'easy' | 'medium' | 'hard') => {
     if (flashcards.length === 0) return
+
+    const isCorrect = difficulty === 'easy'
+
+    // Optimistic global stats update
+    setGlobalStats(prev => ({
+      total_studied: prev.total_studied + 1,
+      total_correct: prev.total_correct + (isCorrect ? 1 : 0)
+    }))
 
     try {
       const { data: { user } } = await supabase.auth.getUser()
@@ -114,8 +168,8 @@ export const FlashcardsView = () => {
           user_id: user.id,
           flashcard_id: currentFlashcard.id,
           times_reviewed: stats.times_reviewed + 1,
-          times_correct: stats.times_correct + (isCorrect ? 1 : 0),
-          times_incorrect: stats.times_incorrect + (isCorrect ? 0 : 1),
+          times_correct: stats.times_correct + (difficulty === 'easy' ? 1 : 0),
+          times_incorrect: stats.times_incorrect + (difficulty === 'hard' ? 1 : 0),
           last_reviewed: new Date().toISOString(),
         })
 
@@ -151,10 +205,12 @@ export const FlashcardsView = () => {
           activity_type: "flashcard_studied",
           metadata: {
             title: "Flashcard estudado",
-            description: isCorrect ? "Você acertou um flashcard" : "Você errou um flashcard",
+            description: difficulty === 'easy' ? "Você acertou um flashcard" :
+              difficulty === 'medium' ? "Você revisou um flashcard" : "Você errou um flashcard",
             category: currentFlashcard.category,
             flashcard_id: currentFlashcard.id,
             correct: isCorrect,
+            difficulty: difficulty
           },
           created_at: new Date().toISOString(),
         })
@@ -163,11 +219,8 @@ export const FlashcardsView = () => {
     }
   }
 
-  const handleNext = async (wasCorrect?: boolean) => {
-    if (wasCorrect !== undefined && isFlipped) {
-      await updateCardStats(wasCorrect)
-    }
-    
+  const handleNext = async (difficulty?: 'easy' | 'medium' | 'hard') => {
+    // Optimistic update: Move to next card immediately
     if (currentCard < flashcards.length - 1) {
       setDirection(1)
       setIsFlipped(false)
@@ -176,6 +229,22 @@ export const FlashcardsView = () => {
         setCurrentCard(nextIndex)
         fetchCardStats(flashcards[nextIndex].id)
       }, 200)
+    }
+
+    // Update stats in the background
+    if (difficulty && isFlipped) {
+      updateCardStats(difficulty).catch(console.error)
+
+      const messages = {
+        easy: "Ótimo! Este card será mostrado com menos frequência.",
+        medium: "Entendido! Vamos revisar este card novamente em breve.",
+        hard: "Vamos praticar mais! Este card aparecerá com mais frequência."
+      }
+
+      toast({
+        title: "Progresso salvo!",
+        description: messages[difficulty],
+      })
     }
   }
 
@@ -217,144 +286,154 @@ export const FlashcardsView = () => {
 
   return (
     <SubscriptionGate feature="Flashcards">
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold text-foreground">Flashcards de Estudo</h2>
-          <p className="text-muted-foreground mt-1">
-            Cartão {currentCard + 1} de {flashcards.length}
-          </p>
-        </div>
-        <button
-          onClick={handleReset}
-          className="flex items-center gap-2 px-4 py-2 text-sm bg-card border border-border rounded-lg hover:bg-muted transition-colors"
-        >
-          <RotateCcw className="h-4 w-4" />
-          Recomeçar
-        </button>
-      </div>
-
-      <div className="flex justify-center items-center min-h-[400px]">
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={currentCard}
-            initial={{ opacity: 0, x: direction * 100 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: direction * -100 }}
-            transition={{ duration: 0.3 }}
-            className="w-full max-w-2xl"
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-2xl font-bold text-foreground">Flashcards de Estudo</h2>
+            <p className="text-muted-foreground mt-1">
+              Cartão {currentCard + 1} de {flashcards.length}
+            </p>
+          </div>
+          <button
+            onClick={handleReset}
+            className="flex items-center gap-2 px-4 py-2 text-sm bg-card border border-border rounded-lg hover:bg-muted transition-colors"
           >
+            <RotateCcw className="h-4 w-4" />
+            Recomeçar
+          </button>
+        </div>
+
+        <div className="flex justify-center items-center min-h-[400px]">
+          <AnimatePresence mode="wait">
             <motion.div
-              className="relative cursor-pointer"
-              onClick={() => !isFlipped && setIsFlipped(true)}
-              animate={{ rotateY: isFlipped ? 180 : 0 }}
-              transition={{ duration: 0.6 }}
-              style={{ transformStyle: "preserve-3d" }}
+              key={currentCard}
+              initial={{ opacity: 0, x: direction * 100 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: direction * -100 }}
+              transition={{ duration: 0.3 }}
+              className="w-full max-w-2xl"
             >
-              <div
-                className="bg-card border border-border rounded-2xl p-8 shadow-card min-h-[300px] flex flex-col justify-center items-center"
-                style={{
-                  backfaceVisibility: "hidden",
-                  transform: isFlipped ? "rotateY(180deg)" : "rotateY(0deg)"
-                }}
+              <motion.div
+                className="relative cursor-pointer"
+                onClick={() => !isFlipped && setIsFlipped(true)}
+                animate={{ rotateY: isFlipped ? 180 : 0 }}
+                transition={{ duration: 0.6 }}
+                style={{ transformStyle: "preserve-3d" }}
               >
-                <div className="absolute top-4 left-4">
-                  <span className="text-xs font-medium px-3 py-1 bg-primary/10 text-primary rounded-full">
-                    {card.category}
-                  </span>
-                </div>
-                <BookOpen className="h-12 w-12 text-primary mb-4" />
-                <h3 className="text-xl font-semibold text-foreground text-center mb-4">
-                  {isFlipped ? "Resposta" : "Pergunta"}
-                </h3>
-                
-                {!isFlipped && card.image_url && (
-                  <div className="mb-4 flex justify-center">
-                    <ImageWithFallback
-                      src={card.image_url}
-                      alt={`Imagem ilustrativa sobre ${card.category}`}
-                      className="max-w-xs w-full rounded-lg shadow-md"
-                      fallbackClassName="h-48"
-                    />
+                <div
+                  className="bg-card border border-border rounded-2xl p-8 shadow-card min-h-[300px] flex flex-col justify-center items-center"
+                  style={{
+                    backfaceVisibility: "hidden",
+                    transform: isFlipped ? "rotateY(180deg)" : "rotateY(0deg)"
+                  }}
+                >
+                  <div className="absolute top-4 left-4">
+                    <span className="text-xs font-medium px-3 py-1 bg-primary/10 text-primary rounded-full">
+                      {card.category}
+                    </span>
                   </div>
-                )}
-                
-                <p className="text-lg text-foreground text-center">
-                  {isFlipped ? card.answer : card.question}
-                </p>
-                {!isFlipped && (
-                  <p className="text-sm text-muted-foreground mt-6">
-                    Clique para ver a resposta
+                  <BookOpen className="h-12 w-12 text-primary mb-4" />
+                  <h3 className="text-xl font-semibold text-foreground text-center mb-4">
+                    {isFlipped ? "Resposta" : "Pergunta"}
+                  </h3>
+
+                  {!isFlipped && card.image_url && (
+                    <div className="mb-4 flex justify-center">
+                      <ImageWithFallback
+                        src={card.image_url}
+                        alt={`Imagem ilustrativa sobre ${card.category}`}
+                        className="max-w-xs w-full rounded-lg shadow-md"
+                        fallbackClassName="h-48"
+                      />
+                    </div>
+                  )}
+
+                  <p className="text-lg text-foreground text-center">
+                    {isFlipped ? card.answer : card.question}
                   </p>
-                )}
-                {isFlipped && (
-                  <div className="flex gap-3 mt-6">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        handleNext(false)
-                      }}
-                      className="flex items-center gap-2 px-4 py-2 bg-destructive/10 text-destructive rounded-lg hover:bg-destructive/20 transition-colors"
-                    >
-                      <XCircle className="h-4 w-4" />
-                      Errei
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        handleNext(true)
-                      }}
-                      className="flex items-center gap-2 px-4 py-2 bg-success/10 text-success rounded-lg hover:bg-success/20 transition-colors"
-                    >
-                      <CheckCircle className="h-4 w-4" />
-                      Acertei
-                    </button>
-                  </div>
-                )}
-              </div>
+                  {!isFlipped && (
+                    <p className="text-sm text-muted-foreground mt-6">
+                      Clique para ver a resposta
+                    </p>
+                  )}
+                  {isFlipped && (
+                    <div className="flex gap-3 mt-6">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleNext('hard')
+                        }}
+                        className="flex items-center gap-2 px-6 py-3 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors shadow-md hover:shadow-lg font-medium"
+                      >
+                        <XCircle className="h-5 w-5" />
+                        Errei
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleNext('medium')
+                        }}
+                        className="flex items-center gap-2 px-6 py-3 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-colors shadow-md hover:shadow-lg font-medium"
+                      >
+                        <HelpCircle className="h-5 w-5" />
+                        Dúvida
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleNext('easy')
+                        }}
+                        className="flex items-center gap-2 px-6 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors shadow-md hover:shadow-lg font-medium"
+                      >
+                        <CheckCircle className="h-5 w-5" />
+                        Acertei
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </motion.div>
             </motion.div>
-          </motion.div>
-        </AnimatePresence>
-      </div>
+          </AnimatePresence>
+        </div>
 
-      <div className="flex justify-center gap-4">
-        <button
-          onClick={handlePrevious}
-          disabled={currentCard === 0}
-          className="flex items-center gap-2 px-6 py-3 bg-card border border-border rounded-lg hover:bg-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Anterior
-        </button>
-        <button
-          onClick={() => handleNext()}
-          disabled={currentCard === flashcards.length - 1}
-          className="flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          Próximo
-          <ArrowRight className="h-4 w-4" />
-        </button>
-      </div>
+        <div className="flex justify-center gap-4">
+          <button
+            onClick={handlePrevious}
+            disabled={currentCard === 0}
+            className="flex items-center gap-2 px-6 py-3 bg-card border border-border rounded-lg hover:bg-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Anterior
+          </button>
+          <button
+            onClick={() => handleNext()}
+            disabled={currentCard === flashcards.length - 1}
+            className="flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Próximo
+            <ArrowRight className="h-4 w-4" />
+          </button>
+        </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">
-        <div className="bg-card border border-border rounded-lg p-4">
-          <h4 className="font-medium text-foreground mb-2">Cards Totais</h4>
-          <p className="text-2xl font-bold text-primary">{flashcards.length}</p>
-        </div>
-        <div className="bg-card border border-border rounded-lg p-4">
-          <h4 className="font-medium text-foreground mb-2">Revisões</h4>
-          <p className="text-2xl font-bold text-secondary">{stats.times_reviewed}</p>
-        </div>
-        <div className="bg-card border border-border rounded-lg p-4">
-          <h4 className="font-medium text-foreground mb-2">Taxa de Acerto</h4>
-          <p className="text-2xl font-bold text-success">
-            {stats.times_reviewed > 0 
-              ? Math.round((stats.times_correct / stats.times_reviewed) * 100) 
-              : 0}%
-          </p>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">
+          <div className="bg-card border border-border rounded-lg p-4">
+            <h4 className="font-medium text-foreground mb-2">Cards Totais</h4>
+            <p className="text-2xl font-bold text-primary">{flashcards.length}</p>
+          </div>
+          <div className="bg-card border border-border rounded-lg p-4">
+            <h4 className="font-medium text-foreground mb-2">Revisões Totais</h4>
+            <p className="text-2xl font-bold text-secondary">{globalStats.total_studied}</p>
+          </div>
+          <div className="bg-card border border-border rounded-lg p-4">
+            <h4 className="font-medium text-foreground mb-2">Taxa de Acerto Geral</h4>
+            <p className="text-2xl font-bold text-success">
+              {globalStats.total_studied > 0
+                ? Math.round((globalStats.total_correct / globalStats.total_studied) * 100)
+                : 0}%
+            </p>
+          </div>
         </div>
       </div>
-    </div>
     </SubscriptionGate>
   )
 }

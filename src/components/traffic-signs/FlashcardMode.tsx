@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { ModernCard } from '@/components/ui/modern-card';
-import { ModernButton } from '@/components/ui/modern-button';
-import { Badge } from '@/components/ui/badge';
-import { ChevronLeft, ChevronRight, RotateCcw, BookOpen, X, RotateCw, ArrowLeft } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { ChevronLeft, ChevronRight, RotateCw, X, BookOpen } from "lucide-react";
 
 interface TrafficSign {
   id: string;
@@ -210,9 +210,9 @@ export default function FlashcardMode({ signs, initialIndex = 0, onClose, catego
           </div>
 
           {onClose && (
-            <ModernButton variant="ghost" size="sm" onClick={onClose}>
+            <Button variant="ghost" size="sm" onClick={onClose}>
               <X className="w-4 h-4" />
-            </ModernButton>
+            </Button>
           )}
         </div>
 
@@ -255,7 +255,7 @@ export default function FlashcardMode({ signs, initialIndex = 0, onClose, catego
           }}
         >
           {/* Front of card (Image) */}
-          <ModernCard
+          <Card
             className="absolute inset-0 w-full h-full backface-hidden flex flex-col items-center justify-center p-6 text-center border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-xl rounded-2xl"
             variant="elevated"
             style={{
@@ -282,10 +282,10 @@ export default function FlashcardMode({ signs, initialIndex = 0, onClose, catego
             <p className="text-sm text-muted-foreground">
               Toque para ver a resposta
             </p>
-          </ModernCard>
+          </Card>
 
           {/* Back of card (Information) */}
-          <ModernCard
+          <Card
             className="absolute inset-0 w-full h-full backface-hidden flex flex-col items-center justify-center p-6 text-center border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-xl rounded-2xl rotate-y-180"
             variant="elevated"
             style={{
@@ -303,7 +303,7 @@ export default function FlashcardMode({ signs, initialIndex = 0, onClose, catego
               </p>
             </div>
             <span>{currentIndex + 1} / {signs.length}</span>
-          </ModernCard>
+          </Card>
         </div>
       </div>
 
@@ -311,7 +311,7 @@ export default function FlashcardMode({ signs, initialIndex = 0, onClose, catego
       <div className="flex justify-center mb-8 w-full">
         {!isFlipped ? (
           <div className="flex items-center justify-between w-full max-w-md px-4 gap-3">
-            <ModernButton
+            <Button
               onClick={handlePrevious}
               variant="outline"
               size="lg"
@@ -319,9 +319,9 @@ export default function FlashcardMode({ signs, initialIndex = 0, onClose, catego
               className="w-14 px-0 shrink-0"
             >
               <ChevronLeft className="w-6 h-6" />
-            </ModernButton>
+            </Button>
 
-            <ModernButton
+            <Button
               onClick={handleFlip}
               variant="premium"
               size="lg"
@@ -331,9 +331,9 @@ export default function FlashcardMode({ signs, initialIndex = 0, onClose, catego
                 <RotateCw className="w-5 h-5 shrink-0" />
                 <span className="truncate">Ver Resposta</span>
               </span>
-            </ModernButton>
+            </Button>
 
-            <ModernButton
+            <Button
               onClick={handleNext}
               variant="outline"
               size="lg"
@@ -341,34 +341,34 @@ export default function FlashcardMode({ signs, initialIndex = 0, onClose, catego
               className="w-14 px-0 shrink-0"
             >
               <ChevronRight className="w-6 h-6" />
-            </ModernButton>
+            </Button>
           </div>
         ) : (
           <div className="grid grid-cols-3 gap-3 w-full max-w-md px-4">
-            <ModernButton
+            <Button
               onClick={(e) => { e.stopPropagation(); handleDifficultyResponse('hard'); }}
               className="bg-red-100 text-red-700 hover:bg-red-200 border-red-200 hover:border-red-300 px-2 sm:px-8"
               variant="outline"
               size="lg"
             >
               Errei
-            </ModernButton>
-            <ModernButton
+            </Button>
+            <Button
               onClick={(e) => { e.stopPropagation(); handleDifficultyResponse('medium'); }}
               className="bg-yellow-100 text-yellow-700 hover:bg-yellow-200 border-yellow-200 hover:border-yellow-300 px-2 sm:px-8"
               variant="outline"
               size="lg"
             >
               Dúvida
-            </ModernButton>
-            <ModernButton
+            </Button>
+            <Button
               onClick={(e) => { e.stopPropagation(); handleDifficultyResponse('easy'); }}
               className="bg-green-100 text-green-700 hover:bg-green-200 border-green-200 hover:border-green-300 px-2 sm:px-8"
               variant="outline"
               size="lg"
             >
               Acertei
-            </ModernButton>
+            </Button>
           </div>
         )}
       </div>
