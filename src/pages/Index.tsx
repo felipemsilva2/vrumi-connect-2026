@@ -5,6 +5,7 @@ const LazyFlashcardSection = React.lazy(() => import("@/components/FlashcardSect
 const LazyFAQ = React.lazy(() => import("@/components/FAQ"));
 const LazyTestimonials = React.lazy(() => import("@/components/Testimonials"));
 const LazyGovernmentSupport = React.lazy(() => import("@/components/GovernmentSupport"));
+const LazyNewLawExplained = React.lazy(() => import("@/components/NewLawExplained"));
 const LazyFooter = React.lazy(() => import("@/components/Footer"));
 import { Navbar } from "@/components/Navbar";
 const LazyPricingSection = React.lazy(() => import("@/components/PricingSection"));
@@ -39,8 +40,8 @@ const Index = () => {
         <MinimalModernHero
           logo={<></>}
           badge="A LEI MUDOU: AUTOESCOLA NÃO É MAIS OBRIGATÓRIA"
-          title="O novo jeito de tirar sua CNH."
-          subtitle="A autoescola do futuro é você quem faz. Mais barato, mais rápido e 100% digital."
+          title="Tire sua CNH estudando sozinho."
+          subtitle="A nova lei permite que você estude por conta própria. O Vrumi é a sua autoescola digital completa, atualizada e muito mais barata."
           description="Aproveite a liberdade da nova lei. Troque as salas de aula cansativas pela tecnologia do Vrumi. Domine todas as placas e leis de trânsito com nossa metodologia ativa e conquiste sua CNH sem burocracia."
           primaryButton={{
             label: "Começar Agora",
@@ -70,6 +71,13 @@ const Index = () => {
           ]}
           accentColor="#10b981"
         />
+      </section>
+
+      {/* 1.5 New Law Explained */}
+      <section id="nova-lei">
+        <Suspense fallback={<div className="p-4 text-sm text-muted-foreground">Carregando informações da lei…</div>}>
+          <LazyNewLawExplained />
+        </Suspense>
       </section>
 
       {/* 2. Social Proof - Depoimentos */}

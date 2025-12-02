@@ -54,7 +54,7 @@ const FlashcardSection = () => {
     } else {
       setStats({ ...stats, incorrect: stats.incorrect + 1 });
     }
-    
+
     setIsFlipped(false);
     setCurrentIndex((prev) => (prev + 1) % flashcardsData.length);
   };
@@ -87,16 +87,18 @@ const FlashcardSection = () => {
         {/* Flashcard */}
         <div className="mb-8 perspective-1000">
           <Card
-            className={`relative h-[400px] cursor-pointer transition-all duration-500 transform shadow-card hover:shadow-elegant ${
-              isFlipped ? "[transform:rotateY(180deg)]" : ""
-            }`}
+            className={`relative h-[400px] cursor-pointer transition-all duration-500 transform shadow-card hover:shadow-elegant ${isFlipped ? "[transform:rotateY(180deg)]" : ""
+              }`}
             style={{ transformStyle: "preserve-3d" }}
             onClick={handleFlip}
           >
             {/* Front */}
             <div
-              className="absolute inset-0 p-8 flex flex-col items-center justify-center backface-hidden bg-gradient-card rounded-lg"
-              style={{ backfaceVisibility: "hidden" }}
+              className="absolute inset-0 p-8 flex flex-col items-center justify-center bg-card border border-border rounded-xl shadow-sm"
+              style={{
+                backfaceVisibility: "hidden",
+                WebkitBackfaceVisibility: "hidden",
+              }}
             >
               <div className="inline-block mb-6 px-4 py-2 bg-primary/10 text-primary rounded-full text-sm font-medium">
                 {currentCard.category}
@@ -112,9 +114,10 @@ const FlashcardSection = () => {
 
             {/* Back */}
             <div
-              className="absolute inset-0 p-8 flex flex-col items-center justify-center backface-hidden bg-gradient-card rounded-lg"
+              className="absolute inset-0 p-8 flex flex-col items-center justify-center bg-card border border-border rounded-xl shadow-sm"
               style={{
                 backfaceVisibility: "hidden",
+                WebkitBackfaceVisibility: "hidden",
                 transform: "rotateY(180deg)",
               }}
             >

@@ -354,14 +354,14 @@ const Checkout = () => {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2 space-y-6">
-            <Card className="shadow-lg">
-              <CardHeader>
-                <h1 className="text-3xl font-bold text-foreground">Finalizar Compra</h1>
-                <p className="text-muted-foreground">
+            <Card className="shadow-sm border-border/60 rounded-3xl overflow-hidden">
+              <CardHeader className="pb-4 border-b border-border/40 bg-muted/20">
+                <h1 className="text-2xl font-semibold text-foreground tracking-tight">Finalizar Compra</h1>
+                <p className="text-muted-foreground text-sm">
                   {pixData ? "Escaneie o QR Code para pagar" : "Escolha como deseja pagar"}
                 </p>
               </CardHeader>
-              <CardContent>
+              <CardContent className="pt-8 px-8">
                 {paymentConfirmed ? (
                   <div className="flex flex-col items-center space-y-6 py-12">
                     <div className="w-20 h-20 rounded-full bg-green-500/10 flex items-center justify-center">
@@ -408,30 +408,40 @@ const Checkout = () => {
                     </Button>
                   </div>
                 ) : !paymentMethod ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-4">
                     <div
                       onClick={() => setPaymentMethod("credit_card")}
-                      className="cursor-pointer border-2 border-transparent hover:border-primary rounded-xl p-6 bg-card shadow-sm transition-all hover:shadow-md flex flex-col items-center text-center gap-4"
+                      className="group cursor-pointer bg-card hover:bg-accent/50 border border-border rounded-2xl p-6 transition-all duration-200 flex items-center justify-between"
                     >
-                      <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
-                        <CreditCard className="h-8 w-8 text-primary" />
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                          <CreditCard className="h-6 w-6 text-primary" />
+                        </div>
+                        <div>
+                          <h3 className="font-semibold text-lg text-foreground">Cartão de Crédito</h3>
+                          <p className="text-sm text-muted-foreground">Aprovação imediata</p>
+                        </div>
                       </div>
-                      <div>
-                        <h3 className="font-bold text-lg">Cartão de Crédito</h3>
-                        <p className="text-sm text-muted-foreground">Aprovação imediata</p>
+                      <div className="w-6 h-6 rounded-full border-2 border-muted-foreground/30 group-hover:border-primary/50 flex items-center justify-center">
+                        {/* Radio circle indicator */}
                       </div>
                     </div>
 
                     <div
                       onClick={() => setPaymentMethod("pix")}
-                      className="cursor-pointer border-2 border-transparent hover:border-primary rounded-xl p-6 bg-card shadow-sm transition-all hover:shadow-md flex flex-col items-center text-center gap-4"
+                      className="group cursor-pointer bg-card hover:bg-accent/50 border border-border rounded-2xl p-6 transition-all duration-200 flex items-center justify-between"
                     >
-                      <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
-                        <QrCode className="h-8 w-8 text-primary" />
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                          <QrCode className="h-6 w-6 text-primary" />
+                        </div>
+                        <div>
+                          <h3 className="font-semibold text-lg text-foreground">Pix</h3>
+                          <p className="text-sm text-muted-foreground">Aprovação imediata</p>
+                        </div>
                       </div>
-                      <div>
-                        <h3 className="font-bold text-lg">Pix</h3>
-                        <p className="text-sm text-muted-foreground">Aprovação imediata</p>
+                      <div className="w-6 h-6 rounded-full border-2 border-muted-foreground/30 group-hover:border-primary/50 flex items-center justify-center">
+                        {/* Radio circle indicator */}
                       </div>
                     </div>
                   </div>
@@ -555,9 +565,9 @@ const Checkout = () => {
           </div>
 
           <div className="lg:col-span-1">
-            <Card className="shadow-lg sticky top-6">
-              <CardHeader>
-                <h3 className="text-xl font-bold">Resumo do Pedido</h3>
+            <Card className="shadow-sm border-border/60 rounded-3xl sticky top-6 overflow-hidden">
+              <CardHeader className="pb-4 border-b border-border/40 bg-muted/20">
+                <h3 className="text-lg font-semibold tracking-tight">Resumo do Pedido</h3>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div>

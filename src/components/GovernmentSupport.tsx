@@ -26,8 +26,8 @@ const GovernmentSupport = () => {
             Certificado e Reconhecido
           </h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Nosso conteúdo está em total conformidade com as normas do CONTRAN e
-            é aprovado pelos padrões do DETRAN
+            Mesmo sem autoescola obrigatória, o conteúdo da prova continua o mesmo.
+            Nosso material é 100% atualizado com as normas do CONTRAN e DETRAN.
           </p>
         </motion.div>
 

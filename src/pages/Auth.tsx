@@ -1,6 +1,16 @@
 import { useState, useEffect, useLayoutEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase, isSupabaseConfigured } from "@/integrations/supabase/client";
+
+const browserLocalPersistence: any = {
+  type: 'local',
+  storage: localStorage,
+};
+const browserSessionPersistence: any = {
+  type: 'session',
+  storage: sessionStorage,
+};
+
 import { useToast } from "@/hooks/use-toast";
 import { useFormValidation } from "@/hooks/useValidation";
 import { getErrorMessage } from "@/utils/errorMessages";
@@ -23,6 +33,7 @@ const Auth = () => {
   const [showResetPassword, setShowResetPassword] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [termsAccepted, setTermsAccepted] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
 
   const {
     values,
@@ -121,6 +132,14 @@ const Auth = () => {
 
     try {
       if (isLogin) {
+        try {
+          await (supabase.auth as any).setPersistence(
+            rememberMe ? browserLocalPersistence : browserSessionPersistence
+          );
+        } catch (err) {
+          console.warn("Failed to set persistence:", err);
+        }
+
         const { error } = await supabase.auth.signInWithPassword({
           email: values.email,
           password: values.password,
@@ -313,6 +332,8 @@ const Auth = () => {
         onForgotPassword={() => setShowResetPassword(true)}
         termsAccepted={termsAccepted}
         setTermsAccepted={setTermsAccepted}
+        rememberMe={rememberMe}
+        setRememberMe={setRememberMe}
       />
 
       {showResetPassword && (

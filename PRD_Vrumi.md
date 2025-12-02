@@ -1,11 +1,11 @@
-# Product Requirements Document (PRD) - Vrumi
+﻿# Product Requirements Document (PRD) - Vrumi
 
 ## Visão Geral do Produto
 
 **Nome do Produto:** Vrumi  
 **Descrição:** Plataforma de estudos para preparação para o exame de CNH (Carteira Nacional de Habilitação) com inteligência artificial, conteúdo personalizado e suporte completo ao aprendizado de direção.  
 **Status:** Em desenvolvimento  
-**Versão:** 1.0  
+**Versão:** 1.1
 
 ## Objetivos do Produto
 
@@ -65,8 +65,9 @@
 - **RF013:** Upgrade/downgrade de planos
 
 #### 2.2 Processamento de Pagamentos
-- **RF014:** Integração com Stripe para pagamentos
-- **RF015:** Suporte a cartão de crédito e boleto
+- **RF014:** Integração com Stripe (Cartão de Crédito) e Abacate Pay (PIX)
+- **RF015:** Suporte a cartão de crédito e PIX com geração de QR Code
+- **RF015b:** Coleta de dados (CPF, Telefone) para emissão de PIX
 - **RF016:** Cancelamento automático em caso de falha de pagamento
 - **RF017:** Emissão de nota fiscal eletrônica
 - **RF018:** Histórico de transações
@@ -83,7 +84,7 @@
 
 #### 3.2 Sistema de Flashcards
 - **RF025:** Criar flashcards personalizados
-- **RF026:** Estudar com sistema de repetição espaçada
+- **RF026:** Estudar com sistema de repetição espaçada (Smart Study)
 - **RF027:** Visualizar estatísticas de desempenho
 - **RF028:** Compartilhar flashcards com a comunidade
 - **RF029:** Importar/Exportar flashcards
@@ -92,7 +93,6 @@
 - **RF030:** Quiz com perguntas de múltipla escolha
 - **RF031:** Timer para simular prova real
 - **RF032:** Feedback imediato com explicações
-- **RF033:** Análise de desempenho por categoria
 - **RF034:** Gerar quiz personalizado baseado em erros anteriores
 
 ### 4. Sistema de Inteligência Artificial
@@ -106,7 +106,7 @@
 
 #### 4.2 Chat com IA
 - **RF040:** Conversação contextual sobre legislação de trânsito
-- **RF041:** Explicar sinais de trânsito e suas meanings
+- **RF041:** Explicar sinais de trânsito e seus significados
 - **RF042:** Auxiliar na interpretação de questões da prova
 - **RF043:** Disponível 24/7 para suporte ao estudo
 
@@ -174,6 +174,12 @@
 - **RF080:** Conquistas e badges
 - **RF081:** Desafios semanais
 
+### 9. Funcionalidades PWA e Mobile
+- **RF082:** Suporte a Progressive Web App (PWA) instalável
+- **RF083:** Funcionamento Offline com cache inteligente
+- **RF084:** Verificação de autenticação segura em modo offline
+- **RF085:** Atualização automática de cache para novas versões
+
 ## Requisitos Não-Funcionais
 
 ### 1. Desempenho
@@ -196,10 +202,11 @@
 - **RNF013:** Banco de dados com replicação automática
 
 ### 4. Usabilidade
-- **RNF014:** Interface responsiva (mobile-first)
+- **RNF014:** Interface responsiva (mobile-first) com ajustes de safe-area
 - **RNF015:** Suporte a leitores de tela (WCAG 2.1)
 - **RNF016:** Tempo médio de onboarding < 5 minutos
 - **RNF017:** Taxa de conclusão de cadastro > 80%
+- **RNF017b:** Tema claro forçado em páginas públicas (Login/Home)
 
 ### 5. Manutenibilidade
 - **RNF018:** Cobertura de testes > 80%
@@ -223,7 +230,7 @@
 - **Banco de Dados:** PostgreSQL (Supabase)
 - **Funções Serverless:** Deno (Supabase Edge Functions)
 - **Autenticação:** Supabase Auth
-- **Pagamentos:** Stripe API
+- **Pagamentos:** Stripe API, Abacate Pay API (PIX)
 - **IA:** Google Gemini 2.5 Flash
 
 #### Infraestrutura
@@ -329,7 +336,7 @@ updated_at: timestamp
 1. Usuário decide continuar após período gratuito
 2. Escolhe plano (individual ou família)
 3. Insere dados de pagamento
-4. Processamento via Stripe
+4. Processamento via Stripe ou Abacate Pay (PIX)
 5. Confirmação de assinatura ativa
 6. Acesso liberado a todos recursos
 7. Renovação automática configurada

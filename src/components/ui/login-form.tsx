@@ -18,6 +18,8 @@ interface LoginFormProps {
     onForgotPassword: () => void;
     termsAccepted?: boolean;
     setTermsAccepted?: (accepted: boolean) => void;
+    rememberMe?: boolean;
+    setRememberMe?: (value: boolean) => void;
 }
 
 export default function LoginForm({
@@ -35,7 +37,9 @@ export default function LoginForm({
     setShowPassword,
     onForgotPassword,
     termsAccepted,
-    setTermsAccepted
+    setTermsAccepted,
+    rememberMe,
+    setRememberMe
 }: LoginFormProps) {
     return (
         <div className="flex min-h-screen w-full bg-white dark:bg-gray-950">
@@ -184,6 +188,8 @@ export default function LoginForm({
                                 className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
                                 type="checkbox"
                                 id="remember"
+                                checked={rememberMe}
+                                onChange={(e) => setRememberMe?.(e.target.checked)}
                             />
                             <label className="text-sm cursor-pointer" htmlFor="remember">Lembrar de mim</label>
                         </div>
