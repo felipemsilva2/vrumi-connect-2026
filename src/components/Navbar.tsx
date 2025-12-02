@@ -1,7 +1,7 @@
 import * as React from "react";
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X, Car } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useContextualNavigation } from "@/utils/navigation";
 import { cn } from "@/lib/utils";
@@ -96,9 +96,9 @@ const Navbar = () => {
             whileTap={{ scale: 0.98 }}
             onClick={() => navigate("/")}
           >
-            <div className="bg-primary/10 p-2 rounded-full">
-              <Car className="w-5 h-5 text-primary" />
-            </div>
+            <img src="/logo-vrumi.jpg" alt="Vrumi Logo" className="w-16 h-16 object-contain" />
+
+
             <span className="text-lg font-bold tracking-tight text-foreground">Vrumi</span>
           </motion.div>
         </div>
@@ -143,87 +143,89 @@ const Navbar = () => {
         >
           <Menu className="h-5 w-5 text-foreground" />
         </button>
-      </motion.div>
+      </motion.div >
 
       {/* Mobile Menu Overlay */}
       <AnimatePresence>
-        {isOpen && (
-          <motion.div
-            role="dialog"
-            aria-modal="true"
-            aria-label="Menu"
-            tabIndex={-1}
-            className="fixed inset-0 bg-background/95 backdrop-blur-xl z-[60] pt-[calc(env(safe-area-inset-top)+6rem)] px-6 md:hidden"
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.3, ease: "easeInOut" }}
-          >
-            <button
-              className="absolute top-[calc(env(safe-area-inset-top)+2.5rem)] right-6 p-2 z-[70] rounded-full bg-secondary/50"
-              onClick={toggleMenu}
+        {
+          isOpen && (
+            <motion.div
+              role="dialog"
+              aria-modal="true"
+              aria-label="Menu"
+              tabIndex={-1}
+              className="fixed inset-0 bg-background/95 backdrop-blur-xl z-[60] pt-[calc(env(safe-area-inset-top)+6rem)] px-6 md:hidden"
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.3, ease: "easeInOut" }}
             >
-              <X className="h-5 w-5 text-foreground" />
-            </button>
+              <button
+                className="absolute top-[calc(env(safe-area-inset-top)+2.5rem)] right-6 p-2 z-[70] rounded-full bg-secondary/50"
+                onClick={toggleMenu}
+              >
+                <X className="h-5 w-5 text-foreground" />
+              </button>
 
-            <div ref={menuRef} className="flex flex-col space-y-4 relative z-[65]">
-              {[
-                { label: "Início", id: "inicio" },
-                { label: "Preço", id: "preço" },
-                { label: "Vantagens", id: "recursos" }
-              ].map((item, i) => (
+              <div ref={menuRef} className="flex flex-col space-y-4 relative z-[65]">
+                {[
+                  { label: "Início", id: "inicio" },
+                  { label: "Preço", id: "preço" },
+                  { label: "Vantagens", id: "recursos" }
+                ].map((item, i) => (
+                  <motion.div
+                    key={item.label}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: i * 0.1 }}
+                  >
+                    <button
+                      onClick={() => scrollToSection(item.id)}
+                      className="text-2xl font-semibold text-foreground w-full text-left py-4 border-b border-border/50"
+                    >
+                      {item.label}
+                    </button>
+                  </motion.div>
+                ))}
+
                 <motion.div
-                  key={item.label}
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: i * 0.1 }}
+                  transition={{ delay: 0.3 }}
                 >
                   <button
-                    onClick={() => scrollToSection(item.id)}
+                    onClick={() => {
+                      toggleMenu();
+                      navigate("/cnh-social");
+                    }}
                     className="text-2xl font-semibold text-foreground w-full text-left py-4 border-b border-border/50"
                   >
-                    {item.label}
+                    CNH Social
                   </button>
                 </motion.div>
-              ))}
 
-              <motion.div
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.3 }}
-              >
-                <button
-                  onClick={() => {
-                    toggleMenu();
-                    navigate("/cnh-social");
-                  }}
-                  className="text-2xl font-semibold text-foreground w-full text-left py-4 border-b border-border/50"
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.3 }}
+                  className="pt-8"
                 >
-                  CNH Social
-                </button>
-              </motion.div>
-
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3 }}
-                className="pt-8"
-              >
-                <button
-                  onClick={() => {
-                    toggleMenu();
-                    navigate(user ? "/painel" : "/entrar");
-                  }}
-                  className="w-full px-5 py-4 text-lg text-white bg-primary rounded-2xl font-semibold shadow-lg active:scale-95 transition-all"
-                >
-                  {user ? "Dashboard" : "Entrar"}
-                </button>
-              </motion.div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
+                  <button
+                    onClick={() => {
+                      toggleMenu();
+                      navigate(user ? "/painel" : "/entrar");
+                    }}
+                    className="w-full px-5 py-4 text-lg text-white bg-primary rounded-2xl font-semibold shadow-lg active:scale-95 transition-all"
+                  >
+                    {user ? "Dashboard" : "Entrar"}
+                  </button>
+                </motion.div>
+              </div>
+            </motion.div>
+          )
+        }
+      </AnimatePresence >
+    </div >
   );
 };
 

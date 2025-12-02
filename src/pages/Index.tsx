@@ -37,7 +37,7 @@ const Index = () => {
       {/* 1. Hero */}
       <section id="inicio">
         <MinimalModernHero
-          logo={<div className="flex items-center gap-2"></div>}
+          logo={<></>}
           badge="A LEI MUDOU: AUTOESCOLA NÃO É MAIS OBRIGATÓRIA"
           title="O novo jeito de tirar sua CNH."
           subtitle="A autoescola do futuro é você quem faz. Mais barato, mais rápido e 100% digital."
