@@ -15,8 +15,8 @@ export default defineConfig(({ mode }) => ({
     mode === "development" && componentTagger(),
     {
       name: 'admin-rewrite',
-      configureServer(server) {
-        server.middlewares.use((req, res, next) => {
+      configureServer(server: any) {
+        server.middlewares.use((req: any, _res: any, next: any) => {
           if (req.url?.startsWith('/admin') && !req.url.includes('.')) {
             req.url = '/admin/index.html';
           }

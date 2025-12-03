@@ -31,10 +31,10 @@ export const supportService = {
                 status: 'open'
             })
             .select()
-            .single()) as any;
+            .single() as any);
 
         if (error) throw error;
-        return data;
+        return data as Ticket;
     },
 
     // Get tickets (filtered by user or all for admin)
@@ -42,7 +42,7 @@ export const supportService = {
         let query = supabase
             .from('support_tickets' as any)
             .select('*')
-            .order('created_at', { ascending: false });
+            .order('created_at', { ascending: false }) as any;
 
         if (!isAdmin && userId) {
             query = query.eq('user_id', userId);
@@ -55,10 +55,10 @@ export const supportService = {
 
     // Update ticket status
     updateTicketStatus: async (ticketId: string, status: 'open' | 'in_progress' | 'resolved'): Promise<void> => {
-        const { error } = await supabase
+        const { error } = await (supabase
             .from('support_tickets' as any)
             .update({ status })
-            .eq('id', ticketId);
+            .eq('id', ticketId) as any);
 
         if (error) throw error;
     }
