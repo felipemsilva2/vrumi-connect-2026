@@ -23,6 +23,7 @@ const AdminFlashcards = lazy(() => import("@/pages/AdminFlashcards"));
 const AdminPopulate = lazy(() => import("@/pages/AdminPopulate"));
 const AdminTrafficSignsImport = lazy(() => import("@/pages/admin/AdminTrafficSignsImport"));
 const AdminLogin = lazy(() => import("@/pages/admin/AdminLogin"));
+const AdminSupport = lazy(() => import("@/pages/admin/AdminSupport"));
 
 const PageLoader = () => (
     <div className="flex items-center justify-center min-h-screen">
@@ -109,6 +110,11 @@ const AdminApp = () => (
                                 <Route path="/placas" element={
                                     <ProtectedAdminRoute>
                                         <AdminTrafficSignsImport />
+                                    </ProtectedAdminRoute>
+                                } />
+                                <Route path="/suporte" element={
+                                    <ProtectedAdminRoute>
+                                        <AdminSupport />
                                     </ProtectedAdminRoute>
                                 } />
 

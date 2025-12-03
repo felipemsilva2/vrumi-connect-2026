@@ -1,6 +1,6 @@
 import { ReactNode } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Car, Users, CreditCard, Shield, FileText, MessageSquare, LogOut, FileSearch, TrafficCone } from "lucide-react";
+import { Car, Users, CreditCard, Shield, FileText, MessageSquare, LogOut, FileSearch, TrafficCone, LifeBuoy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { supabase } from "@/integrations/supabase/client";
@@ -20,6 +20,7 @@ const menuItems = [
   { path: "/flashcards", label: "Flashcards", icon: FileText },
   { path: "/questoes", label: "Questões", icon: MessageSquare },
   { path: "/placas", label: "Placas de Trânsito", icon: TrafficCone },
+  { path: "/suporte", label: "Suporte", icon: LifeBuoy },
 ];
 
 export const AdminLayout = ({ children }: AdminLayoutProps) => {

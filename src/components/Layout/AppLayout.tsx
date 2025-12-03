@@ -28,6 +28,7 @@ import { useTheme } from "@/components/ThemeProvider";
 import { MobileBottomNav } from "./MobileBottomNav";
 import { ModernMobileSidebar } from "./ModernMobileSidebar";
 import { cn } from "@/lib/utils";
+import { SupportWidget } from "@/components/SupportWidget";
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -379,6 +380,9 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
           {isMobile && <MobileBottomNav onMenuClick={() => setMobileMenuOpen(true)} />}
         </div>
       </div>
+
+      {/* Support Widget */}
+      <SupportWidget user={user} profile={profile} />
     </div>
   );
 };
