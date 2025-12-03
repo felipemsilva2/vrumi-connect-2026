@@ -601,6 +601,77 @@ export type Database = {
         }
         Relationships: []
       }
+      ticket_messages: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          sender_id: string
+          sender_type: Database["public"]["Enums"]["message_sender_type"]
+          ticket_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          sender_id: string
+          sender_type: Database["public"]["Enums"]["message_sender_type"]
+          ticket_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          sender_id?: string
+          sender_type?: Database["public"]["Enums"]["message_sender_type"]
+          ticket_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ticket_messages_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tickets: {
+        Row: {
+          category: string
+          created_at: string
+          description: string
+          id: string
+          priority: Database["public"]["Enums"]["ticket_priority"]
+          status: Database["public"]["Enums"]["ticket_status"]
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          description: string
+          id?: string
+          priority?: Database["public"]["Enums"]["ticket_priority"]
+          status?: Database["public"]["Enums"]["ticket_status"]
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          description?: string
+          id?: string
+          priority?: Database["public"]["Enums"]["ticket_priority"]
+          status?: Database["public"]["Enums"]["ticket_status"]
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       traffic_signs: {
         Row: {
           category: string
@@ -1062,7 +1133,10 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "user" | "dpo"
+      message_sender_type: "user" | "support"
       pass_type: "30_days" | "90_days" | "family_90_days"
+      ticket_priority: "low" | "medium" | "high"
+      ticket_status: "open" | "in_progress" | "resolved" | "closed"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1191,7 +1265,10 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "user", "dpo"],
+      message_sender_type: ["user", "support"],
       pass_type: ["30_days", "90_days", "family_90_days"],
+      ticket_priority: ["low", "medium", "high"],
+      ticket_status: ["open", "in_progress", "resolved", "closed"],
     },
   },
 } as const
