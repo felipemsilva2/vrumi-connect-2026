@@ -114,7 +114,7 @@ const StudyRoomWrapper = () => {
       subtitle="Estude com IA e visualize materiais interativos"
       showBreadcrumb={false}
     >
-      <StudyRoom user={user} profile={profile} />
+      <StudyRoom />
     </AppLayout>
   );
 };
