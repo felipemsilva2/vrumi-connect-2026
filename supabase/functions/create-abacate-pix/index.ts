@@ -58,7 +58,7 @@ serve(async (req: Request) => {
 
         logStep("User authenticated", { userId: user.id, email: user.email });
 
-        const { passType, secondUserEmail, customer } = await req.json();
+        const { passType, secondUserEmail, customer, couponCode } = await req.json();
 
         if (!passType || !PASS_DETAILS_MAP[passType]) {
             throw new Error(`Invalid pass type: ${passType}`);
@@ -71,12 +71,51 @@ serve(async (req: Request) => {
             throw new Error("ABACATE_PAY_API_KEY not configured");
         }
 
-        logStep("Creating Abacate Pay PIX QR Code", { passType, amount: passDetails.price });
+        let finalPrice = passDetails.price;
+        let couponId = null;
+
+        // Handle Coupon Logic
+        if (couponCode) {
+            logStep("Validating coupon", { couponCode });
+
+            const { data: coupon, error: couponError } = await supabaseClient
+                .from('coupons')
+                .select('*')
+                .eq('code', couponCode)
+                .single();
+
+            if (!couponError && coupon && coupon.is_active) {
+                const now = new Date();
+                const expiresAt = coupon.expires_at ? new Date(coupon.expires_at) : null;
+                const isExpired = expiresAt && expiresAt < now;
+                const isLimitReached = coupon.max_uses && coupon.used_count >= coupon.max_uses;
+
+                if (!isExpired && !isLimitReached) {
+                    let discountAmount = 0;
+                    if (coupon.discount_type === 'percentage') {
+                        discountAmount = finalPrice * (coupon.discount_value / 100);
+                    } else if (coupon.discount_type === 'fixed') {
+                        // Discount value is in reais, convert to cents
+                        discountAmount = coupon.discount_value * 100;
+                    }
+
+                    finalPrice = Math.max(0, finalPrice - discountAmount);
+                    couponId = coupon.id;
+                    logStep("Coupon applied", { code: couponCode, discountAmount, finalPrice });
+                } else {
+                    logStep("Coupon invalid (expired or limit reached)", { code: couponCode });
+                }
+            } else {
+                logStep("Coupon not found or inactive", { code: couponCode });
+            }
+        }
+
+        logStep("Creating Abacate Pay PIX QR Code", { passType, amount: finalPrice });
 
         const expiresInDays = PASS_EXPIRY_MAP[passType] || 30;
 
         const body = {
-            amount: passDetails.price,
+            amount: Math.round(finalPrice), // Ensure integer for cents
             expiresIn: expiresInDays * 24 * 60, // Convert days to minutes
             description: `${passDetails.name} - RoadWiz`,
             customer: {
@@ -89,7 +128,9 @@ serve(async (req: Request) => {
                 externalId: user.id,
                 user_id: user.id,
                 pass_type: passType,
-                second_user_email: secondUserEmail || ''
+                second_user_email: secondUserEmail || '',
+                coupon_code: couponCode || '',
+                coupon_id: couponId || ''
             }
         };
 
@@ -113,6 +154,21 @@ serve(async (req: Request) => {
 
         if (result.error) {
             throw new Error(`Abacate Pay Error: ${JSON.stringify(result.error)}`);
+        }
+
+        // Increment coupon usage if applied
+        if (couponId) {
+            await supabaseClient.rpc('increment_coupon_usage', { coupon_id: couponId });
+            // Fallback if RPC doesn't exist or fails, though RPC is safer for concurrency.
+            // For now, let's just do a simple update since we are in the edge function
+            const { error: updateError } = await supabaseClient
+                .from('coupons')
+                .update({ used_count: (await supabaseClient.from('coupons').select('used_count').eq('id', couponId).single()).data.used_count + 1 })
+                .eq('id', couponId);
+
+            if (updateError) {
+                logStep("Failed to increment coupon usage", { couponId, error: updateError });
+            }
         }
 
         // Response format from Abacate Pay:

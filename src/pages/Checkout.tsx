@@ -34,6 +34,9 @@ const Checkout = () => {
   const [errors, setErrors] = useState<Partial<Record<keyof PixForm, string>>>({})
   const [verifying, setVerifying] = useState(false)
   const [paymentConfirmed, setPaymentConfirmed] = useState(false)
+  // const [couponCode, setCouponCode] = useState("")
+  // const [appliedCoupon, setAppliedCoupon] = useState<{ code: string, discount: number } | null>(null)
+  // const [validatingCoupon, setValidatingCoupon] = useState(false)
 
   const { activePass, hasActivePass } = useActivePass(user?.id)
 
@@ -256,7 +259,8 @@ const Checkout = () => {
             email: formData.email,
             taxId: formData.cpf.replace(/\D/g, ""),
             phone: formData.phone.replace(/\D/g, ""),
-          }
+          },
+          // couponCode: appliedCoupon ? appliedCoupon.code : null
         },
       })
 
@@ -330,7 +334,60 @@ const Checkout = () => {
     }
   }
 
+  // const handleApplyCoupon = async () => {
+  //   if (!couponCode.trim()) return
+  //
+  //   setValidatingCoupon(true)
+  //   try {
+  //     const { data, error } = await supabase.functions.invoke('validate-coupon', {
+  //       body: {
+  //         couponCode: couponCode.trim(),
+  //         passType: passType
+  //       }
+  //     })
+  //
+  //     if (error) throw error
+  //
+  //     if (data.valid) {
+  //       setAppliedCoupon({
+  //         code: couponCode.trim(),
+  //         discount: data.discountAmount
+  //       })
+  //       toast({
+  //         title: "Cupom aplicado!",
+  //         description: `Desconto de R$ ${data.discountAmount.toFixed(2).replace('.', ',')} aplicado com sucesso.`,
+  //       })
+  //     } else {
+  //       setAppliedCoupon(null)
+  //       toast({
+  //         title: "Cupom inválido",
+  //         description: data.message || "Não foi possível aplicar este cupom.",
+  //         variant: "destructive"
+  //       })
+  //     }
+  //   } catch (error) {
+  //     console.error('Erro ao validar cupom:', error)
+  //     toast({
+  //       title: "Erro ao validar cupom",
+  //       description: "Tente novamente mais tarde.",
+  //       variant: "destructive"
+  //     })
+  //   } finally {
+  //     setValidatingCoupon(false)
+  //   }
+  // }
+  //
+  // const handleRemoveCoupon = () => {
+  //   setAppliedCoupon(null)
+  //   setCouponCode("")
+  // }
+
   if (!selectedPass) return null
+
+  const finalPrice = selectedPass.price
+  // appliedCoupon
+  // ? Math.max(0, selectedPass.price - appliedCoupon.discount)
+  // : selectedPass.price
 
   return (
     <div className="min-h-screen bg-muted py-12 px-4">
@@ -553,10 +610,49 @@ const Checkout = () => {
                           </div>
                         </>
                       )}
+
+                      {/* <div className="bg-muted/30 p-4 rounded-lg border border-border/50 space-y-3">
+                        <Label htmlFor="coupon">Possui um cupom de desconto?</Label>
+                        <div className="flex gap-2">
+                          <Input
+                            id="coupon"
+                            value={couponCode}
+                            onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                            placeholder="Digite seu cupom"
+                            disabled={!!appliedCoupon || validatingCoupon}
+                            className="uppercase"
+                          />
+                          {appliedCoupon ? (
+                            <Button
+                              type="button"
+                              variant="destructive"
+                              onClick={handleRemoveCoupon}
+                              disabled={loading}
+                            >
+                              Remover
+                            </Button>
+                          ) : (
+                            <Button
+                              type="button"
+                              variant="secondary"
+                              onClick={handleApplyCoupon}
+                              disabled={!couponCode || validatingCoupon || loading}
+                            >
+                              {validatingCoupon ? "Validando..." : "Aplicar"}
+                            </Button>
+                          )}
+                        </div>
+                        {appliedCoupon && (
+                          <p className="text-sm text-green-600 font-medium flex items-center gap-1">
+                            <Check className="w-4 h-4" />
+                            Cupom {appliedCoupon.code} aplicado com sucesso!
+                          </p>
+                        )}
+                      </div> */}
                     </div>
 
                     <Button type="submit" size="lg" className="w-full" disabled={loading}>
-                      {loading ? "Gerando Pix..." : "Gerar QR Code Pix"}
+                      {loading ? "Gerando Pix..." : `Gerar Pix de R$ ${finalPrice.toFixed(2).replace('.', ',')}`}
                     </Button>
                   </form>
                 )}
@@ -566,67 +662,76 @@ const Checkout = () => {
 
           <div className="lg:col-span-1">
             <Card className="shadow-sm border-border/60 rounded-3xl sticky top-6 overflow-hidden">
-              <CardHeader className="pb-4 border-b border-border/40 bg-muted/20">
-                <h3 className="text-lg font-semibold tracking-tight">Resumo do Pedido</h3>
+              <CardHeader className="pb-6 border-b border-border/40">
+                <h3 className="text-xl font-bold tracking-tight text-foreground">Resumo do Pedido</h3>
               </CardHeader>
-              <CardContent className="space-y-6">
+              <CardContent className="space-y-8 pt-6">
                 <div>
-                  <div className="bg-primary/5 rounded-lg p-4 border border-primary/20">
-                    <div className="flex items-start justify-between mb-2">
-                      <div>
-                        <h4 className="font-bold text-foreground">{selectedPass.name}</h4>
-                        <p className="text-sm text-muted-foreground">{selectedPass.subtitle}</p>
+                  <div className="bg-gradient-to-br from-primary/5 to-primary/10 rounded-2xl p-5 border border-primary/20 shadow-sm">
+                    <div className="flex flex-col gap-4">
+                      <div className="space-y-1">
+                        <h4 className="font-bold text-lg text-foreground leading-tight">{selectedPass.name}</h4>
+                        <p className="text-sm text-muted-foreground font-medium">{selectedPass.subtitle}</p>
                       </div>
-                      <div className="text-right">
-                        <p className="text-2xl font-bold text-primary">
-                          R$ {selectedPass.price.toFixed(2)}
+
+                      <div className="flex items-end justify-between pt-2 border-t border-primary/10">
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <Calendar className="h-4 w-4 text-primary/70" />
+                          <span className="font-medium">{selectedPass.days} dias</span>
+                        </div>
+                        <p className="text-3xl font-bold text-primary whitespace-nowrap tracking-tight">
+                          R$ {selectedPass.price.toFixed(2).replace('.', ',')}
                         </p>
                       </div>
-                    </div>
-
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground mt-3 pt-3 border-t border-primary/10">
-                      <Calendar className="h-4 w-4" />
-                      <span>{selectedPass.days} dias de acesso total</span>
                     </div>
                   </div>
                 </div>
 
                 <div>
-                  <h4 className="font-semibold mb-3 text-sm text-muted-foreground">O que está incluído:</h4>
-                  <ul className="space-y-2">
+                  <h4 className="font-semibold mb-4 text-sm text-foreground uppercase tracking-wider text-xs">O que está incluído</h4>
+                  <ul className="space-y-3">
                     {selectedPass.features.map((feature, index) => (
-                      <li key={index} className="flex items-start gap-2 text-sm">
-                        <Check className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" />
-                        <span>{feature}</span>
+                      <li key={index} className="flex items-start gap-3 text-sm group">
+                        <div className="mt-0.5 w-5 h-5 rounded-full bg-green-500/10 flex items-center justify-center flex-shrink-0 group-hover:bg-green-500/20 transition-colors">
+                          <Check className="h-3 w-3 text-green-600" />
+                        </div>
+                        <span className="text-muted-foreground leading-relaxed">{feature}</span>
                       </li>
                     ))}
                   </ul>
                 </div>
 
-                <Separator />
+                <Separator className="bg-border/60" />
 
-                <div className="space-y-2">
+                <div className="space-y-3">
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Subtotal</span>
-                    <span className="font-medium">R$ {selectedPass.price.toFixed(2)}</span>
+                    <span className="font-medium text-foreground">R$ {selectedPass.price.toFixed(2).replace('.', ',')}</span>
                   </div>
-                  <div className="flex justify-between text-sm">
+                  {/* <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Desconto</span>
-                    <span className="font-medium text-green-600">R$ 0,00</span>
-                  </div>
-                  <Separator />
-                  <div className="flex justify-between">
-                    <span className="font-bold">Total</span>
-                    <span className="text-2xl font-bold text-primary">
-                      R$ {selectedPass.price.toFixed(2)}
+                    <span className={`font-medium ${appliedCoupon ? 'text-green-600' : 'text-muted-foreground'}`}>
+                      {appliedCoupon ? `- R$ ${appliedCoupon.discount.toFixed(2).replace('.', ',')}` : 'R$ 0,00'}
+                    </span>
+                  </div> */}
+
+                  <div className="flex justify-between items-end pt-4 border-t border-border/60 mt-4">
+                    <div className="space-y-1">
+                      <span className="font-bold text-lg text-foreground">Total</span>
+                      <p className="text-xs text-muted-foreground font-normal">Pagamento único</p>
+                    </div>
+                    <span className="text-3xl font-bold text-primary tracking-tight">
+                      R$ {finalPrice.toFixed(2).replace('.', ',')}
                     </span>
                   </div>
                 </div>
 
-                <div className="bg-muted rounded-lg p-4 text-sm">
-                  <p className="text-muted-foreground">
-                    <ShieldCheck className="inline-block w-4 h-4 mr-1 mb-0.5" />
-                    Pagamento 100% seguro.
+                <div className="bg-muted/50 rounded-xl p-4 text-xs text-center border border-border/50">
+                  <p className="text-muted-foreground flex items-center justify-center gap-2">
+                    <ShieldCheck className="w-4 h-4 text-green-600 flex-shrink-0" />
+                    <span>
+                      Pagamento processado com <strong>segurança bancária</strong>
+                    </span>
                   </p>
                 </div>
               </CardContent>
