@@ -54,6 +54,14 @@ const PageLoader = () => (
   </div>
 );
 
+// Redirect to admin app (separate entry point)
+const AdminRedirect = () => {
+  useEffect(() => {
+    window.location.href = window.location.pathname;
+  }, []);
+  return <PageLoader />;
+};
+
 const App = () => (
   <PersistQueryClientProvider
     client={queryClient}
@@ -83,6 +91,8 @@ const App = () => (
                 <Route path="/pagamento/sucesso" element={<CheckoutSuccess />} />
                 <Route path="/pagamento/cancelado" element={<CheckoutCancel />} />
 
+                {/* Redirect admin routes to admin app */}
+                <Route path="/admin/*" element={<AdminRedirect />} />
 
                 <Route path="*" element={<NotFound />} />
               </Routes>
