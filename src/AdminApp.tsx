@@ -46,7 +46,7 @@ const ProtectedAdminRoute = ({ children }: { children: React.ReactNode }) => {
     }, []);
 
     if (isLoading) return <PageLoader />;
-    if (!isAdmin) return <Navigate to="/admin/login" replace />;
+    if (!isAdmin) return <Navigate to="/login" replace />;
     return <>{children}</>;
 };
 
