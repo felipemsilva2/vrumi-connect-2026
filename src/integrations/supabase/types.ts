@@ -601,6 +601,42 @@ export type Database = {
         }
         Relationships: []
       }
+      support_tickets: {
+        Row: {
+          created_at: string
+          id: string
+          message: string
+          priority: string
+          status: string
+          subject: string
+          updated_at: string
+          user_email: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message: string
+          priority?: string
+          status?: string
+          subject: string
+          updated_at?: string
+          user_email?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message?: string
+          priority?: string
+          status?: string
+          subject?: string
+          updated_at?: string
+          user_email?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       ticket_messages: {
         Row: {
           content: string
@@ -1136,7 +1172,9 @@ export type Database = {
       message_sender_type: "user" | "support"
       pass_type: "30_days" | "90_days" | "family_90_days"
       ticket_priority: "low" | "medium" | "high"
+      ticket_priority_support: "normal" | "high" | "critical"
       ticket_status: "open" | "in_progress" | "resolved" | "closed"
+      ticket_status_support: "open" | "in_progress" | "resolved"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1268,7 +1306,9 @@ export const Constants = {
       message_sender_type: ["user", "support"],
       pass_type: ["30_days", "90_days", "family_90_days"],
       ticket_priority: ["low", "medium", "high"],
+      ticket_priority_support: ["normal", "high", "critical"],
       ticket_status: ["open", "in_progress", "resolved", "closed"],
+      ticket_status_support: ["open", "in_progress", "resolved"],
     },
   },
 } as const
