@@ -440,7 +440,7 @@ export const DashboardHome = ({ user, profile, setSelected }: DashboardHomeProps
         <>
             {/* Cards de Métricas Principais */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 lg:gap-6 mb-6 lg:mb-8" data-tutorial="dashboard">
-                <Card variant="elevated" interactive={true} className="p-4 sm:p-6 h-full bg-[#FEF3E2] border-none shadow-none">
+                <Card variant="elevated" interactive={true} className="p-6 sm:p-8 h-full bg-[#FEF3E2] border-none shadow-none">
                     <div className="flex items-center justify-between mb-4">
                         <div className="p-2 bg-white rounded-full">
                             <BookOpen className="h-5 w-5 text-orange-700" />
@@ -454,7 +454,7 @@ export const DashboardHome = ({ user, profile, setSelected }: DashboardHomeProps
                     <p className="text-sm text-orange-800/90 font-medium mt-1">Continue estudando!</p>
                 </Card>
 
-                <Card variant="elevated" interactive={true} className="p-4 sm:p-6 h-full bg-[#D1FAE5] border-none shadow-none">
+                <Card variant="elevated" interactive={true} className="p-6 sm:p-8 h-full bg-[#D1FAE5] border-none shadow-none">
                     <div className="flex items-center justify-between mb-4">
                         <div className="p-2 bg-white rounded-full">
                             <Trophy className="h-5 w-5 text-emerald-700" />
@@ -466,7 +466,7 @@ export const DashboardHome = ({ user, profile, setSelected }: DashboardHomeProps
                     <p className="text-sm text-emerald-800/90 font-medium mt-1">Excelente desempenho!</p>
                 </Card>
 
-                <Card variant="elevated" interactive={true} className="p-4 sm:p-6 h-full bg-[#FCE7F3] border-none shadow-none">
+                <Card variant="elevated" interactive={true} className="p-6 sm:p-8 h-full bg-[#FCE7F3] border-none shadow-none">
                     <div className="flex items-center justify-between mb-4">
                         <div className="p-2 bg-white rounded-full">
                             <Target className="h-5 w-5 text-pink-700" />
@@ -480,7 +480,7 @@ export const DashboardHome = ({ user, profile, setSelected }: DashboardHomeProps
                     <p className="text-sm text-pink-800/90 font-medium mt-1">Meta: 500 questões</p>
                 </Card>
 
-                <Card variant="elevated" interactive={true} className="p-4 sm:p-6 h-full bg-[#DBEAFE] border-none shadow-none">
+                <Card variant="elevated" interactive={true} className="p-6 sm:p-8 h-full bg-[#DBEAFE] border-none shadow-none">
                     <div className="flex items-center justify-between mb-4">
                         <div className="p-2 bg-white rounded-full">
                             <BarChart3 className="h-5 w-5 text-blue-700" />
@@ -498,7 +498,7 @@ export const DashboardHome = ({ user, profile, setSelected }: DashboardHomeProps
                 <Card
                     variant="elevated"
                     interactive={true}
-                    className="p-4 sm:p-6 h-full cursor-pointer bg-[#FEF3C7] border-none shadow-none"
+                    className="p-6 sm:p-8 h-full cursor-pointer bg-[#FEF3C7] border-none shadow-none"
                     onClick={() => {
                         console.log('Navigating to Biblioteca de Placas...')
                         setSelected("Biblioteca de Placas")
@@ -532,7 +532,7 @@ export const DashboardHome = ({ user, profile, setSelected }: DashboardHomeProps
             {/* Seção de Revisões e Progresso */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6 lg:mb-8">
                 {/* Revisões Pendentes SRS */}
-                <Card variant="elevated" className="p-6 h-full">
+                <Card variant="elevated" className="p-6 sm:p-8 h-full">
                     <div className="flex items-center justify-between mb-4">
                         <h3 className="text-lg font-semibold text-foreground">Revisões Pendentes</h3>
                         <Clock className="h-5 w-5 text-muted-foreground" />
@@ -572,7 +572,7 @@ export const DashboardHome = ({ user, profile, setSelected }: DashboardHomeProps
                 </Card>
 
                 {/* Progresso por Categoria */}
-                <Card variant="elevated" className="p-6 h-full">
+                <Card variant="elevated" className="p-6 sm:p-8 h-full">
                     <div className="flex items-center justify-between mb-4">
                         <h3 className="text-lg font-semibold text-foreground">Progresso por Categoria</h3>
                         <Target className="h-5 w-5 text-muted-foreground" />
@@ -621,7 +621,7 @@ export const DashboardHome = ({ user, profile, setSelected }: DashboardHomeProps
             {/* Cards de Assinatura e Simulados */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6 lg:mb-8">
                 {/* Status da Assinatura */}
-                <Card variant="elevated" className="p-6 h-full">
+                <Card variant="elevated" className="p-6 sm:p-8 h-full">
                     <div className="flex items-center justify-between mb-4">
                         <h3 className="text-lg font-semibold text-foreground">Status da Assinatura</h3>
                         <CreditCard className="h-5 w-5 text-muted-foreground" />
@@ -665,7 +665,7 @@ export const DashboardHome = ({ user, profile, setSelected }: DashboardHomeProps
                 </Card>
 
                 {/* Resumo de Simulados */}
-                <Card variant="elevated" className="p-6 h-full">
+                <Card variant="elevated" className="p-6 sm:p-8 h-full">
                     <div className="flex items-center justify-between mb-4">
                         <h3 className="text-lg font-semibold text-foreground">Resumo de Simulados</h3>
                         <BarChart3 className="h-5 w-5 text-muted-foreground" />
@@ -710,7 +710,7 @@ export const DashboardHome = ({ user, profile, setSelected }: DashboardHomeProps
 
             {/* Atividades Recentes */}
             <Card variant="glass" className="mb-6 lg:mb-8">
-                <CardContent className="p-6">
+                <CardContent className="p-6 sm:p-8">
                     <div className="flex items-center justify-between mb-4">
                         <h3 className="text-lg font-semibold text-foreground">Atividades Recentes</h3>
                         <Clock className="h-5 w-5 text-muted-foreground" />

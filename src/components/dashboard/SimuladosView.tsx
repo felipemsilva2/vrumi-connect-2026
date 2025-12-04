@@ -752,11 +752,11 @@ export const SimuladosView = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <Card className="shadow-lg hover:shadow-xl transition-all hover:border-primary/50" variant="elevated">
             <CardContent className="p-6">
-              <div className="flex items-start gap-4 mb-4">
+              <div className="flex flex-col sm:flex-row items-start gap-4 mb-4">
                 <div className="p-3 bg-primary/10 rounded-xl">
                   <Trophy className="h-7 w-7 text-primary" />
                 </div>
-                <div className="flex-1">
+                <div className="flex-1 w-full">
                   <h3 className="text-xl font-bold text-foreground mb-1">Simulado Oficial</h3>
                   <p className="text-sm text-muted-foreground mb-4">
                     30 questões • 40 minutos • Idêntico ao exame do DETRAN
@@ -777,11 +777,11 @@ export const SimuladosView = () => {
 
           <Card className="shadow-lg hover:shadow-xl transition-all hover:border-secondary/50" variant="elevated">
             <CardContent className="p-6">
-              <div className="flex items-start gap-4 mb-4">
+              <div className="flex flex-col sm:flex-row items-start gap-4 mb-4">
                 <div className="p-3 bg-secondary/10 rounded-xl">
                   <Play className="h-7 w-7 text-secondary" />
                 </div>
-                <div className="flex-1">
+                <div className="flex-1 w-full">
                   <h3 className="text-xl font-bold text-foreground mb-1">Simulado de Prática</h3>
                   <p className="text-sm text-muted-foreground mb-4">
                     15 questões • 20 minutos • Prática rápida

@@ -372,7 +372,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
           </header>
 
           {/* Main Content */}
-          <main className="flex-1">
+          <main className="flex-1 p-6 sm:p-8">
             {children}
           </main>
 

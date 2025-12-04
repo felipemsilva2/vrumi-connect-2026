@@ -97,7 +97,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({ onMenuClick })
                                 active ? "text-primary" : "text-muted-foreground hover:text-foreground"
                             )}
                         >
-                            <item.icon className={cn("h-6 w-6 shrink-0", active && "fill-current")} strokeWidth={active ? 2.5 : 2} />
+                            <item.icon className={cn("h-6 w-6 shrink-0")} strokeWidth={active ? 2.5 : 2} />
                             <span className="text-[10px] font-medium truncate w-full text-center px-1">{item.label}</span>
                         </button>
                     );

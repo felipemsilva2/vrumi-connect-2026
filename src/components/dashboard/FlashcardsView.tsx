@@ -286,7 +286,7 @@ export const FlashcardsView = () => {
 
   return (
     <SubscriptionGate feature="Flashcards">
-      <div className="space-y-6">
+      <div className="space-y-6 pb-24">
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-2xl font-bold text-foreground">Flashcards de Estudo</h2>
@@ -321,7 +321,7 @@ export const FlashcardsView = () => {
                 style={{ transformStyle: "preserve-3d" }}
               >
                 <div
-                  className="bg-card border border-border rounded-2xl p-8 shadow-card min-h-[300px] flex flex-col justify-center items-center"
+                  className="bg-card border border-border rounded-2xl p-4 sm:p-8 shadow-card min-h-[300px] flex flex-col justify-center items-center"
                   style={{
                     backfaceVisibility: "hidden",
                     transform: isFlipped ? "rotateY(180deg)" : "rotateY(0deg)"
@@ -348,7 +348,7 @@ export const FlashcardsView = () => {
                     </div>
                   )}
 
-                  <p className="text-lg text-foreground text-center">
+                  <p className="text-lg text-foreground text-center break-words max-w-full">
                     {isFlipped ? card.answer : card.question}
                   </p>
                   {!isFlipped && (
@@ -357,13 +357,13 @@ export const FlashcardsView = () => {
                     </p>
                   )}
                   {isFlipped && (
-                    <div className="flex gap-3 mt-6">
+                    <div className="flex flex-col sm:flex-row gap-3 mt-6 w-full sm:w-auto">
                       <button
                         onClick={(e) => {
                           e.stopPropagation()
                           handleNext('hard')
                         }}
-                        className="flex items-center gap-2 px-6 py-3 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors shadow-md hover:shadow-lg font-medium"
+                        className="flex items-center justify-center gap-2 px-6 py-3 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors shadow-md hover:shadow-lg font-medium w-full sm:w-auto"
                       >
                         <XCircle className="h-5 w-5" />
                         Errei
@@ -373,7 +373,7 @@ export const FlashcardsView = () => {
                           e.stopPropagation()
                           handleNext('medium')
                         }}
-                        className="flex items-center gap-2 px-6 py-3 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-colors shadow-md hover:shadow-lg font-medium"
+                        className="flex items-center justify-center gap-2 px-6 py-3 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-colors shadow-md hover:shadow-lg font-medium w-full sm:w-auto"
                       >
                         <HelpCircle className="h-5 w-5" />
                         Dúvida
@@ -383,7 +383,7 @@ export const FlashcardsView = () => {
                           e.stopPropagation()
                           handleNext('easy')
                         }}
-                        className="flex items-center gap-2 px-6 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors shadow-md hover:shadow-lg font-medium"
+                        className="flex items-center justify-center gap-2 px-6 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors shadow-md hover:shadow-lg font-medium w-full sm:w-auto"
                       >
                         <CheckCircle className="h-5 w-5" />
                         Acertei
@@ -403,14 +403,16 @@ export const FlashcardsView = () => {
             className="flex items-center gap-2 px-6 py-3 bg-card border border-border rounded-lg hover:bg-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <ArrowLeft className="h-4 w-4" />
-            Anterior
+            <span className="hidden sm:inline">Anterior</span>
+            <span className="sm:hidden">Ant.</span>
           </button>
           <button
             onClick={() => handleNext()}
             disabled={currentCard === flashcards.length - 1}
             className="flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Próximo
+            <span className="hidden sm:inline">Próximo</span>
+            <span className="sm:hidden">Prox.</span>
             <ArrowRight className="h-4 w-4" />
           </button>
         </div>

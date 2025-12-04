@@ -96,10 +96,10 @@ const Navbar = () => {
             whileTap={{ scale: 0.98 }}
             onClick={() => navigate("/")}
           >
-            <img src="/logo-vrumi.jpg" alt="Vrumi Logo" className="w-16 h-16 object-contain" />
+            <img src="/logo-vrumi.png" alt="Vrumi Logo" className="h-16 w-auto object-contain" />
 
 
-            <span className="text-lg font-bold tracking-tight text-foreground">Vrumi</span>
+
           </motion.div>
         </div>
 

@@ -64,7 +64,7 @@ export const AdminLayout = ({ children }: AdminLayoutProps) => {
         </div>
       </header>
 
-      <div className="container mx-auto px-4 py-6">
+      <div className="container mx-auto px-6 sm:px-8 py-6">
         <div className="flex gap-6">
           {/* Sidebar */}
           <aside className="w-64 space-y-2">

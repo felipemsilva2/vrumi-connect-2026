@@ -11,6 +11,7 @@ import { Loader2 } from "lucide-react";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
 
 // Lazy load admin pages
 const AdminDashboard = lazy(() => import("@/pages/admin/AdminDashboard"));
@@ -33,6 +34,7 @@ const PageLoader = () => (
 
 const ProtectedAdminRoute = ({ children }: { children: React.ReactNode }) => {
     const [userId, setUserId] = useState<string>();
+    const [isAuthChecked, setIsAuthChecked] = useState(false);
     const { isAdmin, isLoading } = useIsAdmin(userId);
 
     useEffect(() => {
@@ -41,12 +43,34 @@ const ProtectedAdminRoute = ({ children }: { children: React.ReactNode }) => {
             if (session?.user) {
                 setUserId(session.user.id);
             }
+            setIsAuthChecked(true);
         };
         checkAuth();
     }, []);
 
+    if (!isAuthChecked) return <PageLoader />;
+
+    if (!userId) return <Navigate to="/login" replace />;
+
     if (isLoading) return <PageLoader />;
-    if (!isAdmin) return <Navigate to="/login" replace />;
+    if (!isAdmin) {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-screen gap-4">
+                <h1 className="text-2xl font-bold text-destructive">Acesso Negado</h1>
+                <p>Você está logado, mas não tem permissão de administrador.</p>
+                <div className="p-4 bg-muted rounded-md text-xs font-mono">
+                    <p>User ID: {userId}</p>
+                    <p>Is Admin: {String(isAdmin)}</p>
+                </div>
+                <Button onClick={async () => {
+                    await supabase.auth.signOut();
+                    window.location.href = "/admin/login";
+                }}>
+                    Sair e Tentar Novamente
+                </Button>
+            </div>
+        );
+    }
     return <>{children}</>;
 };
 
