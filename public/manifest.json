@@ -10,25 +10,25 @@
     "theme_color": "#10b981",
     "icons": [
         {
-            "src": "/logo-vrumi.png",
+            "src": "/pwa-icon.png",
             "sizes": "192x192",
             "type": "image/png",
             "purpose": "any maskable"
         },
         {
-            "src": "/logo-vrumi.png",
+            "src": "/pwa-icon.png",
             "sizes": "384x384",
             "type": "image/png",
             "purpose": "any maskable"
         },
         {
-            "src": "/logo-vrumi.png",
+            "src": "/pwa-icon.png",
             "sizes": "512x512",
             "type": "image/png",
             "purpose": "any maskable"
         },
         {
-            "src": "/logo-vrumi.png",
+            "src": "/pwa-icon.png",
             "sizes": "512x512",
             "type": "image/png",
             "purpose": "any"
@@ -40,7 +40,7 @@
     ],
     "screenshots": [
         {
-            "src": "/logo-vrumi.png",
+            "src": "/pwa-icon.png",
             "sizes": "512x512",
             "type": "image/png",
             "form_factor": "narrow"
@@ -54,7 +54,7 @@
             "url": "/flashcards",
             "icons": [
                 {
-                    "src": "/logo-vrumi.png",
+                    "src": "/pwa-icon.png",
                     "sizes": "192x192",
                     "type": "image/png"
                 }
@@ -67,7 +67,7 @@
             "url": "/simulados",
             "icons": [
                 {
-                    "src": "/logo-vrumi.png",
+                    "src": "/pwa-icon.png",
                     "sizes": "192x192",
                     "type": "image/png"
                 }
