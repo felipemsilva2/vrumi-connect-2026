@@ -11,6 +11,7 @@ import { Navbar } from "@/components/Navbar";
 const LazyPricingSection = React.lazy(() => import("@/components/PricingSection"));
 import { useNavigate, useLocation } from "react-router-dom";
 import { Display, Lead, Heading2, BodyLarge } from "@/components/ui/typography";
+
 const Index = () => {
   const navigate = useNavigate();
   const location = useLocation();

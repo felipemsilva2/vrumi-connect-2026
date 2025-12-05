@@ -7,13 +7,9 @@ import {
   FileText,
   BarChart3,
   User,
-  ChevronDown,
   ChevronsRight,
-  Moon,
-  Sun,
   LogOut,
   Trophy,
-  Shield,
   TrafficCone,
   Car,
   Sparkles
@@ -23,12 +19,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
 import { useActivePass } from "@/hooks/useActivePass";
-import { SmartBreadcrumb } from "@/components/SmartBreadcrumb";
 import { useTheme } from "@/components/ThemeProvider";
 import { MobileBottomNav } from "./MobileBottomNav";
 import { ModernMobileSidebar } from "./ModernMobileSidebar";
 import { cn } from "@/lib/utils";
 import { SupportWidget } from "@/components/SupportWidget";
+import { MobileHeader } from "./MobileHeader";
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -167,7 +163,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
   };
 
   return (
-    <div className="flex min-h-[100dvh] w-full">
+    <div className="flex min-h-[100dvh] w-full bg-background">
       <div className="flex w-full bg-background text-foreground">
         {/* Desktop Sidebar */}
         {!isMobile && (
@@ -352,27 +348,36 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
         {/* Main Content */}
         <div className="flex-1 flex flex-col pb-20 sm:pb-0">
           {/* Header */}
-          <header className="sticky top-0 z-30 bg-background border-b border-border px-4 sm:px-6 py-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div>
-                  <h1 className="text-xl sm:text-2xl font-bold text-foreground">
-                    {getPageTitle()}
-                  </h1>
-                  {getPageSubtitle() && (
-                    <p className="text-sm text-muted-foreground">
-                      {getPageSubtitle()}
-                    </p>
-                  )}
+          {isMobile ? (
+            <MobileHeader user={user} profile={profile} subtitle="Continue estudando para sua CNH" />
+          ) : (
+            <header className="sticky top-0 z-30 bg-background border-b border-border px-4 sm:px-6 py-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div>
+                    <h1 className="text-xl sm:text-2xl font-bold text-foreground">
+                      {getPageTitle()}
+                    </h1>
+                    {getPageSubtitle() && (
+                      <p className="text-sm text-muted-foreground">
+                        {getPageSubtitle()}
+                      </p>
+                    )}
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
                 </div>
               </div>
-              <div className="flex items-center gap-3">
-              </div>
-            </div>
-          </header>
+            </header>
+          )}
 
           {/* Main Content */}
-          <main className="flex-1 p-6 sm:p-8">
+          <main
+            className={cn(
+              "flex-1 p-6 sm:p-8",
+              isMobile && "bg-background rounded-t-[1.5rem] mt-[-1.5rem] relative z-10 pt-6 px-4"
+            )}
+          >
             {children}
           </main>
 
@@ -382,7 +387,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
       </div>
 
       {/* Support Widget */}
-      <SupportWidget user={user} profile={profile} />
-    </div>
+      < SupportWidget user={user} profile={profile} />
+    </div >
   );
 };
