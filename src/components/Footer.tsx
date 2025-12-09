@@ -1,4 +1,4 @@
-import { Car, Mail, MapPin, Phone, Facebook, Instagram, Youtube } from "lucide-react";
+import { Car, MapPin, Facebook, Instagram, Youtube } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const Footer = () => {
@@ -94,16 +94,8 @@ const Footer = () => {
             <h3 className="font-semibold text-foreground mb-6">Contato</h3>
             <ul className="space-y-4">
               <li className="flex items-start gap-3 text-sm text-muted-foreground group">
-                <Mail className="w-4 h-4 mt-0.5 text-primary group-hover:scale-110 transition-transform" />
-                <span className="group-hover:text-foreground transition-colors">contato@vrumi.com.br</span>
-              </li>
-              <li className="flex items-start gap-3 text-sm text-muted-foreground group">
-                <Phone className="w-4 h-4 mt-0.5 text-primary group-hover:scale-110 transition-transform" />
-                <span className="group-hover:text-foreground transition-colors">(11) 9999-9999</span>
-              </li>
-              <li className="flex items-start gap-3 text-sm text-muted-foreground group">
                 <MapPin className="w-4 h-4 mt-0.5 text-primary group-hover:scale-110 transition-transform" />
-                <span className="group-hover:text-foreground transition-colors">Brasília, DF - Brasil</span>
+                <span className="group-hover:text-foreground transition-colors">Brasil</span>
               </li>
             </ul>
           </div>
@@ -120,7 +112,7 @@ const Footer = () => {
           </div>
         </div>
       </div>
-    </footer>
+    </footer >
   );
 };
 

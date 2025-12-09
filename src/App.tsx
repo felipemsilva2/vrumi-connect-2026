@@ -29,6 +29,8 @@ const TermosDeUso = lazy(() => import("@/pages/TermosDeUso"));
 const PoliticaPrivacidade = lazy(() => import("@/pages/PoliticaPrivacidade"));
 const CNHSocial = lazy(() => import("@/pages/CNHSocial"));
 
+
+
 const ProtectedAdminRoute = ({ children }: { children: React.ReactNode }) => {
   const [userId, setUserId] = useState<string>();
   const { isAdmin, isLoading } = useIsAdmin(userId);
@@ -86,6 +88,8 @@ const App = () => (
                 <Route path="/termos-de-uso" element={<TermosDeUso />} />
                 <Route path="/politica-de-privacidade" element={<PoliticaPrivacidade />} />
                 <Route path="/cnh-social" element={<CNHSocial />} />
+
+
 
                 <Route path="/pagamento" element={<Checkout />} />
                 <Route path="/pagamento/sucesso" element={<CheckoutSuccess />} />

@@ -485,19 +485,18 @@ const Checkout = () => {
                     </div>
 
                     <div
-                      onClick={() => setPaymentMethod("pix")}
-                      className="group cursor-pointer bg-card hover:bg-accent/50 border border-border rounded-2xl p-6 transition-all duration-200 flex items-center justify-between"
+                      className="group cursor-not-allowed opacity-60 bg-card border border-border rounded-2xl p-6 transition-all duration-200 flex items-center justify-between"
                     >
                       <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                        <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center transition-colors">
                           <QrCode className="h-6 w-6 text-primary" />
                         </div>
                         <div>
                           <h3 className="font-semibold text-lg text-foreground">Pix</h3>
-                          <p className="text-sm text-muted-foreground">Aprovação imediata</p>
+                          <p className="text-sm text-muted-foreground">Estamos trabalhando para começarmos a receber via pix</p>
                         </div>
                       </div>
-                      <div className="w-6 h-6 rounded-full border-2 border-muted-foreground/30 group-hover:border-primary/50 flex items-center justify-center">
+                      <div className="w-6 h-6 rounded-full border-2 border-muted-foreground/30 flex items-center justify-center">
                         {/* Radio circle indicator */}
                       </div>
                     </div>

@@ -78,6 +78,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({ onMenuClick })
             icon: BookOpen,
             path: '/painel?tab=flashcards',
         },
+
     ];
 
     return (
