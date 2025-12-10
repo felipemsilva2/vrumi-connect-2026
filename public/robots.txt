@@ -14,7 +14,7 @@ User-agent: *
 Allow: /
 
 # Sitemap
-Sitemap: https://vrumi.com.br/sitemap.xml
+Sitemap: https://www.vrumi.com.br/sitemap.xml
 
 # Disallow admin and private routes
 Disallow: /admin
