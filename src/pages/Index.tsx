@@ -1,5 +1,6 @@
 import MinimalModernHero from "@/components/ui/minimal";
 import React, { Suspense } from "react";
+import { SEOHead } from "@/components/SEOHead";
 const LazyFeatures = React.lazy(() => import("@/components/ui/feature-section-with-hover-effects").then(m => ({ default: m.FeaturesSectionWithHoverEffects })));
 const LazyFlashcardSection = React.lazy(() => import("@/components/FlashcardSection"));
 const LazyFAQ = React.lazy(() => import("@/components/FAQ"));
@@ -34,6 +35,12 @@ const Index = () => {
   }, [location]);
   return (
     <main className="min-h-screen pt-20">
+      <SEOHead 
+        canonical="/"
+        title="Tire sua CNH Estudando Sozinho | Autoescola Digital 2025"
+        description="Prepare-se para o exame da CNH sem autoescola. A nova lei permite estudar sozinho! Simulados DETRAN, 136 placas de trânsito, flashcards inteligentes. Taxa de aprovação de 95%."
+        keywords="CNH, carteira de motorista, tirar CNH sozinho, simulado DETRAN, placas de trânsito, autoescola online, habilitação 2025"
+      />
       <Navbar />
 
       {/* 1. Hero */}
