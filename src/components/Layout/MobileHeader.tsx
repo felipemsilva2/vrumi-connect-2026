@@ -1,6 +1,7 @@
 import React from "react";
-import { Bell, RotateCcw } from "lucide-react";
+import { RotateCcw } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { NotificationBell } from "@/components/NotificationBell";
 
 interface MobileHeaderProps {
     user: any;
@@ -48,13 +49,10 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                         <RotateCcw className="w-5 h-5" />
                     </button>
 
-                    <button
-                        className="p-2 bg-white/10 rounded-full text-white hover:bg-white/20 transition-colors backdrop-blur-sm relative"
-                        aria-label="Notificações"
-                    >
-                        <Bell className="w-5 h-5" />
-                        <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-red-500 border-2 border-green-600 rounded-full"></span>
-                    </button>
+                    <NotificationBell
+                        user={user}
+                        className="bg-white/10 text-white hover:bg-white/20 backdrop-blur-sm"
+                    />
                 </div>
             </div>
         </div>

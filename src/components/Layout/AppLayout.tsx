@@ -25,6 +25,7 @@ import { ModernMobileSidebar } from "./ModernMobileSidebar";
 import { cn } from "@/lib/utils";
 import { SupportWidget } from "@/components/SupportWidget";
 import { MobileHeader } from "./MobileHeader";
+import { NotificationBell } from "@/components/NotificationBell";
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -366,6 +367,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
+                  <NotificationBell user={user} />
                 </div>
               </div>
             </header>
