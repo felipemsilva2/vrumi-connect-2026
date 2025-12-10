@@ -13,7 +13,7 @@ interface SEOHeadProps {
 const defaultTitle = 'Vrumi - Tire sua CNH Estudando Sozinho | Autoescola Digital 2025';
 const defaultDescription = 'Prepare-se para o exame da CNH sem autoescola. A nova lei permite estudar sozinho! Simulados DETRAN, 136 placas de trânsito, flashcards inteligentes. Taxa de aprovação de 95%.';
 const defaultKeywords = 'CNH, carteira de motorista, exame de habilitação, DETRAN, prova teórica CNH, simulado DETRAN, placas de trânsito, autoescola online, tirar CNH sozinho';
-const siteUrl = 'https://vrumi.com.br';
+const siteUrl = 'https://www.vrumi.com.br';
 
 export const SEOHead = ({
   title,
