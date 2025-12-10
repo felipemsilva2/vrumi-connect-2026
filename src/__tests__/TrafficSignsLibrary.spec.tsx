@@ -2,11 +2,31 @@ import { describe, it, expect, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import TrafficSignsLibrary from '@/pages/TrafficSignsLibrary'
+
+const createTestQueryClient = () => new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: false,
+    },
+  },
+})
+
+const renderWithProviders = (ui: React.ReactNode) => {
+  const queryClient = createTestQueryClient()
+  return render(
+    <QueryClientProvider client={queryClient}>
+      <MemoryRouter>
+        {ui}
+      </MemoryRouter>
+    </QueryClientProvider>
+  )
+}
 
 vi.mock('react-router-dom', async (orig) => {
   const actual = await orig() as any
-  return { 
+  return {
     ...actual,
     useNavigate: () => vi.fn()
   }
@@ -22,10 +42,8 @@ const mockProfile = { full_name: 'Test User', study_progress: 0, total_flashcard
 describe('TrafficSignsLibrary back navigation', () => {
   it('renders back button and navigates to home on click', async () => {
     const user = userEvent.setup()
-    render(
-      <MemoryRouter>
-        <TrafficSignsLibrary user={mockUser} profile={mockProfile} />
-      </MemoryRouter>
+    renderWithProviders(
+      <TrafficSignsLibrary user={mockUser} profile={mockProfile} />
     )
 
     const btn = await screen.findByRole('button', { name: /Voltar/i })
@@ -35,10 +53,8 @@ describe('TrafficSignsLibrary back navigation', () => {
 
   it('is keyboard accessible', async () => {
     const user = userEvent.setup()
-    render(
-      <MemoryRouter>
-        <TrafficSignsLibrary user={mockUser} profile={mockProfile} />
-      </MemoryRouter>
+    renderWithProviders(
+      <TrafficSignsLibrary user={mockUser} profile={mockProfile} />
     )
     const btn = await screen.findByRole('button', { name: /Voltar/i })
     btn.focus()
@@ -67,10 +83,8 @@ describe('TrafficSignsLibrary scroll to top on study mode', () => {
   it('scrolls to top when starting linear study', async () => {
     const user = userEvent.setup()
     window.scrollTo = vi.fn()
-    render(
-      <MemoryRouter>
-        <TrafficSignsLibrary user={mockUser} profile={mockProfile} />
-      </MemoryRouter>
+    renderWithProviders(
+      <TrafficSignsLibrary user={mockUser} profile={mockProfile} />
     )
     const btn = await screen.findByRole('button', { name: /Estudo Linear/i })
     await user.click(btn)
@@ -80,10 +94,8 @@ describe('TrafficSignsLibrary scroll to top on study mode', () => {
   it('scrolls to top when starting smart study', async () => {
     const user = userEvent.setup()
     window.scrollTo = vi.fn()
-    render(
-      <MemoryRouter>
-        <TrafficSignsLibrary user={mockUser} profile={mockProfile} />
-      </MemoryRouter>
+    renderWithProviders(
+      <TrafficSignsLibrary user={mockUser} profile={mockProfile} />
     )
     const btn = await screen.findByRole('button', { name: /Estudo Inteligente/i })
     await user.click(btn)
@@ -93,10 +105,8 @@ describe('TrafficSignsLibrary scroll to top on study mode', () => {
   it('scrolls to top when starting timed challenge', async () => {
     const user = userEvent.setup()
     window.scrollTo = vi.fn()
-    render(
-      <MemoryRouter>
-        <TrafficSignsLibrary user={mockUser} profile={mockProfile} />
-      </MemoryRouter>
+    renderWithProviders(
+      <TrafficSignsLibrary user={mockUser} profile={mockProfile} />
     )
     const btn = await screen.findByRole('button', { name: /Desafio 60s/i })
     await user.click(btn)
@@ -106,10 +116,8 @@ describe('TrafficSignsLibrary scroll to top on study mode', () => {
 
 describe('TrafficSignsLibrary above-the-fold visibility', () => {
   it('shows study modes panel expanded on initial render', async () => {
-    render(
-      <MemoryRouter>
-        <TrafficSignsLibrary user={mockUser} profile={mockProfile} />
-      </MemoryRouter>
+    renderWithProviders(
+      <TrafficSignsLibrary user={mockUser} profile={mockProfile} />
     )
     const region = await screen.findByRole('region', { name: /Painel de modalidades de estudo/i })
     expect(region).toBeDefined()
@@ -118,10 +126,8 @@ describe('TrafficSignsLibrary above-the-fold visibility', () => {
   })
 
   it('shows search input and category select without scrolling', async () => {
-    render(
-      <MemoryRouter>
-        <TrafficSignsLibrary user={mockUser} profile={mockProfile} />
-      </MemoryRouter>
+    renderWithProviders(
+      <TrafficSignsLibrary user={mockUser} profile={mockProfile} />
     )
     const search = await screen.findByPlaceholderText(/Buscar por código, nome ou descrição/i)
     expect(search).toBeDefined()

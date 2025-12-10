@@ -4,12 +4,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { UserDetailsDialog } from "@/components/admin/UserDetailsDialog";
 import { CreatePassDialog } from "@/components/admin/CreatePassDialog";
 import { PaginationControls } from "@/components/admin/PaginationControls";
-import { Search, Eye, Plus, RefreshCw, Shield, GraduationCap } from "lucide-react";
+import { Search, Eye, Plus, RefreshCw, Shield, GraduationCap, Bell, Send, Users, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 
 interface User {
   id: string;
@@ -39,6 +43,13 @@ const AdminUsers = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [createPassDialogOpen, setCreatePassDialogOpen] = useState(false);
   const [selectedUserEmail, setSelectedUserEmail] = useState("");
+
+  // Bulk Actions State
+  const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
+  const [bulkNotificationOpen, setBulkNotificationOpen] = useState(false);
+  const [notificationTitle, setNotificationTitle] = useState("");
+  const [notificationMessage, setNotificationMessage] = useState("");
+  const [isSendingBulk, setIsSendingBulk] = useState(false);
 
   // Debounce search term
   useEffect(() => {
@@ -134,6 +145,55 @@ const AdminUsers = () => {
     setCreatePassDialogOpen(true);
   };
 
+  // Helpers for selection
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedUsers(users.map(u => u.id));
+    } else {
+      setSelectedUsers([]);
+    }
+  };
+
+  const handleSelectOne = (userId: string, checked: boolean) => {
+    if (checked) {
+      setSelectedUsers(prev => [...prev, userId]);
+    } else {
+      setSelectedUsers(prev => prev.filter(id => id !== userId));
+    }
+  };
+
+  const handleSendBulkNotification = async () => {
+    if (selectedUsers.length === 0) return;
+    if (!notificationTitle || !notificationMessage) {
+      toast.error("Preencha título e mensagem");
+      return;
+    }
+
+    setIsSendingBulk(true);
+    try {
+      const { error } = await supabase.functions.invoke('admin-send-notification', {
+        body: {
+          user_ids: selectedUsers,
+          title: notificationTitle,
+          message: notificationMessage,
+          type: 'info'
+        }
+      });
+
+      if (error) throw error;
+      toast.success(`Notificação enviada para ${selectedUsers.length} usuários!`);
+      setBulkNotificationOpen(false);
+      setNotificationTitle("");
+      setNotificationMessage("");
+      setSelectedUsers([]);
+    } catch (error: any) {
+      console.error("Error sending bulk notification:", error);
+      toast.error(error.message || "Erro ao enviar notificações");
+    } finally {
+      setIsSendingBulk(false);
+    }
+  };
+
   const totalPages = Math.ceil(totalItems / itemsPerPage);
 
   return (
@@ -170,6 +230,13 @@ const AdminUsers = () => {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="w-[50px]">
+                  <Checkbox
+                    checked={users.length > 0 && selectedUsers.length === users.length}
+                    onCheckedChange={(checked) => handleSelectAll(checked as boolean)}
+                    aria-label="Select all"
+                  />
+                </TableHead>
                 <TableHead>Usuário</TableHead>
                 <TableHead>Função</TableHead>
                 <TableHead>Cadastro</TableHead>
@@ -181,7 +248,7 @@ const AdminUsers = () => {
             <TableBody>
               {isLoading ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="h-24 text-center">
+                  <TableCell colSpan={7} className="h-24 text-center">
                     <div className="flex items-center justify-center gap-2 text-muted-foreground">
                       <RefreshCw className="h-4 w-4 animate-spin" />
                       Carregando dados...
@@ -190,13 +257,20 @@ const AdminUsers = () => {
                 </TableRow>
               ) : users.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
+                  <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">
                     Nenhum usuário encontrado.
                   </TableCell>
                 </TableRow>
               ) : (
                 users.map((user) => (
-                  <TableRow key={user.id}>
+                  <TableRow key={user.id} className={selectedUsers.includes(user.id) ? "bg-muted/50" : ""}>
+                    <TableCell>
+                      <Checkbox
+                        checked={selectedUsers.includes(user.id)}
+                        onCheckedChange={(checked) => handleSelectOne(user.id, checked as boolean)}
+                        aria-label={`Select ${user.email}`}
+                      />
+                    </TableCell>
                     <TableCell>
                       <div className="flex flex-col">
                         <span className="font-medium">{user.full_name || "Sem nome"}</span>
@@ -280,6 +354,67 @@ const AdminUsers = () => {
         onSuccess={fetchUsers}
         prefilledEmail={selectedUserEmail}
       />
+
+      {/* Bulk Actions Floating Bar */}
+      {selectedUsers.length > 0 && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-foreground text-background px-6 py-3 rounded-full shadow-lg flex items-center gap-4 z-50">
+          <div className="flex items-center gap-2 font-medium">
+            <Users className="h-4 w-4" />
+            {selectedUsers.length} selecionados
+          </div>
+          <div className="h-4 w-px bg-background/20" />
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => setBulkNotificationOpen(true)}
+            className="gap-2"
+          >
+            <Bell className="h-4 w-4" />
+            Enviar Notificação
+          </Button>
+          <Button variant="ghost" size="sm" onClick={() => setSelectedUsers([])} className="ml-2 hover:bg-background/10 h-8 w-8 p-0 rounded-full">
+            ✕
+          </Button>
+        </div>
+      )}
+
+      {/* Bulk Notification Dialog */}
+      <Dialog open={bulkNotificationOpen} onOpenChange={setBulkNotificationOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Enviar Notificação em Massa</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="bg-muted p-3 rounded-md text-sm text-muted-foreground">
+              Enviando para <b>{selectedUsers.length} usuários</b> selecionados.
+            </div>
+            <div className="space-y-2">
+              <Label>Título</Label>
+              <Input
+                value={notificationTitle}
+                onChange={(e) => setNotificationTitle(e.target.value)}
+                placeholder="Ex: Aviso Importante"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Mensagem</Label>
+              <Textarea
+                value={notificationMessage}
+                onChange={(e) => setNotificationMessage(e.target.value)}
+                placeholder="Digite sua mensagem global aqui..."
+                rows={4}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setBulkNotificationOpen(false)}>Cancelar</Button>
+            <Button onClick={handleSendBulkNotification} disabled={isSendingBulk}>
+              {isSendingBulk ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4 mr-2" />}
+              Enviar para Todos
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </AdminLayout>
   );
 };
