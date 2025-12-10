@@ -2,10 +2,17 @@ import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/ca
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Navbar } from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import { SEOHead } from "@/components/SEOHead";
 
 export default function FAQPage() {
   return (
     <>
+      <SEOHead 
+        title="Perguntas Frequentes sobre CNH e Habilitação"
+        description="Tire suas dúvidas sobre o processo de habilitação, nova lei da CNH, autoescola obrigatória, simulados DETRAN e muito mais."
+        keywords="FAQ CNH, dúvidas habilitação, perguntas frequentes DETRAN, como tirar CNH, autoescola obrigatória"
+        canonical="/perguntas-frequentes"
+      />
       <Navbar />
       <div className="container mx-auto px-4 pt-32 pb-12 max-w-4xl">
         <div className="mb-8">

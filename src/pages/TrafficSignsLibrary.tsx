@@ -12,6 +12,7 @@ import TimedChallenge from "@/components/traffic-signs/TimedChallenge";
 import { SubscriptionGate } from "@/components/auth/SubscriptionGate";
 import { LazyImage } from "@/components/ui/lazy-image";
 import { FeatureExplanationButton } from "@/components/ui/feature-explanation-button";
+import { SEOHead } from "@/components/SEOHead";
 
 interface TrafficSign {
   id: string;
@@ -147,6 +148,12 @@ export default function TrafficSignsLibrary({ user, profile }: TrafficSignsLibra
   const hasMore = displayedCount < filteredSigns.length;
   return (
     <SubscriptionGate>
+      <SEOHead 
+        title="136 Placas de Trânsito Brasileiras - Biblioteca Completa"
+        description="Estude todas as 136 placas de trânsito oficiais do Brasil. Placas de regulamentação, advertência, indicação e serviços auxiliares com flashcards e desafios."
+        keywords="placas de trânsito, sinalização de trânsito, placas DETRAN, placa pare, placa proibido estacionar, sinalização vertical"
+        canonical="/biblioteca-de-placas"
+      />
       <div className="container mx-auto p-4 space-y-6 pb-24 md:pb-8 animate-in fade-in duration-500">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>

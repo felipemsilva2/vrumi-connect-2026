@@ -7,6 +7,7 @@ import { Link } from "react-router-dom";
 import MinimalModernHero from "@/components/ui/minimal";
 import { Navbar } from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import { SEOHead } from "@/components/SEOHead";
 
 const STATE_LINKS = [
     { uf: "AC", name: "Acre", url: "https://www.ac.getran.com.br/site/apps/hotsite-cnh-social-ac/" },
@@ -31,6 +32,12 @@ const STATE_LINKS = [
 export default function CNHSocial() {
     return (
         <div className="min-h-screen bg-background pb-20">
+            <SEOHead 
+                title="CNH Social 2025 - Carteira de Motorista Gratuita"
+                description="Saiba como conseguir a CNH Social gratuita. Programa do governo para pessoas de baixa renda. Verifique se você tem direito ao benefício."
+                keywords="CNH social, CNH gratuita, carteira de motorista grátis, habilitação popular, DETRAN gratuito, CadÚnico CNH"
+                canonical="/cnh-social"
+            />
             <Navbar />
 
             {/* Hero Section */}

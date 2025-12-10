@@ -1,18 +1,25 @@
 <!doctype html>
-<html lang="en">
+<html lang="pt-BR">
 
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport"
     content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  
+  <!-- Preconnect for Performance -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
     rel="stylesheet">
-  <title>Vrumi - Preparação Completa para seu Exame de Habilitação</title>
+  
+  <!-- Primary Meta Tags -->
+  <title>Vrumi - Tire sua CNH Estudando Sozinho | Autoescola Digital 2025</title>
   <meta name="description"
-    content="Plataforma completa para preparação de exames de habilitação. Flashcards inteligentes e materiais teóricos completos para sua aprovação.">
-  <meta name="author" content="CNH Fácil" />
+    content="Prepare-se para o exame da CNH sem autoescola. A nova lei permite estudar sozinho! Simulados DETRAN, 136 placas de trânsito, flashcards inteligentes. Taxa de aprovação de 95%.">
+  <meta name="keywords" content="CNH, carteira de motorista, exame de habilitação, DETRAN, prova teórica CNH, simulado DETRAN, placas de trânsito, autoescola online, tirar CNH sozinho, CNH social, habilitação 2025, curso CNH online, prova DETRAN, legislação de trânsito">
+  <meta name="author" content="Vrumi" />
+  <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
+  <link rel="canonical" href="https://vrumi.com.br/" />
 
   <!-- PWA Configuration -->
   <link rel="manifest" href="/manifest.json" />
@@ -32,13 +39,125 @@
   <link rel="icon" type="image/png" sizes="192x192" href="/pwa-icon.png">
   <link rel="icon" type="image/png" sizes="512x512" href="/pwa-icon.png">
 
-  <!-- Open Graph / Social Media -->
-  <meta property="og:title" content="Vrumi - Preparação Completa para seu Exame de Habilitação">
-  <meta name="twitter:title" content="Vrumi - Preparação Completa para seu Exame de Habilitação">
-  <meta property="og:description"
-    content="Plataforma completa para preparação de exames de habilitação. Flashcards inteligentes e materiais teóricos completos para sua aprovação.">
-  <meta name="twitter:description"
-    content="Plataforma completa para preparação de exames de habilitação. Flashcards inteligentes e materiais teóricos completos para sua aprovação.">
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://vrumi.com.br/">
+  <meta property="og:title" content="Vrumi - Tire sua CNH Estudando Sozinho | Autoescola Digital 2025">
+  <meta property="og:description" content="Prepare-se para o exame da CNH sem autoescola. A nova lei permite estudar sozinho! Simulados DETRAN, 136 placas de trânsito, flashcards inteligentes.">
+  <meta property="og:image" content="https://vrumi.com.br/logo-vrumi.png">
+  <meta property="og:locale" content="pt_BR">
+  <meta property="og:site_name" content="Vrumi">
+
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:url" content="https://vrumi.com.br/">
+  <meta name="twitter:title" content="Vrumi - Tire sua CNH Estudando Sozinho | Autoescola Digital 2025">
+  <meta name="twitter:description" content="Prepare-se para o exame da CNH sem autoescola. A nova lei permite estudar sozinho! Simulados DETRAN, 136 placas de trânsito, flashcards inteligentes.">
+  <meta name="twitter:image" content="https://vrumi.com.br/logo-vrumi.png">
+
+  <!-- Geo Tags -->
+  <meta name="geo.region" content="BR">
+  <meta name="geo.placename" content="Brasil">
+
+  <!-- Structured Data - Organization -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "name": "Vrumi",
+    "url": "https://vrumi.com.br",
+    "logo": "https://vrumi.com.br/logo-vrumi.png",
+    "description": "Plataforma de preparação para CNH - Autoescola Digital",
+    "sameAs": []
+  }
+  </script>
+
+  <!-- Structured Data - WebSite with Search -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "Vrumi",
+    "url": "https://vrumi.com.br",
+    "description": "Prepare-se para o exame da CNH estudando sozinho com a Vrumi",
+    "potentialAction": {
+      "@type": "SearchAction",
+      "target": "https://vrumi.com.br/biblioteca-de-placas?search={search_term_string}",
+      "query-input": "required name=search_term_string"
+    }
+  }
+  </script>
+
+  <!-- Structured Data - Educational Organization -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "EducationalOrganization",
+    "name": "Vrumi - Autoescola Digital",
+    "url": "https://vrumi.com.br",
+    "description": "Plataforma digital de preparação para o exame teórico da CNH",
+    "areaServed": {
+      "@type": "Country",
+      "name": "Brasil"
+    }
+  }
+  </script>
+
+  <!-- Structured Data - Course -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Course",
+    "name": "Preparação Completa para CNH",
+    "description": "Curso completo de preparação para o exame teórico da CNH. Inclui todas as 136 placas de trânsito, simulados ilimitados e flashcards inteligentes.",
+    "provider": {
+      "@type": "Organization",
+      "name": "Vrumi",
+      "url": "https://vrumi.com.br"
+    },
+    "educationalLevel": "Beginner",
+    "inLanguage": "pt-BR",
+    "hasCourseInstance": {
+      "@type": "CourseInstance",
+      "courseMode": "online",
+      "courseWorkload": "PT20H"
+    }
+  }
+  </script>
+
+  <!-- Structured Data - FAQ -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "Posso tirar CNH sem autoescola?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Sim! A nova lei permite que você estude por conta própria para o exame teórico da CNH. A Vrumi é a plataforma ideal para isso."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Quantas placas de trânsito existem no Brasil?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "São 136 placas de trânsito oficiais no Brasil, divididas em categorias: Regulamentação, Advertência, Indicação, Educativas e Serviços Auxiliares."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Como funciona o simulado do DETRAN?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "O simulado do DETRAN consiste em 30 questões de múltipla escolha. Para ser aprovado, é necessário acertar pelo menos 21 questões (70%)."
+        }
+      }
+    ]
+  }
+  </script>
 </head>
 
 <body>
