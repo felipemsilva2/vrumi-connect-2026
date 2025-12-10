@@ -40,10 +40,18 @@ serve(async (req) => {
             throw new Error("Forbidden: Admin access required");
         }
 
-        const { user_ids, title, message, type, data } = await req.json();
+        const body = await req.json();
+        console.log("Request body received:", JSON.stringify(body));
+        
+        const { user_ids, title, message, type, data } = body;
 
-        if (!user_ids || !Array.isArray(user_ids) || !title || !message) {
-            throw new Error("Invalid request parameters");
+        if (!user_ids || !Array.isArray(user_ids) || user_ids.length === 0) {
+            console.error("Invalid user_ids:", user_ids);
+            throw new Error("Invalid request: user_ids must be a non-empty array");
+        }
+        if (!title || !message) {
+            console.error("Missing title or message:", { title, message });
+            throw new Error("Invalid request: title and message are required");
         }
 
         // Use Service Role to insert notifications (bypassing RLS if necessary)

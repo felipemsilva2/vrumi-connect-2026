@@ -158,16 +158,22 @@ serve(async (req: Request) => {
 
         // Increment coupon usage if applied
         if (couponId) {
-            await supabaseClient.rpc('increment_coupon_usage', { coupon_id: couponId });
-            // Fallback if RPC doesn't exist or fails, though RPC is safer for concurrency.
-            // For now, let's just do a simple update since we are in the edge function
-            const { error: updateError } = await supabaseClient
+            // First get current count, then update
+            const { data: couponData } = await supabaseClient
                 .from('coupons')
-                .update({ used_count: (await supabaseClient.from('coupons').select('used_count').eq('id', couponId).single()).data.used_count + 1 })
-                .eq('id', couponId);
+                .select('used_count')
+                .eq('id', couponId)
+                .single();
+            
+            if (couponData) {
+                const { error: updateError } = await supabaseClient
+                    .from('coupons')
+                    .update({ used_count: (couponData.used_count || 0) + 1 })
+                    .eq('id', couponId);
 
-            if (updateError) {
-                logStep("Failed to increment coupon usage", { couponId, error: updateError });
+                if (updateError) {
+                    logStep("Failed to increment coupon usage", { couponId, error: updateError });
+                }
             }
         }
 
