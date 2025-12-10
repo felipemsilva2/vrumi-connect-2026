@@ -47,7 +47,7 @@ serve(async (req) => {
             .from('user_roles')
             .select('role')
             .eq('user_id', user.id)
-            .single();
+            .eq('role', 'admin');
 
         if (rolesError) {
             console.error("Roles query error:", rolesError);
@@ -55,8 +55,9 @@ serve(async (req) => {
         
         console.log("User roles:", roles);
 
-        if (roles?.role !== 'admin') {
-            console.error("User is not admin, role:", roles?.role);
+        const isAdmin = roles && roles.length > 0;
+        if (!isAdmin) {
+            console.error("User is not admin");
             throw new Error("Forbidden: Admin access required");
         }
 
