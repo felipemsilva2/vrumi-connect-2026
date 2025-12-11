@@ -115,28 +115,77 @@ export const SimuladosView = () => {
     try {
       const limit = type === "official" ? 30 : 15
 
-      // Fetch questions
-      const { data: questionsData, error: questionsError } = await supabase
+      // Fetch ALL questions for true randomization
+      const { data: allQuestionsData, error: questionsError } = await supabase
         .from("quiz_questions")
         .select("*")
-        .limit(limit)
 
       if (questionsError) throw questionsError
 
       // Fetch traffic signs for image enrichment
       const { data: signsData } = await supabase
         .from("traffic_signs")
-        .select("code, image_url")
+        .select("code, image_url, category")
 
-      let enrichedQuestions = questionsData || []
+      // Categorize questions by sign type (advertência = amarela, regulamentação = vermelha)
+      const advertenciaQuestions: typeof allQuestionsData = []
+      const regulamentacaoQuestions: typeof allQuestionsData = []
+      const otherQuestions: typeof allQuestionsData = []
+
+      allQuestionsData?.forEach(q => {
+        const text = q.question_text.toLowerCase()
+        if (text.includes('advertência') || text.match(/\bA-\d+/i)) {
+          advertenciaQuestions.push(q)
+        } else if (text.includes('regulamentação') || text.match(/\bR-\d+/i)) {
+          regulamentacaoQuestions.push(q)
+        } else {
+          otherQuestions.push(q)
+        }
+      })
+
+      // Shuffle each category using Fisher-Yates algorithm
+      const shuffleArray = <T,>(array: T[]): T[] => {
+        const shuffled = [...array]
+        for (let i = shuffled.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]
+        }
+        return shuffled
+      }
+
+      const shuffledAdv = shuffleArray(advertenciaQuestions)
+      const shuffledReg = shuffleArray(regulamentacaoQuestions)
+      const shuffledOther = shuffleArray(otherQuestions)
+
+      // Balanced selection: ~30% advertência, ~40% regulamentação, ~30% outras
+      const advCount = Math.ceil(limit * 0.30)
+      const regCount = Math.ceil(limit * 0.40)
+      const otherCount = limit - advCount - regCount
+
+      let selectedQuestions = [
+        ...shuffledAdv.slice(0, Math.min(advCount, shuffledAdv.length)),
+        ...shuffledReg.slice(0, Math.min(regCount, shuffledReg.length)),
+        ...shuffledOther.slice(0, Math.min(otherCount, shuffledOther.length))
+      ]
+
+      // Fill remaining slots if any category didn't have enough
+      const remaining = limit - selectedQuestions.length
+      if (remaining > 0) {
+        const allShuffled = shuffleArray([...shuffledAdv, ...shuffledReg, ...shuffledOther])
+        const selectedIds = new Set(selectedQuestions.map(q => q.id))
+        const extras = allShuffled.filter(q => !selectedIds.has(q.id)).slice(0, remaining)
+        selectedQuestions = [...selectedQuestions, ...extras]
+      }
+
+      // Final shuffle to mix categories
+      let questionsData = shuffleArray(selectedQuestions)
 
       // Enrich questions with sign images if missing
       if (signsData && signsData.length > 0) {
-        enrichedQuestions = enrichedQuestions.map(q => {
-          if (q.image_url) return q // Already has image
+        questionsData = questionsData.map(q => {
+          if (q.image_url) return q
 
           // Regex to find sign codes like R-1, A-10a, R-19, etc.
-          // Captures: 1=Prefix(R/A), 2=Number, 3=Suffix(optional)
           const signCodeMatch = q.question_text.match(/\b([RA])[- ]?(\d+)([a-z]?)\b/i)
 
           if (signCodeMatch) {
@@ -144,12 +193,11 @@ export const SimuladosView = () => {
             const number = parseInt(signCodeMatch[2], 10)
             const suffix = signCodeMatch[3] ? signCodeMatch[3].toUpperCase() : ""
 
-            // Generate variations to match database format (e.g. A-1a vs A-01A)
             const codeVariations = [
-              `${prefix}-${number}${suffix}`,           // A-1A
-              `${prefix}-${number.toString().padStart(2, '0')}${suffix}`, // A-01A
-              `${prefix}${number}${suffix}`,            // A1A
-              `${prefix}${number.toString().padStart(2, '0')}${suffix}`   // A01A
+              `${prefix}-${number}${suffix}`,
+              `${prefix}-${number.toString().padStart(2, '0')}${suffix}`,
+              `${prefix}${number}${suffix}`,
+              `${prefix}${number.toString().padStart(2, '0')}${suffix}`
             ]
 
             const sign = signsData.find(s => {
@@ -165,8 +213,7 @@ export const SimuladosView = () => {
         })
       }
 
-      const shuffled = enrichedQuestions.sort(() => Math.random() - 0.5)
-      setQuestions(shuffled)
+      setQuestions(questionsData)
       setView("quiz")
       setQuizStarted(true)
       setCurrentQuestion(0)
