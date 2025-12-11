@@ -25,6 +25,7 @@ const AdminPopulate = lazy(() => import("@/pages/AdminPopulate"));
 const AdminTrafficSignsImport = lazy(() => import("@/pages/admin/AdminTrafficSignsImport"));
 const AdminLogin = lazy(() => import("@/pages/admin/AdminLogin"));
 const AdminSupport = lazy(() => import("@/pages/admin/AdminSupport"));
+const AdminGenerateQuestions = lazy(() => import("@/pages/admin/AdminGenerateQuestions"));
 
 const PageLoader = () => (
     <div className="flex items-center justify-center min-h-screen">
@@ -139,6 +140,11 @@ const AdminApp = () => (
                                 <Route path="/suporte" element={
                                     <ProtectedAdminRoute>
                                         <AdminSupport />
+                                    </ProtectedAdminRoute>
+                                } />
+                                <Route path="/gerar-questoes" element={
+                                    <ProtectedAdminRoute>
+                                        <AdminGenerateQuestions />
                                     </ProtectedAdminRoute>
                                 } />
 
