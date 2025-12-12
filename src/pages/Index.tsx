@@ -10,6 +10,7 @@ const LazyNewLawExplained = React.lazy(() => import("@/components/NewLawExplaine
 const LazyFooter = React.lazy(() => import("@/components/Footer"));
 import { Navbar } from "@/components/Navbar";
 const LazyPricingSection = React.lazy(() => import("@/components/PricingSection"));
+const LazyAppComingSoon = React.lazy(() => import("@/components/AppComingSoon"));
 import { useNavigate, useLocation } from "react-router-dom";
 import { Display, Lead, Heading2, BodyLarge } from "@/components/ui/typography";
 
@@ -35,7 +36,7 @@ const Index = () => {
   }, [location]);
   return (
     <main className="min-h-screen pt-20">
-      <SEOHead 
+      <SEOHead
         canonical="/"
         title="Tire sua CNH Estudando Sozinho | Autoescola Digital 2025"
         description="Prepare-se para o exame da CNH sem autoescola. A nova lei permite estudar sozinho! Simulados DETRAN, 136 placas de trânsito, flashcards inteligentes. Taxa de aprovação de 95%."
@@ -168,6 +169,11 @@ const Index = () => {
       {/* 6. Pricing */}
       <Suspense fallback={<div className="p-4 text-sm text-muted-foreground">Carregando planos…</div>}>
         <LazyPricingSection />
+      </Suspense>
+
+      {/* 6.5 App Coming Soon */}
+      <Suspense fallback={<div className="p-4 text-sm text-muted-foreground">Carregando...</div>}>
+        <LazyAppComingSoon />
       </Suspense>
 
       {/* 7. FAQ */}

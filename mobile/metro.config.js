@@ -6,19 +6,12 @@ const workspaceRoot = path.resolve(projectRoot, '..');
 
 const config = getDefaultConfig(projectRoot);
 
-// Watch the parent directory (web project) for shared code
-config.watchFolders = [workspaceRoot];
+// Only watch the src folder from parent for shared code (not all of parent)
+config.watchFolders = [path.resolve(workspaceRoot, 'src')];
 
-// Let Metro know where to resolve packages
-config.resolver.nodeModulesPaths = [
-    path.resolve(projectRoot, 'node_modules'),
-    path.resolve(workspaceRoot, 'node_modules'),
-];
-
-// Avoid resolving web-specific packages that won't work in React Native
-config.resolver.resolverMainFields = ['react-native', 'browser', 'main'];
-
-// Handle potential conflicts
-config.resolver.disableHierarchicalLookup = true;
+// Allow Metro to resolve from parent's src folder but keep mobile's node_modules priority
+config.resolver.extraNodeModules = {
+    '@': path.resolve(workspaceRoot, 'src'),
+};
 
 module.exports = config;
