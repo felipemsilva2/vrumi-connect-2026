@@ -750,6 +750,27 @@ export type Database = {
         }
         Relationships: []
       }
+      user_achievements: {
+        Row: {
+          achievement_key: string
+          id: string
+          unlocked_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          achievement_key: string
+          id?: string
+          unlocked_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          achievement_key?: string
+          id?: string
+          unlocked_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       user_activities: {
         Row: {
           activity_type: string
@@ -771,6 +792,39 @@ export type Database = {
           id?: string
           metadata?: Json | null
           user_id?: string
+        }
+        Relationships: []
+      }
+      user_daily_goals: {
+        Row: {
+          created_at: string | null
+          daily_goal_minutes: number | null
+          goal_completed_today: boolean | null
+          id: string
+          last_goal_date: string | null
+          minutes_studied_today: number | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          daily_goal_minutes?: number | null
+          goal_completed_today?: boolean | null
+          id?: string
+          last_goal_date?: string | null
+          minutes_studied_today?: number | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          daily_goal_minutes?: number | null
+          goal_completed_today?: boolean | null
+          id?: string
+          last_goal_date?: string | null
+          minutes_studied_today?: number | null
+          updated_at?: string | null
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -827,6 +881,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      user_notes: {
+        Row: {
+          category: string | null
+          content: string
+          created_at: string | null
+          id: string
+          is_pinned: boolean | null
+          related_content: Json | null
+          title: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          category?: string | null
+          content: string
+          created_at?: string | null
+          id?: string
+          is_pinned?: boolean | null
+          related_content?: Json | null
+          title?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          category?: string | null
+          content?: string
+          created_at?: string | null
+          id?: string
+          is_pinned?: boolean | null
+          related_content?: Json | null
+          title?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
       }
       user_passes: {
         Row: {
@@ -1118,11 +1208,113 @@ export type Database = {
           },
         ]
       }
+      user_streaks: {
+        Row: {
+          created_at: string | null
+          current_streak: number | null
+          id: string
+          last_activity_date: string | null
+          longest_streak: number | null
+          streak_freeze_available: boolean | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          current_streak?: number | null
+          id?: string
+          last_activity_date?: string | null
+          longest_streak?: number | null
+          streak_freeze_available?: boolean | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          current_streak?: number | null
+          id?: string
+          last_activity_date?: string | null
+          longest_streak?: number | null
+          streak_freeze_available?: boolean | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      user_xp: {
+        Row: {
+          created_at: string | null
+          id: string
+          last_xp_date: string | null
+          level: number | null
+          total_xp: number | null
+          updated_at: string | null
+          user_id: string | null
+          xp_today: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          last_xp_date?: string | null
+          level?: number | null
+          total_xp?: number | null
+          updated_at?: string | null
+          user_id?: string | null
+          xp_today?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          last_xp_date?: string | null
+          level?: number | null
+          total_xp?: number | null
+          updated_at?: string | null
+          user_id?: string | null
+          xp_today?: number | null
+        }
+        Relationships: []
+      }
+      xp_history: {
+        Row: {
+          action_type: string
+          created_at: string | null
+          description: string | null
+          id: string
+          user_id: string | null
+          xp_amount: number
+        }
+        Insert: {
+          action_type: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          user_id?: string | null
+          xp_amount: number
+        }
+        Update: {
+          action_type?: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          user_id?: string | null
+          xp_amount?: number
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      add_user_xp: {
+        Args: {
+          p_action_type: string
+          p_description?: string
+          p_user_id: string
+          p_xp_amount: number
+        }
+        Returns: Json
+      }
       generate_audit_summary: {
         Args: { p_month: number; p_year: number }
         Returns: Json
@@ -1135,6 +1327,10 @@ export type Database = {
           reviewed_signs: number
           total_signs: number
         }[]
+      }
+      get_user_gamification_stats: {
+        Args: { p_user_id: string }
+        Returns: Json
       }
       has_active_pass: { Args: { user_id: string }; Returns: boolean }
       is_admin: { Args: { user_id?: string }; Returns: boolean }
@@ -1166,6 +1362,7 @@ export type Database = {
         Args: { p_correct: boolean; p_sign_id: string; p_user_id: string }
         Returns: undefined
       }
+      update_user_streak: { Args: { p_user_id: string }; Returns: Json }
     }
     Enums: {
       app_role: "admin" | "user" | "dpo"
