@@ -104,7 +104,7 @@ export default function InstructorRegistration() {
         email: data.email,
         password: data.password,
         options: {
-          emailRedirectTo: `${window.location.origin}/connect/instrutor/dashboard`,
+          emailRedirectTo: `${window.location.origin}/connect/painel-instrutor`,
           data: {
             full_name: data.full_name,
           },

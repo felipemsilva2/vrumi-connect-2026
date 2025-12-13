@@ -121,6 +121,12 @@ const Navbar = () => {
           >
             CNH Social
           </button>
+          <button
+            onClick={() => navigate("/connect")}
+            className="px-4 py-2 text-sm font-medium rounded-full bg-vrumi-secondary/10 text-vrumi-secondary hover:bg-vrumi-secondary/20 transition-colors"
+          >
+            🚗 Vrumi Connect
+          </button>
         </nav>
 
         <div className="flex items-center gap-4">
@@ -200,6 +206,22 @@ const Navbar = () => {
                     className="text-2xl font-semibold text-foreground w-full text-left py-4 border-b border-border/50"
                   >
                     CNH Social
+                  </button>
+                </motion.div>
+
+                <motion.div
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.4 }}
+                >
+                  <button
+                    onClick={() => {
+                      toggleMenu();
+                      navigate("/connect");
+                    }}
+                    className="text-2xl font-semibold text-vrumi-secondary w-full text-left py-4 border-b border-border/50 flex items-center gap-2"
+                  >
+                    🚗 Vrumi Connect
                   </button>
                 </motion.div>
 
