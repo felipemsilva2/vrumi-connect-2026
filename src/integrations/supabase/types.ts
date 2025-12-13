@@ -80,6 +80,83 @@ export type Database = {
         }
         Relationships: []
       }
+      bookings: {
+        Row: {
+          cancellation_reason: string | null
+          cancelled_at: string | null
+          cancelled_by: string | null
+          completed_at: string | null
+          contract_pdf_url: string | null
+          contract_signed_at: string | null
+          created_at: string | null
+          duration_minutes: number
+          id: string
+          instructor_amount: number
+          instructor_id: string
+          payment_intent_id: string | null
+          payment_status: string | null
+          platform_fee: number
+          price: number
+          scheduled_date: string
+          scheduled_time: string
+          status: Database["public"]["Enums"]["booking_status"] | null
+          student_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          cancellation_reason?: string | null
+          cancelled_at?: string | null
+          cancelled_by?: string | null
+          completed_at?: string | null
+          contract_pdf_url?: string | null
+          contract_signed_at?: string | null
+          created_at?: string | null
+          duration_minutes?: number
+          id?: string
+          instructor_amount: number
+          instructor_id: string
+          payment_intent_id?: string | null
+          payment_status?: string | null
+          platform_fee: number
+          price: number
+          scheduled_date: string
+          scheduled_time: string
+          status?: Database["public"]["Enums"]["booking_status"] | null
+          student_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          cancellation_reason?: string | null
+          cancelled_at?: string | null
+          cancelled_by?: string | null
+          completed_at?: string | null
+          contract_pdf_url?: string | null
+          contract_signed_at?: string | null
+          created_at?: string | null
+          duration_minutes?: number
+          id?: string
+          instructor_amount?: number
+          instructor_id?: string
+          payment_intent_id?: string | null
+          payment_status?: string | null
+          platform_fee?: number
+          price?: number
+          scheduled_date?: string
+          scheduled_time?: string
+          status?: Database["public"]["Enums"]["booking_status"] | null
+          student_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bookings_instructor_id_fkey"
+            columns: ["instructor_id"]
+            isOneToOne: false
+            referencedRelation: "instructors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       challenge_results: {
         Row: {
           category: string | null
@@ -188,6 +265,60 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contracts: {
+        Row: {
+          booking_id: string
+          contract_text: string
+          created_at: string | null
+          id: string
+          instructor_id: string
+          instructor_signature: string | null
+          instructor_signed_at: string | null
+          student_id: string
+          student_signature: string | null
+          student_signed_at: string | null
+        }
+        Insert: {
+          booking_id: string
+          contract_text: string
+          created_at?: string | null
+          id?: string
+          instructor_id: string
+          instructor_signature?: string | null
+          instructor_signed_at?: string | null
+          student_id: string
+          student_signature?: string | null
+          student_signed_at?: string | null
+        }
+        Update: {
+          booking_id?: string
+          contract_text?: string
+          created_at?: string | null
+          id?: string
+          instructor_id?: string
+          instructor_signature?: string | null
+          instructor_signed_at?: string | null
+          student_id?: string
+          student_signature?: string | null
+          student_signed_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contracts_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: true
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contracts_instructor_id_fkey"
+            columns: ["instructor_id"]
+            isOneToOne: false
+            referencedRelation: "instructors"
             referencedColumns: ["id"]
           },
         ]
@@ -302,6 +433,164 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      instructor_availability: {
+        Row: {
+          created_at: string | null
+          day_of_week: number
+          end_time: string
+          id: string
+          instructor_id: string
+          is_active: boolean | null
+          start_time: string
+        }
+        Insert: {
+          created_at?: string | null
+          day_of_week: number
+          end_time: string
+          id?: string
+          instructor_id: string
+          is_active?: boolean | null
+          start_time: string
+        }
+        Update: {
+          created_at?: string | null
+          day_of_week?: number
+          end_time?: string
+          id?: string
+          instructor_id?: string
+          is_active?: boolean | null
+          start_time?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "instructor_availability_instructor_id_fkey"
+            columns: ["instructor_id"]
+            isOneToOne: false
+            referencedRelation: "instructors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      instructor_transactions: {
+        Row: {
+          amount: number
+          booking_id: string | null
+          created_at: string | null
+          description: string | null
+          id: string
+          instructor_id: string
+          processed_at: string | null
+          status: string | null
+          type: string
+        }
+        Insert: {
+          amount: number
+          booking_id?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          instructor_id: string
+          processed_at?: string | null
+          status?: string | null
+          type: string
+        }
+        Update: {
+          amount?: number
+          booking_id?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          instructor_id?: string
+          processed_at?: string | null
+          status?: string | null
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "instructor_transactions_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "instructor_transactions_instructor_id_fkey"
+            columns: ["instructor_id"]
+            isOneToOne: false
+            referencedRelation: "instructors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      instructors: {
+        Row: {
+          availability: Json | null
+          average_rating: number | null
+          bio: string | null
+          categories: Database["public"]["Enums"]["cnh_category"][]
+          city: string
+          cpf: string
+          created_at: string | null
+          full_name: string
+          id: string
+          is_verified: boolean | null
+          lesson_duration_minutes: number
+          phone: string
+          photo_url: string | null
+          price_per_lesson: number
+          state: string
+          status: Database["public"]["Enums"]["instructor_status"] | null
+          total_lessons: number | null
+          total_reviews: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          availability?: Json | null
+          average_rating?: number | null
+          bio?: string | null
+          categories?: Database["public"]["Enums"]["cnh_category"][]
+          city: string
+          cpf: string
+          created_at?: string | null
+          full_name: string
+          id?: string
+          is_verified?: boolean | null
+          lesson_duration_minutes?: number
+          phone: string
+          photo_url?: string | null
+          price_per_lesson: number
+          state: string
+          status?: Database["public"]["Enums"]["instructor_status"] | null
+          total_lessons?: number | null
+          total_reviews?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          availability?: Json | null
+          average_rating?: number | null
+          bio?: string | null
+          categories?: Database["public"]["Enums"]["cnh_category"][]
+          city?: string
+          cpf?: string
+          created_at?: string | null
+          full_name?: string
+          id?: string
+          is_verified?: boolean | null
+          lesson_duration_minutes?: number
+          phone?: string
+          photo_url?: string | null
+          price_per_lesson?: number
+          state?: string
+          status?: Database["public"]["Enums"]["instructor_status"] | null
+          total_lessons?: number | null
+          total_reviews?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
       }
       lesson_contents: {
         Row: {
@@ -479,6 +768,54 @@ export type Database = {
             columns: ["chapter_id"]
             isOneToOne: false
             referencedRelation: "study_chapters"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reviews: {
+        Row: {
+          booking_id: string
+          comment: string | null
+          created_at: string | null
+          id: string
+          instructor_id: string
+          is_approved: boolean | null
+          rating: number
+          student_id: string
+        }
+        Insert: {
+          booking_id: string
+          comment?: string | null
+          created_at?: string | null
+          id?: string
+          instructor_id: string
+          is_approved?: boolean | null
+          rating: number
+          student_id: string
+        }
+        Update: {
+          booking_id?: string
+          comment?: string | null
+          created_at?: string | null
+          id?: string
+          instructor_id?: string
+          is_approved?: boolean | null
+          rating?: number
+          student_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reviews_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: true
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reviews_instructor_id_fkey"
+            columns: ["instructor_id"]
+            isOneToOne: false
+            referencedRelation: "instructors"
             referencedColumns: ["id"]
           },
         ]
@@ -1335,6 +1672,7 @@ export type Database = {
       has_active_pass: { Args: { user_id: string }; Returns: boolean }
       is_admin: { Args: { user_id?: string }; Returns: boolean }
       is_dpo: { Args: { user_id?: string }; Returns: boolean }
+      is_instructor: { Args: { check_user_id?: string }; Returns: boolean }
       log_admin_action: {
         Args: {
           p_action_type: string
@@ -1366,6 +1704,14 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "user" | "dpo"
+      booking_status:
+        | "pending"
+        | "confirmed"
+        | "completed"
+        | "cancelled"
+        | "disputed"
+      cnh_category: "A" | "B" | "AB" | "C" | "D" | "E"
+      instructor_status: "pending" | "approved" | "rejected" | "suspended"
       message_sender_type: "user" | "support"
       pass_type: "30_days" | "90_days" | "family_90_days"
       ticket_priority: "low" | "medium" | "high"
@@ -1500,6 +1846,15 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "user", "dpo"],
+      booking_status: [
+        "pending",
+        "confirmed",
+        "completed",
+        "cancelled",
+        "disputed",
+      ],
+      cnh_category: ["A", "B", "AB", "C", "D", "E"],
+      instructor_status: ["pending", "approved", "rejected", "suspended"],
       message_sender_type: ["user", "support"],
       pass_type: ["30_days", "90_days", "family_90_days"],
       ticket_priority: ["low", "medium", "high"],
