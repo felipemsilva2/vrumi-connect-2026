@@ -1,18 +1,18 @@
 import MinimalModernHero from "@/components/ui/minimal";
-import React, { Suspense } from "react";
+import React, { Suspense, lazy } from "react";
 import { SEOHead } from "@/components/SEOHead";
-const LazyFeatures = React.lazy(() => import("@/components/ui/feature-section-with-hover-effects").then(m => ({ default: m.FeaturesSectionWithHoverEffects })));
-const LazyFlashcardSection = React.lazy(() => import("@/components/FlashcardSection"));
-const LazyFAQ = React.lazy(() => import("@/components/FAQ"));
-const LazyTestimonials = React.lazy(() => import("@/components/Testimonials"));
-const LazyGovernmentSupport = React.lazy(() => import("@/components/GovernmentSupport"));
-const LazyNewLawExplained = React.lazy(() => import("@/components/NewLawExplained"));
-const LazyFooter = React.lazy(() => import("@/components/Footer"));
+const LazyFeatures = lazy(() => import("@/components/ui/feature-section-with-hover-effects").then(m => ({ default: m.FeaturesSectionWithHoverEffects })));
+const LazyFlashcardSection = lazy(() => import("@/components/FlashcardSection"));
+const LazyFAQ = lazy(() => import("@/components/FAQ"));
+const LazyTestimonials = lazy(() => import("@/components/Testimonials"));
+const LazyGovernmentSupport = lazy(() => import("@/components/GovernmentSupport"));
+const LazyNewLawExplained = lazy(() => import("@/components/NewLawExplained"));
+const LazyFooter = lazy(() => import("@/components/Footer"));
 import { Navbar } from "@/components/Navbar";
-const LazyPricingSection = React.lazy(() => import("@/components/PricingSection"));
-const LazyAppComingSoon = React.lazy(() => import("@/components/AppComingSoon"));
+const LazyPricingSection = lazy(() => import("@/components/PricingSection"));
+const LazyAppComingSoon = lazy(() => import("@/components/AppComingSoon"));
+const LazyVrumiConnectSection = lazy(() => import("@/components/VrumiConnectSection"));
 import { useNavigate, useLocation } from "react-router-dom";
-import { Display, Lead, Heading2, BodyLarge } from "@/components/ui/typography";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -164,6 +164,11 @@ const Index = () => {
       {/* 5. Preview - Flashcards */}
       <Suspense fallback={<div className="p-4 text-sm text-muted-foreground">Carregando preview…</div>}>
         <LazyFlashcardSection />
+      </Suspense>
+
+      {/* 5.5 Vrumi Connect - Marketplace de Instrutores */}
+      <Suspense fallback={<div className="p-4 text-sm text-muted-foreground">Carregando...</div>}>
+        <LazyVrumiConnectSection />
       </Suspense>
 
       {/* 6. Pricing */}
