@@ -110,7 +110,7 @@ export default function ConnectHome() {
                     Seja um Instrutor
                   </Button>
                 </Link>
-                <Link to="/auth">
+                <Link to="/entrar?redirect=/connect">
                   <Button className="bg-white text-[#0A2F44] hover:bg-white/90">
                     Entrar
                   </Button>
