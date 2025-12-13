@@ -105,7 +105,7 @@ export default function ConnectHome() {
                 <span className="text-xl font-semibold">Vrumi Connect</span>
               </Link>
               <div className="flex items-center gap-4">
-                <Link to="/connect/instrutor/cadastro">
+                <Link to="/connect/cadastro-instrutor">
                   <Button variant="outline" className="border-white/30 text-white hover:bg-white/10">
                     Seja um Instrutor
                   </Button>

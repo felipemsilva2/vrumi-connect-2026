@@ -147,9 +147,28 @@ export default function BookingFlow() {
     }
   };
 
+  const [bookedSlots, setBookedSlots] = useState<Record<string, string[]>>({});
+
+  const fetchBookedSlots = async (date: Date) => {
+    if (!instructorId) return;
+    const dateStr = format(date, "yyyy-MM-dd");
+    
+    const { data } = await supabase
+      .from("bookings")
+      .select("scheduled_time")
+      .eq("instructor_id", instructorId)
+      .eq("scheduled_date", dateStr)
+      .in("status", ["pending", "confirmed"]);
+    
+    const times = data?.map(b => b.scheduled_time.slice(0, 5)) || [];
+    setBookedSlots(prev => ({ ...prev, [dateStr]: times }));
+  };
+
   const getAvailableTimeSlots = (date: Date): string[] => {
     const dayOfWeek = date.getDay();
     const dayAvailability = availability.filter((a) => a.day_of_week === dayOfWeek);
+    const dateStr = format(date, "yyyy-MM-dd");
+    const occupied = bookedSlots[dateStr] || [];
     
     const slots: string[] = [];
     dayAvailability.forEach((slot) => {
@@ -160,8 +179,11 @@ export default function BookingFlow() {
       let currentMin = startMin;
       
       while (currentHour < endHour || (currentHour === endHour && currentMin < endMin)) {
-        slots.push(`${String(currentHour).padStart(2, "0")}:${String(currentMin).padStart(2, "0")}`);
-        currentMin += 50; // lesson duration
+        const timeSlot = `${String(currentHour).padStart(2, "0")}:${String(currentMin).padStart(2, "0")}`;
+        if (!occupied.includes(timeSlot)) {
+          slots.push(timeSlot);
+        }
+        currentMin += 50;
         if (currentMin >= 60) {
           currentHour += Math.floor(currentMin / 60);
           currentMin = currentMin % 60;
@@ -189,6 +211,28 @@ export default function BookingFlow() {
     
     setProcessing(true);
     try {
+      // Check for conflicts before booking (race condition protection)
+      const dateStr = format(selectedDate, "yyyy-MM-dd");
+      const { data: existingBookings } = await supabase
+        .from("bookings")
+        .select("id")
+        .eq("instructor_id", instructor.id)
+        .eq("scheduled_date", dateStr)
+        .eq("scheduled_time", selectedTime)
+        .in("status", ["pending", "confirmed"]);
+
+      if (existingBookings && existingBookings.length > 0) {
+        toast({
+          title: "Horário indisponível",
+          description: "Este horário acabou de ser reservado. Por favor, escolha outro.",
+          variant: "destructive",
+        });
+        await fetchBookedSlots(selectedDate);
+        setStep("time");
+        setProcessing(false);
+        return;
+      }
+
       const price = Number(instructor.price_per_lesson);
       const platformFee = price * PLATFORM_FEE_PERCENTAGE;
       const instructorAmount = price - platformFee;
@@ -199,7 +243,7 @@ export default function BookingFlow() {
         .insert({
           student_id: user.id,
           instructor_id: instructor.id,
-          scheduled_date: format(selectedDate, "yyyy-MM-dd"),
+          scheduled_date: dateStr,
           scheduled_time: selectedTime,
           duration_minutes: instructor.lesson_duration_minutes,
           price: price,
@@ -380,9 +424,12 @@ export default function BookingFlow() {
                     <CalendarComponent
                       mode="single"
                       selected={selectedDate}
-                      onSelect={(date) => {
+                      onSelect={async (date) => {
                         setSelectedDate(date);
-                        if (date) setStep("time");
+                        if (date) {
+                          await fetchBookedSlots(date);
+                          setStep("time");
+                        }
                       }}
                       disabled={(date) => 
                         date < new Date() || 

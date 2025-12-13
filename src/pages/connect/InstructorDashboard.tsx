@@ -14,6 +14,7 @@ import { SEOHead } from "@/components/SEOHead";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { AvailabilityManager } from "@/components/connect/AvailabilityManager";
 
 interface Instructor {
   id: string;
@@ -66,7 +67,7 @@ export default function InstructorDashboard() {
     const { data: { session } } = await supabase.auth.getSession();
     
     if (!session) {
-      navigate("/auth?redirect=/connect/instrutor/dashboard");
+      navigate("/auth?redirect=/connect/painel-instrutor");
       return;
     }
 
@@ -84,7 +85,7 @@ export default function InstructorDashboard() {
           description: "Você ainda não possui um perfil de instrutor.",
           variant: "destructive",
         });
-        navigate("/connect/instrutor/cadastro");
+        navigate("/connect/cadastro-instrutor");
         return;
       }
 
@@ -484,18 +485,9 @@ export default function InstructorDashboard() {
             </TabsContent>
 
             <TabsContent value="availability">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg text-[#0A2F44]">
-                    Gerenciar disponibilidade
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-gray-500 text-center py-8">
-                    Configuração de disponibilidade em desenvolvimento.
-                  </p>
-                </CardContent>
-              </Card>
+              {instructor && (
+                <AvailabilityManager instructorId={instructor.id} />
+              )}
             </TabsContent>
           </Tabs>
         </div>
