@@ -40,6 +40,12 @@ interface Booking {
   status: string;
   payment_status: string;
   student_id: string;
+  student?: {
+    id: string;
+    full_name: string | null;
+    email: string | null;
+    avatar_url: string | null;
+  };
 }
 
 interface Transaction {
@@ -102,7 +108,21 @@ export default function InstructorDashboard() {
         .order("scheduled_date", { ascending: false })
         .limit(20);
 
-      setBookings(bookingsData || []);
+      // Fetch student profiles for bookings
+      const studentIds = [...new Set((bookingsData || []).map(b => b.student_id))];
+      const { data: studentsData } = await supabase
+        .from("profiles")
+        .select("id, full_name, email, avatar_url")
+        .in("id", studentIds);
+
+      const studentsMap = new Map(studentsData?.map(s => [s.id, s]) || []);
+      
+      const bookingsWithStudents = (bookingsData || []).map(b => ({
+        ...b,
+        student: studentsMap.get(b.student_id) || null,
+      }));
+
+      setBookings(bookingsWithStudents);
 
       // Fetch transactions
       const { data: transactionsData } = await supabase
@@ -342,13 +362,24 @@ export default function InstructorDashboard() {
                           key={booking.id}
                           className="flex items-center justify-between p-4 bg-yellow-50 rounded-lg"
                         >
-                          <div>
-                            <p className="font-medium">
-                              {format(new Date(booking.scheduled_date), "dd 'de' MMMM", { locale: ptBR })} às {booking.scheduled_time.slice(0, 5)}
-                            </p>
-                            <p className="text-sm text-gray-600">
-                              {booking.duration_minutes} min • {formatPrice(Number(booking.instructor_amount))}
-                            </p>
+                          <div className="flex items-center gap-3">
+                            <Avatar className="h-10 w-10">
+                              <AvatarImage src={booking.student?.avatar_url || undefined} />
+                              <AvatarFallback className="bg-[#0A2F44] text-white">
+                                {booking.student?.full_name?.charAt(0) || "A"}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div>
+                              <p className="font-medium">
+                                {booking.student?.full_name || "Aluno"}
+                              </p>
+                              <p className="text-sm text-gray-600">
+                                {format(new Date(booking.scheduled_date), "dd 'de' MMMM", { locale: ptBR })} às {booking.scheduled_time.slice(0, 5)}
+                              </p>
+                              <p className="text-xs text-gray-500">
+                                {booking.duration_minutes} min • {formatPrice(Number(booking.instructor_amount))}
+                              </p>
+                            </div>
                           </div>
                           <div className="flex gap-2">
                             <Button
@@ -392,22 +423,40 @@ export default function InstructorDashboard() {
                       {bookings.map((booking) => (
                         <div
                           key={booking.id}
-                          className="flex items-center justify-between p-4 border rounded-lg"
+                          className="p-4 border rounded-lg"
                         >
-                          <div>
-                            <p className="font-medium">
-                              {format(new Date(booking.scheduled_date), "dd/MM/yyyy")} às {booking.scheduled_time.slice(0, 5)}
-                            </p>
-                            <p className="text-sm text-gray-600">
-                              {booking.duration_minutes} min
-                            </p>
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <Avatar className="h-10 w-10">
+                                <AvatarImage src={booking.student?.avatar_url || undefined} />
+                                <AvatarFallback className="bg-[#0A2F44] text-white">
+                                  {booking.student?.full_name?.charAt(0) || "A"}
+                                </AvatarFallback>
+                              </Avatar>
+                              <div>
+                                <p className="font-medium">
+                                  {booking.student?.full_name || "Aluno"}
+                                </p>
+                                <p className="text-sm text-gray-600">
+                                  {format(new Date(booking.scheduled_date), "dd/MM/yyyy")} às {booking.scheduled_time.slice(0, 5)} • {booking.duration_minutes} min
+                                </p>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-4">
+                              <span className="font-medium">
+                                {formatPrice(Number(booking.instructor_amount))}
+                              </span>
+                              {getStatusBadge(booking.status)}
+                            </div>
                           </div>
-                          <div className="flex items-center gap-4">
-                            <span className="font-medium">
-                              {formatPrice(Number(booking.instructor_amount))}
-                            </span>
-                            {getStatusBadge(booking.status)}
-                            {booking.status === "confirmed" && (
+                          
+                          {/* Show student contact for confirmed bookings */}
+                          {booking.status === "confirmed" && booking.student?.email && (
+                            <div className="mt-3 p-3 bg-green-50 rounded-lg flex items-center justify-between">
+                              <div className="text-sm">
+                                <span className="text-gray-600">Contato do aluno: </span>
+                                <span className="font-medium">{booking.student.email}</span>
+                              </div>
                               <Button
                                 size="sm"
                                 variant="outline"
@@ -415,8 +464,20 @@ export default function InstructorDashboard() {
                               >
                                 Marcar concluída
                               </Button>
-                            )}
-                          </div>
+                            </div>
+                          )}
+                          
+                          {booking.status === "confirmed" && !booking.student?.email && (
+                            <div className="mt-3 flex justify-end">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleUpdateBookingStatus(booking.id, "completed")}
+                              >
+                                Marcar concluída
+                              </Button>
+                            </div>
+                          )}
                         </div>
                       ))}
                     </div>
