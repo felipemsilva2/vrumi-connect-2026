@@ -29,6 +29,12 @@ const TermosDeUso = lazy(() => import("@/pages/TermosDeUso"));
 const PoliticaPrivacidade = lazy(() => import("@/pages/PoliticaPrivacidade"));
 const CNHSocial = lazy(() => import("@/pages/CNHSocial"));
 
+// Vrumi Connect pages
+const ConnectHome = lazy(() => import("@/pages/connect/ConnectHome"));
+const InstructorProfile = lazy(() => import("@/pages/connect/InstructorProfile"));
+const InstructorRegistration = lazy(() => import("@/pages/connect/InstructorRegistration"));
+const BookingFlow = lazy(() => import("@/pages/connect/BookingFlow"));
+const InstructorDashboard = lazy(() => import("@/pages/connect/InstructorDashboard"));
 
 
 const ProtectedAdminRoute = ({ children }: { children: React.ReactNode }) => {
@@ -89,7 +95,12 @@ const App = () => (
                 <Route path="/politica-de-privacidade" element={<PoliticaPrivacidade />} />
                 <Route path="/cnh-social" element={<CNHSocial />} />
 
-
+                {/* Vrumi Connect routes */}
+                <Route path="/connect" element={<ConnectHome />} />
+                <Route path="/connect/instrutor/:id" element={<InstructorProfile />} />
+                <Route path="/connect/cadastro-instrutor" element={<InstructorRegistration />} />
+                <Route path="/connect/agendar/:instructorId" element={<BookingFlow />} />
+                <Route path="/connect/painel-instrutor" element={<InstructorDashboard />} />
 
                 <Route path="/pagamento" element={<Checkout />} />
                 <Route path="/pagamento/sucesso" element={<CheckoutSuccess />} />
