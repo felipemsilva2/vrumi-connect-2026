@@ -153,7 +153,7 @@ export default function ConnectHome() {
                         </DropdownMenuItem>
                       </Link>
                       {isInstructor && (
-                        <Link to="/connect/instrutor">
+                        <Link to="/connect/painel-instrutor">
                           <DropdownMenuItem className="cursor-pointer">
                             <LayoutDashboard className="h-4 w-4 mr-2" />
                             Painel do Instrutor
