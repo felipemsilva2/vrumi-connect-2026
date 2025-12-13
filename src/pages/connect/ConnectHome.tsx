@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useSearchParams, Link } from "react-router-dom";
-import { Search, MapPin, Car, Star, Filter, ChevronRight } from "lucide-react";
+import { Search, MapPin, Car, Star, Filter, ChevronRight, User, Calendar, LayoutDashboard } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { SEOHead } from "@/components/SEOHead";
 import { Skeleton } from "@/components/ui/skeleton";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 interface Instructor {
   id: string;
@@ -38,10 +39,28 @@ export default function ConnectHome() {
   const [state, setState] = useState(searchParams.get("state") || "");
   const [city, setCity] = useState(searchParams.get("city") || "");
   const [category, setCategory] = useState(searchParams.get("category") || "");
+  const [user, setUser] = useState<any>(null);
+  const [isInstructor, setIsInstructor] = useState(false);
 
   useEffect(() => {
+    checkUserAndInstructor();
     fetchInstructors();
   }, [state, city, category]);
+
+  const checkUserAndInstructor = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    setUser(user);
+    
+    if (user) {
+      const { data: instructor } = await supabase
+        .from("instructors")
+        .select("id")
+        .eq("user_id", user.id)
+        .single();
+      
+      setIsInstructor(!!instructor);
+    }
+  };
 
   const fetchInstructors = async () => {
     setLoading(true);
@@ -105,16 +124,59 @@ export default function ConnectHome() {
                 <span className="text-xl font-semibold">Vrumi Connect</span>
               </Link>
               <div className="flex items-center gap-4">
-                <Link to="/connect/cadastro-instrutor">
-                  <Button variant="outline" className="border-white/30 text-white hover:bg-white/10">
-                    Seja um Instrutor
-                  </Button>
-                </Link>
-                <Link to="/entrar?redirect=/connect">
-                  <Button className="bg-white text-[#0A2F44] hover:bg-white/90">
-                    Entrar
-                  </Button>
-                </Link>
+                {!user ? (
+                  <>
+                    <Link to="/connect/cadastro-instrutor">
+                      <Button variant="outline" className="border-white/30 text-white hover:bg-white/10">
+                        Seja um Instrutor
+                      </Button>
+                    </Link>
+                    <Link to="/entrar?redirect=/connect">
+                      <Button className="bg-white text-[#0A2F44] hover:bg-white/90">
+                        Entrar
+                      </Button>
+                    </Link>
+                  </>
+                ) : (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button className="bg-white text-[#0A2F44] hover:bg-white/90">
+                        <User className="h-4 w-4 mr-2" />
+                        Minha Conta
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-56">
+                      <Link to="/connect/minhas-aulas">
+                        <DropdownMenuItem className="cursor-pointer">
+                          <Calendar className="h-4 w-4 mr-2" />
+                          Minhas Aulas
+                        </DropdownMenuItem>
+                      </Link>
+                      {isInstructor && (
+                        <Link to="/connect/instrutor">
+                          <DropdownMenuItem className="cursor-pointer">
+                            <LayoutDashboard className="h-4 w-4 mr-2" />
+                            Painel do Instrutor
+                          </DropdownMenuItem>
+                        </Link>
+                      )}
+                      {!isInstructor && (
+                        <Link to="/connect/cadastro-instrutor">
+                          <DropdownMenuItem className="cursor-pointer">
+                            <Car className="h-4 w-4 mr-2" />
+                            Seja um Instrutor
+                          </DropdownMenuItem>
+                        </Link>
+                      )}
+                      <DropdownMenuSeparator />
+                      <Link to="/dashboard">
+                        <DropdownMenuItem className="cursor-pointer">
+                          Voltar ao Vrumi
+                        </DropdownMenuItem>
+                      </Link>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                )}
               </div>
             </div>
           </div>
