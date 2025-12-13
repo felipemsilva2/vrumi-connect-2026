@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 // Lazy load admin pages
 const AdminDashboard = lazy(() => import("@/pages/admin/AdminDashboard"));
 const AdminUsers = lazy(() => import("@/pages/admin/AdminUsers"));
+const AdminInstructors = lazy(() => import("@/pages/admin/AdminInstructors"));
 const AdminRoles = lazy(() => import("@/pages/admin/AdminRoles"));
 const AdminSubscriptions = lazy(() => import("@/pages/admin/AdminSubscriptions"));
 const AdminAuditLogs = lazy(() => import("@/pages/admin/AdminAuditLogs"));
@@ -100,6 +101,11 @@ const AdminApp = () => (
                                 <Route path="/usuarios" element={
                                     <ProtectedAdminRoute>
                                         <AdminUsers />
+                                    </ProtectedAdminRoute>
+                                } />
+                                <Route path="/instrutores" element={
+                                    <ProtectedAdminRoute>
+                                        <AdminInstructors />
                                     </ProtectedAdminRoute>
                                 } />
                                 <Route path="/assinaturas" element={

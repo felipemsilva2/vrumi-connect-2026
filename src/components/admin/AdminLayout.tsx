@@ -1,6 +1,6 @@
 import { ReactNode } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Car, Users, CreditCard, Shield, FileText, MessageSquare, LogOut, FileSearch, TrafficCone, LifeBuoy, Sparkles } from "lucide-react";
+import { Car, Users, CreditCard, Shield, FileText, MessageSquare, LogOut, FileSearch, TrafficCone, LifeBuoy, Sparkles, GraduationCap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { supabase } from "@/integrations/supabase/client";
@@ -14,6 +14,7 @@ interface AdminLayoutProps {
 const menuItems = [
   { path: "/painel", label: "Dashboard", icon: Car },
   { path: "/usuarios", label: "Usuários", icon: Users },
+  { path: "/instrutores", label: "Instrutores", icon: GraduationCap },
   { path: "/assinaturas", label: "Assinaturas", icon: CreditCard },
   { path: "/funcoes", label: "Permissões", icon: Shield },
   { path: "/logs-auditoria", label: "Logs de Auditoria", icon: FileSearch },
