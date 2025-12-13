@@ -24,6 +24,7 @@ import { useActivePass } from "@/hooks/useActivePass";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { StudentBookings } from "@/components/connect/StudentBookings";
 
 interface DashboardHomeProps {
     user: any;
@@ -780,6 +781,13 @@ export const DashboardHome = ({ user, profile, setSelected }: DashboardHomeProps
                     )}
                 </CardContent>
             </Card>
+
+            {/* Vrumi Connect - Minhas Aulas */}
+            {user?.id && (
+                <div className="mt-6">
+                    <StudentBookings userId={user.id} />
+                </div>
+            )}
         </>
     )
 }

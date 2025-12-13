@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { 
   Calendar, Clock, DollarSign, Star, Users, Settings, 
-  ChevronRight, CheckCircle, XCircle, AlertCircle, Car
+  ChevronRight, CheckCircle, XCircle, AlertCircle, Car, User
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,6 +15,7 @@ import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { AvailabilityManager } from "@/components/connect/AvailabilityManager";
+import { InstructorPhotoUpload } from "@/components/connect/InstructorPhotoUpload";
 
 interface Instructor {
   id: string;
@@ -54,6 +55,7 @@ export default function InstructorDashboard() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [instructor, setInstructor] = useState<Instructor | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
@@ -90,6 +92,7 @@ export default function InstructorDashboard() {
       }
 
       setInstructor(instructorData);
+      setUserId(session.user.id);
 
       // Fetch bookings
       const { data: bookingsData } = await supabase
@@ -320,6 +323,7 @@ export default function InstructorDashboard() {
               <TabsTrigger value="bookings">Aulas</TabsTrigger>
               <TabsTrigger value="earnings">Ganhos</TabsTrigger>
               <TabsTrigger value="availability">Disponibilidade</TabsTrigger>
+              <TabsTrigger value="profile">Meu Perfil</TabsTrigger>
             </TabsList>
 
             <TabsContent value="bookings" className="space-y-6">
@@ -487,6 +491,69 @@ export default function InstructorDashboard() {
             <TabsContent value="availability">
               {instructor && (
                 <AvailabilityManager instructorId={instructor.id} />
+              )}
+            </TabsContent>
+
+            <TabsContent value="profile">
+              {instructor && userId && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg text-[#0A2F44] flex items-center gap-2">
+                      <User className="h-5 w-5" />
+                      Meu Perfil
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    <div className="flex flex-col items-center">
+                      <InstructorPhotoUpload
+                        instructorId={instructor.id}
+                        userId={userId}
+                        currentPhotoUrl={instructor.photo_url}
+                        onPhotoUpdated={(newUrl) => 
+                          setInstructor(prev => prev ? { ...prev, photo_url: newUrl } : null)
+                        }
+                      />
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t">
+                      <div>
+                        <p className="text-sm text-gray-500">Nome</p>
+                        <p className="font-medium text-[#0A2F44]">{instructor.full_name}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500">Localização</p>
+                        <p className="font-medium text-[#0A2F44]">{instructor.city}, {instructor.state}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500">Avaliação</p>
+                        <p className="font-medium text-[#0A2F44] flex items-center gap-1">
+                          <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                          {instructor.average_rating.toFixed(1)} ({instructor.total_reviews} avaliações)
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500">Total de aulas</p>
+                        <p className="font-medium text-[#0A2F44]">{instructor.total_lessons}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500">Status</p>
+                        <Badge variant={instructor.status === "approved" ? "default" : "secondary"}>
+                          {instructor.status === "approved" ? "Aprovado" : 
+                           instructor.status === "pending" ? "Em análise" : instructor.status}
+                        </Badge>
+                      </div>
+                      {instructor.is_verified && (
+                        <div>
+                          <p className="text-sm text-gray-500">Verificação</p>
+                          <Badge className="bg-[#2F7B3A]">
+                            <CheckCircle className="h-3 w-3 mr-1" />
+                            Verificado
+                          </Badge>
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
               )}
             </TabsContent>
           </Tabs>
