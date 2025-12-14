@@ -1,5 +1,14 @@
 import { motion } from "framer-motion";
 import { ChevronDown } from "lucide-react";
+import { Suspense, lazy } from "react";
+
+const HeroScene = lazy(() => import("@/components/three/HeroScene"));
+
+const HeroSceneFallback = () => (
+  <div className="absolute inset-0 -z-10 flex items-center justify-center">
+    <div className="w-16 h-16 border-4 border-primary/30 border-t-primary rounded-full animate-spin" />
+  </div>
+);
 
 const InstitutionalHero = () => {
   const scrollToSolutions = () => {
@@ -11,13 +20,18 @@ const InstitutionalHero = () => {
 
   return (
     <section className="relative min-h-screen w-full overflow-hidden bg-background">
+      {/* 3D Scene */}
+      <Suspense fallback={<HeroSceneFallback />}>
+        <HeroScene />
+      </Suspense>
+
       {/* Subtle Grid */}
       <div
-        className="absolute inset-0"
+        className="absolute inset-0 -z-5"
         style={{
           backgroundImage: `
-            linear-gradient(hsl(var(--border) / 0.3) 1px, transparent 1px),
-            linear-gradient(90deg, hsl(var(--border) / 0.3) 1px, transparent 1px)
+            linear-gradient(hsl(var(--border) / 0.15) 1px, transparent 1px),
+            linear-gradient(90deg, hsl(var(--border) / 0.15) 1px, transparent 1px)
           `,
           backgroundSize: "100px 100px",
         }}
