@@ -55,6 +55,20 @@
         --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
         --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
         --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+
+        /* Vrumi Connect - Navy Theme */
+        --connect-primary: 210 70% 20%;
+        /* Navy Blue #0F2A44 */
+        --connect-primary-light: 210 60% 30%;
+        /* Lighter Navy #2A4A6A */
+        --connect-primary-dark: 210 80% 12%;
+        /* Darker Navy #0A1F33 */
+        --connect-accent: 38 92% 50%;
+        /* Gold/Amber #F59E0B */
+        --connect-accent-light: 38 92% 60%;
+        /* Light Gold */
+        --connect-surface: 210 30% 96%;
+        /* Light Surface #F1F5F9 */
     }
 
     .dark {
