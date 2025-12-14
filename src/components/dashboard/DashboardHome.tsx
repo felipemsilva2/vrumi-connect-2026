@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
+import { motion } from "framer-motion";
 import {
     BookOpen,
     Target,
@@ -17,6 +18,7 @@ import {
     CreditCard,
     Search,
 } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useMateriaisHierarchy } from "@/hooks/useMateriaisHierarchy";
 import { supabase, isSupabaseConfigured } from "@/integrations/supabase/client";
@@ -25,6 +27,140 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { StudentBookings } from "@/components/connect/StudentBookings";
+
+// 3D Metric Card Component
+interface Metric3DCardProps {
+    icon: React.ComponentType<{ className?: string }>;
+    title: string;
+    value: string | number;
+    subtitle: string;
+    bgColor: string;
+    iconColor: string;
+    textColor: string;
+    valueColor: string;
+    index: number;
+    onClick?: () => void;
+}
+
+const Metric3DCard: React.FC<Metric3DCardProps> = ({
+    icon: Icon,
+    title,
+    value,
+    subtitle,
+    bgColor,
+    iconColor,
+    textColor,
+    valueColor,
+    index,
+    onClick,
+}) => {
+    const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+    const [hovered, setHovered] = useState(false);
+
+    const handleMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+        const rect = e.currentTarget.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        setMousePos({
+            x: (x / rect.width - 0.5) * 12,
+            y: (y / rect.height - 0.5) * -12,
+        });
+    }, []);
+
+    const handleEnter = useCallback(() => setHovered(true), []);
+    const handleLeave = useCallback(() => {
+        setHovered(false);
+        setMousePos({ x: 0, y: 0 });
+    }, []);
+
+    return (
+        <motion.div
+            initial={{ opacity: 0, y: 20, rotateX: -10 }}
+            animate={{ opacity: 1, y: 0, rotateX: 0 }}
+            transition={{ duration: 0.4, delay: index * 0.08 }}
+            className="h-full"
+            style={{ transformStyle: "preserve-3d" }}
+        >
+            <motion.div
+                className={cn(
+                    "relative p-6 sm:p-8 h-full rounded-2xl border-none shadow-none transform-gpu transition-all duration-300",
+                    bgColor,
+                    onClick && "cursor-pointer"
+                )}
+                onMouseMove={handleMove}
+                onMouseEnter={handleEnter}
+                onMouseLeave={handleLeave}
+                onClick={onClick}
+                animate={{
+                    rotateX: mousePos.y,
+                    rotateY: mousePos.x,
+                    z: hovered ? 15 : 0,
+                    scale: hovered ? 1.02 : 1,
+                }}
+                transition={{ type: "spring", stiffness: 300, damping: 25 }}
+                style={{ transformStyle: "preserve-3d", perspective: "1000px" }}
+                role={onClick ? "button" : undefined}
+                tabIndex={onClick ? 0 : undefined}
+                onKeyDown={onClick ? (e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        onClick();
+                    }
+                } : undefined}
+            >
+                {/* Shimmer effect */}
+                <motion.div
+                    className="absolute inset-0 rounded-2xl overflow-hidden pointer-events-none"
+                    style={{ transform: "translateZ(3px)" }}
+                >
+                    <motion.div
+                        className="absolute -inset-full"
+                        animate={{
+                            background: hovered
+                                ? `linear-gradient(${mousePos.x + 135}deg, transparent 40%, rgba(255,255,255,0.3) 50%, transparent 60%)`
+                                : "transparent",
+                        }}
+                        transition={{ duration: 0.3 }}
+                    />
+                </motion.div>
+
+                <div className="relative z-10" style={{ transform: "translateZ(10px)" }}>
+                    <div className="flex items-center justify-between mb-4">
+                        <motion.div
+                            className="p-2 bg-white rounded-full"
+                            animate={{ scale: hovered ? 1.1 : 1 }}
+                            transition={{ duration: 0.3 }}
+                        >
+                            <Icon className={cn("h-5 w-5", iconColor)} />
+                        </motion.div>
+                        <motion.div
+                            animate={{ y: hovered ? -2 : 0 }}
+                            transition={{ duration: 0.3 }}
+                        >
+                            <TrendingUp className={cn("h-4 w-4", iconColor)} />
+                        </motion.div>
+                    </div>
+                    <h3 className={cn("font-semibold mb-1 drop-shadow-sm", textColor)}>{title}</h3>
+                    <motion.p
+                        className={cn("text-2xl font-bold drop-shadow-sm", valueColor)}
+                        animate={{ scale: hovered ? 1.05 : 1 }}
+                        transition={{ duration: 0.3 }}
+                    >
+                        {value}
+                    </motion.p>
+                    <p className={cn("text-sm font-medium mt-1", textColor, "opacity-90")}>{subtitle}</p>
+                </div>
+
+                {/* Bottom accent line */}
+                <motion.div
+                    className={cn("absolute bottom-0 left-0 right-0 h-1 rounded-b-2xl", valueColor.replace("text-", "bg-"))}
+                    animate={{ opacity: hovered ? 0.5 : 0, scaleX: hovered ? 1 : 0.3 }}
+                    transition={{ duration: 0.3 }}
+                />
+            </motion.div>
+        </motion.div>
+    );
+};
 
 interface DashboardHomeProps {
     user: any;
@@ -439,94 +575,71 @@ export const DashboardHome = ({ user, profile, setSelected }: DashboardHomeProps
 
     return (
         <>
-            {/* Cards de Métricas Principais */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 lg:gap-6 mb-6 lg:mb-8" data-tutorial="dashboard">
-                <Card variant="elevated" interactive={true} className="p-6 sm:p-8 h-full bg-[#FEF3E2] border-none shadow-none">
-                    <div className="flex items-center justify-between mb-4">
-                        <div className="p-2 bg-white rounded-full">
-                            <BookOpen className="h-5 w-5 text-orange-700" />
-                        </div>
-                        <TrendingUp className="h-4 w-4 text-orange-700" />
-                    </div>
-                    <h3 className="font-semibold text-orange-800 mb-1 drop-shadow-sm">Flashcards Estudados</h3>
-                    <p className="text-2xl font-bold text-orange-700 drop-shadow-sm">
-                        {aggregates?.total_flashcards_studied || 0}
-                    </p>
-                    <p className="text-sm text-orange-800/90 font-medium mt-1">Continue estudando!</p>
-                </Card>
+            {/* Cards de Métricas Principais com efeito 3D */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 lg:gap-6 mb-6 lg:mb-8" data-tutorial="dashboard" style={{ perspective: "1500px" }}>
+                <Metric3DCard
+                    icon={BookOpen}
+                    title="Flashcards Estudados"
+                    value={aggregates?.total_flashcards_studied || 0}
+                    subtitle="Continue estudando!"
+                    bgColor="bg-[#FEF3E2]"
+                    iconColor="text-orange-700"
+                    textColor="text-orange-800"
+                    valueColor="text-orange-700"
+                    index={0}
+                />
 
-                <Card variant="elevated" interactive={true} className="p-6 sm:p-8 h-full bg-[#D1FAE5] border-none shadow-none">
-                    <div className="flex items-center justify-between mb-4">
-                        <div className="p-2 bg-white rounded-full">
-                            <Trophy className="h-5 w-5 text-emerald-700" />
-                        </div>
-                        <TrendingUp className="h-4 w-4 text-emerald-700" />
-                    </div>
-                    <h3 className="font-semibold text-emerald-800 mb-1 drop-shadow-sm">Taxa de Acerto</h3>
-                    <p className="text-2xl font-bold text-emerald-700 drop-shadow-sm">{successRate}%</p>
-                    <p className="text-sm text-emerald-800/90 font-medium mt-1">Excelente desempenho!</p>
-                </Card>
+                <Metric3DCard
+                    icon={Trophy}
+                    title="Taxa de Acerto"
+                    value={`${successRate}%`}
+                    subtitle="Excelente desempenho!"
+                    bgColor="bg-[#D1FAE5]"
+                    iconColor="text-emerald-700"
+                    textColor="text-emerald-800"
+                    valueColor="text-emerald-700"
+                    index={1}
+                />
 
-                <Card variant="elevated" interactive={true} className="p-6 sm:p-8 h-full bg-[#FCE7F3] border-none shadow-none">
-                    <div className="flex items-center justify-between mb-4">
-                        <div className="p-2 bg-white rounded-full">
-                            <Target className="h-5 w-5 text-pink-700" />
-                        </div>
-                        <TrendingUp className="h-4 w-4 text-pink-700" />
-                    </div>
-                    <h3 className="font-semibold text-pink-800 mb-1 drop-shadow-sm">Questões Respondidas</h3>
-                    <p className="text-2xl font-bold text-pink-700 drop-shadow-sm">
-                        {aggregates?.total_questions_answered || 0}
-                    </p>
-                    <p className="text-sm text-pink-800/90 font-medium mt-1">Meta: 500 questões</p>
-                </Card>
+                <Metric3DCard
+                    icon={Target}
+                    title="Questões Respondidas"
+                    value={aggregates?.total_questions_answered || 0}
+                    subtitle="Meta: 500 questões"
+                    bgColor="bg-[#FCE7F3]"
+                    iconColor="text-pink-700"
+                    textColor="text-pink-800"
+                    valueColor="text-pink-700"
+                    index={2}
+                />
 
-                <Card variant="elevated" interactive={true} className="p-6 sm:p-8 h-full bg-[#DBEAFE] border-none shadow-none">
-                    <div className="flex items-center justify-between mb-4">
-                        <div className="p-2 bg-white rounded-full">
-                            <BarChart3 className="h-5 w-5 text-blue-700" />
-                        </div>
-                        <TrendingUp className="h-4 w-4 text-blue-700" />
-                    </div>
-                    <h3 className="font-semibold text-blue-800 mb-1 drop-shadow-sm">Progresso Geral</h3>
-                    <p className="text-2xl font-bold text-blue-700 drop-shadow-sm">
-                        {aggregates?.study_progress || 0}%
-                    </p>
-                    <p className="text-sm text-blue-800/90 font-medium mt-1">Continue assim!</p>
-                </Card>
+                <Metric3DCard
+                    icon={BarChart3}
+                    title="Progresso Geral"
+                    value={`${aggregates?.study_progress || 0}%`}
+                    subtitle="Continue assim!"
+                    bgColor="bg-[#DBEAFE]"
+                    iconColor="text-blue-700"
+                    textColor="text-blue-800"
+                    valueColor="text-blue-700"
+                    index={3}
+                />
 
-                {/* Placas de Trânsito */}
-                <Card
-                    variant="elevated"
-                    interactive={true}
-                    className="p-6 sm:p-8 h-full cursor-pointer bg-[#FEF3C7] border-none shadow-none"
+                <Metric3DCard
+                    icon={TrafficCone}
+                    title="Placas Estudadas"
+                    value={`${trafficSignsStats.studied} de ${trafficSignsStats.total}`}
+                    subtitle={`Confiança: ${trafficSignsStats.confidence}%`}
+                    bgColor="bg-[#FEF3C7]"
+                    iconColor="text-amber-700"
+                    textColor="text-amber-800"
+                    valueColor="text-amber-700"
+                    index={4}
                     onClick={() => {
                         console.log('Navigating to Biblioteca de Placas...')
                         setSelected("Biblioteca de Placas")
                     }}
-                    role="button"
-                    tabIndex={0}
-                    onKeyDown={(e) => {
-                        if (e.key === 'Enter' || e.key === ' ') {
-                            e.preventDefault();
-                            setSelected("Biblioteca de Placas");
-                        }
-                    }}
-                >
-                    <div className="flex items-center justify-between mb-4">
-                        <div className="p-2 bg-white rounded-full">
-                            <TrafficCone className="h-5 w-5 text-amber-700" />
-                        </div>
-                        <TrendingUp className="h-4 w-4 text-amber-700" />
-                    </div>
-                    <h3 className="font-semibold text-amber-800 mb-1 drop-shadow-sm">Placas Estudadas</h3>
-                    <p className="text-2xl font-bold text-amber-700 drop-shadow-sm">
-                        {trafficSignsStats.studied} de {trafficSignsStats.total}
-                    </p>
-                    <p className="text-sm text-amber-800/90 font-medium mt-1">
-                        Confiança: {trafficSignsStats.confidence}%
-                    </p>
-                </Card>
+                />
             </div>
 
             {/* Seção de Revisões e Progresso */}
