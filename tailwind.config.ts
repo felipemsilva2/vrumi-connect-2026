@@ -69,6 +69,15 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        // Vrumi Connect Theme
+        connect: {
+          DEFAULT: "hsl(var(--connect-primary))",
+          light: "hsl(var(--connect-primary-light))",
+          dark: "hsl(var(--connect-primary-dark))",
+          accent: "hsl(var(--connect-accent))",
+          "accent-light": "hsl(var(--connect-accent-light))",
+          surface: "hsl(var(--connect-surface))",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",
