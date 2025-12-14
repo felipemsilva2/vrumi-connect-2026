@@ -334,7 +334,7 @@ export default function ConnectHome() {
           <div className="container mx-auto px-4 py-4">
             <div className="flex items-center justify-between">
               <Link to="/connect" className="flex items-center gap-3 group">
-                <img src="/logo-vrumi.png" alt="Vrumi Connect" className="h-14 w-auto" />
+                <img src="/logo-vrumi.png" alt="Vrumi Connect" className="h-10 w-auto" />
                 
               </Link>
               
