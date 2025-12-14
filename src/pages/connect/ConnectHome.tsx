@@ -326,11 +326,13 @@ export default function ConnectHome() {
           <div className="container mx-auto px-4 py-4">
             <div className="flex items-center justify-between">
               <Link to="/connect" className="flex items-center gap-3 group">
-                <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center group-hover:bg-white/20 transition-colors">
-                  <Car className="h-6 w-6" />
-                </div>
+                <img 
+                  src="/logo-vrumi.png" 
+                  alt="Vrumi Connect" 
+                  className="h-10 w-auto"
+                />
                 <div>
-                  <span className="text-xl font-bold tracking-tight">Vrumi Connect</span>
+                  <span className="text-xl font-bold tracking-tight">Connect</span>
                   <span className="block text-xs text-white/60">Instrutores Verificados</span>
                 </div>
               </Link>
