@@ -56,19 +56,19 @@
         --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
         --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
 
-        /* Vrumi Connect - Purple Theme */
-        --connect-primary: 270 60% 40%;
-        /* Rich Purple #6B21A8 */
-        --connect-primary-light: 270 50% 55%;
-        /* Lighter Purple #9333EA */
-        --connect-primary-dark: 270 70% 25%;
-        /* Darker Purple #4C1D95 */
-        --connect-accent: 45 93% 58%;
-        /* Warm Gold #FBBF24 */
-        --connect-accent-light: 45 93% 68%;
-        /* Light Gold */
-        --connect-surface: 270 30% 98%;
-        /* Light Purple Surface #FAF5FF */
+        /* Vrumi Connect - Dark Slate Theme */
+        --connect-primary: 220 20% 20%;
+        /* Dark Slate #2D3748 */
+        --connect-primary-light: 220 15% 35%;
+        /* Lighter Slate #4A5568 */
+        --connect-primary-dark: 220 25% 12%;
+        /* Darker Slate #1A202C */
+        --connect-accent: 160 84% 39%;
+        /* Vrumi Green #10B981 */
+        --connect-accent-light: 160 70% 50%;
+        /* Light Green */
+        --connect-surface: 220 15% 97%;
+        /* Light Gray Surface #F7FAFC */
     }
 
     .dark {
