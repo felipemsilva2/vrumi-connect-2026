@@ -1,3 +1,4 @@
+import { createElement } from "react";
 import type { HeadingData } from "@/types/materiais";
 
 interface HeadingBlockProps {
@@ -5,7 +6,7 @@ interface HeadingBlockProps {
 }
 
 export const HeadingBlock = ({ data }: HeadingBlockProps) => {
-  const HeadingTag = `h${data.level}` as keyof JSX.IntrinsicElements;
+  const headingTag = `h${data.level}` as 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6';
   
   const className = {
     1: "text-3xl md:text-4xl font-bold text-foreground mt-8 mb-4",
@@ -16,5 +17,5 @@ export const HeadingBlock = ({ data }: HeadingBlockProps) => {
     6: "text-sm md:text-base font-medium text-foreground mt-2 mb-1"
   }[data.level];
 
-  return <HeadingTag className={className}>{data.text}</HeadingTag>;
+  return createElement(headingTag, { className }, data.text);
 };
