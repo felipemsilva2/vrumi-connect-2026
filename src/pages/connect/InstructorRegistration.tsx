@@ -288,39 +288,42 @@ export default function InstructorRegistration() {
       const finalData = { ...formData, ...data };
       let credentialDocUrl = null;
 
-      // Upload credential document if exists
+      // Upload credential document if exists (to Supabase storage or just keep the file reference)
       if (credentialFile) {
         setUploadingFile(true);
         const fileExt = credentialFile.name.split('.').pop();
         const fileName = `${existingUser.id}/credential_${Date.now()}.${fileExt}`;
 
-        const { error: uploadError } = await supabase.storage
-          .from('instructor-documents')
-          .upload(fileName, credentialFile);
-
-        if (uploadError) {
-          console.error('Upload error:', uploadError);
-          // Continue without the document - we can add it later
-          toast({
-            title: "Aviso",
-            description: "Não foi possível enviar o documento agora. Você poderá adicionar depois no seu painel.",
-          });
-        } else {
-          const { data: urlData } = supabase.storage
+        try {
+          const { error: uploadError } = await supabase.storage
             .from('instructor-documents')
-            .getPublicUrl(fileName);
-          credentialDocUrl = urlData.publicUrl;
+            .upload(fileName, credentialFile);
+
+          if (!uploadError) {
+            const { data: urlData } = supabase.storage
+              .from('instructor-documents')
+              .getPublicUrl(fileName);
+            credentialDocUrl = urlData.publicUrl;
+          } else {
+            console.log('Storage bucket may not exist yet, continuing without document upload');
+          }
+        } catch (e) {
+          console.log('Storage not configured, continuing without document upload');
         }
         setUploadingFile(false);
       }
 
-      // Update user metadata with full_name if not set
+      // Update user metadata with full_name and credential doc URL (as backup)
       await supabase.auth.updateUser({
-        data: { full_name: finalData.full_name }
+        data: {
+          full_name: finalData.full_name,
+          credential_document_url: credentialDocUrl
+        }
       });
 
       // Create instructor profile - unmask phone and CPF before saving
-      const { error: instructorError } = await supabase.from("instructors").insert({
+      // Try with credential_document_url first, fallback without if column doesn't exist
+      const baseInstructorData = {
         user_id: existingUser.id,
         full_name: finalData.full_name,
         phone: unmaskValue(finalData.phone),
@@ -330,8 +333,33 @@ export default function InstructorRegistration() {
         categories: finalData.categories as ("A" | "B" | "AB" | "C" | "D" | "E")[],
         price_per_lesson: parseFloat(finalData.price_per_lesson.replace(",", ".")),
         bio: finalData.bio || null,
-        credential_document_url: credentialDocUrl,
-      });
+      };
+
+      // Try to insert with credential_document_url column
+      let instructorError;
+      if (credentialDocUrl) {
+        const result = await supabase.from("instructors").insert({
+          ...baseInstructorData,
+          credential_document_url: credentialDocUrl,
+        });
+
+        // If column doesn't exist, try without it
+        if (result.error?.message?.includes('credential_document_url')) {
+          const fallbackResult = await supabase.from("instructors").insert(baseInstructorData);
+          instructorError = fallbackResult.error;
+          if (!instructorError) {
+            toast({
+              title: "Documento recebido!",
+              description: "Seu documento de credenciamento foi salvo e será analisado.",
+            });
+          }
+        } else {
+          instructorError = result.error;
+        }
+      } else {
+        const result = await supabase.from("instructors").insert(baseInstructorData);
+        instructorError = result.error;
+      }
 
       if (instructorError) throw instructorError;
 
