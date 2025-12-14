@@ -1,15 +1,17 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useSearchParams, Link } from "react-router-dom";
 import { Search, MapPin, Car, Star, Filter, ChevronRight, User, Calendar, LayoutDashboard } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { SEOHead } from "@/components/SEOHead";
 import { Skeleton } from "@/components/ui/skeleton";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { motion } from "framer-motion";
+import { cn } from "@/lib/utils";
 
 interface Instructor {
   id: string;
@@ -31,6 +33,83 @@ const BRAZILIAN_STATES = [
 ];
 
 const CNH_CATEGORIES = ["A", "B", "AB", "C", "D", "E"];
+
+// 3D Instructor Card Component
+const InstructorCard3D = ({ instructor, formatPrice, index }: { instructor: Instructor; formatPrice: (p: number) => string; index: number }) => {
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+  const [hovered, setHovered] = useState(false);
+
+  const handleMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    setMousePos({
+      x: (x / rect.width - 0.5) * 15,
+      y: (y / rect.height - 0.5) * -15,
+    });
+  }, []);
+
+  return (
+    <Link to={`/connect/instrutor/${instructor.id}`}>
+      <motion.div
+        className="overflow-hidden rounded-2xl bg-card border border-border cursor-pointer transform-gpu"
+        initial={{ opacity: 0, y: 40, rotateX: -10 }}
+        whileInView={{ opacity: 1, y: 0, rotateX: 0 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.5, delay: index * 0.05, type: "spring", stiffness: 100 }}
+        onMouseMove={handleMove}
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => { setHovered(false); setMousePos({ x: 0, y: 0 }); }}
+        animate={{
+          rotateX: mousePos.y,
+          rotateY: mousePos.x,
+          boxShadow: hovered ? "0 25px 50px -12px rgba(0, 0, 0, 0.25)" : "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
+        }}
+        style={{ transformStyle: "preserve-3d", perspective: "1200px" }}
+      >
+        <div className="relative h-48 bg-gray-100">
+          {instructor.photo_url ? (
+            <img src={instructor.photo_url} alt={instructor.full_name} className="w-full h-full object-cover" />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center bg-[#0A2F44]/10">
+              <span className="text-4xl font-bold text-[#0A2F44]/30">{instructor.full_name.charAt(0)}</span>
+            </div>
+          )}
+          {instructor.is_verified && (
+            <Badge className="absolute top-3 left-3 bg-[#2F7B3A] hover:bg-[#2F7B3A]">Verificado</Badge>
+          )}
+        </div>
+        <CardContent className="p-4">
+          <h3 className="font-semibold text-[#0A2F44] text-lg mb-1">{instructor.full_name}</h3>
+          <div className="flex items-center text-gray-500 text-sm mb-2">
+            <MapPin className="h-4 w-4 mr-1" />
+            {instructor.city}, {instructor.state}
+          </div>
+          <div className="flex items-center gap-2 mb-3">
+            {instructor.categories.map((cat) => (
+              <Badge key={cat} variant="secondary" className="text-xs">{cat}</Badge>
+            ))}
+          </div>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center">
+              <Star className="h-4 w-4 text-yellow-500 fill-yellow-500 mr-1" />
+              <span className="font-medium">{Number(instructor.average_rating).toFixed(1)}</span>
+              <span className="text-gray-500 text-sm ml-1">({instructor.total_reviews})</span>
+            </div>
+            <div className="text-right">
+              <span className="text-lg font-bold text-[#0A2F44]">{formatPrice(Number(instructor.price_per_lesson))}</span>
+              <span className="text-gray-500 text-sm">/aula</span>
+            </div>
+          </div>
+          <Button className="w-full mt-4 bg-[#0A2F44] hover:bg-[#0A2F44]/90">
+            Ver perfil do instrutor
+            <ChevronRight className="h-4 w-4 ml-1" />
+          </Button>
+        </CardContent>
+      </motion.div>
+    </Link>
+  );
+};
 
 export default function ConnectHome() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -258,14 +337,14 @@ export default function ConnectHome() {
           {loading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {[...Array(8)].map((_, i) => (
-                <Card key={i} className="overflow-hidden">
+                <div key={i} className="rounded-2xl overflow-hidden border border-border bg-card">
                   <Skeleton className="h-48 w-full" />
-                  <CardContent className="p-4">
+                  <div className="p-4">
                     <Skeleton className="h-5 w-3/4 mb-2" />
                     <Skeleton className="h-4 w-1/2 mb-4" />
                     <Skeleton className="h-8 w-full" />
-                  </CardContent>
-                </Card>
+                  </div>
+                </div>
               ))}
             </div>
           ) : instructors.length === 0 ? (
@@ -279,67 +358,17 @@ export default function ConnectHome() {
               </p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {instructors.map((instructor) => (
-                <Link key={instructor.id} to={`/connect/instrutor/${instructor.id}`}>
-                  <Card className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer group">
-                    <div className="relative h-48 bg-gray-100">
-                      {instructor.photo_url ? (
-                        <img
-                          src={instructor.photo_url}
-                          alt={instructor.full_name}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center bg-[#0A2F44]/10">
-                          <span className="text-4xl font-bold text-[#0A2F44]/30">
-                            {instructor.full_name.charAt(0)}
-                          </span>
-                        </div>
-                      )}
-                      {instructor.is_verified && (
-                        <Badge className="absolute top-3 left-3 bg-[#2F7B3A] hover:bg-[#2F7B3A]">
-                          Verificado
-                        </Badge>
-                      )}
-                    </div>
-                    <CardContent className="p-4">
-                      <h3 className="font-semibold text-[#0A2F44] text-lg mb-1 group-hover:text-[#0A2F44]/80">
-                        {instructor.full_name}
-                      </h3>
-                      <div className="flex items-center text-gray-500 text-sm mb-2">
-                        <MapPin className="h-4 w-4 mr-1" />
-                        {instructor.city}, {instructor.state}
-                      </div>
-                      <div className="flex items-center gap-2 mb-3">
-                        {instructor.categories.map((cat) => (
-                          <Badge key={cat} variant="secondary" className="text-xs">
-                            {cat}
-                          </Badge>
-                        ))}
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center">
-                          <Star className="h-4 w-4 text-yellow-500 fill-yellow-500 mr-1" />
-                          <span className="font-medium">{Number(instructor.average_rating).toFixed(1)}</span>
-                          <span className="text-gray-500 text-sm ml-1">
-                            ({instructor.total_reviews})
-                          </span>
-                        </div>
-                        <div className="text-right">
-                          <span className="text-lg font-bold text-[#0A2F44]">
-                            {formatPrice(Number(instructor.price_per_lesson))}
-                          </span>
-                          <span className="text-gray-500 text-sm">/aula</span>
-                        </div>
-                      </div>
-                      <Button className="w-full mt-4 bg-[#0A2F44] hover:bg-[#0A2F44]/90 group-hover:bg-[#0A2F44]/90">
-                        Ver perfil do instrutor
-                        <ChevronRight className="h-4 w-4 ml-1" />
-                      </Button>
-                    </CardContent>
-                  </Card>
-                </Link>
+            <div 
+              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+              style={{ perspective: "1500px" }}
+            >
+              {instructors.map((instructor, index) => (
+                <InstructorCard3D 
+                  key={instructor.id} 
+                  instructor={instructor} 
+                  formatPrice={formatPrice}
+                  index={index}
+                />
               ))}
             </div>
           )}
