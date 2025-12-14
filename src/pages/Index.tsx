@@ -14,6 +14,8 @@ const InstitutionalFooter = lazy(() => import("@/components/institutional/Instit
 // Existing Components
 const LazyFAQ = lazy(() => import("@/components/FAQ"));
 const LazyTestimonials = lazy(() => import("@/components/Testimonials"));
+const LazyPricingSection = lazy(() => import("@/components/PricingSection"));
+const LazyFeaturesSection = lazy(() => import("@/components/FeaturesSection"));
 
 const Index = () => {
   const location = useLocation();
@@ -57,29 +59,43 @@ const Index = () => {
         <SolutionsSection />
       </Suspense>
 
-      {/* 3. Depoimentos */}
+      {/* 3. Preços */}
+      <section id="preço">
+        <Suspense fallback={<div className="py-20 text-center text-muted-foreground">Carregando...</div>}>
+          <LazyPricingSection />
+        </Suspense>
+      </section>
+
+      {/* 4. Vantagens */}
+      <section id="recursos">
+        <Suspense fallback={<div className="py-20 text-center text-muted-foreground">Carregando...</div>}>
+          <LazyFeaturesSection />
+        </Suspense>
+      </section>
+
+      {/* 5. Depoimentos */}
       <section id="depoimentos">
         <Suspense fallback={<div className="py-20 text-center text-muted-foreground">Carregando...</div>}>
           <LazyTestimonials />
         </Suspense>
       </section>
 
-      {/* 4. Destaque Vrumi Connect */}
+      {/* 6. Destaque Vrumi Connect */}
       <Suspense fallback={<div className="py-20 text-center text-muted-foreground">Carregando...</div>}>
         <ConnectHighlightSection />
       </Suspense>
 
-      {/* 5. A Nova Era - Contexto Legal */}
+      {/* 7. A Nova Era - Contexto Legal */}
       <Suspense fallback={<div className="py-20 text-center text-muted-foreground">Carregando...</div>}>
         <NewEraSection />
       </Suspense>
 
-      {/* 6. CTA para Instrutores */}
+      {/* 8. CTA para Instrutores */}
       <Suspense fallback={<div className="py-20 text-center text-muted-foreground">Carregando...</div>}>
         <InstructorCTASection />
       </Suspense>
 
-      {/* 7. FAQ */}
+      {/* 9. FAQ */}
       <section id="faq">
         <Suspense fallback={<div className="py-20 text-center text-muted-foreground">Carregando...</div>}>
           <LazyFAQ />
