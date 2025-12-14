@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import {
     View,
     Text,
@@ -15,12 +15,13 @@ import { router } from 'expo-router';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { useGamification } from '../../contexts/GamificationContext';
+import { useCache } from '../../contexts/CacheContext';
 import { supabase } from '../../src/lib/supabase';
 import { Alert } from 'react-native';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const CARD_WIDTH = SCREEN_WIDTH - 48;
-const CARD_HEIGHT = SCREEN_HEIGHT * 0.45;
+const CARD_HEIGHT = Math.min(SCREEN_HEIGHT * 0.45, 380);
 const SWIPE_THRESHOLD = 100;
 
 interface Flashcard {
@@ -33,59 +34,106 @@ export default function FlashcardsScreen() {
     const { theme, isDark } = useTheme();
     const { user } = useAuth();
     const { recordActivity } = useGamification();
+    const { isOffline, cacheFlashcards, getCachedFlashcards } = useCache();
     const [cards, setCards] = useState<Flashcard[]>([]);
     const [currentIndex, setCurrentIndex] = useState(0);
     const [isFlipped, setIsFlipped] = useState(false);
     const [loading, setLoading] = useState(true);
 
-    const position = useState(new Animated.ValueXY())[0];
+    const position = useRef(new Animated.ValueXY()).current;
+    const flipAnim = useRef(new Animated.Value(0)).current;
+    const scaleAnim = useRef(new Animated.Value(1)).current;
+
+    // Flip interpolations
+    const frontRotate = flipAnim.interpolate({
+        inputRange: [0, 1],
+        outputRange: ['0deg', '180deg'],
+    });
+    const backRotate = flipAnim.interpolate({
+        inputRange: [0, 1],
+        outputRange: ['180deg', '360deg'],
+    });
+    const frontOpacity = flipAnim.interpolate({
+        inputRange: [0, 0.5, 1],
+        outputRange: [1, 0, 0],
+    });
+    const backOpacity = flipAnim.interpolate({
+        inputRange: [0, 0.5, 1],
+        outputRange: [0, 0, 1],
+    });
 
     const fetchCards = useCallback(async () => {
         try {
+            if (isOffline) {
+                const cached = await getCachedFlashcards();
+                if (cached.length > 0) {
+                    setCards(cached.map(c => ({ id: c.id, question: c.front, answer: c.back })));
+                }
+                setLoading(false);
+                return;
+            }
+
             const { data, error } = await supabase
                 .from('flashcards')
                 .select('id, question, answer')
                 .limit(20);
 
             if (error) throw error;
-            setCards(data || []);
+
+            const flashcards = data || [];
+            setCards(flashcards);
+
+            if (flashcards.length > 0) {
+                await cacheFlashcards(flashcards.map(fc => ({
+                    id: fc.id,
+                    front: fc.question,
+                    back: fc.answer,
+                    category: 'general',
+                })));
+            }
         } catch (error) {
             console.error('Error fetching flashcards:', error);
+            const cached = await getCachedFlashcards();
+            if (cached.length > 0) {
+                setCards(cached.map(c => ({ id: c.id, question: c.front, answer: c.back })));
+            }
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [isOffline, cacheFlashcards, getCachedFlashcards]);
 
     useEffect(() => {
         fetchCards();
     }, [fetchCards]);
 
-    const panResponder = PanResponder.create({
-        onStartShouldSetPanResponder: () => true,
-        onPanResponderMove: (_, gesture) => {
-            position.setValue({ x: gesture.dx, y: 0 });
-        },
-        onPanResponderRelease: (_, gesture) => {
-            if (gesture.dx > SWIPE_THRESHOLD) {
-                handleSwipe('right');
-            } else if (gesture.dx < -SWIPE_THRESHOLD) {
-                handleSwipe('left');
-            } else {
-                Animated.spring(position, {
-                    toValue: { x: 0, y: 0 },
-                    useNativeDriver: false,
-                }).start();
-            }
-        },
-    });
+    const panResponder = useRef(
+        PanResponder.create({
+            onStartShouldSetPanResponder: () => !isFlipped,
+            onPanResponderMove: (_, gesture) => {
+                position.setValue({ x: gesture.dx, y: 0 });
+            },
+            onPanResponderRelease: (_, gesture) => {
+                if (gesture.dx > SWIPE_THRESHOLD) {
+                    handleSwipe('right');
+                } else if (gesture.dx < -SWIPE_THRESHOLD) {
+                    handleSwipe('left');
+                } else {
+                    Animated.spring(position, {
+                        toValue: { x: 0, y: 0 },
+                        useNativeDriver: true,
+                    }).start();
+                }
+            },
+        })
+    ).current;
 
     const handleSwipe = (direction: 'left' | 'right') => {
         const toValue = direction === 'right' ? SCREEN_WIDTH + 100 : -SCREEN_WIDTH - 100;
 
         Animated.timing(position, {
             toValue: { x: toValue, y: 0 },
-            duration: 250,
-            useNativeDriver: false,
+            duration: 200,
+            useNativeDriver: true,
         }).start(() => {
             nextCard();
         });
@@ -93,6 +141,7 @@ export default function FlashcardsScreen() {
 
     const nextCard = () => {
         setIsFlipped(false);
+        flipAnim.setValue(0);
         position.setValue({ x: 0, y: 0 });
         if (currentIndex < cards.length - 1) {
             setCurrentIndex(currentIndex + 1);
@@ -103,6 +152,19 @@ export default function FlashcardsScreen() {
 
     const flipCard = () => {
         setIsFlipped(!isFlipped);
+
+        // Scale animation
+        Animated.sequence([
+            Animated.timing(scaleAnim, { toValue: 0.95, duration: 80, useNativeDriver: true }),
+            Animated.timing(scaleAnim, { toValue: 1, duration: 80, useNativeDriver: true }),
+        ]).start();
+
+        Animated.spring(flipAnim, {
+            toValue: isFlipped ? 0 : 1,
+            friction: 6,
+            tension: 25,
+            useNativeDriver: true,
+        }).start();
     };
 
     const handleDifficulty = async (difficulty: 'easy' | 'medium' | 'hard') => {
@@ -111,7 +173,6 @@ export default function FlashcardsScreen() {
         const isCorrect = difficulty === 'easy';
 
         try {
-            // Update stats in Supabase
             await supabase
                 .from('user_flashcard_stats')
                 .upsert({
@@ -125,7 +186,6 @@ export default function FlashcardsScreen() {
                     onConflict: 'user_id,flashcard_id'
                 });
 
-            // Log activity
             await supabase.from('user_activities').insert({
                 user_id: user.id,
                 activity_type: 'flashcard_studied',
@@ -137,16 +197,6 @@ export default function FlashcardsScreen() {
                 created_at: new Date().toISOString(),
             });
 
-            // Show feedback and go to next card
-            const messages = {
-                easy: 'Este card será mostrado com menos frequência.',
-                medium: 'Vamos revisar este card novamente em breve.',
-                hard: 'Este card aparecerá com mais frequência.'
-            };
-
-            Alert.alert('Progresso salvo!', messages[difficulty]);
-
-            // Record XP for gamification
             const xpAmount = isCorrect ? 10 : 5;
             await recordActivity('flashcard', xpAmount, 'Flashcard estudado');
 
@@ -162,21 +212,17 @@ export default function FlashcardsScreen() {
 
     const cardRotation = position.x.interpolate({
         inputRange: [-SCREEN_WIDTH, 0, SCREEN_WIDTH],
-        outputRange: ['-10deg', '0deg', '10deg'],
+        outputRange: ['-8deg', '0deg', '8deg'],
     });
-
-    const cardStyle = {
-        transform: [
-            { translateX: position.x },
-            { rotate: cardRotation },
-        ],
-    };
 
     if (loading) {
         return (
             <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]} edges={['top']}>
                 <View style={styles.loadingContainer}>
                     <ActivityIndicator size="large" color={theme.primary} />
+                    <Text style={[styles.loadingText, { color: theme.textSecondary }]}>
+                        Carregando flashcards...
+                    </Text>
                 </View>
             </SafeAreaView>
         );
@@ -186,14 +232,23 @@ export default function FlashcardsScreen() {
         return (
             <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]} edges={['top']}>
                 <View style={styles.header}>
+                    <TouchableOpacity
+                        style={[styles.backButton, { backgroundColor: theme.card }]}
+                        onPress={() => router.replace('/(tabs)')}
+                    >
+                        <Ionicons name="arrow-back" size={22} color={theme.text} />
+                    </TouchableOpacity>
                     <Text style={[styles.title, { color: theme.text }]}>Flashcards</Text>
+                    <View style={{ width: 44 }} />
                 </View>
                 <View style={styles.emptyContainer}>
                     <View style={[styles.emptyIcon, { backgroundColor: theme.card }]}>
                         <Ionicons name="layers-outline" size={48} color={theme.textMuted} />
                     </View>
                     <Text style={[styles.emptyTitle, { color: theme.text }]}>Nenhum flashcard</Text>
-                    <Text style={[styles.emptySubtitle, { color: theme.textMuted }]}>Os cards serão adicionados em breve</Text>
+                    <Text style={[styles.emptySubtitle, { color: theme.textMuted }]}>
+                        Os cards serão adicionados em breve
+                    </Text>
                 </View>
             </SafeAreaView>
         );
@@ -203,83 +258,154 @@ export default function FlashcardsScreen() {
         <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]} edges={['top']}>
             {/* Header */}
             <View style={styles.header}>
-                <TouchableOpacity style={[styles.backButton, { backgroundColor: theme.card }]} onPress={() => router.replace('/(tabs)')}>
-                    <Ionicons name="arrow-back" size={24} color={theme.text} />
+                <TouchableOpacity
+                    style={[styles.backButton, { backgroundColor: theme.card }]}
+                    onPress={() => router.replace('/(tabs)')}
+                >
+                    <Ionicons name="arrow-back" size={22} color={theme.text} />
                 </TouchableOpacity>
-                <Text style={[styles.title, { color: theme.text }]}>Flashcards</Text>
-                <View style={[styles.progressBadge, { backgroundColor: theme.primaryLight }]}>
-                    <Text style={[styles.progressText, { color: theme.primary }]}>{currentIndex + 1}/{cards.length}</Text>
+
+                <View style={styles.headerCenter}>
+                    <Text style={[styles.title, { color: theme.text }]}>Flashcards</Text>
+                    <Text style={[styles.subtitle, { color: theme.textMuted }]}>
+                        {currentIndex + 1} de {cards.length}
+                    </Text>
+                </View>
+
+                <View style={[styles.offlineBadge, { opacity: isOffline ? 1 : 0 }]}>
+                    <Ionicons name="cloud-offline-outline" size={18} color={theme.warning} />
                 </View>
             </View>
 
             {/* Progress Bar */}
-            <View style={[styles.progressBarContainer, { backgroundColor: theme.cardBorder }]}>
-                <View style={[styles.progressBar, { width: `${progress}%`, backgroundColor: theme.primary }]} />
+            <View style={styles.progressWrapper}>
+                <View style={[styles.progressBar, { backgroundColor: theme.cardBorder }]}>
+                    <View
+                        style={[
+                            styles.progressFill,
+                            { width: `${progress}%`, backgroundColor: theme.primary }
+                        ]}
+                    />
+                </View>
             </View>
 
             {/* Card Stack */}
             <View style={styles.cardContainer}>
                 <Animated.View
                     {...panResponder.panHandlers}
-                    style={[styles.card, { backgroundColor: theme.card }, cardStyle]}
+                    style={[
+                        styles.cardWrapper,
+                        {
+                            transform: [
+                                { translateX: position.x },
+                                { rotate: cardRotation },
+                                { scale: scaleAnim },
+                            ],
+                        },
+                    ]}
                 >
-                    <TouchableOpacity
-                        style={styles.cardTouchable}
-                        onPress={flipCard}
-                        activeOpacity={0.95}
+                    {/* Front */}
+                    <Animated.View
+                        style={[
+                            styles.card,
+                            {
+                                backgroundColor: theme.card,
+                                transform: [{ rotateY: frontRotate }],
+                                opacity: frontOpacity,
+                            },
+                        ]}
                     >
-                        {!isFlipped ? (
+                        <TouchableOpacity
+                            style={styles.cardTouchable}
+                            onPress={flipCard}
+                            activeOpacity={0.98}
+                        >
                             <View style={styles.cardContent}>
-                                <View style={[styles.cardLabelBadge, { backgroundColor: theme.background }]}>
-                                    <Text style={[styles.cardLabel, { color: theme.textSecondary }]}>PERGUNTA</Text>
+                                <View style={[styles.labelBadge, { backgroundColor: theme.primaryLight }]}>
+                                    <Text style={[styles.labelText, { color: theme.primary }]}>PERGUNTA</Text>
                                 </View>
-                                <Text style={[styles.cardText, { color: theme.text }]}>{currentCard?.question}</Text>
-                                <Text style={[styles.tapHint, { color: theme.textMuted }]}>Toque para ver resposta</Text>
-                            </View>
-                        ) : (
-                            <View style={[styles.cardContent, { backgroundColor: isDark ? '#064e3b' : '#f0fdf4', borderRadius: 24 }]}>
-                                <View style={[styles.cardLabelBadge, { backgroundColor: theme.primaryLight }]}>
-                                    <Text style={[styles.cardLabel, { color: theme.primary }]}>RESPOSTA</Text>
+                                <Text style={[styles.cardText, { color: theme.text }]}>
+                                    {currentCard?.question}
+                                </Text>
+                                <View style={styles.hintRow}>
+                                    <Ionicons name="hand-left-outline" size={14} color={theme.textMuted} />
+                                    <Text style={[styles.hintText, { color: theme.textMuted }]}>
+                                        Toque para ver a resposta
+                                    </Text>
                                 </View>
-                                <Text style={[styles.cardText, { color: theme.text }]}>{currentCard?.answer}</Text>
                             </View>
-                        )}
-                    </TouchableOpacity>
+                        </TouchableOpacity>
+                    </Animated.View>
+
+                    {/* Back */}
+                    <Animated.View
+                        style={[
+                            styles.card,
+                            styles.cardBack,
+                            {
+                                backgroundColor: isDark ? '#064e3b' : '#ecfdf5',
+                                transform: [{ rotateY: backRotate }],
+                                opacity: backOpacity,
+                            },
+                        ]}
+                    >
+                        <TouchableOpacity
+                            style={styles.cardTouchable}
+                            onPress={flipCard}
+                            activeOpacity={0.98}
+                        >
+                            <View style={styles.cardContent}>
+                                <View style={[styles.labelBadge, { backgroundColor: theme.primary + '30' }]}>
+                                    <Text style={[styles.labelText, { color: theme.primary }]}>RESPOSTA</Text>
+                                </View>
+                                <Text style={[styles.cardText, { color: isDark ? '#fff' : theme.text }]}>
+                                    {currentCard?.answer}
+                                </Text>
+                            </View>
+                        </TouchableOpacity>
+                    </Animated.View>
                 </Animated.View>
             </View>
 
-            {/* Action Buttons - 3 Colored Difficulty Buttons */}
-            <View style={styles.actionContainer}>
+            {/* Action Buttons */}
+            <View style={styles.actionsContainer}>
                 {isFlipped ? (
-                    <View style={styles.difficultyButtons}>
+                    <View style={styles.difficultyRow}>
                         <TouchableOpacity
-                            style={[styles.difficultyButton, styles.hardButton]}
+                            style={[styles.difficultyButton, styles.difficultyHard]}
                             onPress={() => handleDifficulty('hard')}
+                            activeOpacity={0.8}
                         >
-                            <Ionicons name="close-circle" size={20} color="#fff" />
-                            <Text style={styles.difficultyButtonText}>Difícil</Text>
+                            <Ionicons name="close" size={24} color="#fff" />
+                            <Text style={styles.difficultyText}>Difícil</Text>
                         </TouchableOpacity>
 
                         <TouchableOpacity
-                            style={[styles.difficultyButton, styles.mediumButton]}
+                            style={[styles.difficultyButton, styles.difficultyMedium]}
                             onPress={() => handleDifficulty('medium')}
+                            activeOpacity={0.8}
                         >
-                            <Ionicons name="help-circle" size={20} color="#fff" />
-                            <Text style={styles.difficultyButtonText}>Médio</Text>
+                            <Ionicons name="help" size={24} color="#fff" />
+                            <Text style={styles.difficultyText}>Médio</Text>
                         </TouchableOpacity>
 
                         <TouchableOpacity
-                            style={[styles.difficultyButton, styles.easyButton]}
+                            style={[styles.difficultyButton, styles.difficultyEasy]}
                             onPress={() => handleDifficulty('easy')}
+                            activeOpacity={0.8}
                         >
-                            <Ionicons name="checkmark-circle" size={20} color="#fff" />
-                            <Text style={styles.difficultyButtonText}>Fácil</Text>
+                            <Ionicons name="checkmark" size={24} color="#fff" />
+                            <Text style={styles.difficultyText}>Fácil</Text>
                         </TouchableOpacity>
                     </View>
                 ) : (
-                    <TouchableOpacity style={styles.flipPrompt} onPress={flipCard}>
-                        <Ionicons name="sync" size={20} color={theme.primary} />
-                        <Text style={[styles.flipPromptText, { color: theme.primary }]}>Toque no card para ver resposta</Text>
+                    <TouchableOpacity
+                        style={[styles.flipButton, { backgroundColor: theme.primary }]}
+                        onPress={flipCard}
+                        activeOpacity={0.8}
+                    >
+                        <Ionicons name="eye-outline" size={20} color="#fff" />
+                        <Text style={styles.flipButtonText}>Ver Resposta</Text>
                     </TouchableOpacity>
                 )}
             </View>
@@ -295,36 +421,17 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
+        gap: 12,
     },
-    emptyContainer: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        paddingHorizontal: 32,
+    loadingText: {
+        fontSize: 15,
     },
-    emptyIcon: {
-        width: 80,
-        height: 80,
-        borderRadius: 40,
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginBottom: 16,
-    },
-    emptyTitle: {
-        fontSize: 18,
-        fontWeight: '600',
-    },
-    emptySubtitle: {
-        fontSize: 14,
-        marginTop: 4,
-    },
+    // Header
     header: {
         flexDirection: 'row',
-        justifyContent: 'space-between',
         alignItems: 'center',
-        paddingHorizontal: 24,
-        paddingTop: 16,
-        paddingBottom: 20,
+        paddingHorizontal: 20,
+        paddingVertical: 12,
     },
     backButton: {
         width: 44,
@@ -333,46 +440,84 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
     },
-    title: {
-        fontSize: 20,
-        fontWeight: 'bold',
+    headerCenter: {
         flex: 1,
-        textAlign: 'center',
+        alignItems: 'center',
     },
-    progressBadge: {
-        paddingHorizontal: 12,
-        paddingVertical: 6,
-        borderRadius: 20,
+    title: {
+        fontSize: 18,
+        fontWeight: '700',
     },
-    progressText: {
-        fontSize: 14,
-        fontWeight: '600',
+    subtitle: {
+        fontSize: 13,
+        marginTop: 2,
     },
-    progressBarContainer: {
-        height: 4,
-        marginHorizontal: 24,
-        borderRadius: 2,
+    offlineBadge: {
+        width: 44,
+        alignItems: 'center',
+    },
+    // Progress
+    progressWrapper: {
+        paddingHorizontal: 24,
+        marginBottom: 20,
     },
     progressBar: {
-        height: '100%',
-        borderRadius: 2,
+        height: 6,
+        borderRadius: 3,
+        overflow: 'hidden',
     },
+    progressFill: {
+        height: '100%',
+        borderRadius: 3,
+    },
+    // Empty State
+    emptyContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: 24,
+    },
+    emptyIcon: {
+        width: 100,
+        height: 100,
+        borderRadius: 50,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: 20,
+    },
+    emptyTitle: {
+        fontSize: 20,
+        fontWeight: '700',
+        marginBottom: 8,
+    },
+    emptySubtitle: {
+        fontSize: 15,
+        textAlign: 'center',
+    },
+    // Card
     cardContainer: {
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
         paddingHorizontal: 24,
     },
+    cardWrapper: {
+        width: CARD_WIDTH,
+        height: CARD_HEIGHT,
+    },
     card: {
         width: CARD_WIDTH,
         height: CARD_HEIGHT,
         borderRadius: 24,
+        position: 'absolute',
+        backfaceVisibility: 'hidden',
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 8 },
         shadowOpacity: 0.1,
-        shadowRadius: 24,
+        shadowRadius: 16,
         elevation: 8,
     },
+    cardBack: {},
     cardTouchable: {
         flex: 1,
         borderRadius: 24,
@@ -381,127 +526,93 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        padding: 32,
+        padding: 28,
     },
-    cardLabelBadge: {
+    labelBadge: {
         paddingHorizontal: 14,
         paddingVertical: 6,
         borderRadius: 20,
         marginBottom: 24,
     },
-    cardLabel: {
-        fontSize: 12,
-        fontWeight: '600',
-        letterSpacing: 1,
+    labelText: {
+        fontSize: 11,
+        fontWeight: '700',
+        letterSpacing: 1.5,
     },
     cardText: {
         fontSize: 20,
-        fontWeight: '500',
+        fontWeight: '600',
         textAlign: 'center',
         lineHeight: 30,
     },
-    tapHint: {
+    hintRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
         position: 'absolute',
-        bottom: 32,
+        bottom: 28,
+    },
+    hintText: {
         fontSize: 13,
-    },
-    swipeHints: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        width: CARD_WIDTH,
-        marginTop: 24,
-    },
-    swipeHint: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 8,
-    },
-    swipeHintIcon: {
-        width: 28,
-        height: 28,
-        borderRadius: 14,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    swipeHintTextRed: {
-        fontSize: 14,
         fontWeight: '500',
-        color: '#ef4444',
     },
-    swipeHintTextGreen: {
-        fontSize: 14,
-        fontWeight: '500',
-        color: '#10b981',
-    },
-    actionContainer: {
+    // Actions
+    actionsContainer: {
         paddingHorizontal: 24,
-        paddingBottom: 24,
-        marginTop: 20,
+        paddingBottom: 32,
+        paddingTop: 16,
     },
-    nextButton: {
+    flipButton: {
+        height: 58,
+        borderRadius: 29,
         flexDirection: 'row',
-        backgroundColor: '#10b981',
-        borderRadius: 16,
-        padding: 18,
         justifyContent: 'center',
         alignItems: 'center',
-        gap: 8,
+        gap: 10,
         shadowColor: '#10b981',
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.3,
         shadowRadius: 8,
         elevation: 4,
     },
-    nextButtonText: {
-        fontSize: 16,
-        fontWeight: '600',
+    flipButtonText: {
         color: '#fff',
+        fontSize: 16,
+        fontWeight: '700',
     },
-    // Difficulty buttons styles
-    difficultyButtons: {
+    // Difficulty
+    difficultyRow: {
         flexDirection: 'row',
-        justifyContent: 'space-between',
         gap: 12,
     },
     difficultyButton: {
         flex: 1,
-        flexDirection: 'row',
-        alignItems: 'center',
+        height: 64,
+        borderRadius: 16,
+        flexDirection: 'column',
         justifyContent: 'center',
-        paddingVertical: 16,
-        borderRadius: 14,
-        gap: 8,
+        alignItems: 'center',
+        gap: 4,
         shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.3,
+        shadowOpacity: 0.25,
         shadowRadius: 8,
         elevation: 4,
     },
-    hardButton: {
+    difficultyHard: {
         backgroundColor: '#ef4444',
         shadowColor: '#ef4444',
     },
-    mediumButton: {
+    difficultyMedium: {
         backgroundColor: '#f59e0b',
         shadowColor: '#f59e0b',
     },
-    easyButton: {
-        backgroundColor: '#10b981',
-        shadowColor: '#10b981',
+    difficultyEasy: {
+        backgroundColor: '#22c55e',
+        shadowColor: '#22c55e',
     },
-    difficultyButtonText: {
-        fontSize: 14,
-        fontWeight: '600',
+    difficultyText: {
         color: '#fff',
-    },
-    flipPrompt: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: 8,
-        padding: 16,
-    },
-    flipPromptText: {
-        fontSize: 15,
-        fontWeight: '500',
+        fontSize: 13,
+        fontWeight: '700',
     },
 });

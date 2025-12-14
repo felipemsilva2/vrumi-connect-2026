@@ -17,7 +17,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import Pdf from 'react-native-pdf';
+import { WebView } from 'react-native-webview';
 import { useTheme } from '../contexts/ThemeContext';
 import { supabase } from '../src/lib/supabase';
 import NotesManager from '../components/notes/NotesManager';
@@ -256,36 +256,23 @@ export default function StudyRoomScreen() {
                             </TouchableOpacity>
                         </View>
                     ) : (
-                        <Pdf
-                            source={{ uri: pdfUrl, cache: true }}
-                            onLoadComplete={(numberOfPages, filePath) => {
-                                console.log(`Number of pages: ${numberOfPages}`);
-                                setTotalPages(numberOfPages);
-                                setPdfLoading(false);
+                        <WebView
+                            source={{
+                                uri: `https://mozilla.github.io/pdf.js/web/viewer.html?file=${encodeURIComponent(pdfUrl)}`
                             }}
-                            onPageChanged={(page, numberOfPages) => {
-                                setCurrentPage(page);
-                            }}
-                            onError={(error) => {
-                                console.log(error);
+                            style={styles.pdf}
+                            onLoadStart={() => setPdfLoading(true)}
+                            onLoadEnd={() => setPdfLoading(false)}
+                            onError={() => {
                                 setPdfError(true);
                                 setPdfLoading(false);
                             }}
-                            onPressLink={(uri) => {
-                                Linking.openURL(uri);
-                            }}
-                            style={styles.pdf}
-                            trustAllCerts={false}
+                            javaScriptEnabled={true}
+                            domStorageEnabled={true}
+                            startInLoadingState={true}
+                            scalesPageToFit={true}
+                            allowsFullscreenVideo={false}
                         />
-                    )}
-
-                    {/* Page Indicator Overlay */}
-                    {!pdfLoading && !pdfError && (
-                        <View style={[styles.pageIndicator, { backgroundColor: theme.card + 'cc' }]}>
-                            <Text style={[styles.pageIndicatorText, { color: theme.text }]}>
-                                {currentPage} / {totalPages || '--'}
-                            </Text>
-                        </View>
                     )}
                 </View>
             ) : (

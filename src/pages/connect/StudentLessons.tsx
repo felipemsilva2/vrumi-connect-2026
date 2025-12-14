@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { 
-  Calendar, Clock, MapPin, Star, Car, Loader2, CheckCircle, XCircle, 
+import {
+  Calendar, Clock, MapPin, Star, Car, Loader2, CheckCircle, XCircle,
   AlertCircle, Phone, Mail, MessageCircle, ChevronRight, Ban
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -72,9 +72,9 @@ export default function StudentLessons() {
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
   const [cancelReason, setCancelReason] = useState("");
   const [cancelling, setCancelling] = useState(false);
-  const [reviewModal, setReviewModal] = useState<{ isOpen: boolean; booking: Booking | null }>({ 
-    isOpen: false, 
-    booking: null 
+  const [reviewModal, setReviewModal] = useState<{ isOpen: boolean; booking: Booking | null }>({
+    isOpen: false,
+    booking: null
   });
 
   useEffect(() => {
@@ -83,9 +83,9 @@ export default function StudentLessons() {
 
   const checkAuthAndFetch = async () => {
     const { data: { session } } = await supabase.auth.getSession();
-    
+
     if (!session) {
-      navigate("/entrar?redirect=/connect/minhas-aulas");
+      navigate("/entrar?redirect_to=/connect/minhas-aulas");
       return;
     }
 
@@ -298,7 +298,7 @@ export default function StudentLessons() {
                 {upcomingBookings.length === 0 ? (
                   <Card>
                     <CardContent className="py-8 text-center text-muted-foreground">
-                      Nenhuma aula agendada. 
+                      Nenhuma aula agendada.
                       <Link to="/connect" className="text-primary ml-1 hover:underline">
                         Agende uma aula
                       </Link>
@@ -318,10 +318,10 @@ export default function StudentLessons() {
                                   {booking.instructor.full_name.charAt(0)}
                                 </AvatarFallback>
                               </Avatar>
-                              
+
                               <div className="flex-1 min-w-0">
                                 <div className="flex items-start justify-between gap-2 mb-1">
-                                  <Link 
+                                  <Link
                                     to={`/connect/instrutor/${booking.instructor.id}`}
                                     className="font-semibold text-foreground hover:underline"
                                   >
@@ -359,14 +359,14 @@ export default function StudentLessons() {
                                   Contato do instrutor:
                                 </p>
                                 <div className="flex flex-wrap gap-3">
-                                  <a 
+                                  <a
                                     href={`tel:${booking.instructor.phone}`}
                                     className="flex items-center gap-1 text-sm text-green-700 dark:text-green-300 hover:underline"
                                   >
                                     <Phone className="h-4 w-4" />
                                     {booking.instructor.phone}
                                   </a>
-                                  <a 
+                                  <a
                                     href={`https://wa.me/55${booking.instructor.phone.replace(/\D/g, "")}`}
                                     target="_blank"
                                     rel="noopener noreferrer"
@@ -393,7 +393,7 @@ export default function StudentLessons() {
                               Ver detalhes
                               <ChevronRight className="h-4 w-4 ml-1" />
                             </Button>
-                            
+
                             {canCancelBooking(booking) && (
                               <Button
                                 variant="destructive"
@@ -441,7 +441,7 @@ export default function StudentLessons() {
                               {booking.instructor.full_name.charAt(0)}
                             </AvatarFallback>
                           </Avatar>
-                          
+
                           <div className="flex-1 min-w-0">
                             <div className="flex items-start justify-between gap-2 mb-1">
                               <span className="font-medium text-foreground">
@@ -504,7 +504,7 @@ export default function StudentLessons() {
           <DialogHeader>
             <DialogTitle>Detalhes da Aula</DialogTitle>
           </DialogHeader>
-          
+
           {selectedBooking && (
             <div className="space-y-4">
               {/* Instructor Info */}
@@ -571,14 +571,14 @@ export default function StudentLessons() {
                     Contato
                   </h5>
                   <div className="flex flex-wrap gap-2">
-                    <a 
+                    <a
                       href={`tel:${selectedBooking.instructor.phone}`}
                       className="flex items-center gap-1 text-sm bg-white dark:bg-gray-800 px-3 py-1.5 rounded-lg border"
                     >
                       <Phone className="h-4 w-4" />
                       Ligar
                     </a>
-                    <a 
+                    <a
                       href={`https://wa.me/55${selectedBooking.instructor.phone.replace(/\D/g, "")}`}
                       target="_blank"
                       rel="noopener noreferrer"
@@ -620,7 +620,7 @@ export default function StudentLessons() {
               )}
             </AlertDialogDescription>
           </AlertDialogHeader>
-          
+
           <div className="my-4">
             <label className="text-sm font-medium">Motivo do cancelamento (opcional)</label>
             <Textarea

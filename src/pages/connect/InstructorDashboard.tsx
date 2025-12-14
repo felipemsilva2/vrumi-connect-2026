@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { 
-  Calendar, Clock, DollarSign, Star, Users, Settings, 
+import {
+  Calendar, Clock, DollarSign, Star, Users, Settings,
   ChevronRight, CheckCircle, XCircle, AlertCircle, Car, User
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -73,9 +73,9 @@ export default function InstructorDashboard() {
 
   const checkAuthAndFetch = async () => {
     const { data: { session } } = await supabase.auth.getSession();
-    
+
     if (!session) {
-      navigate("/auth?redirect=/connect/painel-instrutor");
+      navigate("/entrar?redirect_to=/connect/painel-instrutor");
       return;
     }
 
@@ -116,7 +116,7 @@ export default function InstructorDashboard() {
         .in("id", studentIds);
 
       const studentsMap = new Map(studentsData?.map(s => [s.id, s]) || []);
-      
+
       const bookingsWithStudents = (bookingsData || []).map(b => ({
         ...b,
         student: studentsMap.get(b.student_id) || null,
@@ -162,8 +162,8 @@ export default function InstructorDashboard() {
     try {
       const { error } = await supabase
         .from("bookings")
-        .update({ 
-          status: newStatus, 
+        .update({
+          status: newStatus,
           ...(newStatus === "completed" ? { completed_at: new Date().toISOString() } : {})
         })
         .eq("id", bookingId);
@@ -239,7 +239,12 @@ export default function InstructorDashboard() {
                 <Car className="h-8 w-8" />
                 <span className="text-xl font-semibold">Vrumi Connect</span>
               </Link>
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-3">
+                <Link to="/painel">
+                  <Button variant="outline" className="border-white/30 text-white hover:bg-white/10 hidden sm:flex">
+                    📚 Painel de Estudos
+                  </Button>
+                </Link>
                 <Link to={`/connect/instrutor/${instructor.id}`}>
                   <Button variant="outline" className="border-white/30 text-white hover:bg-white/10">
                     Ver meu perfil
@@ -449,7 +454,7 @@ export default function InstructorDashboard() {
                               {getStatusBadge(booking.status)}
                             </div>
                           </div>
-                          
+
                           {/* Show student contact for confirmed bookings */}
                           {booking.status === "confirmed" && booking.student?.email && (
                             <div className="mt-3 p-3 bg-green-50 rounded-lg flex items-center justify-between">
@@ -466,7 +471,7 @@ export default function InstructorDashboard() {
                               </Button>
                             </div>
                           )}
-                          
+
                           {booking.status === "confirmed" && !booking.student?.email && (
                             <div className="mt-3 flex justify-end">
                               <Button
@@ -534,9 +539,8 @@ export default function InstructorDashboard() {
                             </p>
                           </div>
                           <span
-                            className={`font-bold ${
-                              tx.type === "earning" ? "text-[#2F7B3A]" : "text-red-600"
-                            }`}
+                            className={`font-bold ${tx.type === "earning" ? "text-[#2F7B3A]" : "text-red-600"
+                              }`}
                           >
                             {tx.type === "earning" ? "+" : "-"}
                             {formatPrice(Number(tx.amount))}
@@ -570,12 +574,12 @@ export default function InstructorDashboard() {
                         instructorId={instructor.id}
                         userId={userId}
                         currentPhotoUrl={instructor.photo_url}
-                        onPhotoUpdated={(newUrl) => 
+                        onPhotoUpdated={(newUrl) =>
                           setInstructor(prev => prev ? { ...prev, photo_url: newUrl } : null)
                         }
                       />
                     </div>
-                    
+
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t">
                       <div>
                         <p className="text-sm text-gray-500">Nome</p>
@@ -599,8 +603,8 @@ export default function InstructorDashboard() {
                       <div>
                         <p className="text-sm text-gray-500">Status</p>
                         <Badge variant={instructor.status === "approved" ? "default" : "secondary"}>
-                          {instructor.status === "approved" ? "Aprovado" : 
-                           instructor.status === "pending" ? "Em análise" : instructor.status}
+                          {instructor.status === "approved" ? "Aprovado" :
+                            instructor.status === "pending" ? "Em análise" : instructor.status}
                         </Badge>
                       </div>
                       {instructor.is_verified && (

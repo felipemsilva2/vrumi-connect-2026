@@ -12,7 +12,8 @@ import {
   Trophy,
   TrafficCone,
   Car,
-  Sparkles
+  Sparkles,
+  Briefcase
 } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { supabase } from "@/integrations/supabase/client";
@@ -53,6 +54,21 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
   const { toast } = useToast();
   const { isAdmin } = useIsAdmin(user?.id);
   const { hasActivePass, activePass } = useActivePass(user?.id);
+  const [isInstructor, setIsInstructor] = useState(false);
+
+  // Check if user is an instructor
+  useEffect(() => {
+    const checkInstructor = async () => {
+      if (!user?.id) return;
+      const { data } = await supabase
+        .from("instructors")
+        .select("id")
+        .eq("user_id", user.id)
+        .single();
+      setIsInstructor(!!data);
+    };
+    checkInstructor();
+  }, [user?.id]);
 
   useEffect(() => {
     // Close mobile menu when route changes
@@ -145,6 +161,16 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
     { label: "Conquistas", icon: Trophy, path: "/painel?tab=conquistas", tooltip: "Suas conquistas", notifs: 1, description: "Suas medalhas" },
   ];
 
+  // Add instructor panel link if user is an instructor
+  const instructorNavItem = isInstructor ? {
+    label: "Painel Instrutor",
+    icon: Briefcase,
+    path: "/connect/painel-instrutor",
+    tooltip: "Gerencie suas aulas como instrutor",
+    isExternal: true,
+    description: "Vrumi Connect"
+  } : null;
+
   const isActiveRoute = (path: string) => {
     const [targetPath, targetQuery] = path.split('?');
 
@@ -212,7 +238,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
             {/* Navigation */}
             <div className="flex-1 overflow-y-auto py-6 px-3 space-y-6 scrollbar-none">
               <div className="space-y-1">
-                {navigationItems.map((item) => {
+                {[...navigationItems, ...(instructorNavItem ? [instructorNavItem] : [])].map((item) => {
                   const active = isActiveRoute(item.path);
                   return (
                     <button
@@ -249,13 +275,13 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
                         )}
                       </div>
 
-                      {item.notifs && sidebarOpen && (
+                      {'notifs' in item && item.notifs && sidebarOpen && (
                         <span className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1.5 text-[10px] font-bold text-primary-foreground">
                           {item.notifs}
                         </span>
                       )}
 
-                      {item.notifs && !sidebarOpen && (
+                      {'notifs' in item && item.notifs && !sidebarOpen && (
                         <span className="absolute top-2 right-2 h-2.5 w-2.5 rounded-full bg-primary ring-2 ring-background" />
                       )}
                     </button>

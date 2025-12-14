@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert, ScrollView, Linking, Switch, RefreshControl, Image, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, ScrollView, Linking, RefreshControl, Image, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../contexts/AuthContext';
@@ -19,7 +19,7 @@ interface ProfileStats {
 
 export default function PerfilScreen() {
     const { user, signOut } = useAuth();
-    const { theme, isDark, toggleTheme } = useTheme();
+    const { theme, isDark, themeMode, setThemeMode, toggleTheme } = useTheme();
     const { stats: gamificationStats, updateDailyGoal } = useGamification();
     const [stats, setStats] = useState<ProfileStats>({
         studyStreak: 0,
@@ -347,17 +347,69 @@ export default function PerfilScreen() {
                 <View style={styles.menuSection}>
                     <Text style={[styles.menuTitle, { color: theme.textSecondary }]}>Aparência</Text>
 
-                    <View style={[styles.menuItem, { backgroundColor: theme.card }]}>
-                        <View style={[styles.menuIcon, { backgroundColor: isDark ? '#312e81' : '#f3f4f6' }]}>
-                            <Ionicons name={isDark ? "moon" : "sunny"} size={20} color={isDark ? '#a78bfa' : '#f59e0b'} />
+                    <View style={[styles.themeCard, { backgroundColor: theme.card }]}>
+                        <View style={styles.themeHeader}>
+                            <View style={[styles.menuIcon, { backgroundColor: isDark ? '#312e81' : '#f3f4f6' }]}>
+                                <Ionicons name={isDark ? "moon" : "sunny"} size={20} color={isDark ? '#a78bfa' : '#f59e0b'} />
+                            </View>
+                            <Text style={[styles.menuItemText, { color: theme.text }]}>Tema do App</Text>
                         </View>
-                        <Text style={[styles.menuItemText, { color: theme.text }]}>Modo Escuro</Text>
-                        <Switch
-                            value={isDark}
-                            onValueChange={toggleTheme}
-                            trackColor={{ false: '#e5e7eb', true: '#86efac' }}
-                            thumbColor={isDark ? '#10b981' : '#fff'}
-                        />
+                        <View style={[styles.themeSelector, { backgroundColor: theme.background }]}>
+                            <TouchableOpacity
+                                style={[
+                                    styles.themeOption,
+                                    themeMode === 'light' && styles.themeOptionActive,
+                                    themeMode === 'light' && { backgroundColor: theme.primary }
+                                ]}
+                                onPress={() => setThemeMode('light')}
+                            >
+                                <Ionicons
+                                    name="sunny"
+                                    size={16}
+                                    color={themeMode === 'light' ? '#fff' : theme.textMuted}
+                                />
+                                <Text style={[
+                                    styles.themeOptionText,
+                                    { color: themeMode === 'light' ? '#fff' : theme.text }
+                                ]}>Claro</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                style={[
+                                    styles.themeOption,
+                                    themeMode === 'dark' && styles.themeOptionActive,
+                                    themeMode === 'dark' && { backgroundColor: theme.primary }
+                                ]}
+                                onPress={() => setThemeMode('dark')}
+                            >
+                                <Ionicons
+                                    name="moon"
+                                    size={16}
+                                    color={themeMode === 'dark' ? '#fff' : theme.textMuted}
+                                />
+                                <Text style={[
+                                    styles.themeOptionText,
+                                    { color: themeMode === 'dark' ? '#fff' : theme.text }
+                                ]}>Escuro</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                style={[
+                                    styles.themeOption,
+                                    themeMode === 'system' && styles.themeOptionActive,
+                                    themeMode === 'system' && { backgroundColor: theme.primary }
+                                ]}
+                                onPress={() => setThemeMode('system')}
+                            >
+                                <Ionicons
+                                    name="phone-portrait"
+                                    size={16}
+                                    color={themeMode === 'system' ? '#fff' : theme.textMuted}
+                                />
+                                <Text style={[
+                                    styles.themeOptionText,
+                                    { color: themeMode === 'system' ? '#fff' : theme.text }
+                                ]}>Sistema</Text>
+                            </TouchableOpacity>
+                        </View>
                     </View>
                 </View>
 
@@ -555,6 +607,43 @@ const styles = StyleSheet.create({
     },
     goalButtonText: {
         fontSize: 14,
+        fontWeight: '600',
+    },
+    // Theme Card Styles
+    themeCard: {
+        padding: 16,
+        borderRadius: 16,
+    },
+    themeHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 16,
+    },
+    themeSelector: {
+        flexDirection: 'row',
+        borderRadius: 12,
+        padding: 4,
+        gap: 4,
+    },
+    themeOption: {
+        flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingVertical: 10,
+        paddingHorizontal: 12,
+        borderRadius: 10,
+        gap: 6,
+    },
+    themeOptionActive: {
+        shadowColor: '#10b981',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.2,
+        shadowRadius: 4,
+        elevation: 2,
+    },
+    themeOptionText: {
+        fontSize: 13,
         fontWeight: '600',
     },
 });

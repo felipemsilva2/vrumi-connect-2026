@@ -82,18 +82,18 @@ export default function BookingFlow() {
   const { instructorId } = useParams<{ instructorId: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
-  
+
   const [instructor, setInstructor] = useState<Instructor | null>(null);
   const [availability, setAvailability] = useState<Availability[]>([]);
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
-  
+
   const [step, setStep] = useState<Step>("date");
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
   const [selectedTime, setSelectedTime] = useState<string>("");
   const [contractAccepted, setContractAccepted] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<"pix" | "card">("pix");
-  
+
   const [user, setUser] = useState<any>(null);
 
   useEffect(() => {
@@ -111,7 +111,7 @@ export default function BookingFlow() {
         description: "Você precisa estar logado para agendar uma aula.",
         variant: "destructive",
       });
-      navigate(`/auth?redirect=/connect/agendar/${instructorId}`);
+      navigate(`/entrar?redirect_to=/connect/agendar/${instructorId}`);
       return;
     }
     setUser(data.session.user);
@@ -152,14 +152,14 @@ export default function BookingFlow() {
   const fetchBookedSlots = async (date: Date) => {
     if (!instructorId) return;
     const dateStr = format(date, "yyyy-MM-dd");
-    
+
     const { data } = await supabase
       .from("bookings")
       .select("scheduled_time")
       .eq("instructor_id", instructorId)
       .eq("scheduled_date", dateStr)
       .in("status", ["pending", "confirmed"]);
-    
+
     const times = data?.map(b => b.scheduled_time.slice(0, 5)) || [];
     setBookedSlots(prev => ({ ...prev, [dateStr]: times }));
   };
@@ -169,15 +169,15 @@ export default function BookingFlow() {
     const dayAvailability = availability.filter((a) => a.day_of_week === dayOfWeek);
     const dateStr = format(date, "yyyy-MM-dd");
     const occupied = bookedSlots[dateStr] || [];
-    
+
     const slots: string[] = [];
     dayAvailability.forEach((slot) => {
       const [startHour, startMin] = slot.start_time.split(":").map(Number);
       const [endHour, endMin] = slot.end_time.split(":").map(Number);
-      
+
       let currentHour = startHour;
       let currentMin = startMin;
-      
+
       while (currentHour < endHour || (currentHour === endHour && currentMin < endMin)) {
         const timeSlot = `${String(currentHour).padStart(2, "0")}:${String(currentMin).padStart(2, "0")}`;
         if (!occupied.includes(timeSlot)) {
@@ -190,7 +190,7 @@ export default function BookingFlow() {
         }
       }
     });
-    
+
     return slots;
   };
 
@@ -208,7 +208,7 @@ export default function BookingFlow() {
 
   const handleConfirmBooking = async () => {
     if (!instructor || !selectedDate || !selectedTime || !user) return;
-    
+
     setProcessing(true);
     try {
       // Check for conflicts before booking (race condition protection)
@@ -363,21 +363,19 @@ export default function BookingFlow() {
             {["date", "time", "contract", "payment"].map((s, i) => (
               <div key={s} className="flex items-center">
                 <div
-                  className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-                    step === s || ["date", "time", "contract", "payment"].indexOf(step) > i
-                      ? "bg-[#0A2F44] text-white"
-                      : "bg-gray-200 text-gray-500"
-                  }`}
+                  className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${step === s || ["date", "time", "contract", "payment"].indexOf(step) > i
+                    ? "bg-[#0A2F44] text-white"
+                    : "bg-gray-200 text-gray-500"
+                    }`}
                 >
                   {i + 1}
                 </div>
                 {i < 3 && (
                   <div
-                    className={`w-12 h-0.5 ${
-                      ["date", "time", "contract", "payment"].indexOf(step) > i
-                        ? "bg-[#0A2F44]"
-                        : "bg-gray-200"
-                    }`}
+                    className={`w-12 h-0.5 ${["date", "time", "contract", "payment"].indexOf(step) > i
+                      ? "bg-[#0A2F44]"
+                      : "bg-gray-200"
+                      }`}
                   />
                 )}
               </div>
@@ -404,7 +402,7 @@ export default function BookingFlow() {
                       <Link to="/connect">
                         <Button variant="outline">Voltar ao início</Button>
                       </Link>
-                      <Link to="/dashboard">
+                      <Link to="/connect/minhas-aulas">
                         <Button className="bg-[#0A2F44] hover:bg-[#0A2F44]/90">
                           Ver minhas aulas
                         </Button>
@@ -431,8 +429,8 @@ export default function BookingFlow() {
                           setStep("time");
                         }
                       }}
-                      disabled={(date) => 
-                        date < new Date() || 
+                      disabled={(date) =>
+                        date < new Date() ||
                         date > addDays(new Date(), 30) ||
                         !isDateAvailable(date)
                       }

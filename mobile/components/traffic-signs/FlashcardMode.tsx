@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import {
     View,
     Text,
@@ -14,7 +14,9 @@ import { useTheme } from '../../contexts/ThemeContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../src/lib/supabase';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+const CARD_WIDTH = SCREEN_WIDTH - 48;
+const CARD_HEIGHT = Math.min(SCREEN_HEIGHT * 0.5, 400);
 
 interface Sign {
     id: string;
@@ -49,14 +51,14 @@ const categoryIcons: Record<string, string> = {
 };
 
 export default function FlashcardMode({ signs, initialIndex = 0, onClose, category }: FlashcardModeProps) {
-    const { theme } = useTheme();
+    const { theme, isDark } = useTheme();
     const { user } = useAuth();
     const [currentIndex, setCurrentIndex] = useState(initialIndex);
     const [isFlipped, setIsFlipped] = useState(false);
     const [isAnimating, setIsAnimating] = useState(false);
 
-    // Animation specific
     const flipAnim = useRef(new Animated.Value(0)).current;
+    const scaleAnim = useRef(new Animated.Value(1)).current;
 
     // Interpolations
     const frontInterpolate = flipAnim.interpolate({
@@ -80,33 +82,48 @@ export default function FlashcardMode({ signs, initialIndex = 0, onClose, catego
     });
 
     const currentSign = signs[currentIndex];
+    const progress = signs.length > 0 ? ((currentIndex + 1) / signs.length) * 100 : 0;
 
     const handleFlip = () => {
         if (isAnimating) return;
+
+        setIsFlipped(!isFlipped);
         setIsAnimating(true);
+
+        // Subtle scale animation on flip
+        Animated.sequence([
+            Animated.timing(scaleAnim, {
+                toValue: 0.95,
+                duration: 100,
+                useNativeDriver: true,
+            }),
+            Animated.timing(scaleAnim, {
+                toValue: 1,
+                duration: 100,
+                useNativeDriver: true,
+            }),
+        ]).start();
 
         Animated.spring(flipAnim, {
             toValue: isFlipped ? 0 : 180,
-            friction: 8,
-            tension: 10,
+            friction: 6,
+            tension: 25,
             useNativeDriver: true,
         }).start(() => {
             setIsAnimating(false);
-            setIsFlipped(!isFlipped);
         });
     };
 
     const resetCard = (callback?: () => void) => {
         if (isFlipped) {
             setIsAnimating(true);
-            Animated.spring(flipAnim, {
+            setIsFlipped(false);
+            Animated.timing(flipAnim, {
                 toValue: 0,
-                friction: 8,
-                tension: 10,
+                duration: 200,
                 useNativeDriver: true,
             }).start(() => {
                 setIsAnimating(false);
-                setIsFlipped(false);
                 if (callback) callback();
             });
         } else {
@@ -160,147 +177,205 @@ export default function FlashcardMode({ signs, initialIndex = 0, onClose, catego
         <View style={[styles.container, { backgroundColor: theme.background }]}>
             {/* Header */}
             <View style={styles.header}>
-                <TouchableOpacity onPress={onClose} style={[styles.closeButton, { backgroundColor: theme.card }]}>
-                    <Ionicons name="close" size={24} color={theme.text} />
+                <TouchableOpacity
+                    onPress={onClose}
+                    style={[styles.closeButton, { backgroundColor: theme.card }]}
+                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                >
+                    <Ionicons name="close" size={22} color={theme.text} />
                 </TouchableOpacity>
-                <View style={styles.progressContainer}>
-                    <Text style={[styles.progressText, { color: theme.textSecondary }]}>
-                        {currentIndex + 1} / {signs.length}
+
+                <View style={styles.headerCenter}>
+                    <Text style={[styles.headerTitle, { color: theme.text }]}>Flashcards</Text>
+                    <Text style={[styles.headerSubtitle, { color: theme.textMuted }]}>
+                        {currentIndex + 1} de {signs.length}
                     </Text>
-                    <View style={[styles.progressBarBg, { backgroundColor: theme.cardBorder }]}>
-                        <View
-                            style={[
-                                styles.progressBarFill,
-                                {
-                                    backgroundColor: theme.primary,
-                                    width: `${((currentIndex + 1) / signs.length) * 100}%`
-                                }
-                            ]}
-                        />
-                    </View>
+                </View>
+
+                <View style={{ width: 44 }} />
+            </View>
+
+            {/* Progress Bar */}
+            <View style={styles.progressWrapper}>
+                <View style={[styles.progressBarBg, { backgroundColor: theme.cardBorder }]}>
+                    <View
+                        style={[
+                            styles.progressBarFill,
+                            { backgroundColor: theme.primary, width: `${progress}%` }
+                        ]}
+                    />
                 </View>
             </View>
 
             {/* Card Container */}
             <View style={styles.cardArea}>
-                <TouchableOpacity activeOpacity={0.9} onPress={handleFlip} style={styles.cardTouchArea}>
+                <TouchableOpacity
+                    activeOpacity={0.95}
+                    onPress={handleFlip}
+                    style={styles.cardTouchArea}
+                >
+                    <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
+                        {/* Front of Card - Image */}
+                        <Animated.View style={[
+                            styles.card,
+                            {
+                                backgroundColor: theme.card,
+                                transform: [{ rotateY: frontInterpolate }],
+                                opacity: frontOpacity,
+                            }
+                        ]}>
+                            <View style={styles.cardInner}>
+                                {/* Category Badge */}
+                                <View style={[styles.categoryBadgeSmall, { backgroundColor: currentCategoryColor + '20' }]}>
+                                    <Text style={[styles.categoryBadgeText, { color: currentCategoryColor }]}>
+                                        {currentSign.category}
+                                    </Text>
+                                </View>
 
-                    {/* Front of Card */}
-                    <Animated.View style={[
-                        styles.card,
-                        {
-                            backgroundColor: theme.card,
-                            transform: [{ rotateY: frontInterpolate }],
-                            opacity: frontOpacity,
-                            zIndex: isFlipped ? 0 : 1
-                        }
-                    ]}>
-                        <View style={[styles.cardContent, { backgroundColor: theme.card }]}>
-                            <View style={[styles.imageContainer, { borderColor: theme.cardBorder }]}>
-                                {currentSign.image_url ? (
-                                    <Image
-                                        source={{ uri: currentSign.image_url }}
-                                        style={styles.cardImage}
-                                        resizeMode="contain"
-                                    />
-                                ) : (
-                                    <View style={styles.placeholderContainer}>
-                                        <Text style={[styles.placeholderText, { color: theme.textSecondary }]}>
-                                            {currentSign.code}
-                                        </Text>
-                                    </View>
-                                )}
+                                {/* Sign Image */}
+                                <View style={[styles.imageContainer, { backgroundColor: isDark ? theme.background : '#f8fafc' }]}>
+                                    {currentSign.image_url ? (
+                                        <Image
+                                            source={{ uri: currentSign.image_url }}
+                                            style={styles.cardImage}
+                                            resizeMode="contain"
+                                        />
+                                    ) : (
+                                        <View style={[styles.placeholderContainer, { backgroundColor: currentCategoryColor + '20' }]}>
+                                            <Text style={[styles.placeholderText, { color: currentCategoryColor }]}>
+                                                {currentSign.code}
+                                            </Text>
+                                        </View>
+                                    )}
+                                </View>
+
+                                {/* Hint */}
+                                <View style={styles.hintContainer}>
+                                    <Ionicons name="hand-left-outline" size={16} color={theme.textMuted} />
+                                    <Text style={[styles.hintText, { color: theme.textMuted }]}>
+                                        Toque para ver a resposta
+                                    </Text>
+                                </View>
                             </View>
-                            <Text style={[styles.cardInstruction, { color: theme.textSecondary }]}>
-                                Toque para ver o significado
-                            </Text>
-                        </View>
-                    </Animated.View>
+                        </Animated.View>
 
-                    {/* Back of Card */}
-                    <Animated.View style={[
-                        styles.card,
-                        styles.cardBack,
-                        {
-                            backgroundColor: theme.card,
-                            transform: [{ rotateY: backInterpolate }],
-                            opacity: backOpacity,
-                            zIndex: isFlipped ? 1 : 0
-                        }
-                    ]}>
-                        <View style={[styles.cardContent, { backgroundColor: theme.card }]}>
-                            <View style={[styles.categoryBadge, { backgroundColor: currentCategoryColor + '20' }]}>
-                                <Ionicons name={categoryIcons[currentSign.category] as any} size={16} color={currentCategoryColor} />
-                                <Text style={[styles.categoryText, { color: currentCategoryColor }]}>
-                                    {currentSign.category}
+                        {/* Back of Card - Answer */}
+                        <Animated.View style={[
+                            styles.card,
+                            styles.cardBack,
+                            {
+                                backgroundColor: theme.card,
+                                transform: [{ rotateY: backInterpolate }],
+                                opacity: backOpacity,
+                            }
+                        ]}>
+                            <View style={styles.cardInner}>
+                                {/* Category Badge */}
+                                <View style={[styles.categoryBadge, { backgroundColor: currentCategoryColor + '20' }]}>
+                                    <Ionicons
+                                        name={categoryIcons[currentSign.category] as any}
+                                        size={18}
+                                        color={currentCategoryColor}
+                                    />
+                                    <Text style={[styles.categoryText, { color: currentCategoryColor }]}>
+                                        {currentSign.category}
+                                    </Text>
+                                </View>
+
+                                {/* Code */}
+                                <Text style={[styles.signCode, { color: theme.textSecondary }]}>
+                                    {currentSign.code}
+                                </Text>
+
+                                {/* Name */}
+                                <Text style={[styles.signName, { color: theme.text }]}>
+                                    {currentSign.name}
+                                </Text>
+
+                                {/* Description */}
+                                <Text style={[styles.signDescription, { color: theme.textSecondary }]}>
+                                    {currentSign.description || 'Sem descrição disponível.'}
                                 </Text>
                             </View>
-
-                            <Text style={[styles.signCode, { color: theme.textSecondary }]}>
-                                {currentSign.code}
-                            </Text>
-
-                            <Text style={[styles.signName, { color: theme.text }]}>
-                                {currentSign.name}
-                            </Text>
-
-                            <Text style={[styles.signDescription, { color: theme.textSecondary }]}>
-                                {currentSign.description}
-                            </Text>
-                        </View>
+                        </Animated.View>
                     </Animated.View>
-
                 </TouchableOpacity>
             </View>
 
-            {/* Controls */}
-            <View style={styles.controlsArea}>
+            {/* Action Buttons */}
+            <View style={styles.actionsArea}>
                 {!isFlipped ? (
-                    <View style={styles.navigationControls}>
+                    // Navigation when not flipped
+                    <View style={styles.navigationRow}>
                         <TouchableOpacity
-                            style={[styles.navButton, { backgroundColor: theme.card }]}
+                            style={[
+                                styles.navButton,
+                                { backgroundColor: theme.card },
+                                currentIndex === 0 && styles.navButtonDisabled
+                            ]}
                             onPress={handlePrevious}
                             disabled={currentIndex === 0}
                         >
-                            <Ionicons name="chevron-back" size={24} color={currentIndex === 0 ? theme.textMuted : theme.text} />
+                            <Ionicons
+                                name="chevron-back"
+                                size={24}
+                                color={currentIndex === 0 ? theme.textMuted : theme.text}
+                            />
                         </TouchableOpacity>
 
                         <TouchableOpacity
-                            style={[styles.flipButton, { backgroundColor: theme.primary }]}
+                            style={[styles.mainButton, { backgroundColor: theme.primary }]}
                             onPress={handleFlip}
+                            activeOpacity={0.8}
                         >
-                            <Text style={styles.flipButtonText}>Ver Resposta</Text>
+                            <Ionicons name="eye-outline" size={20} color="#fff" />
+                            <Text style={styles.mainButtonText}>Ver Resposta</Text>
                         </TouchableOpacity>
 
                         <TouchableOpacity
-                            style={[styles.navButton, { backgroundColor: theme.card }]}
+                            style={[
+                                styles.navButton,
+                                { backgroundColor: theme.card },
+                                currentIndex === signs.length - 1 && styles.navButtonDisabled
+                            ]}
                             onPress={handleNext}
                             disabled={currentIndex === signs.length - 1}
                         >
-                            <Ionicons name="chevron-forward" size={24} color={currentIndex === signs.length - 1 ? theme.textMuted : theme.text} />
+                            <Ionicons
+                                name="chevron-forward"
+                                size={24}
+                                color={currentIndex === signs.length - 1 ? theme.textMuted : theme.text}
+                            />
                         </TouchableOpacity>
                     </View>
                 ) : (
-                    <View style={styles.responseControls}>
+                    // Difficulty buttons when flipped
+                    <View style={styles.difficultyRow}>
                         <TouchableOpacity
-                            style={[styles.responseButton, { backgroundColor: '#fee2e2', borderColor: '#ef4444' }]}
+                            style={[styles.difficultyButton, styles.difficultyHard]}
                             onPress={() => handleDifficultyResponse('hard')}
+                            activeOpacity={0.8}
                         >
-                            <Text style={[styles.responseText, { color: '#ef4444' }]}>Errei</Text>
+                            <Ionicons name="close" size={22} color="#fff" />
+                            <Text style={styles.difficultyText}>Errei</Text>
                         </TouchableOpacity>
 
                         <TouchableOpacity
-                            style={[styles.responseButton, { backgroundColor: '#fef3c7', borderColor: '#f59e0b' }]}
+                            style={[styles.difficultyButton, styles.difficultyMedium]}
                             onPress={() => handleDifficultyResponse('medium')}
+                            activeOpacity={0.8}
                         >
-                            <Text style={[styles.responseText, { color: '#f59e0b' }]}>Dúvida</Text>
+                            <Ionicons name="help" size={22} color="#fff" />
+                            <Text style={styles.difficultyText}>Dúvida</Text>
                         </TouchableOpacity>
 
                         <TouchableOpacity
-                            style={[styles.responseButton, { backgroundColor: '#dcfce7', borderColor: '#22c55e' }]}
+                            style={[styles.difficultyButton, styles.difficultyEasy]}
                             onPress={() => handleDifficultyResponse('easy')}
+                            activeOpacity={0.8}
                         >
-                            <Text style={[styles.responseText, { color: '#22c55e' }]}>Acertei</Text>
+                            <Ionicons name="checkmark" size={22} color="#fff" />
+                            <Text style={styles.difficultyText}>Acertei</Text>
                         </TouchableOpacity>
                     </View>
                 )}
@@ -318,86 +393,99 @@ const styles = StyleSheet.create({
         right: 0,
         bottom: 0,
         zIndex: 50,
-        paddingTop: 40,
     },
+    // Header
     header: {
         flexDirection: 'row',
         alignItems: 'center',
         paddingHorizontal: 20,
-        marginBottom: 20,
+        paddingTop: 50,
+        paddingBottom: 16,
     },
     closeButton: {
-        width: 40,
-        height: 40,
-        borderRadius: 20,
+        width: 44,
+        height: 44,
+        borderRadius: 22,
         justifyContent: 'center',
         alignItems: 'center',
-        marginRight: 16,
     },
-    progressContainer: {
+    headerCenter: {
         flex: 1,
+        alignItems: 'center',
     },
-    progressText: {
-        fontSize: 12,
-        marginBottom: 6,
-        textAlign: 'center',
+    headerTitle: {
+        fontSize: 18,
+        fontWeight: '700',
+    },
+    headerSubtitle: {
+        fontSize: 13,
+        marginTop: 2,
+    },
+    // Progress
+    progressWrapper: {
+        paddingHorizontal: 24,
+        marginBottom: 24,
     },
     progressBarBg: {
         height: 6,
         borderRadius: 3,
-        width: '100%',
         overflow: 'hidden',
     },
     progressBarFill: {
         height: '100%',
         borderRadius: 3,
     },
+    // Card Area
     cardArea: {
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        paddingHorizontal: 20,
+        paddingHorizontal: 24,
     },
     cardTouchArea: {
-        width: '100%',
-        height: 420,
-        alignItems: 'center',
-        justifyContent: 'center',
+        width: CARD_WIDTH,
+        height: CARD_HEIGHT,
     },
     card: {
-        width: '100%',
-        height: '100%',
+        width: CARD_WIDTH,
+        height: CARD_HEIGHT,
         borderRadius: 24,
         backfaceVisibility: 'hidden',
         position: 'absolute',
         shadowColor: "#000",
-        shadowOffset: {
-            width: 0,
-            height: 4,
-        },
-        shadowOpacity: 0.1,
-        shadowRadius: 12,
+        shadowOffset: { width: 0, height: 8 },
+        shadowOpacity: 0.12,
+        shadowRadius: 16,
         elevation: 8,
     },
-    cardBack: {
-
-    },
-    cardContent: {
+    cardBack: {},
+    cardInner: {
         flex: 1,
-        borderRadius: 24,
         padding: 24,
         alignItems: 'center',
         justifyContent: 'center',
     },
-    imageContainer: {
-        width: 200,
-        height: 200,
-        marginBottom: 24,
-        borderWidth: 1,
+    // Front Card
+    categoryBadgeSmall: {
+        position: 'absolute',
+        top: 20,
+        right: 20,
+        paddingHorizontal: 12,
+        paddingVertical: 6,
         borderRadius: 20,
-        padding: 10,
+    },
+    categoryBadgeText: {
+        fontSize: 12,
+        fontWeight: '600',
+    },
+    imageContainer: {
+        width: 180,
+        height: 180,
+        borderRadius: 20,
+        padding: 16,
         justifyContent: 'center',
         alignItems: 'center',
+        marginBottom: 20,
     },
     cardImage: {
         width: '100%',
@@ -408,21 +496,29 @@ const styles = StyleSheet.create({
         height: '100%',
         justifyContent: 'center',
         alignItems: 'center',
+        borderRadius: 16,
     },
     placeholderText: {
-        fontSize: 24,
+        fontSize: 28,
         fontWeight: 'bold',
     },
-    cardInstruction: {
-        fontSize: 16,
+    hintContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+        marginTop: 8,
+    },
+    hintText: {
+        fontSize: 14,
         fontWeight: '500',
     },
+    // Back Card
     categoryBadge: {
         flexDirection: 'row',
         alignItems: 'center',
-        paddingHorizontal: 12,
-        paddingVertical: 6,
-        borderRadius: 12,
+        paddingHorizontal: 14,
+        paddingVertical: 8,
+        borderRadius: 20,
         marginBottom: 16,
         gap: 8,
     },
@@ -431,29 +527,34 @@ const styles = StyleSheet.create({
         fontWeight: '600',
     },
     signCode: {
-        fontSize: 14,
+        fontSize: 13,
         fontWeight: '600',
         marginBottom: 8,
+        letterSpacing: 0.5,
     },
     signName: {
-        fontSize: 24,
+        fontSize: 22,
         fontWeight: 'bold',
         textAlign: 'center',
         marginBottom: 12,
+        lineHeight: 28,
     },
     signDescription: {
-        fontSize: 16,
+        fontSize: 15,
         textAlign: 'center',
-        lineHeight: 24,
+        lineHeight: 22,
+        paddingHorizontal: 8,
     },
-    controlsArea: {
-        padding: 24,
+    // Actions
+    actionsArea: {
+        paddingHorizontal: 24,
         paddingBottom: 40,
+        paddingTop: 16,
     },
-    navigationControls: {
+    navigationRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 16,
+        gap: 12,
     },
     navButton: {
         width: 56,
@@ -462,32 +563,61 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
     },
-    flipButton: {
+    navButtonDisabled: {
+        opacity: 0.5,
+    },
+    mainButton: {
         flex: 1,
         height: 56,
         borderRadius: 28,
+        flexDirection: 'row',
         justifyContent: 'center',
         alignItems: 'center',
+        gap: 10,
+        shadowColor: '#10b981',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
+        elevation: 4,
     },
-    flipButtonText: {
+    mainButtonText: {
         color: '#fff',
         fontSize: 16,
-        fontWeight: '600',
+        fontWeight: '700',
     },
-    responseControls: {
+    // Difficulty Buttons
+    difficultyRow: {
         flexDirection: 'row',
         gap: 12,
     },
-    responseButton: {
+    difficultyButton: {
         flex: 1,
-        height: 56,
+        height: 60,
         borderRadius: 16,
+        flexDirection: 'column',
         justifyContent: 'center',
         alignItems: 'center',
-        borderWidth: 2,
+        gap: 4,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.25,
+        shadowRadius: 8,
+        elevation: 4,
     },
-    responseText: {
-        fontSize: 14,
+    difficultyHard: {
+        backgroundColor: '#ef4444',
+        shadowColor: '#ef4444',
+    },
+    difficultyMedium: {
+        backgroundColor: '#f59e0b',
+        shadowColor: '#f59e0b',
+    },
+    difficultyEasy: {
+        backgroundColor: '#22c55e',
+        shadowColor: '#22c55e',
+    },
+    difficultyText: {
+        color: '#fff',
+        fontSize: 13,
         fontWeight: '700',
     },
 });

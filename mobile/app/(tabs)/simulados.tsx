@@ -18,6 +18,7 @@ import { useQuizLock } from '../../contexts/QuizLockContext';
 import { useGamification } from '../../contexts/GamificationContext';
 import { supabase } from '../../src/lib/supabase';
 
+
 interface QuizQuestion {
     id: string;
     question_text: string;
@@ -52,6 +53,7 @@ export default function SimuladosScreen() {
     const [loading, setLoading] = useState(false);
     const [reviewIndex, setReviewIndex] = useState(0);
     const [selectedQuizType, setSelectedQuizType] = useState<'standard' | 'extended' | null>(null);
+
 
     const isQuizActive = state === 'quiz';
 
@@ -229,6 +231,7 @@ export default function SimuladosScreen() {
     const finishReview = () => {
         setState('result');
     };
+
 
     const restartQuiz = () => {
         setState('start'); // useEffect will sync to context

@@ -9,6 +9,8 @@ export default function TabsLayout() {
         <Tabs
             screenOptions={{
                 headerShown: false,
+                // Smooth fade animation when switching tabs
+                animation: 'fade',
             }}
             tabBar={(props) => <ModernTabBar {...props} />}
         >

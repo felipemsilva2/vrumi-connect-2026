@@ -23,7 +23,6 @@ export default function StreakCard({
 }: StreakCardProps) {
     const { theme } = useTheme();
     const pulseAnim = useRef(new Animated.Value(1)).current;
-    const flameAnim = useRef(new Animated.Value(0)).current;
 
     useEffect(() => {
         if (isActiveToday && currentStreak > 0) {
@@ -42,29 +41,8 @@ export default function StreakCard({
                     }),
                 ])
             ).start();
-
-            // Flame flicker
-            Animated.loop(
-                Animated.sequence([
-                    Animated.timing(flameAnim, {
-                        toValue: 1,
-                        duration: 300,
-                        useNativeDriver: true,
-                    }),
-                    Animated.timing(flameAnim, {
-                        toValue: 0,
-                        duration: 300,
-                        useNativeDriver: true,
-                    }),
-                ])
-            ).start();
         }
     }, [isActiveToday, currentStreak]);
-
-    const flameColor = flameAnim.interpolate({
-        inputRange: [0, 1],
-        outputRange: ['#f97316', '#ef4444'],
-    });
 
     if (compact) {
         return (

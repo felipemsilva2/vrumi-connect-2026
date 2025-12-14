@@ -10,8 +10,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '../../src/lib/supabase';
 import NotificationModal from '../../components/NotificationModal';
 import SearchModal from '../../components/SearchModal';
-import StreakCard from '../../components/gamification/StreakCard';
-import XPBadge from '../../components/gamification/XPBadge';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -173,80 +171,92 @@ export default function DashboardScreen() {
                             <Text style={[styles.subtitle, { color: theme.textSecondary }]}>Vamos estudar hoje?</Text>
                         </View>
                     </View>
-                    <TouchableOpacity
-                        style={[styles.notificationButton, { backgroundColor: theme.card }]}
-                        onPress={() => setNotificationModalVisible(true)}
-                    >
-                        <Ionicons name="notifications-outline" size={22} color={theme.text} />
-                    </TouchableOpacity>
-                </View>
-
-                {/* Hero Card */}
-                <LinearGradient
-                    colors={isDark ? ['#047857', '#065f46'] : ['#10b981', '#059669']}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 1 }}
-                    style={styles.heroCard}
-                >
-                    <View style={styles.heroContent}>
-                        <Text style={styles.heroTitle}>Continue estudando</Text>
+                    <View style={styles.headerRight}>
                         <TouchableOpacity
-                            style={styles.searchBar}
+                            style={[styles.headerButton, { backgroundColor: theme.card }]}
                             onPress={() => setSearchModalVisible(true)}
                         >
-                            <Ionicons name="search" size={18} color="#6b7280" />
-                            <Text style={styles.searchPlaceholder}>Buscar conteúdo...</Text>
+                            <Ionicons name="search-outline" size={20} color={theme.text} />
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                            style={[styles.headerButton, { backgroundColor: theme.card }]}
+                            onPress={() => setNotificationModalVisible(true)}
+                        >
+                            <Ionicons name="notifications-outline" size={20} color={theme.text} />
                         </TouchableOpacity>
                     </View>
+                </View>
 
-                    {/* Stats Row */}
-                    <View style={styles.statsRow}>
-                        <View style={styles.statItem}>
-                            <View style={styles.statIcon}>
-                                <Ionicons name="layers" size={20} color="#10b981" />
-                            </View>
-                            <Text style={styles.statValue}>{stats.cardsReviewed}</Text>
-                            <Text style={styles.statLabel}>Cards</Text>
-                        </View>
-                        <View style={styles.statItem}>
-                            <View style={styles.statIcon}>
-                                <Ionicons name="time" size={20} color="#10b981" />
-                            </View>
-                            <Text style={styles.statValue}>{stats.hoursStudied}h</Text>
-                            <Text style={styles.statLabel}>Estudo</Text>
-                        </View>
-                        <View style={styles.statItem}>
-                            <View style={styles.statIcon}>
-                                <Ionicons name="help-circle" size={20} color="#10b981" />
-                            </View>
-                            <Text style={styles.statValue}>{stats.questionsAnswered}</Text>
-                            <Text style={styles.statLabel}>Questões</Text>
-                        </View>
-                    </View>
-                </LinearGradient>
-
-                {/* Gamification Section */}
+                {/* Gamification Row - Compact */}
                 {gamificationStats && (
-                    <View style={styles.gamificationSection}>
-                        {/* Streak and XP Row */}
-                        <View style={styles.gamificationRow}>
-                            <View style={styles.streakMini}>
-                                <StreakCard
-                                    currentStreak={gamificationStats.streak.current}
-                                    longestStreak={gamificationStats.streak.longest}
-                                    isActiveToday={gamificationStats.streak.isActiveToday}
-                                    compact={false}
+                    <View style={styles.gamificationCompact}>
+                        <View style={[styles.gamificationCard, { backgroundColor: theme.card }]}>
+                            <View style={styles.streakCompact}>
+                                <Ionicons
+                                    name={gamificationStats.streak.current > 0 ? "flame" : "flame-outline"}
+                                    size={22}
+                                    color={gamificationStats.streak.current > 0 ? '#f97316' : theme.textMuted}
                                 />
+                                <Text style={[styles.streakNumber, { color: gamificationStats.streak.current > 0 ? '#f97316' : theme.textMuted }]}>
+                                    {gamificationStats.streak.current}
+                                </Text>
+                                <Text style={[styles.streakLabel, { color: theme.textSecondary }]}>
+                                    {gamificationStats.streak.current === 1 ? 'dia' : 'dias'}
+                                </Text>
+                            </View>
+                            <View style={[styles.dividerVertical, { backgroundColor: theme.cardBorder }]} />
+                            <View style={styles.xpCompact}>
+                                <Ionicons name="star" size={20} color="#eab308" />
+                                <Text style={[styles.xpNumber, { color: theme.text }]}>
+                                    {gamificationStats.xp.total.toLocaleString()}
+                                </Text>
+                                <Text style={[styles.xpLabel, { color: theme.textSecondary }]}>XP</Text>
+                            </View>
+                            <View style={[styles.dividerVertical, { backgroundColor: theme.cardBorder }]} />
+                            <View style={styles.levelCompact}>
+                                <View style={[styles.levelBadge, { backgroundColor: theme.primary + '20' }]}>
+                                    <Text style={[styles.levelText, { color: theme.primary }]}>
+                                        Nv {gamificationStats.xp.level}
+                                    </Text>
+                                </View>
                             </View>
                         </View>
-                        <View style={{ height: 12 }} />
-                        <XPBadge
-                            totalXP={gamificationStats.xp.total}
-                            level={gamificationStats.xp.level}
-                            xpToday={gamificationStats.xp.today}
-                        />
                     </View>
                 )}
+
+                {/* Stats Card */}
+                <View style={styles.statsSection}>
+                    <LinearGradient
+                        colors={isDark ? ['#047857', '#065f46'] : ['#10b981', '#059669']}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 1 }}
+                        style={styles.statsCard}
+                    >
+                        <View style={styles.statsRow}>
+                            <View style={styles.statItem}>
+                                <View style={styles.statIcon}>
+                                    <Ionicons name="layers" size={18} color="#10b981" />
+                                </View>
+                                <Text style={styles.statValue}>{stats.cardsReviewed}</Text>
+                                <Text style={styles.statLabel}>Cards</Text>
+                            </View>
+                            <View style={styles.statItem}>
+                                <View style={styles.statIcon}>
+                                    <Ionicons name="time" size={18} color="#10b981" />
+                                </View>
+                                <Text style={styles.statValue}>{stats.hoursStudied}h</Text>
+                                <Text style={styles.statLabel}>Estudo</Text>
+                            </View>
+                            <View style={styles.statItem}>
+                                <View style={styles.statIcon}>
+                                    <Ionicons name="checkmark-circle" size={18} color="#10b981" />
+                                </View>
+                                <Text style={styles.statValue}>{stats.questionsAnswered}</Text>
+                                <Text style={styles.statLabel}>Questões</Text>
+                            </View>
+                        </View>
+                    </LinearGradient>
+                </View>
 
                 {/* Quick Actions */}
                 <View style={styles.section}>
@@ -294,11 +304,9 @@ export default function DashboardScreen() {
                     </View>
                 </View>
 
-                {/* Recent Activity - Modern Horizontal Cards */}
+                {/* Recent Activity */}
                 <View style={styles.section}>
-                    <View style={styles.sectionHeader}>
-                        <Text style={[styles.sectionTitle, { color: theme.text }]}>Atividade Recente</Text>
-                    </View>
+                    <Text style={[styles.sectionTitle, { color: theme.text }]}>Atividade Recente</Text>
 
                     {loading ? (
                         <View style={styles.activityLoadingRow}>
@@ -325,7 +333,7 @@ export default function DashboardScreen() {
                                     <View style={[styles.activityCardIcon, { backgroundColor: theme.primary + '15' }]}>
                                         <Ionicons
                                             name={getActivityIcon(activity.activity_type)}
-                                            size={20}
+                                            size={18}
                                             color={theme.primary}
                                         />
                                     </View>
@@ -374,213 +382,214 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         paddingHorizontal: 20,
         paddingTop: 8,
-        paddingBottom: 20,
+        paddingBottom: 16,
     },
     headerLeft: {
         flexDirection: 'row',
         alignItems: 'center',
+        flex: 1,
+    },
+    headerRight: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+    },
+    headerButton: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        justifyContent: 'center',
+        alignItems: 'center',
     },
     avatarContainer: {
-        width: 48,
-        height: 48,
-        borderRadius: 24,
+        width: 44,
+        height: 44,
+        borderRadius: 22,
         backgroundColor: '#10b981',
         justifyContent: 'center',
         alignItems: 'center',
         marginRight: 12,
     },
     avatarText: {
-        fontSize: 20,
+        fontSize: 18,
         fontWeight: 'bold',
         color: '#fff',
     },
     avatarImage: {
-        width: 48,
-        height: 48,
-        borderRadius: 24,
-    },
-    greeting: {
-        fontSize: 18,
-        fontWeight: '600',
-    },
-    subtitle: {
-        fontSize: 14,
-        marginTop: 2,
-    },
-    notificationButton: {
         width: 44,
         height: 44,
         borderRadius: 22,
-        justifyContent: 'center',
-        alignItems: 'center',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.05,
-        shadowRadius: 4,
-        elevation: 2,
     },
-    heroCard: {
-        marginHorizontal: 20,
-        borderRadius: 20,
-        padding: 20,
-        marginBottom: 24,
-    },
-    heroContent: {
-        marginBottom: 20,
-    },
-    heroTitle: {
-        fontSize: 18,
+    greeting: {
+        fontSize: 17,
         fontWeight: '600',
-        color: '#fff',
+    },
+    subtitle: {
+        fontSize: 13,
+        marginTop: 2,
+    },
+    // Compact gamification
+    gamificationCompact: {
+        paddingHorizontal: 20,
         marginBottom: 16,
     },
-    searchBar: {
+    gamificationCard: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: '#fff',
-        borderRadius: 12,
-        paddingHorizontal: 16,
-        paddingVertical: 14,
-        gap: 10,
+        justifyContent: 'space-around',
+        borderRadius: 16,
+        padding: 14,
     },
-    searchPlaceholder: {
-        fontSize: 15,
-        color: '#6b7280',
+    streakCompact: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+    },
+    streakNumber: {
+        fontSize: 18,
+        fontWeight: 'bold',
+    },
+    streakLabel: {
+        fontSize: 13,
+    },
+    dividerVertical: {
+        width: 1,
+        height: 28,
+    },
+    xpCompact: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 5,
+    },
+    xpNumber: {
+        fontSize: 16,
+        fontWeight: '600',
+    },
+    xpLabel: {
+        fontSize: 12,
+    },
+    levelCompact: {
+        alignItems: 'center',
+    },
+    levelBadge: {
+        paddingHorizontal: 10,
+        paddingVertical: 5,
+        borderRadius: 10,
+    },
+    levelText: {
+        fontSize: 13,
+        fontWeight: '600',
+    },
+    // Stats section
+    statsSection: {
+        paddingHorizontal: 20,
+        marginBottom: 20,
+    },
+    statsCard: {
+        borderRadius: 16,
+        padding: 16,
     },
     statsRow: {
         flexDirection: 'row',
         justifyContent: 'space-around',
-        backgroundColor: 'rgba(255,255,255,0.15)',
-        borderRadius: 16,
-        padding: 16,
     },
     statItem: {
         alignItems: 'center',
     },
     statIcon: {
-        width: 40,
-        height: 40,
-        borderRadius: 12,
+        width: 36,
+        height: 36,
+        borderRadius: 10,
         backgroundColor: '#fff',
         justifyContent: 'center',
         alignItems: 'center',
-        marginBottom: 8,
+        marginBottom: 6,
     },
     statValue: {
-        fontSize: 18,
+        fontSize: 16,
         fontWeight: 'bold',
         color: '#fff',
     },
     statLabel: {
-        fontSize: 12,
+        fontSize: 11,
         color: 'rgba(255,255,255,0.8)',
         marginTop: 2,
     },
+    // Sections
     section: {
         paddingHorizontal: 20,
-        marginBottom: 24,
-    },
-    sectionHeader: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: 16,
+        marginBottom: 20,
     },
     sectionTitle: {
-        fontSize: 18,
+        fontSize: 17,
         fontWeight: '600',
-        marginBottom: 16,
+        marginBottom: 14,
     },
-    seeAllText: {
-        fontSize: 14,
-        fontWeight: '500',
-    },
+    // Actions grid
     actionsGrid: {
         flexDirection: 'row',
         flexWrap: 'wrap',
-        gap: 12,
+        gap: 10,
     },
     actionCard: {
-        width: (SCREEN_WIDTH - 52) / 2,
-        borderRadius: 16,
-        padding: 20,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.05,
-        shadowRadius: 8,
-        elevation: 2,
+        width: (SCREEN_WIDTH - 50) / 2,
+        borderRadius: 14,
+        padding: 16,
     },
     actionIconBg: {
-        width: 48,
-        height: 48,
-        borderRadius: 12,
+        width: 44,
+        height: 44,
+        borderRadius: 11,
         justifyContent: 'center',
         alignItems: 'center',
-        marginBottom: 12,
+        marginBottom: 10,
     },
     actionTitle: {
-        fontSize: 15,
+        fontSize: 14,
         fontWeight: '600',
     },
-    // Activity styles - Modern horizontal cards
+    // Activity styles
     activityLoadingRow: {
-        height: 100,
+        height: 80,
         justifyContent: 'center',
         alignItems: 'center',
     },
     emptyActivityCompact: {
         flexDirection: 'row',
         alignItems: 'center',
-        borderRadius: 14,
-        padding: 16,
-        gap: 12,
+        borderRadius: 12,
+        padding: 14,
+        gap: 10,
     },
     emptyActivityText: {
         flex: 1,
-        fontSize: 14,
+        fontSize: 13,
     },
     activityHorizontalScroll: {
         paddingRight: 20,
-        gap: 12,
+        gap: 10,
     },
     activityCard: {
-        width: 120,
-        borderRadius: 16,
-        padding: 14,
+        width: 100,
+        borderRadius: 14,
+        padding: 12,
         alignItems: 'center',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.05,
-        shadowRadius: 6,
-        elevation: 2,
     },
     activityCardIcon: {
-        width: 44,
-        height: 44,
-        borderRadius: 22,
+        width: 38,
+        height: 38,
+        borderRadius: 19,
         justifyContent: 'center',
         alignItems: 'center',
-        marginBottom: 10,
+        marginBottom: 8,
     },
     activityCardLabel: {
-        fontSize: 12,
+        fontSize: 11,
         fontWeight: '600',
         textAlign: 'center',
-        marginBottom: 4,
+        marginBottom: 3,
     },
     activityCardTime: {
-        fontSize: 11,
-    },
-    // Gamification styles
-    gamificationSection: {
-        paddingHorizontal: 20,
-        marginTop: 20,
-    },
-    gamificationRow: {
-        flexDirection: 'row',
-        gap: 12,
-    },
-    streakMini: {
-        flex: 1,
+        fontSize: 10,
     },
 });

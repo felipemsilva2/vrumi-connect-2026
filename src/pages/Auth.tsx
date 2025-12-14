@@ -49,26 +49,47 @@ const Auth = () => {
     acceptedTerms: ''
   });
 
+  // Helper function to handle redirect after login
+  const handlePostLoginRedirect = async (session: any, redirectTo: string | null) => {
+    // If there's a specific redirect, use it
+    if (redirectTo) {
+      navigate(redirectTo);
+      return;
+    }
+
+    // Check if user is an instructor
+    try {
+      const { data: instructor } = await supabase
+        .from("instructors")
+        .select("id, status")
+        .eq("user_id", session.user.id)
+        .single();
+
+      if (instructor) {
+        // User is an instructor - redirect to instructor dashboard
+        navigate("/connect/painel-instrutor");
+      } else {
+        // Regular user - redirect to main dashboard
+        navigate("/painel");
+      }
+    } catch {
+      // Not an instructor or error - redirect to main dashboard
+      navigate("/painel");
+    }
+  };
+
   useEffect(() => {
     const redirectTo = searchParams.get('redirect_to');
 
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
-        if (redirectTo) {
-          navigate(redirectTo);
-        } else {
-          navigate("/painel");
-        }
+        handlePostLoginRedirect(session, redirectTo);
       }
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (session && event === "SIGNED_IN") {
-        if (redirectTo) {
-          navigate(redirectTo);
-        } else {
-          navigate("/painel");
-        }
+        handlePostLoginRedirect(session, redirectTo);
       }
     });
 
