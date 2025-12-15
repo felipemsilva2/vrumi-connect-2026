@@ -550,6 +550,8 @@ export type Database = {
           total_reviews: number | null
           updated_at: string | null
           user_id: string
+          vehicle_model: string | null
+          vehicle_transmission: string | null
         }
         Insert: {
           availability?: Json | null
@@ -574,6 +576,8 @@ export type Database = {
           total_reviews?: number | null
           updated_at?: string | null
           user_id: string
+          vehicle_model?: string | null
+          vehicle_transmission?: string | null
         }
         Update: {
           availability?: Json | null
@@ -598,6 +602,8 @@ export type Database = {
           total_reviews?: number | null
           updated_at?: string | null
           user_id?: string
+          vehicle_model?: string | null
+          vehicle_transmission?: string | null
         }
         Relationships: []
       }
