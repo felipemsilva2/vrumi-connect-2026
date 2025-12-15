@@ -87,5 +87,54 @@ serve(async (req) => {
     }
   }
 
+  // Handle Stripe Connect: Account Updated (onboarding complete)
+  if (event.type === 'account.updated') {
+    const account = event.data.object as Stripe.Account;
+
+    // Check if onboarding is complete
+    if (account.charges_enabled && account.payouts_enabled) {
+      console.log(`[WEBHOOK] Account ${account.id} onboarding complete`);
+
+      await supabase
+        .from('instructors')
+        .update({ stripe_onboarding_complete: true })
+        .eq('stripe_account_id', account.id);
+    }
+  }
+
+  // Handle Stripe Connect: PaymentIntent Succeeded (lesson paid)
+  if (event.type === 'payment_intent.succeeded') {
+    const paymentIntent = event.data.object as Stripe.PaymentIntent;
+    const bookingId = paymentIntent.metadata?.booking_id;
+
+    if (bookingId) {
+      console.log(`[WEBHOOK] Payment succeeded for booking ${bookingId}`);
+
+      await supabase
+        .from('bookings')
+        .update({
+          payment_status: 'completed',
+          status: 'confirmed',
+        })
+        .eq('id', bookingId);
+
+      // Create transaction record for instructor earnings
+      const instructorId = paymentIntent.metadata?.instructor_id;
+      const platformFee = parseInt(paymentIntent.metadata?.platform_fee || '0');
+      const instructorAmount = paymentIntent.amount - platformFee;
+
+      if (instructorId) {
+        await supabase.from('transactions').insert({
+          instructor_id: instructorId,
+          booking_id: bookingId,
+          amount: instructorAmount / 100, // Convert cents to BRL
+          type: 'earning',
+          status: 'completed',
+          description: 'Pagamento de aula',
+        });
+      }
+    }
+  }
+
   return new Response(JSON.stringify({ success: true }), { status: 200 });
 });
