@@ -38,6 +38,32 @@ const FAQ = () => {
       answer:
         "Nossos flashcards utilizam o sistema de repetição espaçada, mostrando questões que você tem mais dificuldade com maior frequência, otimizando seu aprendizado.",
     },
+    // Vrumi Connect FAQs
+    {
+      question: "O que é o Vrumi Connect?",
+      answer:
+        "O Vrumi Connect é nosso marketplace que conecta alunos a instrutores de direção independentes e credenciados. Você pode encontrar, avaliar e agendar aulas práticas com profissionais verificados na sua região.",
+    },
+    {
+      question: "Como funciona o agendamento de aulas práticas?",
+      answer:
+        "É simples! Busque instrutores na sua cidade, veja avaliações e disponibilidade, escolha um horário que funcione para você e faça o pagamento seguro pela plataforma. O instrutor confirma e vocês combinam os detalhes.",
+    },
+    {
+      question: "Os instrutores do Vrumi Connect são verificados?",
+      answer:
+        "Sim! Todos os instrutores passam por um processo de verificação onde conferimos credenciamento junto ao DETRAN, documentação e histórico profissional antes de serem aprovados na plataforma.",
+    },
+    {
+      question: "O pagamento é seguro?",
+      answer:
+        "Totalmente! Utilizamos processadores de pagamento confiáveis. O valor só é liberado para o instrutor após a aula ser realizada, garantindo segurança para ambas as partes.",
+    },
+    {
+      question: "Posso cancelar uma aula agendada?",
+      answer:
+        "Sim, você pode cancelar com até 24 horas de antecedência para reembolso integral. Cancelamentos com menos de 24h podem ter taxa de cancelamento conforme política do instrutor.",
+    },
   ];
 
   return (

@@ -25,13 +25,13 @@ const NewEraSection = () => {
 
           {/* Description */}
           <p className="text-lg sm:text-xl text-muted-foreground mb-12 max-w-3xl mx-auto leading-relaxed">
-            Apoiamos a modernização do processo de habilitação. Seja estudando teoria em casa 
-            ou praticando com um instrutor independente, o Vrumi oferece a infraestrutura 
+            Apoiamos a modernização do processo de habilitação. Seja estudando teoria em casa
+            ou praticando com um instrutor independente, o Vrumi oferece a infraestrutura
             tecnológica para que você exerça sua cidadania no trânsito.
           </p>
 
           {/* Features */}
-          <div className="grid sm:grid-cols-3 gap-8">
+          <div className="grid gap-4 sm:grid-cols-3 sm:gap-8">
             {[
               {
                 icon: BookOpen,

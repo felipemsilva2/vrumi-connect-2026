@@ -242,17 +242,16 @@ export default function StudentLessons() {
         description="Gerencie suas aulas de direção agendadas no Vrumi Connect."
       />
 
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-[#F8F9FA]">
         {/* Header */}
-        <header className="bg-[#0A2F44] text-white">
+        <header className="bg-gradient-to-r from-[#0A2F44] to-[#10B981] text-white">
           <div className="container mx-auto px-4 py-4">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <Link to="/connect" className="flex items-center gap-2">
-                <Car className="h-8 w-8" />
-                <span className="text-xl font-semibold">Vrumi Connect</span>
+                <img src="/logo-vrumi.png" alt="Vrumi Connect" className="h-[68px] w-auto" />
               </Link>
-              <Link to="/painel">
-                <Button variant="outline" className="border-white/30 text-white hover:bg-white/10">
+              <Link to="/painel" className="w-full sm:w-auto">
+                <Button className="w-full bg-white text-[#0A2F44] hover:bg-gray-100 border-0 font-medium shadow-sm sm:w-auto">
                   Voltar ao Painel
                 </Button>
               </Link>
@@ -277,7 +276,7 @@ export default function StudentLessons() {
                   Você ainda não agendou nenhuma aula com um instrutor.
                 </p>
                 <Link to="/connect">
-                  <Button className="bg-[#0A2F44] hover:bg-[#0A2F44]/90">
+                  <Button className="bg-[#10B981] hover:bg-[#0D9668]">
                     Encontrar instrutor
                   </Button>
                 </Link>
@@ -285,11 +284,19 @@ export default function StudentLessons() {
             </Card>
           ) : (
             <Tabs defaultValue="upcoming" className="space-y-6">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="upcoming">
+              <TabsList className="w-full h-auto p-1.5 bg-white border border-gray-200 rounded-xl shadow-sm grid grid-cols-2 gap-1">
+                <TabsTrigger
+                  value="upcoming"
+                  className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg data-[state=active]:bg-[#10B981] data-[state=active]:text-white data-[state=active]:shadow-sm transition-all"
+                >
+                  <Calendar className="h-4 w-4" />
                   Próximas ({upcomingBookings.length})
                 </TabsTrigger>
-                <TabsTrigger value="past">
+                <TabsTrigger
+                  value="past"
+                  className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg data-[state=active]:bg-[#10B981] data-[state=active]:text-white data-[state=active]:shadow-sm transition-all"
+                >
+                  <Clock className="h-4 w-4" />
                   Histórico ({pastBookings.length})
                 </TabsTrigger>
               </TabsList>
@@ -381,7 +388,7 @@ export default function StudentLessons() {
                           </div>
 
                           {/* Actions */}
-                          <div className="p-4 bg-muted/30 flex flex-col justify-center gap-2 border-t md:border-t-0 md:border-l">
+                          <div className="p-4 bg-muted/30 flex flex-col gap-2 border-t md:border-t-0 md:border-l md:justify-center">
                             <Button
                               variant="outline"
                               size="sm"

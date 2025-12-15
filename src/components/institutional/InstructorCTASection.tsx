@@ -28,7 +28,7 @@ const InstructorCTASection = () => {
             }}
           />
 
-          <div className="relative z-10 grid lg:grid-cols-2 gap-12 items-center">
+          <div className="relative z-10 grid gap-8 lg:gap-12 lg:grid-cols-2 items-center">
             {/* Content */}
             <div>
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary-foreground/20 text-primary-foreground text-sm font-medium mb-6">
@@ -41,7 +41,7 @@ const InstructorCTASection = () => {
               </h2>
 
               <p className="text-lg text-primary-foreground/90 mb-8 leading-relaxed">
-                Junte-se ao Vrumi Connect e tenha acesso a milhares de alunos na sua região. 
+                Junte-se ao Vrumi Connect e tenha acesso a milhares de alunos na sua região.
                 Gerencie sua agenda e pagamentos em um só lugar.
               </p>
 
@@ -57,7 +57,7 @@ const InstructorCTASection = () => {
             </div>
 
             {/* Benefits */}
-            <div className="grid sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-3 sm:gap-4">
               {[
                 {
                   icon: Users,

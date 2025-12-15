@@ -78,9 +78,9 @@ const VARIANTS = {
 
 const GRIDS = {
   1: "grid-cols-1",
-  2: "grid-cols-1 md:grid-cols-2",
-  3: "grid-cols-1 md:grid-cols-2 lg:grid-cols-3",
-  4: "grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4",
+  2: "grid-cols-1 sm:grid-cols-2",
+  3: "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3",
+  4: "grid-cols-1 sm:grid-cols-2 lg:grid-cols-4",
 } as const;
 
 const GAPS = {
@@ -202,10 +202,10 @@ export const Card3D = React.forwardRef<HTMLDivElement, Card3DProps>(
           disabled || !onClick
             ? {}
             : {
-                scale: 0.98,
-                rotateX: mousePos.y + 3,
-                rotateY: mousePos.x + 3,
-              }
+              scale: 0.98,
+              rotateX: mousePos.y + 3,
+              rotateY: mousePos.x + 3,
+            }
         }
         onClick={handleClick}
         style={{ transformStyle: "preserve-3d", perspective: "1200px" }}

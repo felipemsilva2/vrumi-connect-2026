@@ -455,9 +455,8 @@ export default function InstructorRegistration() {
         {/* Header */}
         <header className="bg-transparent">
           <div className="container mx-auto px-4 py-4">
-            <Link to="/connect" className="inline-flex items-center gap-2 text-white hover:opacity-80 transition-opacity">
-              <Car className="h-8 w-8" />
-              <span className="text-xl font-semibold">Vrumi Connect</span>
+            <Link to="/connect" className="inline-flex items-center gap-2 hover:opacity-80 transition-opacity">
+              <img src="/logo-vrumi.png" alt="Vrumi Connect" className="h-[68px] w-auto" />
             </Link>
           </div>
         </header>

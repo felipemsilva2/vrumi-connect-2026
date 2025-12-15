@@ -28,6 +28,8 @@ interface Instructor {
   total_reviews: number;
   total_lessons: number;
   is_verified: boolean;
+  stripe_account_id: string | null;
+  stripe_onboarding_complete: boolean | null;
 }
 
 interface Booking {
@@ -65,7 +67,59 @@ export default function InstructorDashboard() {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
+  const [stripeLoading, setStripeLoading] = useState(false);
   const [earnings, setEarnings] = useState({ total: 0, pending: 0, thisMonth: 0 });
+
+  const handleStripeOnboarding = async () => {
+    if (!instructor) return;
+
+    setStripeLoading(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast({
+          title: "Sessão expirada",
+          description: "Por favor, faça login novamente.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Step 1: Create Stripe account if not exists
+      if (!instructor.stripe_account_id) {
+        const createRes = await supabase.functions.invoke('connect-create-account', {
+          headers: { Authorization: `Bearer ${session.access_token}` }
+        });
+
+        if (createRes.error) {
+          throw new Error(createRes.error.message);
+        }
+      }
+
+      // Step 2: Get onboarding link
+      const linkRes = await supabase.functions.invoke('connect-onboarding-link', {
+        headers: { Authorization: `Bearer ${session.access_token}` }
+      });
+
+      if (linkRes.error) {
+        throw new Error(linkRes.error.message);
+      }
+
+      // Redirect to Stripe onboarding
+      if (linkRes.data?.url) {
+        window.location.href = linkRes.data.url;
+      }
+    } catch (error: any) {
+      console.error("Stripe onboarding error:", error);
+      toast({
+        title: "Erro",
+        description: error.message || "Não foi possível iniciar o onboarding do Stripe.",
+        variant: "destructive",
+      });
+    } finally {
+      setStripeLoading(false);
+    }
+  };
 
   useEffect(() => {
     checkAuthAndFetch();
@@ -232,27 +286,26 @@ export default function InstructorDashboard() {
 
       <div className="min-h-screen bg-[#F8F9FA]">
         {/* Header */}
-        <header className="bg-[#0A2F44] text-white">
+        <header className="bg-gradient-to-r from-[#0A2F44] to-[#10B981] text-white">
           <div className="container mx-auto px-4 py-4">
             <div className="flex items-center justify-between">
               <Link to="/connect" className="flex items-center gap-2">
-                <Car className="h-8 w-8" />
-                <span className="text-xl font-semibold">Vrumi Connect</span>
+                <img src="/logo-vrumi.png" alt="Vrumi Connect" className="h-[68px] w-auto" />
               </Link>
-              <div className="flex items-center gap-3">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
                 <Link to="/painel">
-                  <Button variant="outline" className="border-white/30 text-white hover:bg-white/10 hidden sm:flex">
+                  <Button variant="secondary" className="w-full bg-white text-[#0A2F44] hover:bg-gray-100 border-0 font-medium shadow-sm sm:w-auto hidden sm:flex">
                     📚 Painel de Estudos
                   </Button>
                 </Link>
                 <Link to={`/connect/instrutor/${instructor.id}`}>
-                  <Button variant="outline" className="border-white/30 text-white hover:bg-white/10">
+                  <Button className="bg-white text-[#0A2F44] hover:bg-gray-100 border-0 font-medium shadow-sm">
                     Ver meu perfil
                   </Button>
                 </Link>
-                <Avatar className="h-10 w-10">
+                <Avatar className="h-10 w-10 border-2 border-white/30">
                   <AvatarImage src={instructor.photo_url || undefined} />
-                  <AvatarFallback className="bg-white/20">
+                  <AvatarFallback className="bg-white/20 text-white">
                     {instructor.full_name.charAt(0)}
                   </AvatarFallback>
                 </Avatar>
@@ -276,12 +329,12 @@ export default function InstructorDashboard() {
           )}
 
           {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-            <Card>
+          <div className="grid grid-cols-2 gap-3 mb-6 md:grid-cols-4 md:gap-4 md:mb-8">
+            <Card className="border-l-4 border-l-[#10B981]">
               <CardContent className="pt-6">
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-full bg-[#0A2F44]/10 flex items-center justify-center">
-                    <DollarSign className="h-6 w-6 text-[#0A2F44]" />
+                  <div className="w-12 h-12 rounded-full bg-[#10B981]/10 flex items-center justify-center">
+                    <DollarSign className="h-6 w-6 text-[#10B981]" />
                   </div>
                   <div>
                     <p className="text-sm text-gray-500">Ganhos este mês</p>
@@ -293,11 +346,11 @@ export default function InstructorDashboard() {
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="border-l-4 border-l-[#10B981]">
               <CardContent className="pt-6">
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-full bg-[#2F7B3A]/10 flex items-center justify-center">
-                    <Calendar className="h-6 w-6 text-[#2F7B3A]" />
+                  <div className="w-12 h-12 rounded-full bg-[#10B981]/10 flex items-center justify-center">
+                    <Calendar className="h-6 w-6 text-[#10B981]" />
                   </div>
                   <div>
                     <p className="text-sm text-gray-500">Aulas agendadas</p>
@@ -309,11 +362,11 @@ export default function InstructorDashboard() {
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="border-l-4 border-l-amber-400">
               <CardContent className="pt-6">
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-full bg-yellow-100 flex items-center justify-center">
-                    <Star className="h-6 w-6 text-yellow-600" />
+                  <div className="w-12 h-12 rounded-full bg-amber-50 flex items-center justify-center">
+                    <Star className="h-6 w-6 text-amber-500" />
                   </div>
                   <div>
                     <p className="text-sm text-gray-500">Avaliação média</p>
@@ -325,11 +378,11 @@ export default function InstructorDashboard() {
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="border-l-4 border-l-[#0A2F44]">
               <CardContent className="pt-6">
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-full bg-purple-100 flex items-center justify-center">
-                    <Users className="h-6 w-6 text-purple-600" />
+                  <div className="w-12 h-12 rounded-full bg-[#0A2F44]/10 flex items-center justify-center">
+                    <Users className="h-6 w-6 text-[#0A2F44]" />
                   </div>
                   <div>
                     <p className="text-sm text-gray-500">Total de aulas</p>
@@ -344,11 +397,35 @@ export default function InstructorDashboard() {
 
           {/* Main Content */}
           <Tabs defaultValue="bookings" className="space-y-6">
-            <TabsList>
-              <TabsTrigger value="bookings">Aulas</TabsTrigger>
-              <TabsTrigger value="earnings">Ganhos</TabsTrigger>
-              <TabsTrigger value="availability">Disponibilidade</TabsTrigger>
-              <TabsTrigger value="profile">Meu Perfil</TabsTrigger>
+            <TabsList className="w-full h-auto p-1.5 bg-white border border-gray-200 rounded-xl shadow-sm overflow-x-auto flex-wrap justify-start sm:justify-center gap-1">
+              <TabsTrigger
+                value="bookings"
+                className="flex items-center gap-2 px-4 py-2.5 rounded-lg data-[state=active]:bg-[#10B981] data-[state=active]:text-white data-[state=active]:shadow-sm transition-all"
+              >
+                <Calendar className="h-4 w-4" />
+                <span>Aulas</span>
+              </TabsTrigger>
+              <TabsTrigger
+                value="earnings"
+                className="flex items-center gap-2 px-4 py-2.5 rounded-lg data-[state=active]:bg-[#10B981] data-[state=active]:text-white data-[state=active]:shadow-sm transition-all"
+              >
+                <DollarSign className="h-4 w-4" />
+                <span>Ganhos</span>
+              </TabsTrigger>
+              <TabsTrigger
+                value="availability"
+                className="flex items-center gap-2 px-4 py-2.5 rounded-lg data-[state=active]:bg-[#10B981] data-[state=active]:text-white data-[state=active]:shadow-sm transition-all"
+              >
+                <Clock className="h-4 w-4" />
+                <span>Disponibilidade</span>
+              </TabsTrigger>
+              <TabsTrigger
+                value="profile"
+                className="flex items-center gap-2 px-4 py-2.5 rounded-lg data-[state=active]:bg-[#10B981] data-[state=active]:text-white data-[state=active]:shadow-sm transition-all"
+              >
+                <User className="h-4 w-4" />
+                <span>Meu Perfil</span>
+              </TabsTrigger>
             </TabsList>
 
             <TabsContent value="bookings" className="space-y-6">
@@ -430,7 +507,7 @@ export default function InstructorDashboard() {
                           key={booking.id}
                           className="p-4 border rounded-lg"
                         >
-                          <div className="flex items-center justify-between">
+                          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                             <div className="flex items-center gap-3">
                               <Avatar className="h-10 w-10">
                                 <AvatarImage src={booking.student?.avatar_url || undefined} />
@@ -447,7 +524,7 @@ export default function InstructorDashboard() {
                                 </p>
                               </div>
                             </div>
-                            <div className="flex items-center gap-4">
+                            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
                               <span className="font-medium">
                                 {formatPrice(Number(booking.instructor_amount))}
                               </span>
@@ -499,7 +576,7 @@ export default function InstructorDashboard() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+                  <div className="grid grid-cols-1 gap-3 mb-6 sm:gap-4 md:grid-cols-3 md:mb-8">
                     <div className="p-4 bg-green-50 rounded-lg">
                       <p className="text-sm text-gray-600">Total recebido</p>
                       <p className="text-2xl font-bold text-[#2F7B3A]">
@@ -519,6 +596,65 @@ export default function InstructorDashboard() {
                       </p>
                     </div>
                   </div>
+
+                  {/* Stripe Connect Status */}
+                  <Card className="mb-6 border-2 border-dashed border-purple-200">
+                    <CardContent className="pt-6">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                          <div className="w-12 h-12 rounded-full bg-purple-100 flex items-center justify-center">
+                            <DollarSign className="h-6 w-6 text-purple-600" />
+                          </div>
+                          <div>
+                            <p className="font-medium text-[#0A2F44]">Conta de Pagamentos</p>
+                            {instructor?.stripe_onboarding_complete ? (
+                              <p className="text-sm text-green-600 flex items-center gap-1">
+                                <CheckCircle className="h-4 w-4" />
+                                Stripe conectado - Receba pagamentos toda segunda-feira
+                              </p>
+                            ) : instructor?.stripe_account_id ? (
+                              <p className="text-sm text-yellow-600">
+                                Onboarding incompleto - Clique para continuar
+                              </p>
+                            ) : (
+                              <p className="text-sm text-gray-500">
+                                Configure sua conta para receber pagamentos
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                        {instructor?.stripe_onboarding_complete ? (
+                          <Badge className="bg-green-500">
+                            <CheckCircle className="h-3 w-3 mr-1" />
+                            Ativo
+                          </Badge>
+                        ) : instructor.status !== "approved" ? (
+                          <div className="text-right">
+                            <Button
+                              disabled
+                              className="bg-gray-300 cursor-not-allowed"
+                            >
+                              Conectar com Stripe
+                            </Button>
+                            <p className="text-xs text-amber-600 mt-1">
+                              Aguardando aprovação do perfil
+                            </p>
+                          </div>
+                        ) : (
+                          <Button
+                            onClick={handleStripeOnboarding}
+                            disabled={stripeLoading}
+                            className="bg-purple-600 hover:bg-purple-700"
+                          >
+                            {stripeLoading ? (
+                              <span className="animate-spin mr-2">⏳</span>
+                            ) : null}
+                            {instructor?.stripe_account_id ? "Continuar configuração" : "Conectar com Stripe"}
+                          </Button>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
 
                   <h4 className="font-medium mb-4">Transações recentes</h4>
                   {transactions.length === 0 ? (

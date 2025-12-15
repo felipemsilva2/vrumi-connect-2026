@@ -9,7 +9,7 @@ const ConnectHighlightSection = () => {
   return (
     <section className="py-20 sm:py-32 px-4 bg-muted/30">
       <div className="container mx-auto max-w-7xl">
-        <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+        <div className="grid gap-8 lg:gap-16 lg:grid-cols-2 items-center">
           {/* Content */}
           <motion.div
             initial={{ opacity: 0, x: -30 }}
@@ -28,13 +28,13 @@ const ConnectHighlightSection = () => {
             </h2>
 
             <p className="text-lg text-muted-foreground mb-8 leading-relaxed">
-              Com o fim da obrigatoriedade da autoescola tradicional, o Vrumi Connect surge 
-              para organizar o mercado. Oferecemos uma plataforma onde alunos encontram 
+              Com o fim da obrigatoriedade da autoescola tradicional, o Vrumi Connect surge
+              para organizar o mercado. Oferecemos uma plataforma onde alunos encontram
               instrutores qualificados perto de casa, com pagamento seguro e garantia de qualidade.
             </p>
 
             {/* Stats */}
-            <div className="grid grid-cols-3 gap-6 mb-8">
+            <div className="grid grid-cols-3 gap-4 mb-8 sm:gap-6">
               {[
                 { value: "500+", label: "Instrutores" },
                 { value: "27", label: "Estados" },

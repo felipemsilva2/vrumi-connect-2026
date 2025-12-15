@@ -52,10 +52,10 @@ const PricingCard3D = ({ plan, buttonState, loading, onPurchase }: PricingCardPr
   return (
     <motion.div
       className={cn(
-        "relative bg-card rounded-2xl p-6 sm:p-8 transition-all transform-gpu overflow-hidden",
+        "relative bg-card rounded-2xl p-6 sm:p-8 transition-all transform-gpu",
         plan.popular
-          ? "border-2 border-primary shadow-xl scale-105"
-          : "border border-border shadow-lg hover:shadow-xl"
+          ? "border-2 border-primary shadow-xl scale-105 mt-6"
+          : "border border-border shadow-lg hover:shadow-xl overflow-hidden"
       )}
       onMouseMove={handleMove}
       onMouseEnter={handleEnter}
@@ -72,7 +72,7 @@ const PricingCard3D = ({ plan, buttonState, loading, onPurchase }: PricingCardPr
       <motion.div
         className="absolute inset-0 rounded-2xl pointer-events-none"
         style={{
-          background: plan.popular 
+          background: plan.popular
             ? `linear-gradient(135deg, hsl(var(--primary) / 0.1) 0%, transparent 50%, hsl(var(--primary) / 0.05) 100%)`
             : `linear-gradient(135deg, transparent 0%, hsl(var(--primary) / 0.03) 50%, transparent 100%)`,
           transform: "translateZ(5px)",
@@ -105,7 +105,7 @@ const PricingCard3D = ({ plan, buttonState, loading, onPurchase }: PricingCardPr
         </div>
       )}
 
-      <motion.div 
+      <motion.div
         className="relative z-10"
         style={{ transform: "translateZ(15px)" }}
       >
@@ -119,7 +119,7 @@ const PricingCard3D = ({ plan, buttonState, loading, onPurchase }: PricingCardPr
             </p>
           )}
           <div className="flex items-baseline justify-center gap-1 mb-2">
-            <motion.span 
+            <motion.span
               className="text-3xl sm:text-4xl font-bold text-foreground"
               animate={{ scale: hovered ? 1.05 : 1 }}
               transition={{ duration: 0.3 }}
@@ -129,7 +129,7 @@ const PricingCard3D = ({ plan, buttonState, loading, onPurchase }: PricingCardPr
           </div>
           <span className="text-sm text-muted-foreground">{plan.period}</span>
           {plan.description && (
-            <p className="text-sm text-muted-foreground mt-4 italic">
+            <p className="text-xs sm:text-sm text-muted-foreground mt-4 italic leading-relaxed">
               "{plan.description}"
             </p>
           )}
@@ -137,8 +137,8 @@ const PricingCard3D = ({ plan, buttonState, loading, onPurchase }: PricingCardPr
 
         <ul className="space-y-3 mb-8">
           {plan.features.map((feature, i) => (
-            <motion.li 
-              key={i} 
+            <motion.li
+              key={i}
               className="flex items-center gap-3"
               animate={{ x: hovered ? 5 : 0 }}
               transition={{ duration: 0.2, delay: i * 0.03 }}
@@ -146,7 +146,7 @@ const PricingCard3D = ({ plan, buttonState, loading, onPurchase }: PricingCardPr
               <div className="flex-shrink-0 w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center">
                 <Check className="h-3 w-3 text-primary" />
               </div>
-              <span className="text-foreground">{feature}</span>
+              <span className="text-sm text-foreground">{feature}</span>
             </motion.li>
           ))}
         </ul>
@@ -301,7 +301,7 @@ const PricingSection = () => {
   return (
     <section id="preço" className="py-16 sm:py-20 px-4 bg-muted">
       <div className="container mx-auto max-w-7xl">
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
@@ -316,7 +316,7 @@ const PricingSection = () => {
           </p>
         </motion.div>
 
-        <div 
+        <div
           className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8 max-w-6xl mx-auto"
           style={{ perspective: "1500px", transformStyle: "preserve-3d" }}
         >
@@ -326,8 +326,8 @@ const PricingSection = () => {
               initial={{ opacity: 0, y: 40, rotateX: -15 }}
               whileInView={{ opacity: 1, y: 0, rotateX: 0 }}
               viewport={{ once: true }}
-              transition={{ 
-                duration: 0.5, 
+              transition={{
+                duration: 0.5,
                 delay: index * 0.1,
                 type: "spring",
                 stiffness: 100,
@@ -344,7 +344,7 @@ const PricingSection = () => {
           ))}
         </div>
 
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}

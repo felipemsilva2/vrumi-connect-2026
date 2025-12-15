@@ -122,7 +122,7 @@ const Solution3DCard: React.FC<Solution3DCardProps> = ({
             "w-16 h-16 rounded-2xl flex items-center justify-center mb-6",
             isHighlight ? "bg-primary/20" : "bg-primary/10"
           )}
-          animate={{ 
+          animate={{
             scale: hovered ? 1.1 : 1,
             rotateZ: hovered ? 5 : 0,
           }}
@@ -173,7 +173,7 @@ const Solution3DCard: React.FC<Solution3DCardProps> = ({
               ))}
             </ul>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+            <div className="grid grid-cols-1 gap-3 mb-8 sm:grid-cols-3 sm:gap-4">
               {(features as { icon: React.ComponentType<any>; label: string }[]).map((feature, index) => (
                 <motion.div
                   key={index}
@@ -234,7 +234,7 @@ const SolutionsSection = () => {
         </motion.div>
 
         {/* Solution Cards */}
-        <div className="grid lg:grid-cols-2 gap-8" style={{ perspective: "1500px" }}>
+        <div className="grid gap-6 lg:gap-8 lg:grid-cols-2" style={{ perspective: "1500px" }}>
           <motion.div
             initial={{ opacity: 0, x: -30 }}
             whileInView={{ opacity: 1, x: 0 }}

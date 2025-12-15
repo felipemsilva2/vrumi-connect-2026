@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { 
-  ArrowLeft, Star, MapPin, Clock, Calendar, CheckCircle, 
+import {
+  ArrowLeft, Star, MapPin, Clock, Calendar, CheckCircle,
   Phone, Mail, Car, Shield, Award
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -30,6 +30,7 @@ interface Instructor {
   average_rating: number;
   total_reviews: number;
   total_lessons: number;
+  status: string;
 }
 
 interface Review {
@@ -52,10 +53,20 @@ export default function InstructorProfile() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [user, setUser] = useState<any>(null);
   const [instructor, setInstructor] = useState<Instructor | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [availability, setAvailability] = useState<Availability[]>([]);
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    checkUser();
+  }, []);
+
+  const checkUser = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    setUser(user);
+  };
 
   useEffect(() => {
     if (id) {
@@ -70,7 +81,6 @@ export default function InstructorProfile() {
           .from("instructors")
           .select("*")
           .eq("id", id)
-          .eq("status", "approved")
           .single(),
         supabase
           .from("reviews")
@@ -168,18 +178,19 @@ export default function InstructorProfile() {
 
       <div className="min-h-screen bg-[#F8F9FA]">
         {/* Header */}
-        <header className="bg-[#0A2F44] text-white">
+        <header className="bg-gradient-to-r from-[#0A2F44] to-[#10B981] text-white">
           <div className="container mx-auto px-4 py-4">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <Link to="/connect" className="flex items-center gap-2">
-                <Car className="h-8 w-8" />
-                <span className="text-xl font-semibold">Vrumi Connect</span>
+                <img src="/logo-vrumi.png" alt="Vrumi Connect" className="h-[68px] w-auto" />
               </Link>
-              <Link to="/auth">
-                <Button className="bg-white text-[#0A2F44] hover:bg-white/90">
-                  Entrar
-                </Button>
-              </Link>
+              {!user && (
+                <Link to={`/entrar?redirect=/connect/instrutor/${id}`}>
+                  <Button className="bg-white text-[#0A2F44] hover:bg-white/90">
+                    Entrar
+                  </Button>
+                </Link>
+              )}
             </div>
           </div>
         </header>
@@ -195,9 +206,22 @@ export default function InstructorProfile() {
             Voltar
           </Button>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Pending Approval Banner */}
+          {instructor.status !== "approved" && (
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-6 flex items-start gap-3">
+              <Clock className="h-5 w-5 text-amber-600 mt-0.5 flex-shrink-0" />
+              <div>
+                <p className="font-medium text-amber-800">Perfil em análise</p>
+                <p className="text-sm text-amber-700">
+                  Este perfil está sendo analisado pela nossa equipe. Algumas funcionalidades estão temporáriamente bloqueadas.
+                </p>
+              </div>
+            </div>
+          )}
+
+          <div className="flex flex-col gap-6 lg:flex-row lg:gap-8">
             {/* Main Content */}
-            <div className="lg:col-span-2 space-y-6">
+            <div className="flex-1 space-y-6 lg:flex-[2]">
               {/* Profile Card */}
               <Card>
                 <CardContent className="p-6">
@@ -312,11 +336,10 @@ export default function InstructorProfile() {
                               {[...Array(5)].map((_, i) => (
                                 <Star
                                   key={i}
-                                  className={`h-4 w-4 ${
-                                    i < review.rating
-                                      ? "text-yellow-500 fill-yellow-500"
-                                      : "text-gray-300"
-                                  }`}
+                                  className={`h-4 w-4 ${i < review.rating
+                                    ? "text-yellow-500 fill-yellow-500"
+                                    : "text-gray-300"
+                                    }`}
                                 />
                               ))}
                             </div>
@@ -336,7 +359,7 @@ export default function InstructorProfile() {
             </div>
 
             {/* Sidebar - Booking Card */}
-            <div className="lg:col-span-1">
+            <div className="lg:flex-1">
               <Card className="sticky top-6">
                 <CardContent className="p-6">
                   <div className="text-center mb-6">
@@ -361,11 +384,22 @@ export default function InstructorProfile() {
                     </div>
                   </div>
 
-                  <Link to={`/connect/agendar/${instructor.id}`}>
-                    <Button className="w-full h-12 text-lg bg-[#0A2F44] hover:bg-[#0A2F44]/90">
-                      Agendar aula
-                    </Button>
-                  </Link>
+                  {instructor.status === "approved" ? (
+                    <Link to={`/connect/agendar/${instructor.id}`}>
+                      <Button className="w-full h-12 text-lg bg-[#10B981] hover:bg-[#0D9668]">
+                        Agendar aula
+                      </Button>
+                    </Link>
+                  ) : (
+                    <div>
+                      <Button disabled className="w-full h-12 text-lg bg-gray-300 cursor-not-allowed">
+                        Agendar aula
+                      </Button>
+                      <p className="text-xs text-amber-600 text-center mt-2">
+                        Agendamento indisponível - perfil em análise
+                      </p>
+                    </div>
+                  )}
 
                   <p className="text-xs text-gray-500 text-center mt-4">
                     Pagamento seguro via PIX ou cartão. Você só é cobrado após confirmar o agendamento.

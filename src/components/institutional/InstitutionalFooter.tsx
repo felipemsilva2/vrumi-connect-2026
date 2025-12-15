@@ -7,9 +7,9 @@ const InstitutionalFooter = () => {
   return (
     <footer className="bg-foreground text-background pt-16 pb-8">
       <div className="container mx-auto max-w-7xl px-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-12 mb-16">
+        <div className="grid grid-cols-2 gap-8 mb-12 md:grid-cols-2 md:gap-12 lg:grid-cols-5 lg:mb-16">
           {/* Brand */}
-          <div className="lg:col-span-2 space-y-4">
+          <div className="col-span-2 space-y-4 lg:col-span-2">
             <div className="flex items-center gap-2">
               <div className="bg-primary p-2 rounded-full">
                 <Car className="w-5 h-5 text-primary-foreground" />
@@ -17,7 +17,7 @@ const InstitutionalFooter = () => {
               <span className="text-2xl font-bold tracking-tight">Vrumi</span>
             </div>
             <p className="text-background/70 text-sm leading-relaxed max-w-sm">
-              O primeiro ecossistema completo para a nova era da habilitação brasileira. 
+              O primeiro ecossistema completo para a nova era da habilitação brasileira.
               Tecnologia, segurança e inovação em um só lugar.
             </p>
             <div className="flex gap-4 pt-2">

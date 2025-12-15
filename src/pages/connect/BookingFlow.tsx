@@ -338,11 +338,10 @@ export default function BookingFlow() {
 
       <div className="min-h-screen bg-[#F8F9FA]">
         {/* Header */}
-        <header className="bg-[#0A2F44] text-white">
+        <header className="bg-gradient-to-r from-[#0A2F44] to-[#10B981] text-white">
           <div className="container mx-auto px-4 py-4">
             <Link to="/connect" className="flex items-center gap-2">
-              <Car className="h-8 w-8" />
-              <span className="text-xl font-semibold">Vrumi Connect</span>
+              <img src="/logo-vrumi.png" alt="Vrumi Connect" className="h-[68px] w-auto" />
             </Link>
           </div>
         </header>
@@ -359,7 +358,7 @@ export default function BookingFlow() {
           </Button>
 
           {/* Progress Steps */}
-          <div className="flex items-center justify-between mb-8 max-w-md mx-auto">
+          <div className="flex items-center justify-between mb-6 max-w-md mx-auto sm:mb-8">
             {["date", "time", "contract", "payment"].map((s, i) => (
               <div key={s} className="flex items-center">
                 <div
@@ -372,7 +371,7 @@ export default function BookingFlow() {
                 </div>
                 {i < 3 && (
                   <div
-                    className={`w-12 h-0.5 ${["date", "time", "contract", "payment"].indexOf(step) > i
+                    className={`w-6 h-0.5 sm:w-12 ${["date", "time", "contract", "payment"].indexOf(step) > i
                       ? "bg-[#0A2F44]"
                       : "bg-gray-200"
                       }`}
@@ -382,9 +381,9 @@ export default function BookingFlow() {
             ))}
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="flex flex-col gap-6 lg:flex-row lg:gap-8">
             {/* Main Content */}
-            <div className="lg:col-span-2">
+            <div className="flex-1 lg:flex-[2]">
               {step === "success" ? (
                 <Card>
                   <CardContent className="py-12 text-center">
@@ -398,12 +397,12 @@ export default function BookingFlow() {
                       Sua aula com {instructor.full_name} foi agendada para{" "}
                       {selectedDate && format(selectedDate, "dd 'de' MMMM", { locale: ptBR })} às {selectedTime}.
                     </p>
-                    <div className="flex gap-4 justify-center">
+                    <div className="flex flex-col gap-3 justify-center sm:flex-row sm:gap-4">
                       <Link to="/connect">
-                        <Button variant="outline">Voltar ao início</Button>
+                        <Button variant="outline" className="w-full sm:w-auto">Voltar ao início</Button>
                       </Link>
                       <Link to="/connect/minhas-aulas">
-                        <Button className="bg-[#0A2F44] hover:bg-[#0A2F44]/90">
+                        <Button className="w-full bg-[#0A2F44] hover:bg-[#0A2F44]/90 sm:w-auto">
                           Ver minhas aulas
                         </Button>
                       </Link>
@@ -454,7 +453,7 @@ export default function BookingFlow() {
                     <p className="text-gray-600 mb-4">
                       {selectedDate && format(selectedDate, "EEEE, dd 'de' MMMM", { locale: ptBR })}
                     </p>
-                    <div className="grid grid-cols-3 md:grid-cols-4 gap-3">
+                    <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-3 md:grid-cols-4">
                       {selectedDate && getAvailableTimeSlots(selectedDate).map((time) => (
                         <Button
                           key={time}
@@ -579,7 +578,7 @@ export default function BookingFlow() {
             </div>
 
             {/* Sidebar - Order Summary */}
-            <div className="lg:col-span-1">
+            <div className="lg:flex-1">
               <Card className="sticky top-6">
                 <CardHeader>
                   <CardTitle className="text-lg text-[#0A2F44]">Resumo</CardTitle>
