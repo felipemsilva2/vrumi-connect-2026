@@ -100,6 +100,7 @@ export type Database = {
           scheduled_date: string
           scheduled_time: string
           status: Database["public"]["Enums"]["booking_status"] | null
+          stripe_payment_intent_id: string | null
           student_id: string
           updated_at: string | null
         }
@@ -122,6 +123,7 @@ export type Database = {
           scheduled_date: string
           scheduled_time: string
           status?: Database["public"]["Enums"]["booking_status"] | null
+          stripe_payment_intent_id?: string | null
           student_id: string
           updated_at?: string | null
         }
@@ -144,6 +146,7 @@ export type Database = {
           scheduled_date?: string
           scheduled_time?: string
           status?: Database["public"]["Enums"]["booking_status"] | null
+          stripe_payment_intent_id?: string | null
           student_id?: string
           updated_at?: string | null
         }
@@ -541,6 +544,8 @@ export type Database = {
           price_per_lesson: number
           state: string
           status: Database["public"]["Enums"]["instructor_status"] | null
+          stripe_account_id: string | null
+          stripe_onboarding_complete: boolean | null
           total_lessons: number | null
           total_reviews: number | null
           updated_at: string | null
@@ -563,6 +568,8 @@ export type Database = {
           price_per_lesson: number
           state: string
           status?: Database["public"]["Enums"]["instructor_status"] | null
+          stripe_account_id?: string | null
+          stripe_onboarding_complete?: boolean | null
           total_lessons?: number | null
           total_reviews?: number | null
           updated_at?: string | null
@@ -585,6 +592,8 @@ export type Database = {
           price_per_lesson?: number
           state?: string
           status?: Database["public"]["Enums"]["instructor_status"] | null
+          stripe_account_id?: string | null
+          stripe_onboarding_complete?: boolean | null
           total_lessons?: number | null
           total_reviews?: number | null
           updated_at?: string | null
