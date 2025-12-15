@@ -18,12 +18,14 @@ import { supabase } from '../../src/lib/supabase';
 
 interface Note {
     id: string;
-    title: string;
+    title: string | null;
     content: string;
-    category: string;
-    is_pinned: boolean;
-    created_at: string;
-    updated_at: string;
+    category: string | null;
+    is_pinned: boolean | null;
+    created_at: string | null;
+    updated_at: string | null;
+    user_id?: string | null;
+    related_content?: any;
 }
 
 interface NotesManagerProps {
@@ -143,7 +145,7 @@ export default function NotesManager({ visible, onClose }: NotesManagerProps) {
     const openEditor = (note?: Note) => {
         if (note) {
             setEditingNote(note);
-            setNoteTitle(note.title);
+            setNoteTitle(note.title || '');
             setNoteContent(note.content);
         } else {
             setEditingNote(null);
@@ -161,11 +163,12 @@ export default function NotesManager({ visible, onClose }: NotesManagerProps) {
     };
 
     const filteredNotes = notes.filter(note =>
-        note.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (note.title || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
         note.content.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
-    const formatDate = (dateStr: string) => {
+    const formatDate = (dateStr: string | null) => {
+        if (!dateStr) return '';
         const date = new Date(dateStr);
         return date.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' });
     };

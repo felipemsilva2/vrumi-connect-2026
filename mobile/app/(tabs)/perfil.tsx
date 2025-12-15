@@ -8,6 +8,7 @@ import { useGamification, getLevelTitle } from '../../contexts/GamificationConte
 import { router } from 'expo-router';
 import { supabase } from '../../src/lib/supabase';
 import * as ImagePicker from 'expo-image-picker';
+import { useInstructorStatus } from '../../hooks/useInstructorStatus';
 
 interface ProfileStats {
     studyStreak: number;
@@ -31,6 +32,7 @@ export default function PerfilScreen() {
     const [refreshing, setRefreshing] = useState(false);
     const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
     const [uploading, setUploading] = useState(false);
+    const { isInstructor, instructorStatus, instructorInfo, loading: instructorLoading } = useInstructorStatus();
 
     const fetchStats = useCallback(async () => {
         if (!user?.id) return;
@@ -289,6 +291,76 @@ export default function PerfilScreen() {
                         <Text style={[styles.menuItemText, { color: theme.text }]}>Conquistas</Text>
                         <Ionicons name="chevron-forward" size={18} color={theme.textMuted} />
                     </TouchableOpacity>
+                </View>
+
+                {/* Vrumi Connect Section */}
+                <View style={styles.menuSection}>
+                    <Text style={[styles.menuTitle, { color: theme.textSecondary }]}>Vrumi Connect</Text>
+
+                    {/* Browse Instructors */}
+                    <TouchableOpacity
+                        style={[styles.menuItem, { backgroundColor: theme.card }]}
+                        onPress={() => router.push('/connect')}
+                    >
+                        <View style={[styles.menuIcon, { backgroundColor: '#e0f2fe' }]}>
+                            <Ionicons name="car-sport" size={20} color="#0ea5e9" />
+                        </View>
+                        <Text style={[styles.menuItemText, { color: theme.text }]}>Encontrar Instrutor</Text>
+                        <Ionicons name="chevron-forward" size={18} color={theme.textMuted} />
+                    </TouchableOpacity>
+
+                    {/* My Lessons */}
+                    <TouchableOpacity
+                        style={[styles.menuItem, { backgroundColor: theme.card }]}
+                        onPress={() => router.push('/connect/minhas-aulas')}
+                    >
+                        <View style={[styles.menuIcon, { backgroundColor: '#d1fae5' }]}>
+                            <Ionicons name="calendar" size={20} color="#10b981" />
+                        </View>
+                        <Text style={[styles.menuItemText, { color: theme.text }]}>Minhas Aulas</Text>
+                        <Ionicons name="chevron-forward" size={18} color={theme.textMuted} />
+                    </TouchableOpacity>
+
+                    {/* Conditional Instructor Options */}
+                    {instructorStatus === 'none' && (
+                        <TouchableOpacity
+                            style={[styles.menuItem, { backgroundColor: theme.card }]}
+                            onPress={() => router.push('/connect/cadastro-instrutor')}
+                        >
+                            <View style={[styles.menuIcon, { backgroundColor: '#fce7f3' }]}>
+                                <Ionicons name="person-add" size={20} color="#ec4899" />
+                            </View>
+                            <Text style={[styles.menuItemText, { color: theme.text }]}>Seja um Instrutor</Text>
+                            <Ionicons name="chevron-forward" size={18} color={theme.textMuted} />
+                        </TouchableOpacity>
+                    )}
+
+                    {instructorStatus === 'pending' && (
+                        <View style={[styles.menuItem, { backgroundColor: theme.card }]}>
+                            <View style={[styles.menuIcon, { backgroundColor: '#fef3c7' }]}>
+                                <Ionicons name="time" size={20} color="#f59e0b" />
+                            </View>
+                            <View style={{ flex: 1 }}>
+                                <Text style={[styles.menuItemText, { color: theme.text }]}>Cadastro em Análise</Text>
+                                <Text style={[styles.menuItemSubtext, { color: theme.textMuted }]}>
+                                    Aguardando aprovação
+                                </Text>
+                            </View>
+                        </View>
+                    )}
+
+                    {instructorStatus === 'approved' && (
+                        <TouchableOpacity
+                            style={[styles.menuItem, { backgroundColor: theme.card }]}
+                            onPress={() => router.push('/connect/painel-instrutor')}
+                        >
+                            <View style={[styles.menuIcon, { backgroundColor: '#dbeafe' }]}>
+                                <Ionicons name="speedometer" size={20} color="#3b82f6" />
+                            </View>
+                            <Text style={[styles.menuItemText, { color: theme.text }]}>Painel do Instrutor</Text>
+                            <Ionicons name="chevron-forward" size={18} color={theme.textMuted} />
+                        </TouchableOpacity>
+                    )}
                 </View>
 
                 {/* Daily Goal Section */}
@@ -553,6 +625,10 @@ const styles = StyleSheet.create({
         flex: 1,
         fontSize: 15,
         fontWeight: '500',
+    },
+    menuItemSubtext: {
+        fontSize: 12,
+        marginTop: 2,
     },
     logoutSection: {
         paddingHorizontal: 20,

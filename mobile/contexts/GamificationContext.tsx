@@ -95,21 +95,21 @@ export function GamificationProvider({ children }: { children: React.ReactNode }
             if (data) {
                 setStats({
                     streak: {
-                        current: data.streak?.current ?? 0,
-                        longest: data.streak?.longest ?? 0,
-                        lastActivity: data.streak?.last_activity ?? null,
-                        isActiveToday: data.streak?.is_active_today ?? false,
+                        current: (data as any).streak?.current ?? 0,
+                        longest: (data as any).streak?.longest ?? 0,
+                        lastActivity: (data as any).streak?.last_activity ?? null,
+                        isActiveToday: (data as any).streak?.is_active_today ?? false,
                     },
                     xp: {
-                        total: data.xp?.total ?? 0,
-                        level: data.xp?.level ?? 1,
-                        today: data.xp?.today ?? 0,
-                        xpToNextLevel: data.xp?.xp_to_next_level ?? 500,
+                        total: (data as any).xp?.total ?? 0,
+                        level: (data as any).xp?.level ?? 1,
+                        today: (data as any).xp?.today ?? 0,
+                        xpToNextLevel: (data as any).xp?.xp_to_next_level ?? 500,
                     },
                     dailyGoal: {
-                        goalMinutes: data.daily_goal?.goal_minutes ?? 10,
-                        minutesToday: data.daily_goal?.minutes_today ?? 0,
-                        completed: data.daily_goal?.completed ?? false,
+                        goalMinutes: (data as any).daily_goal?.goal_minutes ?? 10,
+                        minutesToday: (data as any).daily_goal?.minutes_today ?? 0,
+                        completed: (data as any).daily_goal?.completed ?? false,
                     },
                 });
             }
@@ -172,7 +172,7 @@ export function GamificationProvider({ children }: { children: React.ReactNode }
                 p_user_id: user.id,
                 p_xp_amount: xpAmount,
                 p_action_type: actionType,
-                p_description: description || null
+                p_description: description
             });
 
             // Refresh stats

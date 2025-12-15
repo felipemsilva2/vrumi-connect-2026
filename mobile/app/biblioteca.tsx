@@ -25,8 +25,13 @@ interface Sign {
     name: string;
     code: string;
     category: string;
-    description: string;
+    description: string | null;
     image_url: string | null;
+    created_at?: string | null;
+    updated_at?: string | null;
+    meaning?: string | null;
+    tags?: string[] | null;
+    is_active?: boolean | null;
 }
 
 export default function BibliotecaScreen() {

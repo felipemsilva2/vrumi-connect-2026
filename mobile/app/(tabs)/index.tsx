@@ -301,8 +301,19 @@ export default function DashboardScreen() {
                             </View>
                             <Text style={[styles.actionTitle, { color: theme.text }]}>Placas</Text>
                         </TouchableOpacity>
+
+                        <TouchableOpacity
+                            style={[styles.actionCard, { backgroundColor: theme.card }]}
+                            onPress={() => router.push('/connect')}
+                        >
+                            <View style={[styles.actionIconBg, { backgroundColor: isDark ? '#1e3a5f' : '#e0f2fe' }]}>
+                                <Ionicons name="car-sport" size={24} color="#0ea5e9" />
+                            </View>
+                            <Text style={[styles.actionTitle, { color: theme.text }]}>Connect</Text>
+                        </TouchableOpacity>
                     </View>
                 </View>
+
 
                 {/* Recent Activity */}
                 <View style={styles.section}>

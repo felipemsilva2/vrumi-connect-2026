@@ -23,7 +23,7 @@ interface Sign {
     name: string;
     code: string;
     category: string;
-    description: string;
+    description: string | null;
     image_url: string | null;
 }
 

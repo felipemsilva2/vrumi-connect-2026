@@ -195,7 +195,7 @@ export default function AchievementsScreen() {
                 .eq('user_id', user.id);
 
             if (data) {
-                setUnlockedAchievements(new Set(data.map((a: UserAchievement) => a.achievement_key)));
+                setUnlockedAchievements(new Set(data.map((a: { achievement_key: string }) => a.achievement_key)));
             }
         } catch (error) {
             console.error('Error fetching achievements:', error);
