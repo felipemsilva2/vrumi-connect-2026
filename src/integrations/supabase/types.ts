@@ -326,6 +326,30 @@ export type Database = {
           },
         ]
       }
+      conversations: {
+        Row: {
+          created_at: string | null
+          id: string
+          last_message_at: string | null
+          participant_1: string
+          participant_2: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          last_message_at?: string | null
+          participant_1: string
+          participant_2: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          last_message_at?: string | null
+          participant_1?: string
+          participant_2?: string
+        }
+        Relationships: []
+      }
       data_subject_requests: {
         Row: {
           created_at: string
@@ -533,12 +557,16 @@ export type Database = {
           bio: string | null
           categories: Database["public"]["Enums"]["cnh_category"][]
           city: string
+          cnh_document_url: string | null
           cpf: string
           created_at: string | null
+          documents_status: string | null
           full_name: string
           id: string
           is_verified: boolean | null
+          latitude: number | null
           lesson_duration_minutes: number
+          longitude: number | null
           phone: string
           photo_url: string | null
           price_per_lesson: number
@@ -550,6 +578,7 @@ export type Database = {
           total_reviews: number | null
           updated_at: string | null
           user_id: string
+          vehicle_document_url: string | null
           vehicle_model: string | null
           vehicle_transmission: string | null
         }
@@ -559,12 +588,16 @@ export type Database = {
           bio?: string | null
           categories?: Database["public"]["Enums"]["cnh_category"][]
           city: string
+          cnh_document_url?: string | null
           cpf: string
           created_at?: string | null
+          documents_status?: string | null
           full_name: string
           id?: string
           is_verified?: boolean | null
+          latitude?: number | null
           lesson_duration_minutes?: number
+          longitude?: number | null
           phone: string
           photo_url?: string | null
           price_per_lesson: number
@@ -576,6 +609,7 @@ export type Database = {
           total_reviews?: number | null
           updated_at?: string | null
           user_id: string
+          vehicle_document_url?: string | null
           vehicle_model?: string | null
           vehicle_transmission?: string | null
         }
@@ -585,12 +619,16 @@ export type Database = {
           bio?: string | null
           categories?: Database["public"]["Enums"]["cnh_category"][]
           city?: string
+          cnh_document_url?: string | null
           cpf?: string
           created_at?: string | null
+          documents_status?: string | null
           full_name?: string
           id?: string
           is_verified?: boolean | null
+          latitude?: number | null
           lesson_duration_minutes?: number
+          longitude?: number | null
           phone?: string
           photo_url?: string | null
           price_per_lesson?: number
@@ -602,6 +640,7 @@ export type Database = {
           total_reviews?: number | null
           updated_at?: string | null
           user_id?: string
+          vehicle_document_url?: string | null
           vehicle_model?: string | null
           vehicle_transmission?: string | null
         }
@@ -644,6 +683,41 @@ export type Database = {
             columns: ["lesson_id"]
             isOneToOne: false
             referencedRelation: "study_lessons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      messages: {
+        Row: {
+          content: string
+          conversation_id: string
+          created_at: string | null
+          id: string
+          read_at: string | null
+          sender_id: string
+        }
+        Insert: {
+          content: string
+          conversation_id: string
+          created_at?: string | null
+          id?: string
+          read_at?: string | null
+          sender_id: string
+        }
+        Update: {
+          content?: string
+          conversation_id?: string
+          created_at?: string | null
+          id?: string
+          read_at?: string | null
+          sender_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
             referencedColumns: ["id"]
           },
         ]
@@ -728,6 +802,33 @@ export type Database = {
           total_flashcards_studied?: number | null
           total_questions_answered?: number | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      push_tokens: {
+        Row: {
+          created_at: string | null
+          id: string
+          platform: string
+          token: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          platform: string
+          token: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          platform?: string
+          token?: string
+          updated_at?: string | null
+          user_id?: string
         }
         Relationships: []
       }
