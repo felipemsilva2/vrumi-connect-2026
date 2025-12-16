@@ -10,6 +10,7 @@ import {
     ActivityIndicator,
     Dimensions,
     RefreshControl,
+    StatusBar,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -19,7 +20,6 @@ import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../src/lib/supabase';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
-const CARD_WIDTH = (SCREEN_WIDTH - 48 - 12) / 2;
 
 interface Instructor {
     id: string;
@@ -32,38 +32,35 @@ interface Instructor {
     average_rating: number | null;
     total_reviews: number | null;
     is_verified: boolean | null;
+    vehicle_model?: string;
+    vehicle_transmission?: string;
 }
 
-const BRAZILIAN_STATES = [
-    'AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA',
-    'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN',
-    'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'
+const CNH_CATEGORIES = [
+    { id: 'A', label: 'Moto', icon: 'bicycle-outline' as const },
+    { id: 'B', label: 'Carro', icon: 'car-outline' as const },
+    { id: 'C', label: 'Caminhão', icon: 'bus-outline' as const },
+    { id: 'D', label: 'Ônibus', icon: 'bus' as const },
+    { id: 'E', label: 'Articulado', icon: 'train-outline' as const },
 ];
-
-const CNH_CATEGORIES = ['A', 'B', 'AB', 'C', 'D', 'E'];
 
 export default function ConnectHomeScreen() {
     const { theme, isDark } = useTheme();
-    const { user } = useAuth();
+    const { user, profile } = useAuth();
     const [instructors, setInstructors] = useState<Instructor[]>([]);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     const [searchCity, setSearchCity] = useState('');
-    const [selectedState, setSelectedState] = useState('');
     const [selectedCategory, setSelectedCategory] = useState('');
-    const [showFilters, setShowFilters] = useState(false);
 
     const fetchInstructors = useCallback(async () => {
         try {
             let query = supabase
                 .from('instructors')
-                .select('id, full_name, photo_url, city, state, categories, price_per_lesson, average_rating, total_reviews, is_verified')
+                .select('id, full_name, photo_url, city, state, categories, price_per_lesson, average_rating, total_reviews, is_verified, vehicle_model, vehicle_transmission')
                 .eq('status', 'approved')
                 .order('average_rating', { ascending: false });
 
-            if (selectedState) {
-                query = query.eq('state', selectedState);
-            }
             if (searchCity) {
                 query = query.ilike('city', `%${searchCity}%`);
             }
@@ -71,7 +68,7 @@ export default function ConnectHomeScreen() {
                 query = query.contains('categories', [selectedCategory]);
             }
 
-            const { data, error } = await query.limit(20);
+            const { data, error } = await query.limit(10);
 
             if (error) throw error;
             setInstructors(data || []);
@@ -81,7 +78,7 @@ export default function ConnectHomeScreen() {
             setLoading(false);
             setRefreshing(false);
         }
-    }, [selectedState, searchCity, selectedCategory]);
+    }, [searchCity, selectedCategory]);
 
     useEffect(() => {
         fetchInstructors();
@@ -99,499 +96,555 @@ export default function ConnectHomeScreen() {
         }).format(price);
     };
 
-    const clearFilters = () => {
-        setSelectedState('');
-        setSearchCity('');
-        setSelectedCategory('');
+    const getGreeting = () => {
+        const hour = new Date().getHours();
+        if (hour < 12) return 'Bom dia';
+        if (hour < 18) return 'Boa tarde';
+        return 'Boa noite';
     };
 
-    const hasActiveFilters = selectedState || searchCity || selectedCategory;
+    const firstName = profile?.full_name?.split(' ')[0] || 'Aluno';
 
-    const renderInstructorCard = (instructor: Instructor) => (
+    const renderInstructorCard = (instructor: Instructor, index: number) => (
         <TouchableOpacity
             key={instructor.id}
-            style={[styles.instructorCard, { backgroundColor: theme.card }]}
+            style={styles.instructorCard}
             onPress={() => router.push(`/connect/instrutor/${instructor.id}`)}
-            activeOpacity={0.8}
+            activeOpacity={0.9}
         >
             {/* Photo */}
-            <View style={styles.photoContainer}>
+            <View style={styles.instructorPhotoContainer}>
                 {instructor.photo_url ? (
                     <Image
                         source={{ uri: instructor.photo_url }}
-                        style={styles.photo}
+                        style={styles.instructorPhoto}
                         resizeMode="cover"
                     />
                 ) : (
-                    <View style={[styles.photoPlaceholder, { backgroundColor: theme.primary }]}>
-                        <Text style={styles.photoInitial}>
+                    <View style={[styles.instructorPhotoPlaceholder, { backgroundColor: '#10b981' }]}>
+                        <Text style={styles.instructorInitial}>
                             {instructor.full_name.charAt(0).toUpperCase()}
                         </Text>
-                    </View>
-                )}
-                {instructor.is_verified && (
-                    <View style={[styles.verifiedBadge, { backgroundColor: theme.primary }]}>
-                        <Ionicons name="checkmark" size={10} color="#fff" />
                     </View>
                 )}
             </View>
 
             {/* Info */}
-            <View style={styles.cardInfo}>
-                <Text style={[styles.instructorName, { color: theme.text }]} numberOfLines={1}>
-                    {instructor.full_name}
-                </Text>
+            <View style={styles.instructorInfo}>
+                <View style={styles.instructorHeader}>
+                    <Text style={styles.instructorName} numberOfLines={1}>
+                        {instructor.full_name}
+                    </Text>
+                    {instructor.is_verified && (
+                        <View style={styles.verifiedBadge}>
+                            <Ionicons name="checkmark-circle" size={16} color="#10b981" />
+                        </View>
+                    )}
+                </View>
 
-                <View style={styles.locationRow}>
-                    <Ionicons name="location-outline" size={12} color={theme.textMuted} />
-                    <Text style={[styles.locationText, { color: theme.textMuted }]} numberOfLines={1}>
+                <View style={styles.instructorMeta}>
+                    <Ionicons name="location" size={12} color="#9ca3af" />
+                    <Text style={styles.instructorLocation}>
                         {instructor.city}, {instructor.state}
                     </Text>
                 </View>
 
-                <View style={styles.ratingRow}>
-                    <Ionicons name="star" size={12} color="#f59e0b" />
-                    <Text style={[styles.ratingText, { color: theme.text }]}>
-                        {Number(instructor.average_rating).toFixed(1)}
-                    </Text>
-                    <Text style={[styles.reviewCount, { color: theme.textMuted }]}>
-                        ({instructor.total_reviews})
+                {instructor.vehicle_model && (
+                    <View style={styles.instructorMeta}>
+                        <Ionicons name="car-sport" size={12} color="#9ca3af" />
+                        <Text style={styles.instructorVehicle}>
+                            {instructor.vehicle_model} • {instructor.vehicle_transmission === 'automatic' ? 'Automático' : 'Manual'}
+                        </Text>
+                    </View>
+                )}
+
+                <View style={styles.instructorFooter}>
+                    <View style={styles.ratingContainer}>
+                        <Ionicons name="star" size={14} color="#f59e0b" />
+                        <Text style={styles.ratingText}>
+                            {(instructor.average_rating || 0).toFixed(1)}
+                        </Text>
+                        <Text style={styles.reviewCount}>
+                            ({instructor.total_reviews || 0})
+                        </Text>
+                    </View>
+                    <Text style={styles.priceText}>
+                        {formatPrice(instructor.price_per_lesson)}
                     </Text>
                 </View>
+            </View>
 
-                <View style={styles.categoriesRow}>
-                    {instructor.categories.slice(0, 2).map((cat) => (
-                        <View
-                            key={cat}
-                            style={[styles.categoryBadge, { backgroundColor: theme.primaryLight }]}
-                        >
-                            <Text style={[styles.categoryText, { color: theme.primary }]}>{cat}</Text>
-                        </View>
-                    ))}
-                </View>
-
-                <Text style={[styles.priceText, { color: theme.primary }]}>
-                    {formatPrice(instructor.price_per_lesson)}
-                    <Text style={[styles.priceLabel, { color: theme.textMuted }]}>/aula</Text>
-                </Text>
+            {/* Arrow */}
+            <View style={styles.arrowContainer}>
+                <Ionicons name="chevron-forward" size={20} color="#9ca3af" />
             </View>
         </TouchableOpacity>
     );
 
     return (
-        <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]} edges={['top']}>
-            {/* Header */}
-            <View style={styles.header}>
-                <TouchableOpacity
-                    style={[styles.backButton, { backgroundColor: theme.card }]}
-                    onPress={() => router.back()}
-                >
-                    <Ionicons name="arrow-back" size={22} color={theme.text} />
-                </TouchableOpacity>
-                <View style={styles.headerCenter}>
-                    <Text style={[styles.headerTitle, { color: theme.text }]}>Vrumi Connect</Text>
-                    <Text style={[styles.headerSubtitle, { color: theme.textMuted }]}>
-                        Encontre seu instrutor
-                    </Text>
-                </View>
-                <TouchableOpacity
-                    style={[
-                        styles.filterButton,
-                        { backgroundColor: showFilters ? theme.primary : theme.card }
-                    ]}
-                    onPress={() => setShowFilters(!showFilters)}
-                >
-                    <Ionicons
-                        name="options-outline"
-                        size={22}
-                        color={showFilters ? '#fff' : theme.text}
-                    />
-                </TouchableOpacity>
-            </View>
+        <View style={styles.container}>
+            <StatusBar barStyle="light-content" backgroundColor="#064e3b" />
 
-            {/* Search Bar */}
-            <View style={styles.searchContainer}>
-                <View style={[styles.searchBar, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
-                    <Ionicons name="search" size={20} color={theme.textMuted} />
-                    <TextInput
-                        style={[styles.searchInput, { color: theme.text }]}
-                        placeholder="Buscar por cidade..."
-                        placeholderTextColor={theme.textMuted}
-                        value={searchCity}
-                        onChangeText={setSearchCity}
-                        onSubmitEditing={fetchInstructors}
-                        returnKeyType="search"
-                    />
-                    {searchCity.length > 0 && (
-                        <TouchableOpacity onPress={() => setSearchCity('')}>
-                            <Ionicons name="close-circle" size={20} color={theme.textMuted} />
+            {/* Dark Green Header */}
+            <View style={styles.headerSection}>
+                <SafeAreaView edges={['top']} style={styles.safeHeader}>
+                    {/* Top Bar */}
+                    <View style={styles.topBar}>
+                        <TouchableOpacity
+                            style={styles.backButton}
+                            onPress={() => router.back()}
+                        >
+                            <Ionicons name="arrow-back" size={24} color="#fff" />
                         </TouchableOpacity>
-                    )}
-                </View>
-            </View>
-
-            {/* Filters */}
-            {showFilters && (
-                <View style={[styles.filtersContainer, { backgroundColor: theme.card }]}>
-                    <Text style={[styles.filterLabel, { color: theme.textSecondary }]}>Estado</Text>
-                    <ScrollView
-                        horizontal
-                        showsHorizontalScrollIndicator={false}
-                        style={styles.filterScroll}
-                    >
-                        {BRAZILIAN_STATES.map((state) => (
-                            <TouchableOpacity
-                                key={state}
-                                style={[
-                                    styles.filterChip,
-                                    {
-                                        backgroundColor: selectedState === state
-                                            ? theme.primary
-                                            : theme.background,
-                                        borderColor: selectedState === state
-                                            ? theme.primary
-                                            : theme.cardBorder,
-                                    }
-                                ]}
-                                onPress={() => setSelectedState(selectedState === state ? '' : state)}
-                            >
-                                <Text style={[
-                                    styles.filterChipText,
-                                    { color: selectedState === state ? '#fff' : theme.text }
-                                ]}>
-                                    {state}
-                                </Text>
-                            </TouchableOpacity>
-                        ))}
-                    </ScrollView>
-
-                    <Text style={[styles.filterLabel, { color: theme.textSecondary, marginTop: 12 }]}>
-                        Categoria CNH
-                    </Text>
-                    <View style={styles.categoryFilters}>
-                        {CNH_CATEGORIES.map((cat) => (
-                            <TouchableOpacity
-                                key={cat}
-                                style={[
-                                    styles.filterChip,
-                                    {
-                                        backgroundColor: selectedCategory === cat
-                                            ? theme.primary
-                                            : theme.background,
-                                        borderColor: selectedCategory === cat
-                                            ? theme.primary
-                                            : theme.cardBorder,
-                                    }
-                                ]}
-                                onPress={() => setSelectedCategory(selectedCategory === cat ? '' : cat)}
-                            >
-                                <Text style={[
-                                    styles.filterChipText,
-                                    { color: selectedCategory === cat ? '#fff' : theme.text }
-                                ]}>
-                                    {cat}
-                                </Text>
-                            </TouchableOpacity>
-                        ))}
+                        <View style={styles.userInfo}>
+                            <Text style={styles.greeting}>{getGreeting()},</Text>
+                            <Text style={styles.userName}>{firstName}</Text>
+                        </View>
+                        <TouchableOpacity style={styles.profileButton}>
+                            {profile?.avatar_url ? (
+                                <Image
+                                    source={{ uri: profile.avatar_url }}
+                                    style={styles.profileAvatar}
+                                />
+                            ) : (
+                                <View style={styles.profileAvatarPlaceholder}>
+                                    <Ionicons name="person" size={18} color="#064e3b" />
+                                </View>
+                            )}
+                        </TouchableOpacity>
                     </View>
 
-                    {hasActiveFilters && (
-                        <TouchableOpacity style={styles.clearButton} onPress={clearFilters}>
-                            <Ionicons name="close" size={16} color={theme.primary} />
-                            <Text style={[styles.clearButtonText, { color: theme.primary }]}>
-                                Limpar filtros
+                    {/* Hero Text */}
+                    <Text style={styles.heroTitle}>Encontre seu{'\n'}instrutor ideal</Text>
+
+                    {/* Search Card */}
+                    <View style={styles.searchCard}>
+                        <View style={styles.searchInputContainer}>
+                            <Ionicons name="location-outline" size={20} color="#9ca3af" />
+                            <TextInput
+                                style={styles.searchInput}
+                                placeholder="Digite sua cidade..."
+                                placeholderTextColor="#9ca3af"
+                                value={searchCity}
+                                onChangeText={setSearchCity}
+                            />
+                        </View>
+                        <View style={styles.searchDivider} />
+                        <View style={styles.searchInputContainer}>
+                            <Ionicons name="car-outline" size={20} color="#9ca3af" />
+                            <Text style={styles.categoryPlaceholder}>
+                                {selectedCategory ? `Categoria ${selectedCategory}` : 'Selecione a categoria'}
                             </Text>
+                        </View>
+                        <TouchableOpacity
+                            style={styles.searchButton}
+                            onPress={fetchInstructors}
+                        >
+                            <Text style={styles.searchButtonText}>Buscar Instrutores</Text>
                         </TouchableOpacity>
-                    )}
-                </View>
-            )}
-
-            {/* Results Count */}
-            <View style={styles.resultsHeader}>
-                <Text style={[styles.resultsText, { color: theme.textSecondary }]}>
-                    {loading ? 'Carregando...' : `${instructors.length} instrutor(es) encontrado(s)`}
-                </Text>
+                    </View>
+                </SafeAreaView>
             </View>
 
-            {/* Instructors List */}
-            {loading ? (
-                <View style={styles.loadingContainer}>
-                    <ActivityIndicator size="large" color={theme.primary} />
+            {/* Content */}
+            <ScrollView
+                style={styles.content}
+                contentContainerStyle={styles.contentContainer}
+                showsVerticalScrollIndicator={false}
+                refreshControl={
+                    <RefreshControl
+                        refreshing={refreshing}
+                        onRefresh={onRefresh}
+                        tintColor="#10b981"
+                        colors={['#10b981']}
+                    />
+                }
+            >
+                {/* Categories */}
+                <Text style={styles.sectionTitle}>Categorias CNH</Text>
+                <View style={styles.categoriesGrid}>
+                    {CNH_CATEGORIES.map((cat) => (
+                        <TouchableOpacity
+                            key={cat.id}
+                            style={[
+                                styles.categoryCard,
+                                selectedCategory === cat.id && styles.categoryCardActive,
+                            ]}
+                            onPress={() => setSelectedCategory(
+                                selectedCategory === cat.id ? '' : cat.id
+                            )}
+                        >
+                            <View style={[
+                                styles.categoryIcon,
+                                selectedCategory === cat.id && styles.categoryIconActive,
+                            ]}>
+                                <Ionicons
+                                    name={cat.icon}
+                                    size={24}
+                                    color={selectedCategory === cat.id ? '#fff' : '#064e3b'}
+                                />
+                            </View>
+                            <Text style={[
+                                styles.categoryLabel,
+                                selectedCategory === cat.id && styles.categoryLabelActive,
+                            ]}>
+                                {cat.label}
+                            </Text>
+                            <Text style={styles.categoryBadge}>{cat.id}</Text>
+                        </TouchableOpacity>
+                    ))}
                 </View>
-            ) : instructors.length === 0 ? (
-                <View style={styles.emptyContainer}>
-                    <View style={[styles.emptyIcon, { backgroundColor: theme.card }]}>
-                        <Ionicons name="car-outline" size={48} color={theme.textMuted} />
+
+                {/* Instructors */}
+                <View style={styles.instructorsHeader}>
+                    <Text style={styles.sectionTitle}>Instrutores disponíveis</Text>
+                    {instructors.length > 0 && (
+                        <Text style={styles.instructorCount}>
+                            {instructors.length} encontrado(s)
+                        </Text>
+                    )}
+                </View>
+
+                {loading ? (
+                    <View style={styles.loadingContainer}>
+                        <ActivityIndicator size="large" color="#10b981" />
                     </View>
-                    <Text style={[styles.emptyTitle, { color: theme.text }]}>
-                        Nenhum instrutor encontrado
-                    </Text>
-                    <Text style={[styles.emptySubtitle, { color: theme.textMuted }]}>
-                        Tente ajustar os filtros de busca
-                    </Text>
-                </View>
-            ) : (
-                <ScrollView
-                    style={styles.scrollView}
-                    contentContainerStyle={styles.scrollContent}
-                    showsVerticalScrollIndicator={false}
-                    refreshControl={
-                        <RefreshControl
-                            refreshing={refreshing}
-                            onRefresh={onRefresh}
-                            colors={[theme.primary]}
-                            tintColor={theme.primary}
-                        />
-                    }
-                >
-                    <View style={styles.instructorsGrid}>
+                ) : instructors.length === 0 ? (
+                    <View style={styles.emptyContainer}>
+                        <View style={styles.emptyIcon}>
+                            <Ionicons name="search-outline" size={48} color="#9ca3af" />
+                        </View>
+                        <Text style={styles.emptyTitle}>Nenhum instrutor encontrado</Text>
+                        <Text style={styles.emptySubtitle}>
+                            Tente buscar em outra cidade ou categoria
+                        </Text>
+                    </View>
+                ) : (
+                    <View style={styles.instructorsList}>
                         {instructors.map(renderInstructorCard)}
                     </View>
-                    <View style={{ height: 24 }} />
-                </ScrollView>
-            )}
-        </SafeAreaView>
+                )}
+
+                <View style={{ height: 32 }} />
+            </ScrollView>
+        </View>
     );
 }
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
+        backgroundColor: '#f3f4f6',
     },
-    // Header
-    header: {
+    // Header Section
+    headerSection: {
+        backgroundColor: '#064e3b',
+        borderBottomLeftRadius: 32,
+        borderBottomRightRadius: 32,
+        paddingBottom: 80,
+    },
+    safeHeader: {
+        paddingHorizontal: 20,
+    },
+    topBar: {
         flexDirection: 'row',
         alignItems: 'center',
-        paddingHorizontal: 20,
-        paddingVertical: 12,
+        justifyContent: 'space-between',
+        marginTop: 8,
+        marginBottom: 24,
     },
     backButton: {
-        width: 44,
-        height: 44,
-        borderRadius: 22,
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        backgroundColor: 'rgba(255,255,255,0.15)',
         justifyContent: 'center',
         alignItems: 'center',
     },
-    headerCenter: {
+    userInfo: {
         flex: 1,
-        alignItems: 'center',
+        marginLeft: 16,
     },
-    headerTitle: {
+    greeting: {
+        fontSize: 14,
+        color: 'rgba(255,255,255,0.7)',
+    },
+    userName: {
         fontSize: 18,
         fontWeight: '700',
+        color: '#fff',
     },
-    headerSubtitle: {
-        fontSize: 12,
-        marginTop: 2,
-    },
-    filterButton: {
+    profileButton: {
         width: 44,
         height: 44,
         borderRadius: 22,
+        overflow: 'hidden',
+    },
+    profileAvatar: {
+        width: '100%',
+        height: '100%',
+    },
+    profileAvatarPlaceholder: {
+        width: '100%',
+        height: '100%',
+        backgroundColor: '#fff',
         justifyContent: 'center',
         alignItems: 'center',
     },
-    // Search
-    searchContainer: {
-        paddingHorizontal: 20,
-        marginBottom: 12,
+    heroTitle: {
+        fontSize: 32,
+        fontWeight: '800',
+        color: '#fff',
+        lineHeight: 40,
+        marginBottom: 24,
     },
-    searchBar: {
+    // Search Card
+    searchCard: {
+        backgroundColor: '#fff',
+        borderRadius: 20,
+        padding: 20,
+        marginBottom: -60,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.15,
+        shadowRadius: 12,
+        elevation: 8,
+    },
+    searchInputContainer: {
         flexDirection: 'row',
         alignItems: 'center',
-        borderRadius: 16,
-        borderWidth: 1,
-        paddingHorizontal: 16,
-        height: 52,
+        paddingVertical: 12,
         gap: 12,
     },
     searchInput: {
         flex: 1,
         fontSize: 16,
+        color: '#1f2937',
     },
-    // Filters
-    filtersContainer: {
-        marginHorizontal: 20,
-        padding: 16,
+    categoryPlaceholder: {
+        flex: 1,
+        fontSize: 16,
+        color: '#9ca3af',
+    },
+    searchDivider: {
+        height: 1,
+        backgroundColor: '#e5e7eb',
+    },
+    searchButton: {
+        backgroundColor: '#10b981',
+        borderRadius: 14,
+        paddingVertical: 16,
+        alignItems: 'center',
+        marginTop: 16,
+    },
+    searchButtonText: {
+        color: '#fff',
+        fontSize: 16,
+        fontWeight: '700',
+    },
+    // Content
+    content: {
+        flex: 1,
+        marginTop: 20,
+    },
+    contentContainer: {
+        paddingHorizontal: 20,
+        paddingTop: 60,
+    },
+    sectionTitle: {
+        fontSize: 18,
+        fontWeight: '700',
+        color: '#1f2937',
+        marginBottom: 16,
+    },
+    // Categories
+    categoriesGrid: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        marginBottom: 28,
+    },
+    categoryCard: {
+        width: (SCREEN_WIDTH - 40 - 32) / 5,
+        alignItems: 'center',
+        paddingVertical: 12,
         borderRadius: 16,
-        marginBottom: 12,
+        backgroundColor: '#fff',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.06,
+        shadowRadius: 8,
+        elevation: 2,
     },
-    filterLabel: {
-        fontSize: 13,
+    categoryCardActive: {
+        backgroundColor: '#064e3b',
+    },
+    categoryIcon: {
+        width: 44,
+        height: 44,
+        borderRadius: 22,
+        backgroundColor: '#ecfdf5',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: 6,
+    },
+    categoryIconActive: {
+        backgroundColor: '#10b981',
+    },
+    categoryLabel: {
+        fontSize: 10,
         fontWeight: '600',
-        marginBottom: 8,
+        color: '#6b7280',
+        marginBottom: 2,
     },
-    filterScroll: {
+    categoryLabelActive: {
+        color: '#fff',
+    },
+    categoryBadge: {
+        fontSize: 12,
+        fontWeight: '800',
+        color: '#064e3b',
+    },
+    // Instructors
+    instructorsHeader: {
         flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 16,
     },
-    filterChip: {
-        paddingHorizontal: 14,
-        paddingVertical: 8,
-        borderRadius: 20,
-        borderWidth: 1,
-        marginRight: 8,
+    instructorCount: {
+        fontSize: 14,
+        color: '#6b7280',
     },
-    filterChipText: {
-        fontSize: 13,
-        fontWeight: '500',
+    instructorsList: {
+        gap: 12,
     },
-    categoryFilters: {
-        flexDirection: 'row',
-        flexWrap: 'wrap',
-        gap: 8,
-    },
-    clearButton: {
+    instructorCard: {
         flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'center',
-        marginTop: 16,
-        gap: 6,
+        backgroundColor: '#fff',
+        borderRadius: 16,
+        padding: 12,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.06,
+        shadowRadius: 8,
+        elevation: 2,
     },
-    clearButtonText: {
+    instructorPhotoContainer: {
+        width: 64,
+        height: 64,
+        borderRadius: 32,
+        overflow: 'hidden',
+    },
+    instructorPhoto: {
+        width: '100%',
+        height: '100%',
+    },
+    instructorPhotoPlaceholder: {
+        width: '100%',
+        height: '100%',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    instructorInitial: {
+        fontSize: 24,
+        fontWeight: '700',
+        color: '#fff',
+    },
+    instructorInfo: {
+        flex: 1,
+        marginLeft: 12,
+    },
+    instructorHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+        marginBottom: 4,
+    },
+    instructorName: {
+        fontSize: 16,
+        fontWeight: '700',
+        color: '#1f2937',
+        flex: 1,
+    },
+    verifiedBadge: {
+        marginLeft: 4,
+    },
+    instructorMeta: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 4,
+        marginBottom: 2,
+    },
+    instructorLocation: {
+        fontSize: 12,
+        color: '#6b7280',
+    },
+    instructorVehicle: {
+        fontSize: 12,
+        color: '#6b7280',
+    },
+    instructorFooter: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        marginTop: 6,
+    },
+    ratingContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 4,
+    },
+    ratingText: {
         fontSize: 14,
         fontWeight: '600',
+        color: '#1f2937',
     },
-    // Results
-    resultsHeader: {
-        paddingHorizontal: 20,
-        marginBottom: 12,
+    reviewCount: {
+        fontSize: 12,
+        color: '#9ca3af',
     },
-    resultsText: {
-        fontSize: 14,
+    priceText: {
+        fontSize: 16,
+        fontWeight: '800',
+        color: '#10b981',
+    },
+    arrowContainer: {
+        width: 32,
+        height: 32,
+        borderRadius: 16,
+        backgroundColor: '#f3f4f6',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginLeft: 8,
     },
     // Loading & Empty
     loadingContainer: {
-        flex: 1,
-        justifyContent: 'center',
+        paddingVertical: 48,
         alignItems: 'center',
     },
     emptyContainer: {
-        flex: 1,
-        justifyContent: 'center',
         alignItems: 'center',
-        padding: 24,
+        paddingVertical: 48,
     },
     emptyIcon: {
-        width: 100,
-        height: 100,
-        borderRadius: 50,
+        width: 80,
+        height: 80,
+        borderRadius: 40,
+        backgroundColor: '#f3f4f6',
         justifyContent: 'center',
         alignItems: 'center',
-        marginBottom: 20,
+        marginBottom: 16,
     },
     emptyTitle: {
         fontSize: 18,
         fontWeight: '700',
+        color: '#1f2937',
         marginBottom: 8,
     },
     emptySubtitle: {
         fontSize: 14,
+        color: '#6b7280',
         textAlign: 'center',
-    },
-    // Grid
-    scrollView: {
-        flex: 1,
-    },
-    scrollContent: {
-        paddingHorizontal: 20,
-    },
-    instructorsGrid: {
-        flexDirection: 'row',
-        flexWrap: 'wrap',
-        gap: 12,
-    },
-    // Instructor Card
-    instructorCard: {
-        width: CARD_WIDTH,
-        borderRadius: 16,
-        overflow: 'hidden',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.08,
-        shadowRadius: 8,
-        elevation: 3,
-    },
-    photoContainer: {
-        width: '100%',
-        height: 120,
-        position: 'relative',
-    },
-    photo: {
-        width: '100%',
-        height: '100%',
-    },
-    photoPlaceholder: {
-        width: '100%',
-        height: '100%',
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    photoInitial: {
-        fontSize: 40,
-        fontWeight: '700',
-        color: '#fff',
-    },
-    verifiedBadge: {
-        position: 'absolute',
-        top: 8,
-        left: 8,
-        width: 20,
-        height: 20,
-        borderRadius: 10,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    cardInfo: {
-        padding: 12,
-    },
-    instructorName: {
-        fontSize: 14,
-        fontWeight: '700',
-        marginBottom: 4,
-    },
-    locationRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 4,
-        marginBottom: 6,
-    },
-    locationText: {
-        fontSize: 11,
-        flex: 1,
-    },
-    ratingRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 4,
-        marginBottom: 8,
-    },
-    ratingText: {
-        fontSize: 12,
-        fontWeight: '600',
-    },
-    reviewCount: {
-        fontSize: 11,
-    },
-    categoriesRow: {
-        flexDirection: 'row',
-        gap: 6,
-        marginBottom: 8,
-    },
-    categoryBadge: {
-        paddingHorizontal: 8,
-        paddingVertical: 3,
-        borderRadius: 8,
-    },
-    categoryText: {
-        fontSize: 10,
-        fontWeight: '600',
-    },
-    priceText: {
-        fontSize: 16,
-        fontWeight: '700',
-    },
-    priceLabel: {
-        fontSize: 12,
-        fontWeight: '400',
     },
 });
