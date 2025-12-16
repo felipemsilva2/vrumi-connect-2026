@@ -1,58 +1,63 @@
 import { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions, ActivityIndicator, RefreshControl, Image } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions, ActivityIndicator, RefreshControl, Image, Linking } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
-import { useGamification } from '../../contexts/GamificationContext';
 import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '../../src/lib/supabase';
 import NotificationModal from '../../components/NotificationModal';
-import SearchModal from '../../components/SearchModal';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const CARD_WIDTH = (SCREEN_WIDTH - 48 - 12) / 2;
 
-interface UserStats {
-    cardsReviewed: number;
-    hoursStudied: number;
-    questionsAnswered: number;
-}
-
-interface Activity {
+interface Instructor {
     id: string;
-    activity_type: string;
-    metadata: any;
-    created_at: string;
+    full_name: string;
+    photo_url: string | null;
+    city: string;
+    state: string;
+    price_per_lesson: number;
+    average_rating: number | null;
+    is_verified: boolean | null;
 }
 
-export default function DashboardScreen() {
+interface UpcomingLesson {
+    id: string;
+    scheduled_date: string;
+    scheduled_time: string;
+    instructor: {
+        full_name: string;
+        photo_url: string | null;
+    };
+}
+
+export default function HomeScreen() {
     const { user } = useAuth();
     const { theme, isDark } = useTheme();
-    const { stats: gamificationStats, refreshStats } = useGamification();
-    const [stats, setStats] = useState<UserStats>({ cardsReviewed: 0, hoursStudied: 0, questionsAnswered: 0 });
-    const [activities, setActivities] = useState<Activity[]>([]);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     const [notificationModalVisible, setNotificationModalVisible] = useState(false);
-    const [searchModalVisible, setSearchModalVisible] = useState(false);
     const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+    const [featuredInstructors, setFeaturedInstructors] = useState<Instructor[]>([]);
+    const [upcomingLesson, setUpcomingLesson] = useState<UpcomingLesson | null>(null);
 
     const firstName = user?.user_metadata?.full_name?.split(' ')[0] ||
         user?.email?.split('@')[0] ||
-        'Estudante';
+        'Motorista';
 
     const hour = new Date().getHours();
     const greeting = hour < 12 ? 'Bom dia' : hour < 18 ? 'Boa tarde' : 'Boa noite';
 
-    const fetchUserData = useCallback(async () => {
+    const fetchData = useCallback(async () => {
         if (!user?.id) return;
 
         try {
-            // Fetch profile data including avatar
+            // Fetch profile for avatar
             const { data: profile } = await supabase
                 .from('profiles')
-                .select('total_flashcards_studied, total_questions_answered, avatar_url')
+                .select('avatar_url')
                 .eq('id', user.id)
                 .single();
 
@@ -60,36 +65,43 @@ export default function DashboardScreen() {
                 setAvatarUrl(profile.avatar_url);
             }
 
-            // Fetch study hours from last 7 days
-            const sevenDaysAgo = new Date();
-            sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+            // Fetch top rated instructors
+            const { data: instructors } = await supabase
+                .from('instructors')
+                .select('id, full_name, photo_url, city, state, price_per_lesson, average_rating, is_verified')
+                .eq('status', 'approved')
+                .order('average_rating', { ascending: false })
+                .limit(4);
 
-            // Using type assertion since this table exists but isn't in generated types
-            const { data: studyData } = await (supabase as any)
-                .from('daily_study_activities')
-                .select('hours_studied')
-                .eq('user_id', user.id)
-                .gte('study_date', sevenDaysAgo.toISOString().split('T')[0]);
+            setFeaturedInstructors(instructors || []);
 
-            const totalHours = studyData?.reduce((sum: number, day: any) => sum + (Number(day.hours_studied) || 0), 0) || 0;
+            // Fetch next upcoming lesson
+            const now = new Date().toISOString().split('T')[0];
+            const { data: lessons } = await supabase
+                .from('bookings')
+                .select(`
+                    id,
+                    scheduled_date,
+                    scheduled_time,
+                    instructor:instructors(full_name, photo_url)
+                `)
+                .eq('student_id', user.id)
+                .gte('scheduled_date', now)
+                .in('status', ['confirmed'])
+                .order('scheduled_date', { ascending: true })
+                .limit(1);
 
-            // Fetch recent activities
-            const { data: activityData } = await supabase
-                .from('user_activities')
-                .select('id, activity_type, metadata, created_at')
-                .eq('user_id', user.id)
-                .order('created_at', { ascending: false })
-                .limit(5);
-
-            setStats({
-                cardsReviewed: profile?.total_flashcards_studied || 0,
-                hoursStudied: Math.round(totalHours * 10) / 10,
-                questionsAnswered: profile?.total_questions_answered || 0,
-            });
-
-            setActivities(activityData || []);
+            if (lessons && lessons.length > 0) {
+                const lesson = lessons[0] as any;
+                setUpcomingLesson({
+                    id: lesson.id,
+                    scheduled_date: lesson.scheduled_date,
+                    scheduled_time: lesson.scheduled_time,
+                    instructor: lesson.instructor[0] || lesson.instructor,
+                });
+            }
         } catch (error) {
-            console.error('Error fetching user data:', error);
+            console.error('Error fetching data:', error);
         } finally {
             setLoading(false);
             setRefreshing(false);
@@ -97,47 +109,41 @@ export default function DashboardScreen() {
     }, [user?.id]);
 
     useEffect(() => {
-        fetchUserData();
-    }, [fetchUserData]);
+        fetchData();
+    }, [fetchData]);
 
     const onRefresh = useCallback(() => {
         setRefreshing(true);
-        fetchUserData();
-    }, [fetchUserData]);
+        fetchData();
+    }, [fetchData]);
 
-    const getActivityIcon = (type: string): keyof typeof Ionicons.glyphMap => {
-        switch (type) {
-            case 'flashcard_review': return 'layers';
-            case 'quiz_complete': return 'clipboard';
-            case 'traffic_sign_study': return 'warning';
-            case 'lesson_complete': return 'book';
-            default: return 'time';
-        }
+    const formatPrice = (price: number) => {
+        return new Intl.NumberFormat('pt-BR', {
+            style: 'currency',
+            currency: 'BRL',
+        }).format(price);
     };
 
-    const getActivityLabel = (type: string): string => {
-        switch (type) {
-            case 'flashcard_review': return 'Flashcard revisado';
-            case 'quiz_complete': return 'Simulado concluído';
-            case 'traffic_sign_study': return 'Placa estudada';
-            case 'lesson_complete': return 'Lição concluída';
-            default: return 'Atividade';
-        }
+    const formatLessonDate = (dateStr: string, timeStr: string) => {
+        const date = new Date(dateStr + 'T00:00:00');
+        const formattedDate = date.toLocaleDateString('pt-BR', { weekday: 'short', day: 'numeric', month: 'short' });
+        const formattedTime = timeStr.substring(0, 5);
+        return `${formattedDate} às ${formattedTime}`;
     };
 
-    const formatTimeAgo = (dateStr: string): string => {
-        const date = new Date(dateStr);
-        const now = new Date();
-        const diffMs = now.getTime() - date.getTime();
-        const diffMinutes = Math.floor(diffMs / (1000 * 60));
-        const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-        const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-
-        if (diffMinutes < 1) return 'agora';
-        if (diffMinutes < 60) return `${diffMinutes}min`;
-        if (diffHours < 24) return `${diffHours}h`;
-        return `${diffDays}d`;
+    const openPWA = () => {
+        Linking.openURL('https://vrumi.com.br/dashboard');
     };
+
+    if (loading) {
+        return (
+            <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]} edges={['top']}>
+                <View style={styles.loadingContainer}>
+                    <ActivityIndicator size="large" color={theme.primary} />
+                </View>
+            </SafeAreaView>
+        );
+    }
 
     return (
         <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]} edges={['top']}>
@@ -150,209 +156,155 @@ export default function DashboardScreen() {
                         refreshing={refreshing}
                         onRefresh={onRefresh}
                         tintColor={theme.primary}
-                        colors={[theme.primary]}
                     />
                 }
             >
                 {/* Header */}
                 <View style={styles.header}>
                     <TouchableOpacity onPress={() => router.push('/(tabs)/perfil')}>
-                        <View style={styles.avatarContainer}>
-                            {avatarUrl ? (
-                                <Image source={{ uri: avatarUrl }} style={styles.avatarImage} />
-                            ) : (
-                                <Text style={styles.avatarText}>
-                                    {firstName.charAt(0).toUpperCase()}
-                                </Text>
-                            )}
-                        </View>
+                        {avatarUrl ? (
+                            <Image source={{ uri: avatarUrl }} style={styles.avatar} />
+                        ) : (
+                            <View style={[styles.avatarPlaceholder, { backgroundColor: theme.primary }]}>
+                                <Text style={styles.avatarInitial}>{firstName.charAt(0)}</Text>
+                            </View>
+                        )}
                     </TouchableOpacity>
-
-                    <View style={{ flex: 1, paddingHorizontal: 10 }}>
-                        <Text style={[styles.greeting, { color: theme.textSecondary }]}>{greeting},</Text>
-                        <Text style={[styles.userName, { color: theme.text }]}>{firstName}</Text>
+                    <View style={styles.headerCenter}>
+                        <Text style={[styles.greeting, { color: theme.textMuted }]}>{greeting},</Text>
+                        <Text style={[styles.userName, { color: theme.text }]}>{firstName}!</Text>
                     </View>
-
                     <TouchableOpacity
-                        style={[styles.headerButton, { backgroundColor: theme.card }]}
+                        style={[styles.notificationBtn, { backgroundColor: theme.card }]}
                         onPress={() => setNotificationModalVisible(true)}
                     >
-                        <Ionicons name="notifications-outline" size={20} color={theme.text} />
-                        {/* Red dot if needed */}
+                        <Ionicons name="notifications-outline" size={22} color={theme.text} />
                     </TouchableOpacity>
                 </View>
 
                 {/* Search Bar */}
-                <View style={styles.searchContainer}>
+                <TouchableOpacity
+                    style={[styles.searchBar, { backgroundColor: theme.card }]}
+                    onPress={() => router.push('/(tabs)/buscar')}
+                >
+                    <Ionicons name="search-outline" size={20} color={theme.textMuted} />
+                    <Text style={[styles.searchPlaceholder, { color: theme.textMuted }]}>
+                        Buscar instrutor...
+                    </Text>
+                </TouchableOpacity>
+
+                {/* Upcoming Lesson (if any) */}
+                {upcomingLesson && (
                     <TouchableOpacity
-                        style={[styles.searchBar, { backgroundColor: theme.card }]}
-                        onPress={() => setSearchModalVisible(true)}
+                        style={[styles.upcomingCard]}
+                        onPress={() => router.push('/(tabs)/aulas')}
                     >
-                        <Ionicons name="search-outline" size={20} color={theme.textSecondary} />
-                        <Text style={[styles.searchPlaceholder, { color: theme.textSecondary }]}>
-                            O que vamos estudar hoje?
-                        </Text>
-                        <View style={[styles.filterButton, { backgroundColor: theme.primary }]}>
-                            <Ionicons name="options-outline" size={18} color="#fff" />
-                        </View>
-                    </TouchableOpacity>
-                </View>
-
-                {/* Featured Card - Vrumi Connect */}
-                <View style={styles.section}>
-                    <Text style={[styles.sectionTitle, { color: theme.text }]}>Destaque</Text>
-                    <TouchableOpacity
-                        style={[
-                            styles.featuredCard,
-                            { backgroundColor: isDark ? '#1e293b' : '#FEF3C7' }
-                        ]}
-                        onPress={() => router.push('/connect')}
-                    >
-                        <View style={styles.featuredHeader}>
-                            <View>
-                                <Text style={[styles.featuredLabel, { color: isDark ? '#cbd5e1' : '#92400E' }]}>Vrumi Connect</Text>
-                                <Text style={[styles.featuredTitle, { color: isDark ? '#fff' : '#451a03' }]}>Encontre seu Instrutor</Text>
-                            </View>
-                            <View style={[styles.featuredIcon, { backgroundColor: isDark ? '#334155' : '#FDE68A' }]}>
-                                <Ionicons name="car-sport" size={24} color={isDark ? '#e2e8f0' : '#D97706'} />
-                            </View>
-                        </View>
-
-                        <View style={styles.featuredTags}>
-                            <View style={[styles.tag, { backgroundColor: isDark ? '#334155' : '#FFFBEB' }]}>
-                                <Text style={[styles.tagText, { color: isDark ? '#e2e8f0' : '#92400E' }]}>Aulas Práticas</Text>
-                            </View>
-                            <View style={[styles.tag, { backgroundColor: isDark ? '#334155' : '#FFFBEB' }]}>
-                                <Text style={[styles.tagText, { color: isDark ? '#e2e8f0' : '#92400E' }]}>Verificados</Text>
-                            </View>
-                        </View>
-
-                        <View style={styles.featuredFooter}>
-                            <View style={styles.instructorAvatars}>
-                                {/* Mockup avatars using simple circles */}
-                                <View style={[styles.miniAvatar, { backgroundColor: '#FF6B6B', marginLeft: 0 }]} />
-                                <View style={[styles.miniAvatar, { backgroundColor: '#4ECDC4', marginLeft: -8 }]} />
-                                <View style={[styles.miniAvatar, { backgroundColor: '#FFE66D', marginLeft: -8 }]} />
-                            </View>
-                            <Text style={[styles.featuredFooterText, { color: isDark ? '#94a3b8' : '#92400E' }]}>
-                                Instrutores disponíveis na sua região
-                            </Text>
-                        </View>
-                    </TouchableOpacity>
-                </View>
-
-                {/* Categories - Horizontal Scroll */}
-                <View style={styles.section}>
-                    <Text style={[styles.sectionTitle, { color: theme.text }]}>Categorias</Text>
-                    <ScrollView
-                        horizontal
-                        showsHorizontalScrollIndicator={false}
-                        contentContainerStyle={styles.categoriesScroll}
-                    >
-                        <TouchableOpacity
-                            style={[styles.categoryCard, { backgroundColor: isDark ? '#1e293b' : '#EFF6FF' }]} // Blue tint
-                            onPress={() => router.push('/(tabs)/simulados')}
+                        <LinearGradient
+                            colors={isDark ? ['#065f46', '#047857'] : ['#10b981', '#059669']}
+                            style={styles.upcomingGradient}
+                            start={{ x: 0, y: 0 }}
+                            end={{ x: 1, y: 1 }}
                         >
-                            <View style={[styles.categoryIcon, { backgroundColor: isDark ? '#1e3a5f' : '#BFDBFE' }]}>
-                                <Ionicons name="clipboard" size={24} color="#2563EB" />
-                            </View>
-                            <Text style={[styles.categoryTitle, { color: theme.text }]}>Simulados</Text>
-                            <Text style={[styles.categoryCount, { color: theme.textSecondary }]}>30+ Provas</Text>
-                        </TouchableOpacity>
-
-                        <TouchableOpacity
-                            style={[styles.categoryCard, { backgroundColor: isDark ? '#1e293b' : '#ECFDF5' }]} // Green tint
-                            onPress={() => router.push('/(tabs)/flashcards')}
-                        >
-                            <View style={[styles.categoryIcon, { backgroundColor: isDark ? '#064e3b' : '#A7F3D0' }]}>
-                                <Ionicons name="layers" size={24} color="#059669" />
-                            </View>
-                            <Text style={[styles.categoryTitle, { color: theme.text }]}>Flashcards</Text>
-                            <Text style={[styles.categoryCount, { color: theme.textSecondary }]}>500+ Cards</Text>
-                        </TouchableOpacity>
-
-                        <TouchableOpacity
-                            style={[styles.categoryCard, { backgroundColor: isDark ? '#1e293b' : '#FDF2F8' }]} // Pink tint
-                            onPress={() => router.push('/biblioteca')}
-                        >
-                            <View style={[styles.categoryIcon, { backgroundColor: isDark ? '#4a1d4e' : '#FBCFE8' }]}>
-                                <Ionicons name="warning" size={24} color="#DB2777" />
-                            </View>
-                            <Text style={[styles.categoryTitle, { color: theme.text }]}>Placas</Text>
-                            <Text style={[styles.categoryCount, { color: theme.textSecondary }]}>Biblioteca</Text>
-                        </TouchableOpacity>
-
-                        <TouchableOpacity
-                            style={[styles.categoryCard, { backgroundColor: isDark ? '#1e293b' : '#FFFBEB' }]} // Yellow tint
-                            onPress={() => router.push('/(tabs)/estudos')}
-                        >
-                            <View style={[styles.categoryIcon, { backgroundColor: isDark ? '#451a03' : '#FDE68A' }]}>
-                                <Ionicons name="book" size={24} color="#D97706" />
-                            </View>
-                            <Text style={[styles.categoryTitle, { color: theme.text }]}>Estudos</Text>
-                            <Text style={[styles.categoryCount, { color: theme.textSecondary }]}>Aulas</Text>
-                        </TouchableOpacity>
-                    </ScrollView>
-                </View>
-
-                {/* Gamification/Stats - Bottom */}
-                <View style={styles.section}>
-                    <Text style={[styles.sectionTitle, { color: theme.text }]}>Seu Progresso</Text>
-
-                    {gamificationStats && (
-                        <View style={[styles.statsRowCard, { backgroundColor: theme.card }]}>
-                            <View style={styles.startRowLeft}>
-                                <Text style={[styles.statsTitle, { color: theme.text }]}>Nível {gamificationStats.xp.level}</Text>
-                                <Text style={[styles.statsSubtitle, { color: theme.textSecondary }]}>
-                                    {gamificationStats.xp.current} / {gamificationStats.xp.nextLevel} XP para o próximo nível
-                                </Text>
-                                <View style={styles.progressBarBg}>
-                                    <View
-                                        style={[
-                                            styles.progressBarFill,
-                                            {
-                                                width: `${(gamificationStats.xp.current / gamificationStats.xp.nextLevel) * 100}%`,
-                                                backgroundColor: theme.primary
-                                            }
-                                        ]}
-                                    />
+                            <View style={styles.upcomingContent}>
+                                <View>
+                                    <Text style={styles.upcomingLabel}>Próxima Aula</Text>
+                                    <Text style={styles.upcomingInstructor}>
+                                        {upcomingLesson.instructor?.full_name || 'Instrutor'}
+                                    </Text>
+                                    <Text style={styles.upcomingDate}>
+                                        {formatLessonDate(upcomingLesson.scheduled_date, upcomingLesson.scheduled_time)}
+                                    </Text>
                                 </View>
+                                <Ionicons name="car-sport" size={48} color="rgba(255,255,255,0.3)" />
                             </View>
-                            <View style={[styles.levelCircle, { borderColor: theme.primary }]}>
-                                <Ionicons name="star" size={24} color={theme.primary} />
-                            </View>
-                        </View>
-                    )}
+                        </LinearGradient>
+                    </TouchableOpacity>
+                )}
 
-                    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.statsScroll}>
-                        <View style={[styles.miniStatCard, { backgroundColor: theme.card }]}>
-                            <Text style={[styles.miniStatValue, { color: theme.text }]}>{stats.questionsAnswered}</Text>
-                            <Text style={[styles.miniStatLabel, { color: theme.textSecondary }]}>Questões</Text>
-                        </View>
-                        <View style={[styles.miniStatCard, { backgroundColor: theme.card }]}>
-                            <Text style={[styles.miniStatValue, { color: theme.text }]}>{stats.hoursStudied}h</Text>
-                            <Text style={[styles.miniStatLabel, { color: theme.textSecondary }]}>Estudo</Text>
-                        </View>
-                        <View style={[styles.miniStatCard, { backgroundColor: theme.card }]}>
-                            <Text style={[styles.miniStatValue, { color: theme.text }]}>{stats.cardsReviewed}</Text>
-                            <Text style={[styles.miniStatLabel, { color: theme.textSecondary }]}>Cards</Text>
-                        </View>
-                    </ScrollView>
+                {/* Featured Instructors */}
+                <View style={styles.sectionHeader}>
+                    <Text style={[styles.sectionTitle, { color: theme.text }]}>Instrutores em Destaque</Text>
+                    <TouchableOpacity onPress={() => router.push('/(tabs)/buscar')}>
+                        <Text style={[styles.seeAllText, { color: theme.primary }]}>Ver todos</Text>
+                    </TouchableOpacity>
                 </View>
 
+                <View style={styles.instructorsGrid}>
+                    {featuredInstructors.map((instructor) => (
+                        <TouchableOpacity
+                            key={instructor.id}
+                            style={[styles.instructorCard, { backgroundColor: theme.card }]}
+                            onPress={() => router.push(`/connect/instrutor/${instructor.id}`)}
+                        >
+                            <View style={styles.photoContainer}>
+                                {instructor.photo_url ? (
+                                    <Image source={{ uri: instructor.photo_url }} style={styles.photo} />
+                                ) : (
+                                    <View style={[styles.photoPlaceholder, { backgroundColor: theme.primary }]}>
+                                        <Text style={styles.photoInitial}>
+                                            {instructor.full_name.charAt(0)}
+                                        </Text>
+                                    </View>
+                                )}
+                                {instructor.is_verified && (
+                                    <View style={[styles.verifiedBadge, { backgroundColor: theme.primary }]}>
+                                        <Ionicons name="checkmark" size={10} color="#fff" />
+                                    </View>
+                                )}
+                            </View>
+                            <View style={styles.cardInfo}>
+                                <Text style={[styles.instructorName, { color: theme.text }]} numberOfLines={1}>
+                                    {instructor.full_name}
+                                </Text>
+                                <View style={styles.ratingRow}>
+                                    <Ionicons name="star" size={12} color="#f59e0b" />
+                                    <Text style={[styles.ratingText, { color: theme.text }]}>
+                                        {Number(instructor.average_rating || 0).toFixed(1)}
+                                    </Text>
+                                </View>
+                                <Text style={[styles.priceText, { color: theme.primary }]}>
+                                    {formatPrice(instructor.price_per_lesson)}
+                                </Text>
+                            </View>
+                        </TouchableOpacity>
+                    ))}
+                </View>
+
+                {featuredInstructors.length === 0 && (
+                    <View style={[styles.emptyCard, { backgroundColor: theme.card }]}>
+                        <Ionicons name="people-outline" size={40} color={theme.textMuted} />
+                        <Text style={[styles.emptyText, { color: theme.textMuted }]}>
+                            Nenhum instrutor disponível ainda
+                        </Text>
+                    </View>
+                )}
+
+                {/* PWA Banner */}
+                <TouchableOpacity
+                    style={[styles.pwaBanner, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}
+                    onPress={openPWA}
+                >
+                    <View style={[styles.pwaIcon, { backgroundColor: theme.primaryLight }]}>
+                        <Ionicons name="book" size={24} color={theme.primary} />
+                    </View>
+                    <View style={styles.pwaContent}>
+                        <Text style={[styles.pwaTitle, { color: theme.text }]}>
+                            Estudar para prova teórica?
+                        </Text>
+                        <Text style={[styles.pwaSubtitle, { color: theme.textMuted }]}>
+                            Acesse o Vrumi Education pelo site
+                        </Text>
+                    </View>
+                    <Ionicons name="open-outline" size={20} color={theme.textMuted} />
+                </TouchableOpacity>
+
+                <View style={{ height: 100 }} />
             </ScrollView>
 
             {/* Notification Modal */}
             <NotificationModal
                 visible={notificationModalVisible}
                 onClose={() => setNotificationModalVisible(false)}
-                userId={user?.id}
-            />
-
-            {/* Search Modal */}
-            <SearchModal
-                visible={searchModalVisible}
-                onClose={() => setSearchModalVisible(false)}
             />
         </SafeAreaView>
     );
@@ -362,239 +314,219 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
     },
+    loadingContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
     scrollView: {
         flex: 1,
     },
     scrollContent: {
-        paddingBottom: 24,
+        paddingHorizontal: 20,
     },
+    // Header
     header: {
         flexDirection: 'row',
         alignItems: 'center',
-        paddingHorizontal: 20,
-        paddingTop: 10,
-        paddingBottom: 10,
+        paddingVertical: 16,
     },
-    avatarContainer: {
+    avatar: {
         width: 48,
         height: 48,
         borderRadius: 24,
-        backgroundColor: '#E2E8F0',
+    },
+    avatarPlaceholder: {
+        width: 48,
+        height: 48,
+        borderRadius: 24,
         justifyContent: 'center',
         alignItems: 'center',
     },
-    avatarText: {
-        fontSize: 18,
-        fontWeight: 'bold',
-        color: '#64748B',
+    avatarInitial: {
+        color: '#fff',
+        fontSize: 20,
+        fontWeight: '700',
     },
-    avatarImage: {
-        width: 48,
-        height: 48,
-        borderRadius: 24,
+    headerCenter: {
+        flex: 1,
+        marginLeft: 12,
     },
     greeting: {
         fontSize: 14,
-        fontWeight: '500',
     },
     userName: {
-        fontSize: 18,
-        fontWeight: 'bold',
+        fontSize: 20,
+        fontWeight: '700',
     },
-    headerButton: {
-        width: 40,
-        height: 40,
-        borderRadius: 20,
+    notificationBtn: {
+        width: 44,
+        height: 44,
+        borderRadius: 22,
         justifyContent: 'center',
         alignItems: 'center',
     },
-
     // Search
-    searchContainer: {
-        paddingHorizontal: 20,
-        marginBottom: 20,
-        marginTop: 10,
-    },
     searchBar: {
         flexDirection: 'row',
         alignItems: 'center',
-        height: 50,
+        paddingHorizontal: 16,
+        paddingVertical: 14,
         borderRadius: 14,
-        paddingLeft: 16,
-        paddingRight: 6,
+        gap: 10,
+        marginBottom: 20,
     },
     searchPlaceholder: {
-        flex: 1,
-        marginLeft: 10,
+        fontSize: 15,
+    },
+    // Upcoming Lesson
+    upcomingCard: {
+        borderRadius: 20,
+        overflow: 'hidden',
+        marginBottom: 24,
+    },
+    upcomingGradient: {
+        padding: 20,
+    },
+    upcomingContent: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+    },
+    upcomingLabel: {
+        color: 'rgba(255,255,255,0.8)',
+        fontSize: 13,
+        marginBottom: 4,
+    },
+    upcomingInstructor: {
+        color: '#fff',
+        fontSize: 18,
+        fontWeight: '700',
+        marginBottom: 4,
+    },
+    upcomingDate: {
+        color: 'rgba(255,255,255,0.9)',
         fontSize: 14,
     },
-    filterButton: {
-        width: 38,
-        height: 38,
+    // Section
+    sectionHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 16,
+    },
+    sectionTitle: {
+        fontSize: 18,
+        fontWeight: '700',
+    },
+    seeAllText: {
+        fontSize: 14,
+        fontWeight: '600',
+    },
+    // Instructors Grid
+    instructorsGrid: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        gap: 12,
+        marginBottom: 24,
+    },
+    instructorCard: {
+        width: CARD_WIDTH,
+        borderRadius: 16,
+        overflow: 'hidden',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.08,
+        shadowRadius: 8,
+        elevation: 3,
+    },
+    photoContainer: {
+        position: 'relative',
+    },
+    photo: {
+        width: '100%',
+        height: CARD_WIDTH * 0.7,
+    },
+    photoPlaceholder: {
+        width: '100%',
+        height: CARD_WIDTH * 0.7,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    photoInitial: {
+        fontSize: 32,
+        fontWeight: '700',
+        color: '#fff',
+    },
+    verifiedBadge: {
+        position: 'absolute',
+        top: 8,
+        right: 8,
+        width: 20,
+        height: 20,
         borderRadius: 10,
         justifyContent: 'center',
         alignItems: 'center',
     },
-
-    // Sections
-    section: {
-        marginBottom: 24,
+    cardInfo: {
+        padding: 12,
     },
-    sectionTitle: {
-        fontSize: 18,
-        fontWeight: 'bold',
-        marginBottom: 16,
-        paddingHorizontal: 20,
-    },
-
-    // Featured Card
-    featuredCard: {
-        marginHorizontal: 20,
-        borderRadius: 24,
-        padding: 20,
-    },
-    featuredHeader: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'flex-start',
-        marginBottom: 16,
-    },
-    featuredLabel: {
-        fontSize: 12,
+    instructorName: {
+        fontSize: 14,
         fontWeight: '600',
         marginBottom: 4,
     },
-    featuredTitle: {
-        fontSize: 20,
-        fontWeight: 'bold',
-    },
-    featuredIcon: {
-        width: 48,
-        height: 48,
-        borderRadius: 14,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    featuredTags: {
-        flexDirection: 'row',
-        gap: 8,
-        marginBottom: 20,
-    },
-    tag: {
-        paddingHorizontal: 12,
-        paddingVertical: 6,
-        borderRadius: 8,
-    },
-    tagText: {
-        fontSize: 12,
-        fontWeight: '500',
-    },
-    featuredFooter: {
+    ratingRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 12,
-    },
-    instructorAvatars: {
-        flexDirection: 'row',
-    },
-    miniAvatar: {
-        width: 24,
-        height: 24,
-        borderRadius: 12,
-        borderWidth: 2,
-        borderColor: '#fff',
-    },
-    featuredFooterText: {
-        fontSize: 12,
-        fontWeight: '500',
-    },
-
-    // Categories
-    categoriesScroll: {
-        paddingHorizontal: 20,
-        gap: 16,
-    },
-    categoryCard: {
-        width: 140,
-        height: 160,
-        borderRadius: 20,
-        padding: 16,
-        justifyContent: 'space-between',
-    },
-    categoryIcon: {
-        width: 44,
-        height: 44,
-        borderRadius: 12,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    categoryTitle: {
-        fontSize: 16,
-        fontWeight: 'bold',
-        marginTop: 10,
-    },
-    categoryCount: {
-        fontSize: 12,
-        fontWeight: '500',
-    },
-
-    // Stats
-    statsRowCard: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginHorizontal: 20,
-        padding: 16,
-        borderRadius: 20,
-        marginBottom: 16,
-    },
-    startRowLeft: {
-        flex: 1,
-        marginRight: 16,
-    },
-    statsTitle: {
-        fontSize: 16,
-        fontWeight: 'bold',
+        gap: 4,
         marginBottom: 4,
     },
-    statsSubtitle: {
+    ratingText: {
         fontSize: 12,
-        marginBottom: 10,
+        fontWeight: '600',
     },
-    progressBarBg: {
-        height: 6,
-        backgroundColor: '#E2E8F0',
-        borderRadius: 3,
-        width: '100%',
-        overflow: 'hidden',
+    priceText: {
+        fontSize: 15,
+        fontWeight: '700',
     },
-    progressBarFill: {
-        height: '100%',
-        borderRadius: 3,
+    // Empty
+    emptyCard: {
+        padding: 40,
+        borderRadius: 16,
+        alignItems: 'center',
+        gap: 12,
+        marginBottom: 24,
     },
-    levelCircle: {
-        width: 50,
-        height: 50,
-        borderRadius: 25,
-        borderWidth: 3,
+    emptyText: {
+        fontSize: 14,
+        textAlign: 'center',
+    },
+    // PWA Banner
+    pwaBanner: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: 16,
+        borderRadius: 16,
+        borderWidth: 1,
+        gap: 12,
+    },
+    pwaIcon: {
+        width: 48,
+        height: 48,
+        borderRadius: 12,
         justifyContent: 'center',
         alignItems: 'center',
     },
-    statsScroll: {
-        paddingHorizontal: 20,
-        gap: 12,
+    pwaContent: {
+        flex: 1,
     },
-    miniStatCard: {
-        width: 100,
-        padding: 12,
-        borderRadius: 14,
-        alignItems: 'center',
-    },
-    miniStatValue: {
-        fontSize: 18,
-        fontWeight: 'bold',
+    pwaTitle: {
+        fontSize: 15,
+        fontWeight: '600',
         marginBottom: 2,
     },
-    miniStatLabel: {
-        fontSize: 12,
+    pwaSubtitle: {
+        fontSize: 13,
     },
 });

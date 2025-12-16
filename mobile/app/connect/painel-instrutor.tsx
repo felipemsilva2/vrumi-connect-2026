@@ -226,12 +226,12 @@ export default function InstructorDashboardScreen() {
 
                     <TouchableOpacity
                         style={[styles.actionCard, { backgroundColor: theme.card }]}
-                        onPress={() => Alert.alert('Em breve', 'Configurações em desenvolvimento')}
+                        onPress={() => router.push('/connect/documentos')}
                     >
-                        <View style={[styles.actionIcon, { backgroundColor: '#f1f5f9' }]}>
-                            <Ionicons name="settings" size={24} color="#475569" />
+                        <View style={[styles.actionIcon, { backgroundColor: '#fce7f3' }]}>
+                            <Ionicons name="shield-checkmark" size={24} color="#be185d" />
                         </View>
-                        <Text style={[styles.actionLabel, { color: theme.text }]}>Ajustes</Text>
+                        <Text style={[styles.actionLabel, { color: theme.text }]}>Documentos</Text>
                     </TouchableOpacity>
                 </View>
 

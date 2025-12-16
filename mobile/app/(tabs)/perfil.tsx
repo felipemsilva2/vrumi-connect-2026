@@ -253,54 +253,16 @@ export default function PerfilScreen() {
                     </TouchableOpacity>
                     <Text style={[styles.userName, { color: theme.text }]}>{userName}</Text>
                     <Text style={[styles.userEmail, { color: theme.textSecondary }]}>{userEmail}</Text>
-
-                    <View style={[styles.statsBadge, { backgroundColor: theme.background }]}>
-                        <View style={styles.statItem}>
-                            <Text style={[styles.statValue, { color: theme.primary }]}>{stats.studyStreak}</Text>
-                            <Text style={[styles.statLabel, { color: theme.textSecondary }]}>Dias</Text>
-                        </View>
-                        <View style={[styles.divider, { backgroundColor: theme.cardBorder }]} />
-                        <View style={styles.statItem}>
-                            <Text style={[styles.statValue, { color: theme.primary }]}>{stats.totalCards}</Text>
-                            <Text style={[styles.statLabel, { color: theme.textSecondary }]}>Cards</Text>
-                        </View>
-                        <View style={[styles.divider, { backgroundColor: theme.cardBorder }]} />
-                        <View style={styles.statItem}>
-                            <Text style={[styles.statValue, { color: theme.primary }]}>{stats.accuracyRate}%</Text>
-                            <Text style={[styles.statLabel, { color: theme.textSecondary }]}>Acertos</Text>
-                        </View>
-                    </View>
                 </View>
 
                 {/* Menu Items */}
-                <View style={styles.menuSection}>
-                    <Text style={[styles.menuTitle, { color: theme.textSecondary }]}>Geral</Text>
-
-                    <TouchableOpacity style={[styles.menuItem, { backgroundColor: theme.card }]} onPress={handleStatistics}>
-                        <View style={[styles.menuIcon, { backgroundColor: theme.primaryLight }]}>
-                            <Ionicons name="stats-chart" size={20} color={theme.primary} />
-                        </View>
-                        <Text style={[styles.menuItemText, { color: theme.text }]}>Estatísticas</Text>
-                        <Ionicons name="chevron-forward" size={18} color={theme.textMuted} />
-                    </TouchableOpacity>
-
-                    <TouchableOpacity style={[styles.menuItem, { backgroundColor: theme.card }]} onPress={handleAchievements}>
-                        <View style={[styles.menuIcon, { backgroundColor: '#fef3c7' }]}>
-                            <Ionicons name="medal" size={20} color="#f59e0b" />
-                        </View>
-                        <Text style={[styles.menuItemText, { color: theme.text }]}>Conquistas</Text>
-                        <Ionicons name="chevron-forward" size={18} color={theme.textMuted} />
-                    </TouchableOpacity>
-                </View>
-
-                {/* Vrumi Connect Section */}
                 <View style={styles.menuSection}>
                     <Text style={[styles.menuTitle, { color: theme.textSecondary }]}>Vrumi Connect</Text>
 
                     {/* Browse Instructors */}
                     <TouchableOpacity
                         style={[styles.menuItem, { backgroundColor: theme.card }]}
-                        onPress={() => router.push('/connect')}
+                        onPress={() => router.push('/(tabs)/buscar')}
                     >
                         <View style={[styles.menuIcon, { backgroundColor: '#e0f2fe' }]}>
                             <Ionicons name="car-sport" size={20} color="#0ea5e9" />
@@ -312,12 +274,24 @@ export default function PerfilScreen() {
                     {/* My Lessons */}
                     <TouchableOpacity
                         style={[styles.menuItem, { backgroundColor: theme.card }]}
-                        onPress={() => router.push('/connect/minhas-aulas')}
+                        onPress={() => router.push('/(tabs)/aulas')}
                     >
                         <View style={[styles.menuIcon, { backgroundColor: '#d1fae5' }]}>
                             <Ionicons name="calendar" size={20} color="#10b981" />
                         </View>
                         <Text style={[styles.menuItemText, { color: theme.text }]}>Minhas Aulas</Text>
+                        <Ionicons name="chevron-forward" size={18} color={theme.textMuted} />
+                    </TouchableOpacity>
+
+                    {/* Messages */}
+                    <TouchableOpacity
+                        style={[styles.menuItem, { backgroundColor: theme.card }]}
+                        onPress={() => router.push('/connect/mensagens')}
+                    >
+                        <View style={[styles.menuIcon, { backgroundColor: '#fef3c7' }]}>
+                            <Ionicons name="chatbubbles" size={20} color="#f59e0b" />
+                        </View>
+                        <Text style={[styles.menuItemText, { color: theme.text }]}>Mensagens</Text>
                         <Ionicons name="chevron-forward" size={18} color={theme.textMuted} />
                     </TouchableOpacity>
 

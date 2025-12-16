@@ -15,9 +15,8 @@ export default function TabsLayout() {
             tabBar={(props) => <ModernTabBar {...props} />}
         >
             <Tabs.Screen name="index" />
-            <Tabs.Screen name="flashcards" />
-            <Tabs.Screen name="simulados" />
-            <Tabs.Screen name="estudos" />
+            <Tabs.Screen name="buscar" />
+            <Tabs.Screen name="aulas" />
             <Tabs.Screen name="perfil" />
         </Tabs>
     );

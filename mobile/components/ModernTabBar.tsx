@@ -10,7 +10,6 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { useTheme } from '../contexts/ThemeContext';
-import { useQuizLock } from '../contexts/QuizLockContext';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -23,9 +22,8 @@ interface TabConfig {
 
 const TABS: TabConfig[] = [
     { name: 'index', label: 'Início', icon: 'home-outline', iconActive: 'home' },
-    { name: 'flashcards', label: 'Flashcards', icon: 'layers-outline', iconActive: 'layers' },
-    { name: 'simulados', label: 'Simulados', icon: 'clipboard-outline', iconActive: 'clipboard' },
-    { name: 'estudos', label: 'Estudos', icon: 'book-outline', iconActive: 'book' },
+    { name: 'buscar', label: 'Buscar', icon: 'search-outline', iconActive: 'search' },
+    { name: 'aulas', label: 'Aulas', icon: 'calendar-outline', iconActive: 'calendar' },
     { name: 'perfil', label: 'Perfil', icon: 'person-outline', iconActive: 'person' },
 ];
 
@@ -33,7 +31,6 @@ const TAB_WIDTH = SCREEN_WIDTH / TABS.length;
 
 export default function ModernTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
     const { theme, isDark } = useTheme();
-    const { isQuizActive, showExitConfirmation } = useQuizLock();
 
     // Animated values for each tab
     const animations = useRef(TABS.map(() => ({
@@ -81,14 +78,6 @@ export default function ModernTabBar({ state, descriptors, navigation }: BottomT
     }, [state.index]);
 
     const handlePress = (routeName: string, index: number) => {
-        // If quiz is active and trying to navigate away from simulados, show confirmation
-        if (isQuizActive && routeName !== 'simulados') {
-            showExitConfirmation(() => {
-                navigation.navigate(routeName);
-            });
-            return;
-        }
-
         const event = navigation.emit({
             type: 'tabPress',
             target: state.routes[index].key,

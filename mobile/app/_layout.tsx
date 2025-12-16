@@ -1,13 +1,18 @@
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { AuthProvider } from '../contexts/AuthContext';
+import { AuthProvider, useAuth } from '../contexts/AuthContext';
 import { ThemeProvider, useTheme } from '../contexts/ThemeContext';
 import { QuizLockProvider } from '../contexts/QuizLockContext';
 import { GamificationProvider } from '../contexts/GamificationContext';
 import { CacheProvider } from '../contexts/CacheContext';
+import { usePushNotifications } from '../hooks/usePushNotifications';
 
 function AppContent() {
     const { isDark, theme } = useTheme();
+    const { user } = useAuth();
+
+    // Initialize push notifications when user is logged in
+    usePushNotifications(user?.id);
 
     return (
         <>
