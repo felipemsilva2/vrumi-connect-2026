@@ -9,16 +9,17 @@ import {
     Image,
     ActivityIndicator,
     Dimensions,
+    StatusBar,
     RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useTheme } from '../../contexts/ThemeContext';
+import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../src/lib/supabase';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
-const CARD_WIDTH = (SCREEN_WIDTH - 48 - 12) / 2;
 
 interface Instructor {
     id: string;
@@ -31,37 +32,37 @@ interface Instructor {
     average_rating: number | null;
     total_reviews: number | null;
     is_verified: boolean | null;
+    vehicle_model?: string | null;
+    vehicle_transmission?: string | null;
 }
 
-const BRAZILIAN_STATES = [
-    'AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA',
-    'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN',
-    'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'
+const CNH_CATEGORIES = [
+    { id: 'A', label: 'Moto', icon: 'bicycle' as const },
+    { id: 'B', label: 'Carro', icon: 'car' as const },
+    { id: 'AB', label: 'Moto+Carro', icon: 'car-sport' as const },
+    { id: 'C', label: 'Caminhão', icon: 'bus' as const },
+    { id: 'D', label: 'Ônibus', icon: 'bus' as const },
+    { id: 'E', label: 'Articulado', icon: 'train' as const },
 ];
-
-const CNH_CATEGORIES = ['A', 'B', 'AB', 'C', 'D', 'E'];
 
 export default function BuscarScreen() {
     const { theme, isDark } = useTheme();
+    const { user } = useAuth();
+    const [profile, setProfile] = useState<{ full_name?: string | null; avatar_url?: string | null } | null>(null);
     const [instructors, setInstructors] = useState<Instructor[]>([]);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     const [searchCity, setSearchCity] = useState('');
-    const [selectedState, setSelectedState] = useState('');
     const [selectedCategory, setSelectedCategory] = useState('');
-    const [showFilters, setShowFilters] = useState(false);
 
     const fetchInstructors = useCallback(async () => {
         try {
             let query = supabase
                 .from('instructors')
-                .select('id, full_name, photo_url, city, state, categories, price_per_lesson, average_rating, total_reviews, is_verified')
+                .select('id, full_name, photo_url, city, state, categories, price_per_lesson, average_rating, total_reviews, is_verified, vehicle_model, vehicle_transmission')
                 .eq('status', 'approved')
                 .order('average_rating', { ascending: false });
 
-            if (selectedState) {
-                query = query.eq('state', selectedState);
-            }
             if (searchCity) {
                 query = query.ilike('city', `%${searchCity}%`);
             }
@@ -69,7 +70,7 @@ export default function BuscarScreen() {
                 query = query.contains('categories', [selectedCategory]);
             }
 
-            const { data, error } = await query.limit(20);
+            const { data, error } = await query.limit(10);
 
             if (error) throw error;
             setInstructors(data || []);
@@ -79,11 +80,20 @@ export default function BuscarScreen() {
             setLoading(false);
             setRefreshing(false);
         }
-    }, [selectedState, searchCity, selectedCategory]);
+    }, [searchCity, selectedCategory]);
 
     useEffect(() => {
         fetchInstructors();
     }, [fetchInstructors]);
+
+    useEffect(() => {
+        if (user?.id) {
+            supabase.from('profiles').select('full_name, avatar_url').eq('id', user.id).single()
+                .then(({ data }) => {
+                    if (data) setProfile(data);
+                });
+        }
+    }, [user]);
 
     const onRefresh = () => {
         setRefreshing(true);
@@ -97,405 +107,795 @@ export default function BuscarScreen() {
         }).format(price);
     };
 
-    const clearFilters = () => {
-        setSelectedState('');
-        setSearchCity('');
-        setSelectedCategory('');
+    const getGreeting = () => {
+        const hour = new Date().getHours();
+        if (hour < 12) return 'Bom dia';
+        if (hour < 18) return 'Boa tarde';
+        return 'Boa noite';
     };
 
-    const hasActiveFilters = selectedState || searchCity || selectedCategory;
-
-    const renderInstructorCard = (instructor: Instructor) => (
-        <TouchableOpacity
-            key={instructor.id}
-            style={[styles.instructorCard, { backgroundColor: theme.card }]}
-            onPress={() => router.push(`/connect/instrutor/${instructor.id}`)}
-            activeOpacity={0.8}
-        >
-            <View style={styles.photoContainer}>
-                {instructor.photo_url ? (
-                    <Image
-                        source={{ uri: instructor.photo_url }}
-                        style={styles.photo}
-                        resizeMode="cover"
-                    />
-                ) : (
-                    <View style={[styles.photoPlaceholder, { backgroundColor: theme.primary }]}>
-                        <Text style={styles.photoInitial}>
-                            {instructor.full_name.charAt(0).toUpperCase()}
-                        </Text>
-                    </View>
-                )}
-                {instructor.is_verified && (
-                    <View style={[styles.verifiedBadge, { backgroundColor: theme.primary }]}>
-                        <Ionicons name="checkmark" size={10} color="#fff" />
-                    </View>
-                )}
-            </View>
-
-            <View style={styles.cardInfo}>
-                <Text style={[styles.instructorName, { color: theme.text }]} numberOfLines={1}>
-                    {instructor.full_name}
-                </Text>
-
-                <View style={styles.locationRow}>
-                    <Ionicons name="location-outline" size={12} color={theme.textMuted} />
-                    <Text style={[styles.locationText, { color: theme.textMuted }]} numberOfLines={1}>
-                        {instructor.city}, {instructor.state}
-                    </Text>
-                </View>
-
-                <View style={styles.ratingRow}>
-                    <Ionicons name="star" size={12} color="#f59e0b" />
-                    <Text style={[styles.ratingText, { color: theme.text }]}>
-                        {Number(instructor.average_rating || 0).toFixed(1)}
-                    </Text>
-                    <Text style={[styles.reviewCount, { color: theme.textMuted }]}>
-                        ({instructor.total_reviews || 0})
-                    </Text>
-                </View>
-
-                <View style={styles.categoriesRow}>
-                    {instructor.categories?.slice(0, 2).map((cat) => (
-                        <View
-                            key={cat}
-                            style={[styles.categoryBadge, { backgroundColor: theme.primaryLight }]}
-                        >
-                            <Text style={[styles.categoryText, { color: theme.primary }]}>{cat}</Text>
-                        </View>
-                    ))}
-                </View>
-
-                <Text style={[styles.priceText, { color: theme.primary }]}>
-                    {formatPrice(instructor.price_per_lesson)}
-                    <Text style={[styles.priceLabel, { color: theme.textMuted }]}>/aula</Text>
-                </Text>
-            </View>
-        </TouchableOpacity>
-    );
+    const firstName = profile?.full_name?.split(' ')[0] || 'Aluno';
 
     return (
-        <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]} edges={['top']}>
-            {/* Header - Simplified for Tab */}
-            <View style={styles.header}>
-                <Text style={[styles.headerTitle, { color: theme.text }]}>Buscar Instrutores</Text>
-                <View style={styles.headerActions}>
-                    <TouchableOpacity
-                        style={[styles.filterButton, { backgroundColor: theme.card }]}
-                        onPress={() => router.push('/connect/mapa')}
-                    >
-                        <Ionicons name="map-outline" size={20} color={theme.primary} />
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                        style={[
-                            styles.filterButton,
-                            { backgroundColor: showFilters ? theme.primary : theme.card }
-                        ]}
-                        onPress={() => setShowFilters(!showFilters)}
-                    >
-                        <Ionicons
-                            name="options-outline"
-                            size={20}
-                            color={showFilters ? '#fff' : theme.text}
-                        />
-                    </TouchableOpacity>
-                </View>
-            </View>
+        <View style={styles.container}>
+            <StatusBar barStyle="light-content" backgroundColor="#064e3b" />
 
-            {/* Search Bar */}
-            <View style={[styles.searchContainer, { backgroundColor: theme.card }]}>
-                <Ionicons name="search-outline" size={20} color={theme.textMuted} />
-                <TextInput
-                    style={[styles.searchInput, { color: theme.text }]}
-                    placeholder="Buscar por cidade..."
-                    placeholderTextColor={theme.textMuted}
-                    value={searchCity}
-                    onChangeText={setSearchCity}
-                    onSubmitEditing={fetchInstructors}
-                />
-                {searchCity.length > 0 && (
-                    <TouchableOpacity onPress={() => setSearchCity('')}>
-                        <Ionicons name="close-circle" size={18} color={theme.textMuted} />
-                    </TouchableOpacity>
-                )}
-            </View>
-
-            {/* Filters */}
-            {showFilters && (
-                <View style={styles.filtersContainer}>
-                    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterRow}>
-                        <Text style={[styles.filterLabel, { color: theme.textMuted }]}>Estado:</Text>
-                        {BRAZILIAN_STATES.slice(0, 10).map((state) => (
-                            <TouchableOpacity
-                                key={state}
-                                style={[
-                                    styles.filterChip,
-                                    {
-                                        backgroundColor: selectedState === state ? theme.primary : theme.card,
-                                        borderColor: theme.cardBorder,
-                                    }
-                                ]}
-                                onPress={() => setSelectedState(selectedState === state ? '' : state)}
-                            >
-                                <Text style={{
-                                    color: selectedState === state ? '#fff' : theme.text,
-                                    fontSize: 13,
-                                    fontWeight: '500',
-                                }}>
-                                    {state}
-                                </Text>
-                            </TouchableOpacity>
-                        ))}
-                    </ScrollView>
-
-                    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterRow}>
-                        <Text style={[styles.filterLabel, { color: theme.textMuted }]}>Categoria:</Text>
-                        {CNH_CATEGORIES.map((cat) => (
-                            <TouchableOpacity
-                                key={cat}
-                                style={[
-                                    styles.filterChip,
-                                    {
-                                        backgroundColor: selectedCategory === cat ? theme.primary : theme.card,
-                                        borderColor: theme.cardBorder,
-                                    }
-                                ]}
-                                onPress={() => setSelectedCategory(selectedCategory === cat ? '' : cat)}
-                            >
-                                <Text style={{
-                                    color: selectedCategory === cat ? '#fff' : theme.text,
-                                    fontSize: 13,
-                                    fontWeight: '500',
-                                }}>
-                                    {cat}
-                                </Text>
-                            </TouchableOpacity>
-                        ))}
-                    </ScrollView>
-
-                    {hasActiveFilters && (
-                        <TouchableOpacity style={styles.clearButton} onPress={clearFilters}>
-                            <Text style={[styles.clearButtonText, { color: theme.primary }]}>
-                                Limpar filtros
-                            </Text>
+            {/* Fixed Header Bar */}
+            <View style={styles.headerBar}>
+                <SafeAreaView edges={['top']} style={styles.safeHeader}>
+                    <View style={styles.headerRow}>
+                        <TouchableOpacity style={styles.profileBtn}>
+                            {profile?.avatar_url ? (
+                                <Image source={{ uri: profile.avatar_url }} style={styles.profileImg} />
+                            ) : (
+                                <View style={styles.profilePlaceholder}>
+                                    <Text style={styles.profileInitial}>{firstName.charAt(0)}</Text>
+                                </View>
+                            )}
                         </TouchableOpacity>
-                    )}
-                </View>
-            )}
+                        <View style={styles.userInfo}>
+                            <Text style={styles.greetingText}>{getGreeting()}, {firstName}</Text>
+                        </View>
+                        <View style={styles.weatherBadge}>
+                            <Ionicons name="sunny" size={14} color="#f59e0b" />
+                            <Text style={styles.weatherText}>28°C</Text>
+                        </View>
+                    </View>
+                </SafeAreaView>
+            </View>
 
-            {/* Instructors Grid */}
-            {loading ? (
-                <View style={styles.loadingContainer}>
-                    <ActivityIndicator size="large" color={theme.primary} />
-                </View>
-            ) : (
-                <ScrollView
-                    style={styles.scrollView}
-                    contentContainerStyle={styles.instructorsGrid}
-                    refreshControl={
-                        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.primary} />
-                    }
-                    showsVerticalScrollIndicator={false}
-                >
-                    {instructors.length === 0 ? (
-                        <View style={styles.emptyState}>
-                            <Ionicons name="search-outline" size={48} color={theme.textMuted} />
-                            <Text style={[styles.emptyText, { color: theme.textMuted }]}>
-                                Nenhum instrutor encontrado
+            {/* Scrollable Content */}
+            <ScrollView
+                style={styles.scrollView}
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={styles.scrollContent}
+                refreshControl={
+                    <RefreshControl
+                        refreshing={refreshing}
+                        onRefresh={onRefresh}
+                        tintColor="#10b981"
+                        colors={['#10b981']}
+                    />
+                }
+            >
+                {/* Hero Section */}
+                <View style={styles.heroSection}>
+                    <Text style={styles.heroTitle}>Onde você quer{'\n'}ter sua aula?</Text>
+
+                    {/* Search Card */}
+                    <View style={[styles.searchCard, { backgroundColor: theme.card }]}>
+                        <View style={styles.searchRow}>
+                            <View style={styles.searchDot} />
+                            <TextInput
+                                style={[styles.searchInput, { color: theme.text }]}
+                                placeholder="Buscar por cidade..."
+                                placeholderTextColor={theme.textMuted}
+                                value={searchCity}
+                                onChangeText={setSearchCity}
+                            />
+                        </View>
+                        <View style={[styles.searchDivider, { backgroundColor: theme.cardBorder }]} />
+                        <View style={styles.searchRow}>
+                            <View style={[styles.searchDot, styles.searchDotSecondary]} />
+                            <Text style={[styles.categorySelectorText, { color: theme.textMuted }]}>
+                                {selectedCategory ? `Categoria ${selectedCategory}` : 'Selecionar categoria CNH'}
                             </Text>
                         </View>
+                        <TouchableOpacity
+                            style={styles.findButton}
+                            onPress={fetchInstructors}
+                        >
+                            <Ionicons name="search" size={18} color="#fff" />
+                            <Text style={styles.findButtonText}>Buscar</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+
+                {/* Content Card */}
+                <View style={[styles.contentCard, { backgroundColor: theme.background }]}>
+                    {/* Promo Banner */}
+                    <TouchableOpacity style={[styles.promoBanner, { backgroundColor: isDark ? theme.primaryLight : '#ecfdf5' }]}>
+                        <View style={styles.promoIcon}>
+                            <Ionicons name="gift" size={18} color="#10b981" />
+                        </View>
+                        <View style={styles.promoContent}>
+                            <Text style={[styles.promoTitle, { color: isDark ? theme.primaryDark : '#065f46' }]}>Primeira aula com 10% OFF!</Text>
+                        </View>
+                        <Ionicons name="chevron-forward" size={18} color="#9ca3af" />
+                    </TouchableOpacity>
+
+                    {/* CNH Categories */}
+                    <Text style={[styles.sectionLabel, { color: theme.text }]}>Categorias CNH</Text>
+                    <ScrollView
+                        horizontal
+                        showsHorizontalScrollIndicator={false}
+                        style={styles.categoriesScroll}
+                        contentContainerStyle={styles.categoriesContent}
+                    >
+                        {CNH_CATEGORIES.map((cat) => (
+                            <TouchableOpacity
+                                key={cat.id}
+                                style={[
+                                    styles.categoryCard,
+                                    { backgroundColor: theme.card, borderColor: theme.cardBorder, borderWidth: 1 },
+                                    selectedCategory === cat.id && styles.categoryCardActive
+                                ]}
+                                onPress={() => setSelectedCategory(
+                                    selectedCategory === cat.id ? '' : cat.id
+                                )}
+                            >
+                                <View style={[
+                                    styles.categoryIcon,
+                                    { backgroundColor: isDark ? theme.card : '#f3f4f6' },
+                                    selectedCategory === cat.id && styles.categoryIconActive
+                                ]}>
+                                    <Ionicons
+                                        name={cat.icon}
+                                        size={22}
+                                        color={selectedCategory === cat.id ? '#fff' : theme.primary}
+                                    />
+                                </View>
+                                <Text style={[
+                                    styles.categoryLabel,
+                                    { color: theme.textSecondary },
+                                    selectedCategory === cat.id && styles.categoryLabelActive
+                                ]}>
+                                    {cat.label}
+                                </Text>
+                                <Text style={[
+                                    styles.categoryBadge,
+                                    { color: isDark ? theme.primary : '#064e3b' },
+                                    selectedCategory === cat.id && styles.categoryBadgeActive
+                                ]}>
+                                    {cat.id}
+                                </Text>
+                            </TouchableOpacity>
+                        ))}
+                    </ScrollView>
+
+                    {/* Filter Chips */}
+                    <View style={styles.filterSection}>
+                        <Text style={[styles.sectionLabel, { color: theme.text }]}>Instrutores disponíveis</Text>
+                        <ScrollView
+                            horizontal
+                            showsHorizontalScrollIndicator={false}
+                            style={styles.filterScroll}
+                        >
+                            <TouchableOpacity style={[styles.filterChip, styles.filterChipActive]}>
+                                <Ionicons name="star" size={12} color="#fff" />
+                                <Text style={[styles.filterChipText, styles.filterChipTextActive]}>Melhor avaliação</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity style={[styles.filterChip, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
+                                <Ionicons name="cash-outline" size={12} color={theme.textSecondary} />
+                                <Text style={[styles.filterChipText, { color: theme.textSecondary }]}>Menor preço</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity style={[styles.filterChip, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
+                                <Ionicons name="location-outline" size={12} color={theme.textSecondary} />
+                                <Text style={[styles.filterChipText, { color: theme.textSecondary }]}>Mais próximo</Text>
+                            </TouchableOpacity>
+                        </ScrollView>
+                    </View>
+
+                    {/* Instructor List */}
+                    {loading ? (
+                        <ActivityIndicator size="large" color="#10b981" style={{ marginVertical: 40 }} />
+                    ) : instructors.length === 0 ? (
+                        <View style={styles.emptyState}>
+                            <Ionicons name="car-outline" size={48} color={theme.textMuted} />
+                            <Text style={[styles.emptyTitle, { color: theme.text }]}>Nenhum instrutor encontrado</Text>
+                            <Text style={[styles.emptySubtitle, { color: theme.textMuted }]}>Tente alterar os filtros de busca</Text>
+                        </View>
                     ) : (
-                        instructors.map(renderInstructorCard)
+                        <View style={styles.instructorsList}>
+                            {instructors.map((instructor, index) => (
+                                <TouchableOpacity
+                                    key={instructor.id}
+                                    style={[styles.instructorCard, { backgroundColor: theme.card, borderColor: theme.cardBorder, borderWidth: 1 }]}
+                                    onPress={() => router.push(`/connect/instrutor/${instructor.id}`)}
+                                    activeOpacity={0.95}
+                                >
+                                    {/* Availability Badge */}
+                                    <View style={[styles.availabilityBadge, { backgroundColor: isDark ? theme.primaryLight : '#ecfdf5' }]}>
+                                        <View style={styles.availabilityDot} />
+                                        <Text style={[styles.availabilityText, { color: isDark ? theme.primaryDark : '#065f46' }]}>Disponível hoje</Text>
+                                    </View>
+
+                                    <View style={styles.instructorRow}>
+                                        {/* Photo */}
+                                        <View style={styles.photoWrapper}>
+                                            {instructor.photo_url ? (
+                                                <Image
+                                                    source={{ uri: instructor.photo_url }}
+                                                    style={styles.instructorPhoto}
+                                                />
+                                            ) : (
+                                                <View style={styles.instructorPhotoPlaceholder}>
+                                                    <Text style={styles.instructorInitial}>
+                                                        {instructor.full_name.charAt(0)}
+                                                    </Text>
+                                                </View>
+                                            )}
+                                            {instructor.is_verified && (
+                                                <View style={[styles.verifiedBadge, { backgroundColor: theme.card }]}>
+                                                    <Ionicons name="checkmark-circle" size={18} color="#10b981" />
+                                                </View>
+                                            )}
+                                        </View>
+
+                                        {/* Info */}
+                                        <View style={styles.instructorInfo}>
+                                            <View style={styles.nameRow}>
+                                                <Text style={[styles.instructorName, { color: theme.text }]} numberOfLines={1}>
+                                                    {instructor.full_name}
+                                                </Text>
+                                                {index === 0 && (
+                                                    <View style={styles.topBadge}>
+                                                        <Ionicons name="trophy" size={10} color="#d97706" />
+                                                        <Text style={styles.topBadgeText}>TOP</Text>
+                                                    </View>
+                                                )}
+                                            </View>
+
+                                            {/* Rating */}
+                                            <View style={styles.ratingContainer}>
+                                                <View style={styles.starsRow}>
+                                                    {[1, 2, 3, 4, 5].map((star) => (
+                                                        <Ionicons
+                                                            key={star}
+                                                            name={star <= Math.round(instructor.average_rating || 0) ? 'star' : 'star-outline'}
+                                                            size={12}
+                                                            color="#f59e0b"
+                                                        />
+                                                    ))}
+                                                </View>
+                                                <Text style={[styles.ratingText, { color: theme.text }]}>
+                                                    {(instructor.average_rating || 0).toFixed(1)}
+                                                </Text>
+                                                <Text style={[styles.reviewsText, { color: theme.textMuted }]}>
+                                                    ({instructor.total_reviews || 0} avaliações)
+                                                </Text>
+                                            </View>
+
+                                            {/* Location */}
+                                            <View style={styles.metaRow}>
+                                                <Ionicons name="location" size={13} color={theme.textSecondary} />
+                                                <Text style={[styles.metaText, { color: theme.textSecondary }]}>{instructor.city}, {instructor.state}</Text>
+                                                <Text style={styles.distanceText}>~2.5 km</Text>
+                                            </View>
+
+                                            {/* Vehicle */}
+                                            <View style={styles.metaRow}>
+                                                <Ionicons name="car" size={13} color={theme.textSecondary} />
+                                                <Text style={[styles.metaText, { color: theme.textSecondary }]}>
+                                                    {instructor.vehicle_model || 'Veículo padrão'}
+                                                </Text>
+                                                <View style={[styles.transmissionBadge, { backgroundColor: isDark ? theme.cardBorder : '#f3f4f6' }]}>
+                                                    <Text style={[styles.transmissionText, { color: theme.textSecondary }]}>
+                                                        {instructor.vehicle_transmission === 'automatic' ? 'AUTO' : 'MANUAL'}
+                                                    </Text>
+                                                </View>
+                                            </View>
+
+                                            {/* Categories */}
+                                            <View style={styles.categoriesRow}>
+                                                {(instructor.categories || ['B']).slice(0, 3).map((cat) => (
+                                                    <View key={cat} style={styles.categoryChip}>
+                                                        <Text style={styles.categoryChipText}>{cat}</Text>
+                                                    </View>
+                                                ))}
+                                            </View>
+                                        </View>
+                                    </View>
+
+                                    {/* Price Footer */}
+                                    <View style={[styles.priceFooter, { borderTopColor: theme.cardBorder }]}>
+                                        <View style={styles.priceInfo}>
+                                            <Text style={styles.priceValue}>{formatPrice(instructor.price_per_lesson)}</Text>
+                                            <Text style={[styles.priceLabel, { color: theme.textMuted }]}>por aula de 50min</Text>
+                                        </View>
+                                        <TouchableOpacity style={styles.bookButton}>
+                                            <Text style={styles.bookButtonText}>Ver perfil</Text>
+                                            <Ionicons name="arrow-forward" size={16} color="#fff" />
+                                        </TouchableOpacity>
+                                    </View>
+                                </TouchableOpacity>
+                            ))}
+                        </View>
                     )}
+
                     <View style={{ height: 100 }} />
-                </ScrollView>
-            )}
-        </SafeAreaView>
+                </View>
+            </ScrollView>
+        </View>
     );
 }
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
+        backgroundColor: '#064e3b',
     },
-    header: {
+    // Fixed Header
+    headerBar: {
+        backgroundColor: '#064e3b',
+    },
+    safeHeader: {
+        paddingHorizontal: 20,
+        paddingBottom: 12,
+    },
+    headerRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'space-between',
-        paddingHorizontal: 20,
-        paddingVertical: 16,
+        marginTop: 8,
     },
-    headerTitle: {
-        fontSize: 24,
-        fontWeight: '700',
-    },
-    headerActions: {
-        flexDirection: 'row',
-        gap: 8,
-    },
-    filterButton: {
+    profileBtn: {
         width: 40,
         height: 40,
         borderRadius: 20,
+        overflow: 'hidden',
+        borderWidth: 2,
+        borderColor: 'rgba(255,255,255,0.3)',
+    },
+    profileImg: {
+        width: '100%',
+        height: '100%',
+    },
+    profilePlaceholder: {
+        width: '100%',
+        height: '100%',
+        backgroundColor: '#10b981',
         justifyContent: 'center',
         alignItems: 'center',
     },
-    searchContainer: {
+    profileInitial: {
+        color: '#fff',
+        fontSize: 16,
+        fontWeight: '700',
+    },
+    userInfo: {
+        flex: 1,
+        marginLeft: 12,
+    },
+    greetingText: {
+        fontSize: 15,
+        fontWeight: '600',
+        color: '#fff',
+    },
+    weatherBadge: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginHorizontal: 20,
-        paddingHorizontal: 16,
-        paddingVertical: 12,
-        borderRadius: 14,
-        gap: 10,
+        backgroundColor: 'rgba(255,255,255,0.15)',
+        paddingHorizontal: 10,
+        paddingVertical: 6,
+        borderRadius: 20,
+        gap: 4,
+    },
+    weatherText: {
+        fontSize: 12,
+        fontWeight: '600',
+        color: '#fff',
+    },
+    // Scrollable Content
+    scrollView: {
+        flex: 1,
+    },
+    scrollContent: {
+        flexGrow: 1,
+    },
+    // Hero Section
+    heroSection: {
+        backgroundColor: '#064e3b',
+        paddingHorizontal: 20,
+        paddingBottom: 30,
+    },
+    heroTitle: {
+        fontSize: 26,
+        fontWeight: '800',
+        color: '#fff',
+        lineHeight: 32,
+        marginBottom: 16,
+    },
+    // Search Card
+    searchCard: {
+        backgroundColor: '#fff',
+        borderRadius: 16,
+        padding: 14,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.15,
+        shadowRadius: 12,
+        elevation: 8,
+    },
+    searchRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingVertical: 8,
+    },
+    searchDot: {
+        width: 10,
+        height: 10,
+        borderRadius: 5,
+        backgroundColor: '#10b981',
+        marginRight: 12,
+    },
+    searchDotSecondary: {
+        backgroundColor: '#d1d5db',
     },
     searchInput: {
         flex: 1,
         fontSize: 15,
+        color: '#1f2937',
     },
-    filtersContainer: {
-        paddingVertical: 12,
+    searchDivider: {
+        height: 1,
+        backgroundColor: '#f3f4f6',
+        marginVertical: 4,
+        marginLeft: 22,
     },
-    filterRow: {
+    categorySelectorText: {
+        flex: 1,
+        fontSize: 15,
+        color: '#9ca3af',
+    },
+    findButton: {
+        flexDirection: 'row',
+        backgroundColor: '#10b981',
+        borderRadius: 12,
+        paddingVertical: 14,
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginTop: 8,
+        gap: 8,
+    },
+    findButtonText: {
+        color: '#fff',
+        fontSize: 15,
+        fontWeight: '700',
+    },
+    // Content Card
+    contentCard: {
+        flex: 1,
+        backgroundColor: '#f9fafb',
+        borderTopLeftRadius: 24,
+        borderTopRightRadius: 24,
+        paddingTop: 20,
         paddingHorizontal: 20,
-        marginBottom: 8,
+        marginTop: -10,
     },
-    filterLabel: {
-        marginRight: 10,
+    // Promo Banner
+    promoBanner: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#ecfdf5',
+        padding: 12,
+        borderRadius: 12,
+        marginBottom: 20,
+    },
+    promoIcon: {
+        width: 36,
+        height: 36,
+        borderRadius: 18,
+        backgroundColor: '#d1fae5',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    promoContent: {
+        flex: 1,
+        marginLeft: 10,
+    },
+    promoTitle: {
         fontSize: 13,
-        alignSelf: 'center',
+        fontWeight: '600',
+        color: '#065f46',
+    },
+    // Categories
+    sectionLabel: {
+        fontSize: 16,
+        fontWeight: '700',
+        color: '#1f2937',
+        marginBottom: 12,
+    },
+    categoriesScroll: {
+        marginHorizontal: -20,
+        marginBottom: 20,
+    },
+    categoriesContent: {
+        paddingHorizontal: 20,
+        gap: 10,
+    },
+    categoryCard: {
+        alignItems: 'center',
+        width: 70,
+        paddingVertical: 10,
+        backgroundColor: '#fff',
+        borderRadius: 14,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.05,
+        shadowRadius: 4,
+        elevation: 1,
+    },
+    categoryCardActive: {
+        backgroundColor: '#10b981',
+    },
+    categoryIcon: {
+        width: 44,
+        height: 44,
+        borderRadius: 12,
+        backgroundColor: '#f3f4f6',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: 6,
+    },
+    categoryIconActive: {
+        backgroundColor: 'rgba(255,255,255,0.2)',
+    },
+    categoryLabel: {
+        fontSize: 10,
+        color: '#6b7280',
+        marginBottom: 2,
+    },
+    categoryLabelActive: {
+        color: 'rgba(255,255,255,0.8)',
+    },
+    categoryBadge: {
+        fontSize: 14,
+        fontWeight: '800',
+        color: '#064e3b',
+    },
+    categoryBadgeActive: {
+        color: '#fff',
+    },
+    // Filters
+    filterSection: {
+        marginBottom: 16,
+    },
+    filterScroll: {
+        marginTop: 8,
     },
     filterChip: {
-        paddingHorizontal: 14,
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 4,
+        backgroundColor: '#fff',
+        paddingHorizontal: 12,
         paddingVertical: 8,
         borderRadius: 20,
         marginRight: 8,
         borderWidth: 1,
+        borderColor: '#e5e7eb',
     },
-    clearButton: {
-        alignSelf: 'center',
-        paddingVertical: 8,
+    filterChipActive: {
+        backgroundColor: '#10b981',
+        borderColor: '#10b981',
     },
-    clearButtonText: {
-        fontSize: 14,
-        fontWeight: '600',
+    filterChipText: {
+        fontSize: 12,
+        fontWeight: '500',
+        color: '#6b7280',
     },
-    loadingContainer: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
+    filterChipTextActive: {
+        color: '#fff',
     },
-    scrollView: {
-        flex: 1,
-    },
-    instructorsGrid: {
-        flexDirection: 'row',
-        flexWrap: 'wrap',
-        paddingHorizontal: 20,
+    // Instructor List
+    instructorsList: {
         gap: 12,
-        paddingTop: 16,
     },
     instructorCard: {
-        width: CARD_WIDTH,
-        borderRadius: 16,
-        overflow: 'hidden',
+        backgroundColor: '#fff',
+        borderRadius: 20,
+        padding: 16,
+        marginBottom: 16,
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
+        shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.08,
-        shadowRadius: 8,
-        elevation: 3,
+        shadowRadius: 12,
+        elevation: 4,
     },
-    photoContainer: {
+    availabilityBadge: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        alignSelf: 'flex-start',
+        backgroundColor: '#ecfdf5',
+        paddingHorizontal: 10,
+        paddingVertical: 4,
+        borderRadius: 12,
+        marginBottom: 12,
+        gap: 6,
+    },
+    availabilityDot: {
+        width: 6,
+        height: 6,
+        borderRadius: 3,
+        backgroundColor: '#10b981',
+    },
+    availabilityText: {
+        fontSize: 11,
+        fontWeight: '600',
+        color: '#065f46',
+    },
+    instructorRow: {
+        flexDirection: 'row',
+        alignItems: 'flex-start',
+    },
+    photoWrapper: {
         position: 'relative',
     },
-    photo: {
-        width: '100%',
-        height: CARD_WIDTH * 0.8,
+    instructorPhoto: {
+        width: 80,
+        height: 80,
+        borderRadius: 16,
     },
-    photoPlaceholder: {
-        width: '100%',
-        height: CARD_WIDTH * 0.8,
+    instructorPhotoPlaceholder: {
+        width: 80,
+        height: 80,
+        borderRadius: 16,
+        backgroundColor: '#10b981',
         justifyContent: 'center',
         alignItems: 'center',
     },
-    photoInitial: {
-        fontSize: 36,
-        fontWeight: '700',
+    instructorInitial: {
         color: '#fff',
+        fontSize: 28,
+        fontWeight: '700',
     },
     verifiedBadge: {
         position: 'absolute',
-        top: 8,
-        right: 8,
-        width: 20,
-        height: 20,
+        bottom: -4,
+        right: -4,
+        backgroundColor: '#fff',
         borderRadius: 10,
-        justifyContent: 'center',
-        alignItems: 'center',
+        padding: 1,
     },
-    cardInfo: {
-        padding: 12,
+    instructorInfo: {
+        flex: 1,
+        marginLeft: 14,
     },
-    instructorName: {
-        fontSize: 14,
-        fontWeight: '600',
-        marginBottom: 4,
-    },
-    locationRow: {
+    nameRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 4,
+        gap: 8,
+        marginBottom: 6,
+    },
+    instructorName: {
+        fontSize: 16,
+        fontWeight: '700',
+        color: '#1f2937',
+        flex: 1,
+    },
+    topBadge: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 3,
+        backgroundColor: '#fef3c7',
+        paddingHorizontal: 8,
+        paddingVertical: 3,
+        borderRadius: 8,
+    },
+    topBadgeText: {
+        fontSize: 10,
+        fontWeight: '700',
+        color: '#d97706',
+    },
+    ratingContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 8,
+    },
+    starsRow: {
+        flexDirection: 'row',
+        gap: 1,
+        marginRight: 6,
+    },
+    ratingText: {
+        fontSize: 13,
+        fontWeight: '700',
+        color: '#1f2937',
+        marginRight: 4,
+    },
+    reviewsText: {
+        fontSize: 11,
+        color: '#9ca3af',
+    },
+    metaRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
         marginBottom: 4,
     },
-    locationText: {
-        fontSize: 11,
+    metaText: {
+        fontSize: 12,
+        color: '#6b7280',
         flex: 1,
+    },
+    distanceText: {
+        fontSize: 11,
+        fontWeight: '600',
+        color: '#10b981',
+    },
+    transmissionBadge: {
+        backgroundColor: '#f3f4f6',
+        paddingHorizontal: 6,
+        paddingVertical: 2,
+        borderRadius: 4,
+    },
+    transmissionText: {
+        fontSize: 9,
+        fontWeight: '700',
+        color: '#4b5563',
+    },
+    categoriesRow: {
+        flexDirection: 'row',
+        gap: 6,
+        marginTop: 6,
+    },
+    categoryChip: {
+        backgroundColor: '#064e3b',
+        paddingHorizontal: 10,
+        paddingVertical: 4,
+        borderRadius: 8,
+    },
+    categoryChipText: {
+        fontSize: 11,
+        fontWeight: '700',
+        color: '#fff',
+    },
+    priceFooter: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        marginTop: 16,
+        paddingTop: 14,
+        borderTopWidth: 1,
+        borderTopColor: '#f3f4f6',
+    },
+    priceInfo: {},
+    priceValue: {
+        fontSize: 20,
+        fontWeight: '800',
+        color: '#10b981',
+    },
+    priceLabel: {
+        fontSize: 11,
+        color: '#9ca3af',
+    },
+    bookButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+        backgroundColor: '#10b981',
+        paddingHorizontal: 16,
+        paddingVertical: 10,
+        borderRadius: 12,
+    },
+    bookButtonText: {
+        fontSize: 13,
+        fontWeight: '700',
+        color: '#fff',
     },
     ratingRow: {
         flexDirection: 'row',
         alignItems: 'center',
         gap: 4,
-        marginBottom: 6,
+        marginTop: 4,
     },
-    ratingText: {
-        fontSize: 12,
-        fontWeight: '600',
+    priceSection: {
+        alignItems: 'flex-end',
     },
-    reviewCount: {
-        fontSize: 11,
-    },
-    categoriesRow: {
-        flexDirection: 'row',
-        gap: 4,
-        marginBottom: 8,
-    },
-    categoryBadge: {
-        paddingHorizontal: 8,
-        paddingVertical: 3,
-        borderRadius: 6,
-    },
-    categoryText: {
-        fontSize: 10,
-        fontWeight: '600',
-    },
-    priceText: {
-        fontSize: 16,
-        fontWeight: '700',
-    },
-    priceLabel: {
-        fontSize: 12,
-        fontWeight: '400',
-    },
+    // Empty State
     emptyState: {
-        flex: 1,
-        width: SCREEN_WIDTH - 40,
-        justifyContent: 'center',
         alignItems: 'center',
-        paddingVertical: 60,
-        gap: 12,
+        paddingVertical: 40,
     },
-    emptyText: {
-        fontSize: 15,
-        textAlign: 'center',
+    emptyTitle: {
+        fontSize: 16,
+        fontWeight: '600',
+        color: '#1f2937',
+        marginTop: 12,
+    },
+    emptySubtitle: {
+        fontSize: 13,
+        color: '#9ca3af',
+        marginTop: 4,
     },
 });

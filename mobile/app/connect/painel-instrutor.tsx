@@ -195,8 +195,7 @@ export default function InstructorDashboardScreen() {
                 <Text style={[styles.sectionTitle, { color: theme.text }]}>Acesso Rápido</Text>
                 <View style={styles.actionsGrid}>
                     <TouchableOpacity
-                        style={[styles.actionCard, { backgroundColor: theme.card }]}
-                        onPress={() => Alert.alert('Em breve', 'Gestão de agenda em desenvolvimento')}
+                        onPress={() => router.push('/connect/agenda')}
                     >
                         <View style={[styles.actionIcon, { backgroundColor: '#f3e8ff' }]}>
                             <Ionicons name="calendar" size={24} color="#7e22ce" />
@@ -205,8 +204,7 @@ export default function InstructorDashboardScreen() {
                     </TouchableOpacity>
 
                     <TouchableOpacity
-                        style={[styles.actionCard, { backgroundColor: theme.card }]}
-                        onPress={() => Alert.alert('Em breve', 'Gestão financeira em desenvolvimento')}
+                        onPress={() => router.push('/connect/financeiro')}
                     >
                         <View style={[styles.actionIcon, { backgroundColor: '#ecfccb' }]}>
                             <Ionicons name="wallet" size={24} color="#4d7c0f" />
@@ -216,7 +214,16 @@ export default function InstructorDashboardScreen() {
 
                     <TouchableOpacity
                         style={[styles.actionCard, { backgroundColor: theme.card }]}
-                        onPress={() => Alert.alert('Em breve', 'Histórico de alunos em desenvolvimento')}
+                        onPress={() => router.push('/connect/horarios')}
+                    >
+                        <View style={[styles.actionIcon, { backgroundColor: isDark ? theme.primaryLight : '#ecfdf5' }]}>
+                            <Ionicons name="time" size={24} color="#10b981" />
+                        </View>
+                        <Text style={[styles.actionLabel, { color: theme.textSecondary }]}>Horários</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                        onPress={() => router.push('/connect/alunos')}
                     >
                         <View style={[styles.actionIcon, { backgroundColor: '#ffedd5' }]}>
                             <Ionicons name="people" size={24} color="#c2410c" />
@@ -276,7 +283,7 @@ export default function InstructorDashboardScreen() {
                                     style={[styles.detailsButton, { backgroundColor: theme.background }]}
                                     onPress={() => {
                                         if (lesson.status === 'confirmed') {
-                                            router.push(`/connect/aula/${lesson.id}/qrcode`);
+                                            router.push(`/connect/aula/${lesson.id}`);
                                         } else {
                                             Alert.alert('Detalhes', `Aula com ${lesson.student_name} às ${lesson.scheduled_time}`);
                                         }

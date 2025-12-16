@@ -9,6 +9,7 @@ module.exports = function (api) {
                     root: ['./'],
                     alias: {
                         '@': '../src',
+                        'lodash': './node_modules/lodash',
                     },
                     extensions: ['.ios.ts', '.android.ts', '.ts', '.ios.tsx', '.android.tsx', '.tsx', '.jsx', '.js', '.json'],
                 },

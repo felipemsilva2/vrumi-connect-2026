@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useMemo } from 'react';
 import {
     View,
     Text,
@@ -10,6 +10,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { useTheme } from '../contexts/ThemeContext';
+import { useInstructorStatus } from '../hooks/useInstructorStatus';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -20,20 +21,41 @@ interface TabConfig {
     iconActive: keyof typeof Ionicons.glyphMap;
 }
 
-const TABS: TabConfig[] = [
+const BASE_TABS: TabConfig[] = [
     { name: 'index', label: 'Início', icon: 'home-outline', iconActive: 'home' },
     { name: 'buscar', label: 'Buscar', icon: 'search-outline', iconActive: 'search' },
     { name: 'aulas', label: 'Aulas', icon: 'calendar-outline', iconActive: 'calendar' },
     { name: 'perfil', label: 'Perfil', icon: 'person-outline', iconActive: 'person' },
 ];
 
-const TAB_WIDTH = SCREEN_WIDTH / TABS.length;
+const INSTRUCTOR_TAB: TabConfig = {
+    name: 'instrutor',
+    label: 'Instrutor',
+    icon: 'car-outline',
+    iconActive: 'car',
+};
 
 export default function ModernTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
     const { theme, isDark } = useTheme();
+    const { isInstructor } = useInstructorStatus();
 
-    // Animated values for each tab
-    const animations = useRef(TABS.map(() => ({
+    // Dynamically build tabs array
+    const TABS = useMemo(() => {
+        if (isInstructor) {
+            // Insert instructor tab before perfil
+            return [
+                ...BASE_TABS.slice(0, 3),
+                INSTRUCTOR_TAB,
+                BASE_TABS[3],
+            ];
+        }
+        return BASE_TABS;
+    }, [isInstructor]);
+
+    const TAB_WIDTH = SCREEN_WIDTH / TABS.length;
+
+    // Animated values for each tab - always create for max tabs (5)
+    const animations = useRef([...Array(5)].map(() => ({
         scale: new Animated.Value(1),
         translateY: new Animated.Value(0),
         opacity: new Animated.Value(0.6),
@@ -43,9 +65,16 @@ export default function ModernTabBar({ state, descriptors, navigation }: BottomT
     const indicatorPosition = useRef(new Animated.Value(0)).current;
 
     useEffect(() => {
+        // Find actual index in our TABS array
+        const currentRouteName = state.routes[state.index]?.name;
+        const tabIndex = TABS.findIndex(t => t.name === currentRouteName);
+
+        if (tabIndex === -1) return;
+
         // Animate all tabs
-        animations.forEach((anim, index) => {
-            const isActive = index === state.index;
+        TABS.forEach((_, index) => {
+            const isActive = index === tabIndex;
+            const anim = animations[index];
 
             Animated.parallel([
                 Animated.spring(anim.scale, {
@@ -70,17 +99,23 @@ export default function ModernTabBar({ state, descriptors, navigation }: BottomT
 
         // Animate indicator
         Animated.spring(indicatorPosition, {
-            toValue: state.index * TAB_WIDTH,
+            toValue: tabIndex * TAB_WIDTH,
             friction: 6,
             tension: 80,
             useNativeDriver: true,
         }).start();
-    }, [state.index]);
+    }, [state.index, TABS, TAB_WIDTH]);
 
     const handlePress = (routeName: string, index: number) => {
+        const route = state.routes.find(r => r.name === routeName);
+        if (!route) {
+            navigation.navigate(routeName);
+            return;
+        }
+
         const event = navigation.emit({
             type: 'tabPress',
-            target: state.routes[index].key,
+            target: route.key,
             canPreventDefault: true,
         });
 
@@ -104,6 +139,10 @@ export default function ModernTabBar({ state, descriptors, navigation }: BottomT
         ]).start();
     };
 
+    // Get current active tab index
+    const currentRouteName = state.routes[state.index]?.name;
+    const activeTabIndex = TABS.findIndex(t => t.name === currentRouteName);
+
     return (
         <View style={[styles.container, {
             backgroundColor: isDark ? theme.card : '#ffffff',
@@ -115,6 +154,7 @@ export default function ModernTabBar({ state, descriptors, navigation }: BottomT
                     styles.indicator,
                     {
                         backgroundColor: theme.primary,
+                        width: TAB_WIDTH - 24,
                         transform: [{ translateX: indicatorPosition }],
                     },
                 ]}
@@ -126,19 +166,20 @@ export default function ModernTabBar({ state, descriptors, navigation }: BottomT
                     styles.activeBackground,
                     {
                         backgroundColor: theme.primary + '15',
+                        width: TAB_WIDTH - 16,
                         transform: [{ translateX: indicatorPosition }],
                     },
                 ]}
             />
 
             {TABS.map((tab, index) => {
-                const isActive = index === state.index;
+                const isActive = index === activeTabIndex;
                 const anim = animations[index];
 
                 return (
                     <TouchableOpacity
                         key={tab.name}
-                        style={styles.tab}
+                        style={[styles.tab, { width: TAB_WIDTH }]}
                         onPress={() => handlePress(tab.name, index)}
                         activeOpacity={0.7}
                     >
@@ -156,7 +197,7 @@ export default function ModernTabBar({ state, descriptors, navigation }: BottomT
                         >
                             <Ionicons
                                 name={isActive ? tab.iconActive : tab.icon}
-                                size={24}
+                                size={22}
                                 color={isActive ? theme.primary : theme.textMuted}
                             />
                             <Text
@@ -167,6 +208,7 @@ export default function ModernTabBar({ state, descriptors, navigation }: BottomT
                                         fontWeight: isActive ? '700' : '500',
                                     },
                                 ]}
+                                numberOfLines={1}
                             >
                                 {tab.label}
                             </Text>
@@ -194,7 +236,6 @@ const styles = StyleSheet.create({
     indicator: {
         position: 'absolute',
         top: 0,
-        width: TAB_WIDTH - 24,
         marginLeft: 12,
         height: 3,
         borderRadius: 2,
@@ -202,13 +243,11 @@ const styles = StyleSheet.create({
     activeBackground: {
         position: 'absolute',
         top: 8,
-        width: TAB_WIDTH - 16,
         marginLeft: 8,
         height: 48,
         borderRadius: 16,
     },
     tab: {
-        flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
         paddingTop: 8,
@@ -218,7 +257,7 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
     },
     label: {
-        fontSize: 11,
+        fontSize: 10,
         marginTop: 4,
     },
 });

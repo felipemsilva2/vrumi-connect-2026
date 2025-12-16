@@ -158,7 +158,7 @@ export default function BookingScreen() {
             Alert.alert(
                 'Aula Confirmada!',
                 'Sua aula foi agendada e confirmada automaticamente! O instrutor já foi notificado.',
-                [{ text: 'OK', onPress: () => router.push('/connect/minhas-aulas') }]
+                [{ text: 'OK', onPress: () => router.push('/(tabs)/aulas') }]
             );
         } catch (error) {
             console.error('Error booking:', error);

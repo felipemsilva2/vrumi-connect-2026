@@ -315,8 +315,11 @@ export default function PerfilScreen() {
                     {instructorStatus === 'approved' && (
                         <TouchableOpacity
                             style={[styles.menuItem, { backgroundColor: theme.card }]}
-                            onPress={() => router.push('/connect/painel-instrutor')}
-                        >
+                            onPress={() => {
+                                // If already on tabs, navigate between them; or push if it was external.
+                                // Since we are in tabs/perfil, we can just jump to tabs/instrutor
+                                router.replace('/(tabs)/instrutor');
+                            }}>
                             <View style={[styles.menuIcon, { backgroundColor: '#dbeafe' }]}>
                                 <Ionicons name="speedometer" size={20} color="#3b82f6" />
                             </View>

@@ -10,6 +10,7 @@ import {
     RefreshControl,
     Alert,
     Linking,
+    StatusBar,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -17,6 +18,7 @@ import { router } from 'expo-router';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../src/lib/supabase';
+import { isLessonExpired } from '../../utils/dateUtils';
 
 interface Instructor {
     id: string;
@@ -41,7 +43,8 @@ interface Booking {
 export default function AulasScreen() {
     const { theme, isDark } = useTheme();
     const { user } = useAuth();
-    const [bookings, setBookings] = useState<Booking[]>([]);
+    const [upcomingBookings, setUpcomingBookings] = useState<Booking[]>([]);
+    const [historyBookings, setHistoryBookings] = useState<Booking[]>([]);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     const [activeTab, setActiveTab] = useState<'upcoming' | 'history'>('upcoming');
@@ -50,8 +53,7 @@ export default function AulasScreen() {
         if (!user?.id) return;
 
         try {
-            const now = new Date().toISOString().split('T')[0];
-
+            // Fetch all relevant bookings without pre-filtering by date/status for tabs
             let query = supabase
                 .from('bookings')
                 .select(`
@@ -64,36 +66,48 @@ export default function AulasScreen() {
                     payment_status,
                     instructor:instructors(id, full_name, photo_url, city, state, phone)
                 `)
-                .eq('student_id', user.id);
-
-            if (activeTab === 'upcoming') {
-                query = query
-                    .gte('scheduled_date', now)
-                    .in('status', ['pending', 'confirmed'])
-                    .order('scheduled_date', { ascending: true });
-            } else {
-                query = query
-                    .or(`scheduled_date.lt.${now},status.eq.completed,status.eq.cancelled`)
-                    .order('scheduled_date', { ascending: false });
-            }
+                .eq('student_id', user.id)
+                .order('scheduled_date', { ascending: true }) // Order by date for consistent processing
+                .order('scheduled_time', { ascending: true });
 
             const { data, error } = await query;
 
             if (error) throw error;
 
-            const formattedData = data?.map((booking: any) => ({
-                ...booking,
-                instructor: booking.instructor[0] || booking.instructor,
-            })) || [];
+            if (data) {
+                const formattedData = data.map((booking: any) => ({
+                    ...booking,
+                    instructor: booking.instructor[0] || booking.instructor,
+                })) || [];
 
-            setBookings(formattedData);
+                // Separate bookings into upcoming and history
+                const upcoming = formattedData.filter(booking => {
+                    // Check if lesson is expired (past time + 30min tolerance)
+                    const expired = isLessonExpired(booking.scheduled_date, booking.scheduled_time);
+
+                    // Lesson is upcoming if status is confirmed/pending AND not expired
+                    return ['pending', 'confirmed'].includes(booking.status) && !expired;
+                });
+
+                const history = formattedData.filter(booking => {
+                    const expired = isLessonExpired(booking.scheduled_date, booking.scheduled_time);
+                    // History includes:
+                    // 1. Completed/Cancelled lessons
+                    // 2. Confirmed/Pending lessons that are EXPIRED
+                    return ['completed', 'cancelled'].includes(booking.status) ||
+                        (['pending', 'confirmed'].includes(booking.status) && expired);
+                });
+
+                setUpcomingBookings(upcoming);
+                setHistoryBookings(history);
+            }
         } catch (error) {
             console.error('Error fetching bookings:', error);
         } finally {
             setLoading(false);
             setRefreshing(false);
         }
-    }, [user?.id, activeTab]);
+    }, [user?.id]); // Removed activeTab from dependency array as filtering is now client-side
 
     useEffect(() => {
         fetchBookings();
@@ -119,6 +133,7 @@ export default function AulasScreen() {
             confirmed: { bg: '#d1fae5', text: '#059669', label: 'Confirmada' },
             completed: { bg: '#dbeafe', text: '#2563eb', label: 'Concluída' },
             cancelled: { bg: '#fee2e2', text: '#dc2626', label: 'Cancelada' },
+            expired: { bg: '#f3f4f6', text: '#6b7280', label: 'Não Realizada' },
         };
         return statusConfig[status] || statusConfig.pending;
     };
@@ -151,16 +166,20 @@ export default function AulasScreen() {
     };
 
     const renderBookingCard = (booking: Booking) => {
-        const status = getStatusBadge(booking.status);
+        // Check if expired to adjust badge visualization
+        const expired = isLessonExpired(booking.scheduled_date, booking.scheduled_time);
+        const displayStatus = (['pending', 'confirmed'].includes(booking.status) && expired)
+            ? 'expired'
+            : booking.status;
+
+        const status = getStatusBadge(displayStatus);
         const bookingDate = new Date(booking.scheduled_date + 'T00:00:00');
         const isPast = new Date(booking.scheduled_date) < new Date();
         const canCancel = !isPast && ['pending', 'confirmed'].includes(booking.status);
 
         return (
-            <View
-                key={booking.id}
-                style={[styles.bookingCard, { backgroundColor: theme.card }]}
-            >
+            <View key={booking.id} style={[styles.bookingCard, { backgroundColor: theme.card, borderColor: theme.cardBorder, borderWidth: 1 }]}>
+                {/* Header Row */}
                 <View style={styles.bookingHeader}>
                     {booking.instructor?.photo_url ? (
                         <Image
@@ -168,7 +187,7 @@ export default function AulasScreen() {
                             style={styles.instructorPhoto}
                         />
                     ) : (
-                        <View style={[styles.instructorPhotoPlaceholder, { backgroundColor: theme.primary }]}>
+                        <View style={styles.instructorPhotoPlaceholder}>
                             <Text style={styles.instructorInitial}>
                                 {booking.instructor?.full_name?.charAt(0) || 'I'}
                             </Text>
@@ -180,7 +199,7 @@ export default function AulasScreen() {
                             {booking.instructor?.full_name || 'Instrutor'}
                         </Text>
                         <View style={styles.locationRow}>
-                            <Ionicons name="location-outline" size={14} color={theme.textMuted} />
+                            <Ionicons name="location" size={12} color={theme.textMuted} />
                             <Text style={[styles.locationText, { color: theme.textMuted }]}>
                                 {booking.instructor?.city}, {booking.instructor?.state}
                             </Text>
@@ -194,9 +213,10 @@ export default function AulasScreen() {
                     </View>
                 </View>
 
-                <View style={[styles.bookingDetails, { borderTopColor: theme.cardBorder }]}>
+                {/* Details Row */}
+                <View style={styles.bookingDetails}>
                     <View style={styles.detailItem}>
-                        <Ionicons name="calendar-outline" size={18} color={theme.primary} />
+                        <Ionicons name="calendar" size={16} color="#10b981" />
                         <Text style={[styles.detailText, { color: theme.text }]}>
                             {bookingDate.toLocaleDateString('pt-BR', {
                                 weekday: 'short',
@@ -206,43 +226,68 @@ export default function AulasScreen() {
                         </Text>
                     </View>
                     <View style={styles.detailItem}>
-                        <Ionicons name="time-outline" size={18} color={theme.primary} />
+                        <Ionicons name="time" size={16} color="#10b981" />
                         <Text style={[styles.detailText, { color: theme.text }]}>
                             {formatTime(booking.scheduled_time)}
                         </Text>
                     </View>
                     <View style={styles.detailItem}>
-                        <Ionicons name="cash-outline" size={18} color={theme.primary} />
+                        <Ionicons name="cash" size={16} color="#10b981" />
                         <Text style={[styles.detailText, { color: theme.text }]}>
                             {formatPrice(booking.price)}
                         </Text>
                     </View>
                 </View>
 
-                {canCancel && (
+                {/* Actions */}
+                {['confirmed'].includes(booking.status) && !expired && (
                     <TouchableOpacity
-                        style={[styles.cancelButton, { borderColor: theme.cardBorder }]}
-                        onPress={() => handleCancelBooking(booking.id)}
+                        style={styles.primaryButton}
+                        onPress={() => router.push(`/connect/aula/${booking.id}`)}
                     >
-                        <Ionicons name="close-circle-outline" size={18} color="#dc2626" />
-                        <Text style={styles.cancelButtonText}>Cancelar Aula</Text>
+                        <Ionicons name="scan-outline" size={20} color="#fff" />
+                        <Text style={styles.primaryButtonText}>Confirmar Presença</Text>
                     </TouchableOpacity>
+                )}
+
+                {/* Expired Lesson Recovery Actions */}
+                {expired && ['confirmed', 'pending'].includes(booking.status) && (
+                    <View style={styles.recoveryActions}>
+                        <TouchableOpacity
+                            style={styles.rebookButton}
+                            onPress={() => router.push(`/connect/instrutor/${booking.instructor.id}`)}
+                        >
+                            <Ionicons name="calendar" size={20} color="#fff" />
+                            <Text style={styles.rebookButtonText}>Reagendar Aula</Text>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity
+                            style={styles.whatsappOutlineBtn}
+                            onPress={() => {
+                                const phone = booking.instructor?.phone?.replace(/\D/g, '');
+                                if (phone) Linking.openURL(`https://wa.me/55${phone}`);
+                            }}
+                        >
+                            <Ionicons name="logo-whatsapp" size={20} color="#10b981" />
+                            <Text style={styles.whatsappOutlineText}>Falar com Instrutor</Text>
+                        </TouchableOpacity>
+                    </View>
                 )}
 
                 {booking.payment_status === 'paid' && (
                     <View style={styles.contactButtonsRow}>
                         <TouchableOpacity
-                            style={[styles.contactBtn, { backgroundColor: theme.card, borderColor: theme.primary }]}
+                            style={styles.contactBtn}
                             onPress={() => {
                                 const phone = booking.instructor?.phone?.replace(/\D/g, '');
                                 if (phone) Linking.openURL(`tel:${phone}`);
                             }}
                         >
-                            <Ionicons name="call-outline" size={18} color={theme.primary} />
-                            <Text style={[styles.contactBtnText, { color: theme.primary }]}>Ligar</Text>
+                            <Ionicons name="call" size={18} color="#10b981" />
+                            <Text style={styles.contactBtnText}>Ligar</Text>
                         </TouchableOpacity>
                         <TouchableOpacity
-                            style={[styles.contactBtn, { backgroundColor: '#25D366' }]}
+                            style={[styles.contactBtn, styles.whatsappBtn]}
                             onPress={() => {
                                 const phone = booking.instructor?.phone?.replace(/\D/g, '');
                                 if (phone) Linking.openURL(`https://wa.me/55${phone}`);
@@ -254,24 +299,51 @@ export default function AulasScreen() {
                     </View>
                 )}
 
-                {['confirmed'].includes(booking.status) && (
+                {canCancel && (
                     <TouchableOpacity
-                        style={[styles.confirmButton, { backgroundColor: theme.primary }]}
-                        onPress={() => router.push(`/connect/aula/${booking.id}/scan`)}
+                        style={styles.cancelButton}
+                        onPress={() => handleCancelBooking(booking.id)}
                     >
-                        <Ionicons name="scan-outline" size={20} color="#fff" />
-                        <Text style={styles.confirmButtonText}>Confirmar Presença</Text>
+                        <Ionicons name="close-circle-outline" size={18} color="#dc2626" />
+                        <Text style={styles.cancelButtonText}>Cancelar Aula</Text>
                     </TouchableOpacity>
                 )}
             </View>
         );
     };
 
+    const renderEmptyState = () => (
+        <View style={styles.emptyState}>
+            <View style={[styles.emptyIcon, { backgroundColor: isDark ? theme.card : '#ffffff' }]}>
+                {activeTab === 'upcoming' ? (
+                    <Ionicons name="calendar-outline" size={48} color={isDark ? theme.textMuted : '#9ca3af'} />
+                ) : (
+                    <Ionicons name="time-outline" size={48} color={isDark ? theme.textMuted : '#9ca3af'} />
+                )}
+            </View>
+            <Text style={[styles.emptyTitle, { color: theme.text }]}>
+                {activeTab === 'upcoming' ? 'Nenhuma aula agendada' : 'Histórico vazio'}
+            </Text>
+            <Text style={[styles.emptySubtitle, { color: theme.textMuted }]}>
+                {activeTab === 'upcoming'
+                    ? 'Suas próximas aulas aparecerão aqui.'
+                    : 'Suas aulas passadas aparecerão aqui.'}
+            </Text>
+        </View>
+    );
+
     return (
-        <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]} edges={['top']}>
-            {/* Header - Simplified for Tab */}
-            <View style={styles.header}>
-                <Text style={[styles.headerTitle, { color: theme.text }]}>Minhas Aulas</Text>
+        <View style={[styles.container, { backgroundColor: theme.background }]}>
+            <StatusBar barStyle="light-content" backgroundColor="#064e3b" />
+
+            {/* Dark Green Header */}
+            <View style={styles.headerSection}>
+                <SafeAreaView edges={['top']} style={styles.safeHeader}>
+                    <Text style={styles.headerTitle}>Minhas Aulas</Text>
+                    <Text style={styles.headerSubtitle}>
+                        Gerencie suas aulas agendadas
+                    </Text>
+                </SafeAreaView>
             </View>
 
             {/* Tabs */}
@@ -279,13 +351,19 @@ export default function AulasScreen() {
                 <TouchableOpacity
                     style={[
                         styles.tab,
-                        { backgroundColor: activeTab === 'upcoming' ? theme.primary : theme.card }
+                        { backgroundColor: theme.card, borderColor: theme.cardBorder, borderWidth: 1 },
+                        activeTab === 'upcoming' && styles.tabActive,
                     ]}
                     onPress={() => setActiveTab('upcoming')}
                 >
+                    <Ionicons
+                        name="calendar"
+                        size={18}
+                        color={activeTab === 'upcoming' ? '#fff' : theme.textSecondary}
+                    />
                     <Text style={[
                         styles.tabText,
-                        { color: activeTab === 'upcoming' ? '#fff' : theme.text }
+                        activeTab === 'upcoming' && styles.tabTextActive,
                     ]}>
                         Próximas
                     </Text>
@@ -293,13 +371,19 @@ export default function AulasScreen() {
                 <TouchableOpacity
                     style={[
                         styles.tab,
-                        { backgroundColor: activeTab === 'history' ? theme.primary : theme.card }
+                        { backgroundColor: theme.card, borderColor: theme.cardBorder, borderWidth: 1 },
+                        activeTab === 'history' && styles.tabActive,
                     ]}
                     onPress={() => setActiveTab('history')}
                 >
+                    <Ionicons
+                        name="time"
+                        size={18}
+                        color={activeTab === 'history' ? '#fff' : theme.textSecondary}
+                    />
                     <Text style={[
                         styles.tabText,
-                        { color: activeTab === 'history' ? '#fff' : theme.text }
+                        activeTab === 'history' && styles.tabTextActive,
                     ]}>
                         Histórico
                     </Text>
@@ -309,76 +393,111 @@ export default function AulasScreen() {
             {/* Content */}
             {loading ? (
                 <View style={styles.loadingContainer}>
-                    <ActivityIndicator size="large" color={theme.primary} />
+                    <ActivityIndicator size="large" color="#10b981" />
                 </View>
             ) : (
                 <ScrollView
                     style={styles.scrollView}
                     contentContainerStyle={styles.scrollContent}
                     refreshControl={
-                        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.primary} />
+                        <RefreshControl
+                            refreshing={refreshing}
+                            onRefresh={onRefresh}
+                            tintColor={isDark ? theme.primary : '#10b981'}
+                            colors={[isDark ? theme.primary : '#10b981']}
+                        />
                     }
-                    showsVerticalScrollIndicator={false}
                 >
-                    {bookings.length === 0 ? (
-                        <View style={styles.emptyState}>
-                            <Ionicons
-                                name={activeTab === 'upcoming' ? 'calendar-outline' : 'time-outline'}
-                                size={48}
-                                color={theme.textMuted}
-                            />
-                            <Text style={[styles.emptyText, { color: theme.textMuted }]}>
-                                {activeTab === 'upcoming'
-                                    ? 'Você não tem aulas agendadas.'
-                                    : 'Nenhuma aula no histórico.'}
-                            </Text>
-                            {activeTab === 'upcoming' && (
-                                <TouchableOpacity
-                                    style={[styles.findButton, { backgroundColor: theme.primary }]}
-                                    onPress={() => router.push('/(tabs)/buscar')}
-                                >
-                                    <Text style={styles.findButtonText}>Encontrar Instrutor</Text>
-                                </TouchableOpacity>
-                            )}
-                        </View>
+                    {activeTab === 'upcoming' ? (
+                        upcomingBookings.length > 0 ? (
+                            upcomingBookings.map((booking) => (
+                                <View key={booking.id} style={{ marginBottom: 16 }}>
+                                    {renderBookingCard(booking)}
+                                </View>
+                            ))
+                        ) : (
+                            renderEmptyState()
+                        )
                     ) : (
-                        bookings.map(renderBookingCard)
+                        historyBookings.length > 0 ? (
+                            historyBookings.map((booking) => (
+                                <View key={booking.id} style={{ marginBottom: 16 }}>
+                                    {renderBookingCard(booking)}
+                                </View>
+                            ))
+                        ) : (
+                            renderEmptyState()
+                        )
                     )}
-                    <View style={{ height: 100 }} />
+
+                    <View style={{ height: 120 }} />
                 </ScrollView>
             )}
-        </SafeAreaView>
+        </View >
     );
 }
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
+        backgroundColor: '#f3f4f6',
     },
-    header: {
+    // Header Section
+    headerSection: {
+        backgroundColor: '#064e3b',
+        paddingBottom: 24,
+        borderBottomLeftRadius: 24,
+        borderBottomRightRadius: 24,
+    },
+    safeHeader: {
         paddingHorizontal: 20,
-        paddingVertical: 16,
+        paddingTop: 8,
     },
     headerTitle: {
-        fontSize: 24,
-        fontWeight: '700',
+        fontSize: 28,
+        fontWeight: '800',
+        color: '#fff',
+        marginBottom: 4,
     },
+    headerSubtitle: {
+        fontSize: 14,
+        color: 'rgba(255,255,255,0.7)',
+    },
+    // Tabs
     tabsContainer: {
         flexDirection: 'row',
         paddingHorizontal: 20,
         gap: 12,
+        marginTop: 20,
         marginBottom: 16,
     },
     tab: {
         flex: 1,
-        paddingVertical: 12,
-        borderRadius: 12,
+        flexDirection: 'row',
         alignItems: 'center',
+        justifyContent: 'center',
+        gap: 8,
+        paddingVertical: 14,
+        borderRadius: 14,
+        backgroundColor: '#fff',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.06,
+        shadowRadius: 8,
+        elevation: 2,
+    },
+    tabActive: {
+        backgroundColor: '#10b981',
     },
     tabText: {
         fontSize: 14,
         fontWeight: '600',
+        color: '#6b7280',
     },
+    tabTextActive: {
+        color: '#fff',
+    },
+    // Content
     loadingContainer: {
         flex: 1,
         justifyContent: 'center',
@@ -389,56 +508,84 @@ const styles = StyleSheet.create({
     },
     scrollContent: {
         paddingHorizontal: 20,
-        gap: 16,
     },
+    // Empty State
     emptyState: {
         alignItems: 'center',
         paddingVertical: 60,
-        gap: 12,
     },
-    emptyText: {
-        fontSize: 15,
+    emptyIcon: {
+        width: 80,
+        height: 80,
+        borderRadius: 40,
+        backgroundColor: '#fff',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: 16,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.06,
+        shadowRadius: 8,
+        elevation: 2,
+    },
+    emptyTitle: {
+        fontSize: 18,
+        fontWeight: '700',
+        color: '#1f2937',
+        marginBottom: 8,
+    },
+    emptySubtitle: {
+        fontSize: 14,
+        color: '#6b7280',
         textAlign: 'center',
+        paddingHorizontal: 20,
+        marginBottom: 20,
     },
     findButton: {
-        paddingHorizontal: 24,
-        paddingVertical: 12,
-        borderRadius: 25,
-        marginTop: 8,
+        backgroundColor: '#10b981',
+        paddingHorizontal: 28,
+        paddingVertical: 14,
+        borderRadius: 14,
     },
     findButtonText: {
         color: '#fff',
-        fontWeight: '600',
-        fontSize: 14,
+        fontWeight: '700',
+        fontSize: 15,
+    },
+    // Bookings List
+    bookingsList: {
+        gap: 16,
     },
     bookingCard: {
+        backgroundColor: '#fff',
         borderRadius: 16,
         padding: 16,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.08,
+        shadowOpacity: 0.06,
         shadowRadius: 8,
-        elevation: 3,
+        elevation: 2,
     },
     bookingHeader: {
         flexDirection: 'row',
         alignItems: 'center',
     },
     instructorPhoto: {
-        width: 50,
-        height: 50,
-        borderRadius: 25,
+        width: 56,
+        height: 56,
+        borderRadius: 28,
     },
     instructorPhotoPlaceholder: {
-        width: 50,
-        height: 50,
-        borderRadius: 25,
+        width: 56,
+        height: 56,
+        borderRadius: 28,
+        backgroundColor: '#10b981',
         justifyContent: 'center',
         alignItems: 'center',
     },
     instructorInitial: {
         color: '#fff',
-        fontSize: 20,
+        fontSize: 22,
         fontWeight: '700',
     },
     bookingInfo: {
@@ -447,7 +594,8 @@ const styles = StyleSheet.create({
     },
     instructorName: {
         fontSize: 16,
-        fontWeight: '600',
+        fontWeight: '700',
+        color: '#1f2937',
         marginBottom: 4,
     },
     locationRow: {
@@ -457,22 +605,24 @@ const styles = StyleSheet.create({
     },
     locationText: {
         fontSize: 12,
+        color: '#6b7280',
     },
     statusBadge: {
-        paddingHorizontal: 10,
-        paddingVertical: 5,
-        borderRadius: 8,
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        borderRadius: 10,
     },
     statusText: {
         fontSize: 11,
-        fontWeight: '600',
+        fontWeight: '700',
     },
     bookingDetails: {
         flexDirection: 'row',
         marginTop: 16,
         paddingTop: 16,
         borderTopWidth: 1,
-        gap: 16,
+        borderTopColor: '#f3f4f6',
+        gap: 20,
     },
     detailItem: {
         flexDirection: 'row',
@@ -481,22 +631,24 @@ const styles = StyleSheet.create({
     },
     detailText: {
         fontSize: 13,
-        fontWeight: '500',
+        fontWeight: '600',
+        color: '#1f2937',
     },
-    cancelButton: {
+    // Buttons
+    primaryButton: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
-        gap: 6,
+        gap: 8,
         marginTop: 16,
-        paddingVertical: 12,
-        borderRadius: 10,
-        borderWidth: 1,
+        paddingVertical: 14,
+        borderRadius: 14,
+        backgroundColor: '#10b981',
     },
-    cancelButtonText: {
-        color: '#dc2626',
-        fontSize: 14,
-        fontWeight: '600',
+    primaryButtonText: {
+        color: '#fff',
+        fontSize: 15,
+        fontWeight: '700',
     },
     contactButtonsRow: {
         flexDirection: 'row',
@@ -510,25 +662,75 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         gap: 6,
         paddingVertical: 12,
-        borderRadius: 10,
-        borderWidth: 1,
+        borderRadius: 12,
+        backgroundColor: '#ecfdf5',
+    },
+    whatsappBtn: {
+        backgroundColor: '#25D366',
     },
     contactBtnText: {
         fontSize: 13,
         fontWeight: '600',
+        color: '#10b981',
     },
-    confirmButton: {
+    cancelButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 6,
+        marginTop: 12,
+        paddingVertical: 12,
+        borderRadius: 12,
+        borderWidth: 1,
+        borderColor: '#fee2e2',
+        backgroundColor: '#fef2f2',
+    },
+    cancelButtonText: {
+        color: '#dc2626',
+        fontSize: 13,
+        fontWeight: '600',
+    },
+    // Recovery Actions
+    recoveryActions: {
+        flexDirection: 'row',
+        gap: 12,
+        marginTop: 16,
+    },
+    rebookButton: {
+        flex: 1.2,
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
         gap: 8,
-        marginTop: 12,
         paddingVertical: 12,
-        borderRadius: 10,
+        borderRadius: 12,
+        backgroundColor: '#10b981',
+        shadowColor: '#10b981',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.2,
+        shadowRadius: 4,
+        elevation: 2,
     },
-    confirmButtonText: {
+    rebookButtonText: {
         color: '#fff',
-        fontSize: 14,
+        fontSize: 13,
+        fontWeight: '700',
+    },
+    whatsappOutlineBtn: {
+        flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 6,
+        paddingVertical: 12,
+        borderRadius: 12,
+        borderWidth: 1,
+        borderColor: '#10b981',
+        backgroundColor: 'transparent',
+    },
+    whatsappOutlineText: {
+        color: '#10b981',
+        fontSize: 12,
         fontWeight: '600',
     },
 });
