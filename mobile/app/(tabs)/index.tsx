@@ -156,7 +156,7 @@ export default function DashboardScreen() {
             >
                 {/* Header */}
                 <View style={styles.header}>
-                    <View style={styles.headerLeft}>
+                    <TouchableOpacity onPress={() => router.push('/(tabs)/perfil')}>
                         <View style={styles.avatarContainer}>
                             {avatarUrl ? (
                                 <Image source={{ uri: avatarUrl }} style={styles.avatarImage} />
@@ -166,199 +166,180 @@ export default function DashboardScreen() {
                                 </Text>
                             )}
                         </View>
-                        <View>
-                            <Text style={[styles.greeting, { color: theme.text }]}>{greeting}, {firstName}!</Text>
-                            <Text style={[styles.subtitle, { color: theme.textSecondary }]}>Vamos estudar hoje?</Text>
-                        </View>
-                    </View>
-                    <View style={styles.headerRight}>
-                        <TouchableOpacity
-                            style={[styles.headerButton, { backgroundColor: theme.card }]}
-                            onPress={() => setSearchModalVisible(true)}
-                        >
-                            <Ionicons name="search-outline" size={20} color={theme.text} />
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                            style={[styles.headerButton, { backgroundColor: theme.card }]}
-                            onPress={() => setNotificationModalVisible(true)}
-                        >
-                            <Ionicons name="notifications-outline" size={20} color={theme.text} />
-                        </TouchableOpacity>
-                    </View>
-                </View>
+                    </TouchableOpacity>
 
-                {/* Gamification Row - Compact */}
-                {gamificationStats && (
-                    <View style={styles.gamificationCompact}>
-                        <View style={[styles.gamificationCard, { backgroundColor: theme.card }]}>
-                            <View style={styles.streakCompact}>
-                                <Ionicons
-                                    name={gamificationStats.streak.current > 0 ? "flame" : "flame-outline"}
-                                    size={22}
-                                    color={gamificationStats.streak.current > 0 ? '#f97316' : theme.textMuted}
-                                />
-                                <Text style={[styles.streakNumber, { color: gamificationStats.streak.current > 0 ? '#f97316' : theme.textMuted }]}>
-                                    {gamificationStats.streak.current}
-                                </Text>
-                                <Text style={[styles.streakLabel, { color: theme.textSecondary }]}>
-                                    {gamificationStats.streak.current === 1 ? 'dia' : 'dias'}
-                                </Text>
-                            </View>
-                            <View style={[styles.dividerVertical, { backgroundColor: theme.cardBorder }]} />
-                            <View style={styles.xpCompact}>
-                                <Ionicons name="star" size={20} color="#eab308" />
-                                <Text style={[styles.xpNumber, { color: theme.text }]}>
-                                    {gamificationStats.xp.total.toLocaleString()}
-                                </Text>
-                                <Text style={[styles.xpLabel, { color: theme.textSecondary }]}>XP</Text>
-                            </View>
-                            <View style={[styles.dividerVertical, { backgroundColor: theme.cardBorder }]} />
-                            <View style={styles.levelCompact}>
-                                <View style={[styles.levelBadge, { backgroundColor: theme.primary + '20' }]}>
-                                    <Text style={[styles.levelText, { color: theme.primary }]}>
-                                        Nv {gamificationStats.xp.level}
-                                    </Text>
-                                </View>
-                            </View>
-                        </View>
+                    <View style={{ flex: 1, paddingHorizontal: 10 }}>
+                        <Text style={[styles.greeting, { color: theme.textSecondary }]}>{greeting},</Text>
+                        <Text style={[styles.userName, { color: theme.text }]}>{firstName}</Text>
                     </View>
-                )}
 
-                {/* Stats Card */}
-                <View style={styles.statsSection}>
-                    <LinearGradient
-                        colors={isDark ? ['#047857', '#065f46'] : ['#10b981', '#059669']}
-                        start={{ x: 0, y: 0 }}
-                        end={{ x: 1, y: 1 }}
-                        style={styles.statsCard}
+                    <TouchableOpacity
+                        style={[styles.headerButton, { backgroundColor: theme.card }]}
+                        onPress={() => setNotificationModalVisible(true)}
                     >
-                        <View style={styles.statsRow}>
-                            <View style={styles.statItem}>
-                                <View style={styles.statIcon}>
-                                    <Ionicons name="layers" size={18} color="#10b981" />
-                                </View>
-                                <Text style={styles.statValue}>{stats.cardsReviewed}</Text>
-                                <Text style={styles.statLabel}>Cards</Text>
-                            </View>
-                            <View style={styles.statItem}>
-                                <View style={styles.statIcon}>
-                                    <Ionicons name="time" size={18} color="#10b981" />
-                                </View>
-                                <Text style={styles.statValue}>{stats.hoursStudied}h</Text>
-                                <Text style={styles.statLabel}>Estudo</Text>
-                            </View>
-                            <View style={styles.statItem}>
-                                <View style={styles.statIcon}>
-                                    <Ionicons name="checkmark-circle" size={18} color="#10b981" />
-                                </View>
-                                <Text style={styles.statValue}>{stats.questionsAnswered}</Text>
-                                <Text style={styles.statLabel}>Questões</Text>
-                            </View>
-                        </View>
-                    </LinearGradient>
+                        <Ionicons name="notifications-outline" size={20} color={theme.text} />
+                        {/* Red dot if needed */}
+                    </TouchableOpacity>
                 </View>
 
-                {/* Quick Actions */}
-                <View style={styles.section}>
-                    <Text style={[styles.sectionTitle, { color: theme.text }]}>Ações Rápidas</Text>
-                    <View style={styles.actionsGrid}>
-                        <TouchableOpacity
-                            style={[styles.actionCard, { backgroundColor: theme.card }]}
-                            onPress={() => router.push('/(tabs)/flashcards')}
-                        >
-                            <View style={[styles.actionIconBg, { backgroundColor: isDark ? '#064e3b' : '#ecfdf5' }]}>
-                                <Ionicons name="layers" size={24} color="#10b981" />
-                            </View>
-                            <Text style={[styles.actionTitle, { color: theme.text }]}>Flashcards</Text>
-                        </TouchableOpacity>
-
-                        <TouchableOpacity
-                            style={[styles.actionCard, { backgroundColor: theme.card }]}
-                            onPress={() => router.push('/(tabs)/simulados')}
-                        >
-                            <View style={[styles.actionIconBg, { backgroundColor: isDark ? '#1e3a5f' : '#eff6ff' }]}>
-                                <Ionicons name="clipboard" size={24} color="#3b82f6" />
-                            </View>
-                            <Text style={[styles.actionTitle, { color: theme.text }]}>Simulados</Text>
-                        </TouchableOpacity>
-
-                        <TouchableOpacity
-                            style={[styles.actionCard, { backgroundColor: theme.card }]}
-                            onPress={() => router.push('/(tabs)/estudos')}
-                        >
-                            <View style={[styles.actionIconBg, { backgroundColor: isDark ? '#451a03' : '#fef3c7' }]}>
-                                <Ionicons name="book" size={24} color="#f59e0b" />
-                            </View>
-                            <Text style={[styles.actionTitle, { color: theme.text }]}>Estudos</Text>
-                        </TouchableOpacity>
-
-                        <TouchableOpacity
-                            style={[styles.actionCard, { backgroundColor: theme.card }]}
-                            onPress={() => router.push('/biblioteca')}
-                        >
-                            <View style={[styles.actionIconBg, { backgroundColor: isDark ? '#4a1d4e' : '#fce7f3' }]}>
-                                <Ionicons name="warning" size={24} color="#ec4899" />
-                            </View>
-                            <Text style={[styles.actionTitle, { color: theme.text }]}>Placas</Text>
-                        </TouchableOpacity>
-
-                        <TouchableOpacity
-                            style={[styles.actionCard, { backgroundColor: theme.card }]}
-                            onPress={() => router.push('/connect')}
-                        >
-                            <View style={[styles.actionIconBg, { backgroundColor: isDark ? '#1e3a5f' : '#e0f2fe' }]}>
-                                <Ionicons name="car-sport" size={24} color="#0ea5e9" />
-                            </View>
-                            <Text style={[styles.actionTitle, { color: theme.text }]}>Connect</Text>
-                        </TouchableOpacity>
-                    </View>
+                {/* Search Bar */}
+                <View style={styles.searchContainer}>
+                    <TouchableOpacity
+                        style={[styles.searchBar, { backgroundColor: theme.card }]}
+                        onPress={() => setSearchModalVisible(true)}
+                    >
+                        <Ionicons name="search-outline" size={20} color={theme.textSecondary} />
+                        <Text style={[styles.searchPlaceholder, { color: theme.textSecondary }]}>
+                            O que vamos estudar hoje?
+                        </Text>
+                        <View style={[styles.filterButton, { backgroundColor: theme.primary }]}>
+                            <Ionicons name="options-outline" size={18} color="#fff" />
+                        </View>
+                    </TouchableOpacity>
                 </View>
 
-
-                {/* Recent Activity */}
+                {/* Featured Card - Vrumi Connect */}
                 <View style={styles.section}>
-                    <Text style={[styles.sectionTitle, { color: theme.text }]}>Atividade Recente</Text>
-
-                    {loading ? (
-                        <View style={styles.activityLoadingRow}>
-                            <ActivityIndicator size="small" color={theme.primary} />
+                    <Text style={[styles.sectionTitle, { color: theme.text }]}>Destaque</Text>
+                    <TouchableOpacity
+                        style={[
+                            styles.featuredCard,
+                            { backgroundColor: isDark ? '#1e293b' : '#FEF3C7' }
+                        ]}
+                        onPress={() => router.push('/connect')}
+                    >
+                        <View style={styles.featuredHeader}>
+                            <View>
+                                <Text style={[styles.featuredLabel, { color: isDark ? '#cbd5e1' : '#92400E' }]}>Vrumi Connect</Text>
+                                <Text style={[styles.featuredTitle, { color: isDark ? '#fff' : '#451a03' }]}>Encontre seu Instrutor</Text>
+                            </View>
+                            <View style={[styles.featuredIcon, { backgroundColor: isDark ? '#334155' : '#FDE68A' }]}>
+                                <Ionicons name="car-sport" size={24} color={isDark ? '#e2e8f0' : '#D97706'} />
+                            </View>
                         </View>
-                    ) : activities.length === 0 ? (
-                        <View style={[styles.emptyActivityCompact, { backgroundColor: theme.card }]}>
-                            <Ionicons name="sparkles-outline" size={24} color={theme.primary} />
-                            <Text style={[styles.emptyActivityText, { color: theme.textSecondary }]}>
-                                Comece a estudar para ver sua atividade aqui
+
+                        <View style={styles.featuredTags}>
+                            <View style={[styles.tag, { backgroundColor: isDark ? '#334155' : '#FFFBEB' }]}>
+                                <Text style={[styles.tagText, { color: isDark ? '#e2e8f0' : '#92400E' }]}>Aulas Práticas</Text>
+                            </View>
+                            <View style={[styles.tag, { backgroundColor: isDark ? '#334155' : '#FFFBEB' }]}>
+                                <Text style={[styles.tagText, { color: isDark ? '#e2e8f0' : '#92400E' }]}>Verificados</Text>
+                            </View>
+                        </View>
+
+                        <View style={styles.featuredFooter}>
+                            <View style={styles.instructorAvatars}>
+                                {/* Mockup avatars using simple circles */}
+                                <View style={[styles.miniAvatar, { backgroundColor: '#FF6B6B', marginLeft: 0 }]} />
+                                <View style={[styles.miniAvatar, { backgroundColor: '#4ECDC4', marginLeft: -8 }]} />
+                                <View style={[styles.miniAvatar, { backgroundColor: '#FFE66D', marginLeft: -8 }]} />
+                            </View>
+                            <Text style={[styles.featuredFooterText, { color: isDark ? '#94a3b8' : '#92400E' }]}>
+                                Instrutores disponíveis na sua região
                             </Text>
                         </View>
-                    ) : (
-                        <ScrollView
-                            horizontal
-                            showsHorizontalScrollIndicator={false}
-                            contentContainerStyle={styles.activityHorizontalScroll}
-                        >
-                            {activities.map((activity) => (
-                                <View
-                                    key={activity.id}
-                                    style={[styles.activityCard, { backgroundColor: theme.card }]}
-                                >
-                                    <View style={[styles.activityCardIcon, { backgroundColor: theme.primary + '15' }]}>
-                                        <Ionicons
-                                            name={getActivityIcon(activity.activity_type)}
-                                            size={18}
-                                            color={theme.primary}
-                                        />
-                                    </View>
-                                    <Text style={[styles.activityCardLabel, { color: theme.text }]} numberOfLines={1}>
-                                        {getActivityLabel(activity.activity_type)}
-                                    </Text>
-                                    <Text style={[styles.activityCardTime, { color: theme.textMuted }]}>
-                                        {formatTimeAgo(activity.created_at)}
-                                    </Text>
-                                </View>
-                            ))}
-                        </ScrollView>
-                    )}
+                    </TouchableOpacity>
                 </View>
+
+                {/* Categories - Horizontal Scroll */}
+                <View style={styles.section}>
+                    <Text style={[styles.sectionTitle, { color: theme.text }]}>Categorias</Text>
+                    <ScrollView
+                        horizontal
+                        showsHorizontalScrollIndicator={false}
+                        contentContainerStyle={styles.categoriesScroll}
+                    >
+                        <TouchableOpacity
+                            style={[styles.categoryCard, { backgroundColor: isDark ? '#1e293b' : '#EFF6FF' }]} // Blue tint
+                            onPress={() => router.push('/(tabs)/simulados')}
+                        >
+                            <View style={[styles.categoryIcon, { backgroundColor: isDark ? '#1e3a5f' : '#BFDBFE' }]}>
+                                <Ionicons name="clipboard" size={24} color="#2563EB" />
+                            </View>
+                            <Text style={[styles.categoryTitle, { color: theme.text }]}>Simulados</Text>
+                            <Text style={[styles.categoryCount, { color: theme.textSecondary }]}>30+ Provas</Text>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity
+                            style={[styles.categoryCard, { backgroundColor: isDark ? '#1e293b' : '#ECFDF5' }]} // Green tint
+                            onPress={() => router.push('/(tabs)/flashcards')}
+                        >
+                            <View style={[styles.categoryIcon, { backgroundColor: isDark ? '#064e3b' : '#A7F3D0' }]}>
+                                <Ionicons name="layers" size={24} color="#059669" />
+                            </View>
+                            <Text style={[styles.categoryTitle, { color: theme.text }]}>Flashcards</Text>
+                            <Text style={[styles.categoryCount, { color: theme.textSecondary }]}>500+ Cards</Text>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity
+                            style={[styles.categoryCard, { backgroundColor: isDark ? '#1e293b' : '#FDF2F8' }]} // Pink tint
+                            onPress={() => router.push('/biblioteca')}
+                        >
+                            <View style={[styles.categoryIcon, { backgroundColor: isDark ? '#4a1d4e' : '#FBCFE8' }]}>
+                                <Ionicons name="warning" size={24} color="#DB2777" />
+                            </View>
+                            <Text style={[styles.categoryTitle, { color: theme.text }]}>Placas</Text>
+                            <Text style={[styles.categoryCount, { color: theme.textSecondary }]}>Biblioteca</Text>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity
+                            style={[styles.categoryCard, { backgroundColor: isDark ? '#1e293b' : '#FFFBEB' }]} // Yellow tint
+                            onPress={() => router.push('/(tabs)/estudos')}
+                        >
+                            <View style={[styles.categoryIcon, { backgroundColor: isDark ? '#451a03' : '#FDE68A' }]}>
+                                <Ionicons name="book" size={24} color="#D97706" />
+                            </View>
+                            <Text style={[styles.categoryTitle, { color: theme.text }]}>Estudos</Text>
+                            <Text style={[styles.categoryCount, { color: theme.textSecondary }]}>Aulas</Text>
+                        </TouchableOpacity>
+                    </ScrollView>
+                </View>
+
+                {/* Gamification/Stats - Bottom */}
+                <View style={styles.section}>
+                    <Text style={[styles.sectionTitle, { color: theme.text }]}>Seu Progresso</Text>
+
+                    {gamificationStats && (
+                        <View style={[styles.statsRowCard, { backgroundColor: theme.card }]}>
+                            <View style={styles.startRowLeft}>
+                                <Text style={[styles.statsTitle, { color: theme.text }]}>Nível {gamificationStats.xp.level}</Text>
+                                <Text style={[styles.statsSubtitle, { color: theme.textSecondary }]}>
+                                    {gamificationStats.xp.current} / {gamificationStats.xp.nextLevel} XP para o próximo nível
+                                </Text>
+                                <View style={styles.progressBarBg}>
+                                    <View
+                                        style={[
+                                            styles.progressBarFill,
+                                            {
+                                                width: `${(gamificationStats.xp.current / gamificationStats.xp.nextLevel) * 100}%`,
+                                                backgroundColor: theme.primary
+                                            }
+                                        ]}
+                                    />
+                                </View>
+                            </View>
+                            <View style={[styles.levelCircle, { borderColor: theme.primary }]}>
+                                <Ionicons name="star" size={24} color={theme.primary} />
+                            </View>
+                        </View>
+                    )}
+
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.statsScroll}>
+                        <View style={[styles.miniStatCard, { backgroundColor: theme.card }]}>
+                            <Text style={[styles.miniStatValue, { color: theme.text }]}>{stats.questionsAnswered}</Text>
+                            <Text style={[styles.miniStatLabel, { color: theme.textSecondary }]}>Questões</Text>
+                        </View>
+                        <View style={[styles.miniStatCard, { backgroundColor: theme.card }]}>
+                            <Text style={[styles.miniStatValue, { color: theme.text }]}>{stats.hoursStudied}h</Text>
+                            <Text style={[styles.miniStatLabel, { color: theme.textSecondary }]}>Estudo</Text>
+                        </View>
+                        <View style={[styles.miniStatCard, { backgroundColor: theme.card }]}>
+                            <Text style={[styles.miniStatValue, { color: theme.text }]}>{stats.cardsReviewed}</Text>
+                            <Text style={[styles.miniStatLabel, { color: theme.textSecondary }]}>Cards</Text>
+                        </View>
+                    </ScrollView>
+                </View>
+
             </ScrollView>
 
             {/* Notification Modal */}
@@ -389,21 +370,36 @@ const styles = StyleSheet.create({
     },
     header: {
         flexDirection: 'row',
-        justifyContent: 'space-between',
         alignItems: 'center',
         paddingHorizontal: 20,
-        paddingTop: 8,
-        paddingBottom: 16,
+        paddingTop: 10,
+        paddingBottom: 10,
     },
-    headerLeft: {
-        flexDirection: 'row',
+    avatarContainer: {
+        width: 48,
+        height: 48,
+        borderRadius: 24,
+        backgroundColor: '#E2E8F0',
+        justifyContent: 'center',
         alignItems: 'center',
-        flex: 1,
     },
-    headerRight: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 8,
+    avatarText: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        color: '#64748B',
+    },
+    avatarImage: {
+        width: 48,
+        height: 48,
+        borderRadius: 24,
+    },
+    greeting: {
+        fontSize: 14,
+        fontWeight: '500',
+    },
+    userName: {
+        fontSize: 18,
+        fontWeight: 'bold',
     },
     headerButton: {
         width: 40,
@@ -412,195 +408,193 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
     },
-    avatarContainer: {
-        width: 44,
-        height: 44,
-        borderRadius: 22,
-        backgroundColor: '#10b981',
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginRight: 12,
-    },
-    avatarText: {
-        fontSize: 18,
-        fontWeight: 'bold',
-        color: '#fff',
-    },
-    avatarImage: {
-        width: 44,
-        height: 44,
-        borderRadius: 22,
-    },
-    greeting: {
-        fontSize: 17,
-        fontWeight: '600',
-    },
-    subtitle: {
-        fontSize: 13,
-        marginTop: 2,
-    },
-    // Compact gamification
-    gamificationCompact: {
-        paddingHorizontal: 20,
-        marginBottom: 16,
-    },
-    gamificationCard: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-around',
-        borderRadius: 16,
-        padding: 14,
-    },
-    streakCompact: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 6,
-    },
-    streakNumber: {
-        fontSize: 18,
-        fontWeight: 'bold',
-    },
-    streakLabel: {
-        fontSize: 13,
-    },
-    dividerVertical: {
-        width: 1,
-        height: 28,
-    },
-    xpCompact: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 5,
-    },
-    xpNumber: {
-        fontSize: 16,
-        fontWeight: '600',
-    },
-    xpLabel: {
-        fontSize: 12,
-    },
-    levelCompact: {
-        alignItems: 'center',
-    },
-    levelBadge: {
-        paddingHorizontal: 10,
-        paddingVertical: 5,
-        borderRadius: 10,
-    },
-    levelText: {
-        fontSize: 13,
-        fontWeight: '600',
-    },
-    // Stats section
-    statsSection: {
+
+    // Search
+    searchContainer: {
         paddingHorizontal: 20,
         marginBottom: 20,
+        marginTop: 10,
     },
-    statsCard: {
-        borderRadius: 16,
-        padding: 16,
-    },
-    statsRow: {
+    searchBar: {
         flexDirection: 'row',
-        justifyContent: 'space-around',
-    },
-    statItem: {
         alignItems: 'center',
-    },
-    statIcon: {
-        width: 36,
-        height: 36,
-        borderRadius: 10,
-        backgroundColor: '#fff',
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginBottom: 6,
-    },
-    statValue: {
-        fontSize: 16,
-        fontWeight: 'bold',
-        color: '#fff',
-    },
-    statLabel: {
-        fontSize: 11,
-        color: 'rgba(255,255,255,0.8)',
-        marginTop: 2,
-    },
-    // Sections
-    section: {
-        paddingHorizontal: 20,
-        marginBottom: 20,
-    },
-    sectionTitle: {
-        fontSize: 17,
-        fontWeight: '600',
-        marginBottom: 14,
-    },
-    // Actions grid
-    actionsGrid: {
-        flexDirection: 'row',
-        flexWrap: 'wrap',
-        gap: 10,
-    },
-    actionCard: {
-        width: (SCREEN_WIDTH - 50) / 2,
+        height: 50,
         borderRadius: 14,
-        padding: 16,
+        paddingLeft: 16,
+        paddingRight: 6,
     },
-    actionIconBg: {
-        width: 44,
-        height: 44,
-        borderRadius: 11,
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginBottom: 10,
-    },
-    actionTitle: {
-        fontSize: 14,
-        fontWeight: '600',
-    },
-    // Activity styles
-    activityLoadingRow: {
-        height: 80,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    emptyActivityCompact: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        borderRadius: 12,
-        padding: 14,
-        gap: 10,
-    },
-    emptyActivityText: {
+    searchPlaceholder: {
         flex: 1,
-        fontSize: 13,
+        marginLeft: 10,
+        fontSize: 14,
     },
-    activityHorizontalScroll: {
-        paddingRight: 20,
-        gap: 10,
-    },
-    activityCard: {
-        width: 100,
-        borderRadius: 14,
-        padding: 12,
-        alignItems: 'center',
-    },
-    activityCardIcon: {
+    filterButton: {
         width: 38,
         height: 38,
-        borderRadius: 19,
+        borderRadius: 10,
         justifyContent: 'center',
         alignItems: 'center',
-        marginBottom: 8,
     },
-    activityCardLabel: {
-        fontSize: 11,
+
+    // Sections
+    section: {
+        marginBottom: 24,
+    },
+    sectionTitle: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        marginBottom: 16,
+        paddingHorizontal: 20,
+    },
+
+    // Featured Card
+    featuredCard: {
+        marginHorizontal: 20,
+        borderRadius: 24,
+        padding: 20,
+    },
+    featuredHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'flex-start',
+        marginBottom: 16,
+    },
+    featuredLabel: {
+        fontSize: 12,
         fontWeight: '600',
-        textAlign: 'center',
-        marginBottom: 3,
+        marginBottom: 4,
     },
-    activityCardTime: {
-        fontSize: 10,
+    featuredTitle: {
+        fontSize: 20,
+        fontWeight: 'bold',
+    },
+    featuredIcon: {
+        width: 48,
+        height: 48,
+        borderRadius: 14,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    featuredTags: {
+        flexDirection: 'row',
+        gap: 8,
+        marginBottom: 20,
+    },
+    tag: {
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        borderRadius: 8,
+    },
+    tagText: {
+        fontSize: 12,
+        fontWeight: '500',
+    },
+    featuredFooter: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 12,
+    },
+    instructorAvatars: {
+        flexDirection: 'row',
+    },
+    miniAvatar: {
+        width: 24,
+        height: 24,
+        borderRadius: 12,
+        borderWidth: 2,
+        borderColor: '#fff',
+    },
+    featuredFooterText: {
+        fontSize: 12,
+        fontWeight: '500',
+    },
+
+    // Categories
+    categoriesScroll: {
+        paddingHorizontal: 20,
+        gap: 16,
+    },
+    categoryCard: {
+        width: 140,
+        height: 160,
+        borderRadius: 20,
+        padding: 16,
+        justifyContent: 'space-between',
+    },
+    categoryIcon: {
+        width: 44,
+        height: 44,
+        borderRadius: 12,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    categoryTitle: {
+        fontSize: 16,
+        fontWeight: 'bold',
+        marginTop: 10,
+    },
+    categoryCount: {
+        fontSize: 12,
+        fontWeight: '500',
+    },
+
+    // Stats
+    statsRowCard: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginHorizontal: 20,
+        padding: 16,
+        borderRadius: 20,
+        marginBottom: 16,
+    },
+    startRowLeft: {
+        flex: 1,
+        marginRight: 16,
+    },
+    statsTitle: {
+        fontSize: 16,
+        fontWeight: 'bold',
+        marginBottom: 4,
+    },
+    statsSubtitle: {
+        fontSize: 12,
+        marginBottom: 10,
+    },
+    progressBarBg: {
+        height: 6,
+        backgroundColor: '#E2E8F0',
+        borderRadius: 3,
+        width: '100%',
+        overflow: 'hidden',
+    },
+    progressBarFill: {
+        height: '100%',
+        borderRadius: 3,
+    },
+    levelCircle: {
+        width: 50,
+        height: 50,
+        borderRadius: 25,
+        borderWidth: 3,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    statsScroll: {
+        paddingHorizontal: 20,
+        gap: 12,
+    },
+    miniStatCard: {
+        width: 100,
+        padding: 12,
+        borderRadius: 14,
+        alignItems: 'center',
+    },
+    miniStatValue: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        marginBottom: 2,
+    },
+    miniStatLabel: {
+        fontSize: 12,
     },
 });

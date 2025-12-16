@@ -255,6 +255,17 @@ export default function MyLessonsScreen() {
                         </TouchableOpacity>
                     </View>
                 )}
+
+                {/* Confirm Presence - Student */}
+                {['confirmed'].includes(booking.status) && (
+                    <TouchableOpacity
+                        style={[styles.confirmButton, { backgroundColor: theme.primary }]}
+                        onPress={() => router.push(`/connect/aula/${booking.id}/scan`)}
+                    >
+                        <Ionicons name="scan-outline" size={20} color="#fff" />
+                        <Text style={styles.confirmButtonText}>Confirmar Presença</Text>
+                    </TouchableOpacity>
+                )}
             </View>
         );
     };
@@ -556,6 +567,20 @@ const styles = StyleSheet.create({
     },
     contactBtnText: {
         fontSize: 13,
+        fontWeight: '600',
+    },
+    confirmButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 8,
+        marginTop: 12,
+        paddingVertical: 12,
+        borderRadius: 10,
+    },
+    confirmButtonText: {
+        color: '#fff',
+        fontSize: 14,
         fontWeight: '600',
     },
 });

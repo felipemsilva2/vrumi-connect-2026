@@ -89,6 +89,10 @@ export default function InstructorRegistrationScreen() {
 
     const handleSubmit = async () => {
         if (!validateStep3()) return;
+        if (!user) {
+            Alert.alert('Erro', 'Usuário não autenticado');
+            return;
+        }
 
         setLoading(true);
         try {
@@ -96,11 +100,11 @@ export default function InstructorRegistrationScreen() {
             const { data: profile } = await supabase
                 .from('profiles')
                 .select('avatar_url')
-                .eq('id', user?.id)
+                .eq('id', user.id)
                 .single();
 
             const { error } = await supabase.from('instructors').insert({
-                user_id: user?.id,
+                user_id: user.id,
                 full_name: formData.full_name,
                 phone: formData.phone,
                 cpf: formData.cpf,
@@ -111,14 +115,14 @@ export default function InstructorRegistrationScreen() {
                 vehicle_model: formData.vehicle_model,
                 vehicle_transmission: formData.vehicle_transmission,
                 // Class Info
-                categories: formData.categories,
+                categories: formData.categories as any,
                 price_per_lesson: parseFloat(formData.price_per_lesson?.replace(',', '.') || '0'),
                 lesson_duration_minutes: 50, // Default duration
                 status: 'pending',
                 photo_url: profile?.avatar_url,
                 is_verified: false,
                 created_at: new Date().toISOString(),
-            } as any); // Cast to any because of potential type mismatch with generated types
+            });
 
             if (error) throw error;
 

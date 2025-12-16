@@ -149,15 +149,15 @@ export default function BookingScreen() {
                 price: instructor.price_per_lesson,
                 platform_fee: platformFee,
                 instructor_amount: instructorAmount,
-                status: 'pending',
+                status: 'confirmed', // Automatic approval enabled
                 payment_status: 'pending',
             });
 
             if (error) throw error;
 
             Alert.alert(
-                'Aula Agendada!',
-                'Sua aula foi agendada com sucesso. Aguarde a confirmação do instrutor.',
+                'Aula Confirmada!',
+                'Sua aula foi agendada e confirmada automaticamente! O instrutor já foi notificado.',
                 [{ text: 'OK', onPress: () => router.push('/connect/minhas-aulas') }]
             );
         } catch (error) {

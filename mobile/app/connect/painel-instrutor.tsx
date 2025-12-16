@@ -274,9 +274,19 @@ export default function InstructorDashboardScreen() {
                                 </View>
                                 <TouchableOpacity
                                     style={[styles.detailsButton, { backgroundColor: theme.background }]}
-                                    onPress={() => Alert.alert('Detalhes', `Aula com ${lesson.student_name} às ${lesson.scheduled_time}`)}
+                                    onPress={() => {
+                                        if (lesson.status === 'confirmed') {
+                                            router.push(`/connect/aula/${lesson.id}/qrcode`);
+                                        } else {
+                                            Alert.alert('Detalhes', `Aula com ${lesson.student_name} às ${lesson.scheduled_time}`);
+                                        }
+                                    }}
                                 >
-                                    <Ionicons name="chevron-forward" size={20} color={theme.textMuted} />
+                                    <Ionicons
+                                        name={lesson.status === 'confirmed' ? "qr-code" : "chevron-forward"}
+                                        size={20}
+                                        color={lesson.status === 'confirmed' ? theme.primary : theme.textMuted}
+                                    />
                                 </TouchableOpacity>
                             </View>
                         ))}
