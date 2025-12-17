@@ -4,7 +4,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
-import { useGamification, getLevelTitle } from '../../contexts/GamificationContext';
 import { router } from 'expo-router';
 import { supabase } from '../../src/lib/supabase';
 import * as ImagePicker from 'expo-image-picker';
@@ -21,7 +20,6 @@ interface ProfileStats {
 export default function PerfilScreen() {
     const { user, signOut } = useAuth();
     const { theme, isDark, themeMode, setThemeMode, toggleTheme } = useTheme();
-    const { stats: gamificationStats, updateDailyGoal } = useGamification();
     const [stats, setStats] = useState<ProfileStats>({
         studyStreak: 0,
         totalCards: 0,
@@ -200,14 +198,7 @@ export default function PerfilScreen() {
     };
 
     const handleHelp = () => {
-        Alert.alert(
-            'Ajuda',
-            'Precisa de suporte?\n\nEntre em contato conosco pelo email:\nsuporte@vrumi.com.br',
-            [
-                { text: 'Cancelar', style: 'cancel' },
-                { text: 'Enviar email', onPress: () => Linking.openURL('mailto:suporte@vrumi.com.br') }
-            ]
-        );
+        router.push('/connect/suporte');
     };
 
     const userName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Usuário';
@@ -327,59 +318,6 @@ export default function PerfilScreen() {
                             <Ionicons name="chevron-forward" size={18} color={theme.textMuted} />
                         </TouchableOpacity>
                     )}
-                </View>
-
-                {/* Daily Goal Section */}
-                <View style={styles.menuSection}>
-                    <Text style={[styles.menuTitle, { color: theme.textSecondary }]}>Meta Diária</Text>
-
-                    <View style={[styles.goalCard, { backgroundColor: theme.card }]}>
-                        <View style={styles.goalHeader}>
-                            <View style={[styles.menuIcon, { backgroundColor: '#dbeafe' }]}>
-                                <Ionicons name="flag" size={20} color="#3b82f6" />
-                            </View>
-                            <View style={styles.goalInfo}>
-                                <Text style={[styles.goalTitle, { color: theme.text }]}>
-                                    {gamificationStats?.dailyGoal.goalMinutes || 10} minutos por dia
-                                </Text>
-                                <Text style={[styles.goalSubtitle, { color: theme.textSecondary }]}>
-                                    {gamificationStats?.dailyGoal.completed
-                                        ? '✅ Concluída hoje!'
-                                        : `${gamificationStats?.dailyGoal.minutesToday || 0} de ${gamificationStats?.dailyGoal.goalMinutes || 10} min`
-                                    }
-                                </Text>
-                            </View>
-                        </View>
-
-                        <View style={styles.goalButtons}>
-                            {[5, 10, 15, 20].map((minutes) => (
-                                <TouchableOpacity
-                                    key={minutes}
-                                    style={[
-                                        styles.goalButton,
-                                        {
-                                            backgroundColor: gamificationStats?.dailyGoal.goalMinutes === minutes
-                                                ? theme.primary
-                                                : theme.background,
-                                            borderColor: theme.cardBorder,
-                                        }
-                                    ]}
-                                    onPress={() => updateDailyGoal(minutes)}
-                                >
-                                    <Text style={[
-                                        styles.goalButtonText,
-                                        {
-                                            color: gamificationStats?.dailyGoal.goalMinutes === minutes
-                                                ? '#fff'
-                                                : theme.text
-                                        }
-                                    ]}>
-                                        {minutes}m
-                                    </Text>
-                                </TouchableOpacity>
-                            ))}
-                        </View>
-                    </View>
                 </View>
 
                 <View style={styles.menuSection}>

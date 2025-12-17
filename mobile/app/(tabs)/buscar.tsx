@@ -54,6 +54,7 @@ export default function BuscarScreen() {
     const [refreshing, setRefreshing] = useState(false);
     const [searchCity, setSearchCity] = useState('');
     const [selectedCategory, setSelectedCategory] = useState('');
+    const [sortBy, setSortBy] = useState<'rating' | 'price' | 'distance'>('rating');
 
     const fetchInstructors = useCallback(async () => {
         try {
@@ -61,7 +62,7 @@ export default function BuscarScreen() {
                 .from('instructors')
                 .select('id, full_name, photo_url, city, state, categories, price_per_lesson, average_rating, total_reviews, is_verified, vehicle_model, vehicle_transmission')
                 .eq('status', 'approved')
-                .order('average_rating', { ascending: false });
+                .order(sortBy === 'price' ? 'price_per_lesson' : 'average_rating', { ascending: sortBy === 'price' });
 
             if (searchCity) {
                 query = query.ilike('city', `%${searchCity}%`);
@@ -80,7 +81,7 @@ export default function BuscarScreen() {
             setLoading(false);
             setRefreshing(false);
         }
-    }, [searchCity, selectedCategory]);
+    }, [searchCity, selectedCategory, sortBy]);
 
     useEffect(() => {
         fetchInstructors();
@@ -107,15 +108,6 @@ export default function BuscarScreen() {
         }).format(price);
     };
 
-    const getGreeting = () => {
-        const hour = new Date().getHours();
-        if (hour < 12) return 'Bom dia';
-        if (hour < 18) return 'Boa tarde';
-        return 'Boa noite';
-    };
-
-    const firstName = profile?.full_name?.split(' ')[0] || 'Aluno';
-
     return (
         <View style={styles.container}>
             <StatusBar barStyle="light-content" backgroundColor="#064e3b" />
@@ -124,17 +116,12 @@ export default function BuscarScreen() {
             <View style={styles.headerBar}>
                 <SafeAreaView edges={['top']} style={styles.safeHeader}>
                     <View style={styles.headerRow}>
-                        <TouchableOpacity style={styles.profileBtn}>
-                            {profile?.avatar_url ? (
-                                <Image source={{ uri: profile.avatar_url }} style={styles.profileImg} />
-                            ) : (
-                                <View style={styles.profilePlaceholder}>
-                                    <Text style={styles.profileInitial}>{firstName.charAt(0)}</Text>
-                                </View>
-                            )}
-                        </TouchableOpacity>
-                        <View style={styles.userInfo}>
-                            <Text style={styles.greetingText}>{getGreeting()}, {firstName}</Text>
+                        <View style={styles.iconContainer}>
+                            <Ionicons name="search" size={24} color="#fff" />
+                        </View>
+                        <View style={styles.headerTitleContainer}>
+                            <Text style={styles.headerTitle}>Encontrar Instrutor</Text>
+                            <Text style={styles.headerSubtitle}>Escolha o melhor para você</Text>
                         </View>
                         <View style={styles.weatherBadge}>
                             <Ionicons name="sunny" size={14} color="#f59e0b" />
@@ -261,17 +248,26 @@ export default function BuscarScreen() {
                             showsHorizontalScrollIndicator={false}
                             style={styles.filterScroll}
                         >
-                            <TouchableOpacity style={[styles.filterChip, styles.filterChipActive]}>
-                                <Ionicons name="star" size={12} color="#fff" />
-                                <Text style={[styles.filterChipText, styles.filterChipTextActive]}>Melhor avaliação</Text>
+                            <TouchableOpacity
+                                style={[styles.filterChip, sortBy === 'rating' && styles.filterChipActive]}
+                                onPress={() => setSortBy('rating')}
+                            >
+                                <Ionicons name="star" size={12} color={sortBy === 'rating' ? '#fff' : theme.textSecondary} />
+                                <Text style={[styles.filterChipText, sortBy === 'rating' && styles.filterChipTextActive]}>Melhor avaliação</Text>
                             </TouchableOpacity>
-                            <TouchableOpacity style={[styles.filterChip, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
-                                <Ionicons name="cash-outline" size={12} color={theme.textSecondary} />
-                                <Text style={[styles.filterChipText, { color: theme.textSecondary }]}>Menor preço</Text>
+                            <TouchableOpacity
+                                style={[styles.filterChip, sortBy === 'price' ? styles.filterChipActive : { backgroundColor: theme.card, borderColor: theme.cardBorder }]}
+                                onPress={() => setSortBy('price')}
+                            >
+                                <Ionicons name="cash-outline" size={12} color={sortBy === 'price' ? '#fff' : theme.textSecondary} />
+                                <Text style={[styles.filterChipText, sortBy === 'price' ? styles.filterChipTextActive : { color: theme.textSecondary }]}>Menor preço</Text>
                             </TouchableOpacity>
-                            <TouchableOpacity style={[styles.filterChip, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
-                                <Ionicons name="location-outline" size={12} color={theme.textSecondary} />
-                                <Text style={[styles.filterChipText, { color: theme.textSecondary }]}>Mais próximo</Text>
+                            <TouchableOpacity
+                                style={[styles.filterChip, sortBy === 'distance' ? styles.filterChipActive : { backgroundColor: theme.card, borderColor: theme.cardBorder }]}
+                                onPress={() => setSortBy('distance')}
+                            >
+                                <Ionicons name="location-outline" size={12} color={sortBy === 'distance' ? '#fff' : theme.textSecondary} />
+                                <Text style={[styles.filterChipText, sortBy === 'distance' ? styles.filterChipTextActive : { color: theme.textSecondary }]}>Mais próximo</Text>
                             </TouchableOpacity>
                         </ScrollView>
                     </View>
@@ -393,7 +389,10 @@ export default function BuscarScreen() {
                                             <Text style={styles.priceValue}>{formatPrice(instructor.price_per_lesson)}</Text>
                                             <Text style={[styles.priceLabel, { color: theme.textMuted }]}>por aula de 50min</Text>
                                         </View>
-                                        <TouchableOpacity style={styles.bookButton}>
+                                        <TouchableOpacity
+                                            style={styles.bookButton}
+                                            onPress={() => router.push(`/connect/instrutor/${instructor.id}`)}
+                                        >
                                             <Text style={styles.bookButtonText}>Ver perfil</Text>
                                             <Ionicons name="arrow-forward" size={16} color="#fff" />
                                         </TouchableOpacity>
@@ -452,14 +451,28 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontWeight: '700',
     },
-    userInfo: {
+    iconContainer: {
+        width: 48,
+        height: 48,
+        borderRadius: 24,
+        backgroundColor: 'rgba(255,255,255,0.15)',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    headerTitleContainer: {
         flex: 1,
         marginLeft: 12,
     },
-    greetingText: {
-        fontSize: 15,
-        fontWeight: '600',
+    headerTitle: {
+        fontSize: 18,
+        fontWeight: '700',
         color: '#fff',
+    },
+    headerSubtitle: {
+        fontSize: 13,
+        fontWeight: '400',
+        color: 'rgba(255,255,255,0.7)',
+        marginTop: 2,
     },
     weatherBadge: {
         flexDirection: 'row',

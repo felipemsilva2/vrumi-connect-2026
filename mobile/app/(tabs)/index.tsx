@@ -20,6 +20,7 @@ import { useTheme } from '../../contexts/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '../../src/lib/supabase';
 import { isLessonExpired } from '../../utils/dateUtils';
+import { getTimeBasedGreeting } from '../../utils/greetingUtils';
 import NotificationModal from '../../components/NotificationModal';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
@@ -66,8 +67,7 @@ export default function HomeScreen() {
         user?.email?.split('@')[0] ||
         'Motorista';
 
-    const hour = new Date().getHours();
-    const greeting = hour < 12 ? 'Bom dia' : hour < 18 ? 'Boa tarde' : 'Boa noite';
+    const greeting = getTimeBasedGreeting();
 
     const fetchData = useCallback(async () => {
         if (!user?.id) return;
@@ -172,10 +172,10 @@ export default function HomeScreen() {
                 router.push('/(tabs)/buscar');
                 break;
             case 'teoria':
-                Linking.openURL('https://vrumi.com.br/dashboard');
+                Linking.openURL('https://www.vrumi.com.br');
                 break;
             case 'simulado':
-                Linking.openURL('https://vrumi.com.br/simulado');
+                Linking.openURL('https://www.vrumi.com.br');
                 break;
             case 'agendados':
                 router.push('/(tabs)/aulas');

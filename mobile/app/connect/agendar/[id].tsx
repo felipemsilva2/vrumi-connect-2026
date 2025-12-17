@@ -46,6 +46,7 @@ export default function BookingScreen() {
     const [selectedTime, setSelectedTime] = useState<string | null>(null);
     const [bookedSlots, setBookedSlots] = useState<string[]>([]);
     const [submitting, setSubmitting] = useState(false);
+    const [vehicleType, setVehicleType] = useState<'instructor' | 'student'>('instructor');
 
     // Generate next 14 days
     const availableDates = Array.from({ length: 14 }, (_, i) => {
@@ -151,6 +152,7 @@ export default function BookingScreen() {
                 instructor_amount: instructorAmount,
                 status: 'confirmed', // Automatic approval enabled
                 payment_status: 'pending',
+                vehicle_type: vehicleType,
             });
 
             if (error) throw error;
@@ -414,6 +416,70 @@ export default function BookingScreen() {
                             </View>
                         </View>
 
+                        {/* Vehicle Selection */}
+                        <Text style={[styles.sectionTitle, { color: theme.text }]}>
+                            Tipo de Veículo
+                        </Text>
+
+                        <TouchableOpacity
+                            style={[
+                                styles.vehicleCard,
+                                {
+                                    backgroundColor: vehicleType === 'instructor' ? theme.primaryLight : theme.card,
+                                    borderColor: vehicleType === 'instructor' ? theme.primary : theme.cardBorder,
+                                }
+                            ]}
+                            onPress={() => setVehicleType('instructor')}
+                            activeOpacity={0.7}
+                        >
+                            <View style={[
+                                styles.radioOuter,
+                                { borderColor: vehicleType === 'instructor' ? theme.primary : theme.textMuted }
+                            ]}>
+                                {vehicleType === 'instructor' && (
+                                    <View style={[styles.radioInner, { backgroundColor: theme.primary }]} />
+                                )}
+                            </View>
+                            <View style={styles.vehicleInfo}>
+                                <Text style={[styles.vehicleTitle, { color: theme.text }]}>
+                                    Carro do Instrutor
+                                </Text>
+                                <Text style={[styles.vehicleSubtitle, { color: theme.textMuted }]}>
+                                    Veículo incluso no preço
+                                </Text>
+                            </View>
+                            <Ionicons name="car-sport" size={24} color={theme.primary} />
+                        </TouchableOpacity>
+
+                        <TouchableOpacity
+                            style={[
+                                styles.vehicleCard,
+                                {
+                                    backgroundColor: vehicleType === 'student' ? theme.primaryLight : theme.card,
+                                    borderColor: vehicleType === 'student' ? theme.primary : theme.cardBorder,
+                                }
+                            ]}
+                            onPress={() => setVehicleType('student')}
+                            activeOpacity={0.7}
+                        >
+                            <View style={[
+                                styles.radioOuter,
+                                { borderColor: vehicleType === 'student' ? theme.primary : theme.textMuted }
+                            ]}>
+                                {vehicleType === 'student' && (
+                                    <View style={[styles.radioInner, { backgroundColor: theme.primary }]} />
+                                )}
+                            </View>
+                            <View style={styles.vehicleInfo}>
+                                <Text style={[styles.vehicleTitle, { color: theme.text }]}>
+                                    Meu Próprio Carro
+                                </Text>
+                                <Text style={[styles.vehicleSubtitle, { color: theme.textMuted }]}>
+                                    Traga seu veículo
+                                </Text>
+                            </View>
+                            <Ionicons name="key" size={24} color={theme.primary} />
+                        </TouchableOpacity>
                         <View style={[styles.priceCard, { backgroundColor: theme.primaryLight }]}>
                             <Text style={[styles.priceLabel, { color: theme.primary }]}>Valor da Aula</Text>
                             <Text style={[styles.priceValue, { color: theme.primary }]}>
@@ -642,5 +708,45 @@ const styles = StyleSheet.create({
         color: '#fff',
         fontSize: 16,
         fontWeight: '700',
+    },
+    // Vehicle Selection
+    sectionTitle: {
+        fontSize: 16,
+        fontWeight: '600',
+        marginTop: 20,
+        marginBottom: 12,
+    },
+    vehicleCard: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: 16,
+        borderRadius: 14,
+        borderWidth: 2,
+        marginBottom: 12,
+        gap: 14,
+    },
+    radioOuter: {
+        width: 22,
+        height: 22,
+        borderRadius: 11,
+        borderWidth: 2,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    radioInner: {
+        width: 12,
+        height: 12,
+        borderRadius: 6,
+    },
+    vehicleInfo: {
+        flex: 1,
+    },
+    vehicleTitle: {
+        fontSize: 15,
+        fontWeight: '600',
+    },
+    vehicleSubtitle: {
+        fontSize: 12,
+        marginTop: 2,
     },
 });
