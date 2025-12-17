@@ -580,7 +580,9 @@ export type Database = {
           longitude: number | null
           phone: string
           photo_url: string | null
+          price_instructor_car: number | null
           price_per_lesson: number
+          price_student_car: number | null
           state: string
           status: Database["public"]["Enums"]["instructor_status"] | null
           stripe_account_id: string | null
@@ -612,7 +614,9 @@ export type Database = {
           longitude?: number | null
           phone: string
           photo_url?: string | null
+          price_instructor_car?: number | null
           price_per_lesson: number
+          price_student_car?: number | null
           state: string
           status?: Database["public"]["Enums"]["instructor_status"] | null
           stripe_account_id?: string | null
@@ -644,7 +648,9 @@ export type Database = {
           longitude?: number | null
           phone?: string
           photo_url?: string | null
+          price_instructor_car?: number | null
           price_per_lesson?: number
+          price_student_car?: number | null
           state?: string
           status?: Database["public"]["Enums"]["instructor_status"] | null
           stripe_account_id?: string | null
@@ -696,6 +702,53 @@ export type Database = {
             columns: ["lesson_id"]
             isOneToOne: false
             referencedRelation: "study_lessons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lesson_packages: {
+        Row: {
+          created_at: string | null
+          discount_percent: number | null
+          id: string
+          instructor_id: string | null
+          is_active: boolean | null
+          name: string
+          total_lessons: number
+          total_price: number
+          updated_at: string | null
+          vehicle_type: string
+        }
+        Insert: {
+          created_at?: string | null
+          discount_percent?: number | null
+          id?: string
+          instructor_id?: string | null
+          is_active?: boolean | null
+          name: string
+          total_lessons: number
+          total_price: number
+          updated_at?: string | null
+          vehicle_type: string
+        }
+        Update: {
+          created_at?: string | null
+          discount_percent?: number | null
+          id?: string
+          instructor_id?: string | null
+          is_active?: boolean | null
+          name?: string
+          total_lessons?: number
+          total_price?: number
+          updated_at?: string | null
+          vehicle_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lesson_packages_instructor_id_fkey"
+            columns: ["instructor_id"]
+            isOneToOne: false
+            referencedRelation: "instructors"
             referencedColumns: ["id"]
           },
         ]
@@ -945,6 +998,73 @@ export type Database = {
             columns: ["instructor_id"]
             isOneToOne: false
             referencedRelation: "instructors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      student_packages: {
+        Row: {
+          cancelled_at: string | null
+          completed_at: string | null
+          id: string
+          instructor_id: string | null
+          lessons_total: number
+          lessons_used: number | null
+          package_id: string | null
+          purchased_at: string | null
+          status: string | null
+          student_id: string | null
+          total_paid: number
+          vehicle_type: string
+        }
+        Insert: {
+          cancelled_at?: string | null
+          completed_at?: string | null
+          id?: string
+          instructor_id?: string | null
+          lessons_total: number
+          lessons_used?: number | null
+          package_id?: string | null
+          purchased_at?: string | null
+          status?: string | null
+          student_id?: string | null
+          total_paid: number
+          vehicle_type: string
+        }
+        Update: {
+          cancelled_at?: string | null
+          completed_at?: string | null
+          id?: string
+          instructor_id?: string | null
+          lessons_total?: number
+          lessons_used?: number | null
+          package_id?: string | null
+          purchased_at?: string | null
+          status?: string | null
+          student_id?: string | null
+          total_paid?: number
+          vehicle_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_packages_instructor_id_fkey"
+            columns: ["instructor_id"]
+            isOneToOne: false
+            referencedRelation: "instructors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_packages_package_id_fkey"
+            columns: ["package_id"]
+            isOneToOne: false
+            referencedRelation: "lesson_packages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_packages_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
