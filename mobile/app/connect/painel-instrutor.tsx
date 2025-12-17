@@ -32,6 +32,16 @@ interface UpcomingLesson {
     price: number;
 }
 
+interface LessonPackage {
+    id: string;
+    name: string;
+    total_lessons: number;
+    vehicle_type: string;
+    total_price: number;
+    discount_percent: number;
+    is_active: boolean;
+}
+
 export default function InstructorDashboardScreen() {
     const { theme, isDark } = useTheme();
     const { user } = useAuth();
@@ -45,6 +55,7 @@ export default function InstructorDashboardScreen() {
         reviewCount: 0,
     });
     const [upcomingLessons, setUpcomingLessons] = useState<UpcomingLesson[]>([]);
+    const [packages, setPackages] = useState<LessonPackage[]>([]);
 
     const fetchDashboardData = useCallback(async () => {
         if (!user?.id) return;
@@ -104,6 +115,17 @@ export default function InstructorDashboardScreen() {
                     status: b.status,
                     price: b.price
                 })));
+            }
+
+            // 4. Get Instructor's Packages
+            const { data: packagesData } = await supabase
+                .from('lesson_packages')
+                .select('*')
+                .eq('instructor_id', instructor.id)
+                .order('created_at', { ascending: false });
+
+            if (packagesData) {
+                setPackages(packagesData);
             }
 
         } catch (error) {
@@ -241,6 +263,72 @@ export default function InstructorDashboardScreen() {
                         <Text style={[styles.actionLabel, { color: theme.text }]}>Documentos</Text>
                     </TouchableOpacity>
                 </View>
+
+                {/* My Packages */}
+                <View style={styles.sectionHeader}>
+                    <Text style={[styles.sectionTitle, { color: theme.text }]}>Meus Pacotes</Text>
+                    <TouchableOpacity
+                        style={[styles.addButton, { backgroundColor: theme.primary }]}
+                        onPress={() => router.push('/connect/criar-pacote')}
+                    >
+                        <Ionicons name="add" size={18} color="#fff" />
+                    </TouchableOpacity>
+                </View>
+
+                {packages.length === 0 ? (
+                    <TouchableOpacity
+                        style={[styles.emptyCard, { backgroundColor: theme.card }]}
+                        onPress={() => router.push('/connect/criar-pacote')}
+                    >
+                        <Ionicons name="pricetag-outline" size={40} color={theme.textMuted} />
+                        <Text style={[styles.emptyText, { color: theme.textMuted }]}>
+                            Crie pacotes de aulas com desconto para seus alunos.
+                        </Text>
+                        <Text style={[styles.emptyAction, { color: theme.primary }]}>+ Criar Pacote</Text>
+                    </TouchableOpacity>
+                ) : (
+                    <ScrollView
+                        horizontal
+                        showsHorizontalScrollIndicator={false}
+                        contentContainerStyle={styles.packagesScroll}
+                    >
+                        {packages.map(pkg => (
+                            <TouchableOpacity
+                                key={pkg.id}
+                                style={[
+                                    styles.packageCard,
+                                    {
+                                        backgroundColor: pkg.is_active ? theme.card : theme.background,
+                                        borderColor: pkg.is_active ? theme.primaryLight : theme.cardBorder,
+                                        opacity: pkg.is_active ? 1 : 0.6,
+                                    }
+                                ]}
+                                onPress={() => router.push(`/connect/criar-pacote?id=${pkg.id}`)}
+                            >
+                                <View style={styles.packageHeader}>
+                                    <Text style={[styles.packageName, { color: theme.text }]}>{pkg.name}</Text>
+                                    <View style={[
+                                        styles.discountBadge,
+                                        { backgroundColor: pkg.is_active ? '#dcfce7' : '#f3f4f6' }
+                                    ]}>
+                                        <Text style={[
+                                            styles.discountText,
+                                            { color: pkg.is_active ? '#166534' : '#6b7280' }
+                                        ]}>
+                                            -{pkg.discount_percent}%
+                                        </Text>
+                                    </View>
+                                </View>
+                                <Text style={[styles.packageLessons, { color: theme.textSecondary }]}>
+                                    {pkg.total_lessons} aulas • {pkg.vehicle_type === 'instructor' ? '🚗' : '🔑'}
+                                </Text>
+                                <Text style={[styles.packagePrice, { color: theme.primary }]}>
+                                    {formatCurrency(pkg.total_price)}
+                                </Text>
+                            </TouchableOpacity>
+                        ))}
+                    </ScrollView>
+                )}
 
                 {/* Upcoming Lessons */}
                 <Text style={[styles.sectionTitle, { color: theme.text }]}>Próximas Aulas</Text>
@@ -472,5 +560,63 @@ const styles = StyleSheet.create({
         textAlign: 'center',
         fontSize: 14,
         lineHeight: 20,
+    },
+    emptyAction: {
+        fontSize: 14,
+        fontWeight: '600',
+        marginTop: 4,
+    },
+    sectionHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginTop: 24,
+        marginBottom: 16,
+    },
+    addButton: {
+        width: 32,
+        height: 32,
+        borderRadius: 16,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    packagesScroll: {
+        paddingRight: 20,
+        gap: 12,
+    },
+    packageCard: {
+        width: 160,
+        padding: 16,
+        borderRadius: 14,
+        borderWidth: 2,
+    },
+    packageHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'flex-start',
+        marginBottom: 8,
+    },
+    packageName: {
+        fontSize: 14,
+        fontWeight: '600',
+        flex: 1,
+    },
+    discountBadge: {
+        paddingHorizontal: 6,
+        paddingVertical: 2,
+        borderRadius: 6,
+        marginLeft: 6,
+    },
+    discountText: {
+        fontSize: 11,
+        fontWeight: '700',
+    },
+    packageLessons: {
+        fontSize: 12,
+        marginBottom: 8,
+    },
+    packagePrice: {
+        fontSize: 18,
+        fontWeight: '700',
     },
 });

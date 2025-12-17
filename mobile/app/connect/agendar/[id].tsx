@@ -22,6 +22,8 @@ interface Instructor {
     city: string;
     state: string;
     price_per_lesson: number;
+    price_instructor_car: number | null;
+    price_student_car: number | null;
     lesson_duration_minutes: number;
 }
 
@@ -29,6 +31,14 @@ interface Availability {
     day_of_week: number;
     start_time: string;
     end_time: string;
+}
+
+interface ActivePackage {
+    id: string;
+    lessons_total: number;
+    lessons_used: number;
+    vehicle_type: string;
+    instructor_id: string;
 }
 
 const DAY_NAMES = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
@@ -47,6 +57,7 @@ export default function BookingScreen() {
     const [bookedSlots, setBookedSlots] = useState<string[]>([]);
     const [submitting, setSubmitting] = useState(false);
     const [vehicleType, setVehicleType] = useState<'instructor' | 'student'>('instructor');
+    const [activePackage, setActivePackage] = useState<ActivePackage | null>(null);
 
     // Generate next 14 days
     const availableDates = Array.from({ length: 14 }, (_, i) => {
@@ -56,7 +67,10 @@ export default function BookingScreen() {
     });
 
     useEffect(() => {
-        if (id) fetchInstructorData();
+        if (id) {
+            fetchInstructorData();
+            fetchActivePackage();
+        }
     }, [id]);
 
     useEffect(() => {
@@ -67,7 +81,7 @@ export default function BookingScreen() {
         try {
             const { data: instructorData, error: instructorError } = await supabase
                 .from('instructors')
-                .select('id, full_name, photo_url, city, state, price_per_lesson, lesson_duration_minutes')
+                .select('id, full_name, photo_url, city, state, price_per_lesson, price_instructor_car, price_student_car, lesson_duration_minutes')
                 .eq('id', id)
                 .single();
 
@@ -84,6 +98,29 @@ export default function BookingScreen() {
             console.error('Error fetching instructor:', error);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const fetchActivePackage = async () => {
+        if (!user) return;
+
+        try {
+            const { data } = await supabase
+                .from('student_packages')
+                .select('id, lessons_total, lessons_used, vehicle_type, instructor_id')
+                .eq('student_id', user.id)
+                .eq('instructor_id', id)
+                .eq('status', 'active')
+                .single();
+
+            if (data) {
+                setActivePackage(data as ActivePackage);
+                // Auto-select vehicle type from package
+                setVehicleType(data.vehicle_type as 'instructor' | 'student');
+            }
+        } catch (error) {
+            // No active package - that's fine
+            setActivePackage(null);
         }
     };
 
@@ -133,33 +170,66 @@ export default function BookingScreen() {
 
     const formatTime = (time: string) => time.substring(0, 5);
 
+    // Get price based on selected vehicle type
+    const getCurrentPrice = () => {
+        if (!instructor) return 0;
+        if (vehicleType === 'student' && instructor.price_student_car) {
+            return instructor.price_student_car;
+        }
+        return instructor.price_instructor_car || instructor.price_per_lesson;
+    };
+
     const handleConfirmBooking = async () => {
         if (!user || !instructor || !selectedDate || !selectedTime) return;
 
         setSubmitting(true);
         try {
-            const platformFee = instructor.price_per_lesson * 0.15;
-            const instructorAmount = instructor.price_per_lesson - platformFee;
+            const isUsingPackage = activePackage && activePackage.instructor_id === instructor.id;
+            const currentPrice = isUsingPackage ? 0 : getCurrentPrice();
+            const platformFee = currentPrice * 0.15;
+            const instructorAmount = currentPrice - platformFee;
 
-            const { error } = await supabase.from('bookings').insert({
+            // Create booking
+            const { error: bookingError } = await supabase.from('bookings').insert({
                 student_id: user.id,
                 instructor_id: instructor.id,
                 scheduled_date: selectedDate.toISOString().split('T')[0],
                 scheduled_time: selectedTime,
                 duration_minutes: instructor.lesson_duration_minutes,
-                price: instructor.price_per_lesson,
+                price: currentPrice,
                 platform_fee: platformFee,
                 instructor_amount: instructorAmount,
-                status: 'confirmed', // Automatic approval enabled
-                payment_status: 'pending',
-                vehicle_type: vehicleType,
+                status: 'confirmed',
+                payment_status: isUsingPackage ? 'paid' : 'pending',
+                vehicle_type: isUsingPackage ? activePackage.vehicle_type : vehicleType,
             });
 
-            if (error) throw error;
+            if (bookingError) throw bookingError;
+
+            // If using package, increment lessons_used
+            if (isUsingPackage && activePackage) {
+                const newLessonsUsed = activePackage.lessons_used + 1;
+                const isCompleted = newLessonsUsed >= activePackage.lessons_total;
+
+                await supabase
+                    .from('student_packages')
+                    .update({
+                        lessons_used: newLessonsUsed,
+                        status: isCompleted ? 'completed' : 'active',
+                        completed_at: isCompleted ? new Date().toISOString() : null,
+                    })
+                    .eq('id', activePackage.id);
+            }
+
+            const remainingCredits = activePackage
+                ? activePackage.lessons_total - activePackage.lessons_used - 1
+                : 0;
 
             Alert.alert(
-                'Aula Confirmada!',
-                'Sua aula foi agendada e confirmada automaticamente! O instrutor já foi notificado.',
+                'Aula Confirmada! 🎉',
+                isUsingPackage
+                    ? `Você usou 1 crédito do seu pacote. Restam ${remainingCredits} aulas.`
+                    : 'Sua aula foi agendada e confirmada automaticamente!',
                 [{ text: 'OK', onPress: () => router.push('/(tabs)/aulas') }]
             );
         } catch (error) {
@@ -480,10 +550,36 @@ export default function BookingScreen() {
                             </View>
                             <Ionicons name="key" size={24} color={theme.primary} />
                         </TouchableOpacity>
-                        <View style={[styles.priceCard, { backgroundColor: theme.primaryLight }]}>
-                            <Text style={[styles.priceLabel, { color: theme.primary }]}>Valor da Aula</Text>
-                            <Text style={[styles.priceValue, { color: theme.primary }]}>
-                                {formatPrice(instructor.price_per_lesson)}
+
+                        {/* Package Credit Banner */}
+                        {activePackage && activePackage.instructor_id === instructor.id && (
+                            <View style={[styles.packageBanner, { backgroundColor: '#dcfce7' }]}>
+                                <Ionicons name="pricetag" size={20} color="#166534" />
+                                <View style={styles.packageBannerInfo}>
+                                    <Text style={styles.packageBannerTitle}>Usando Crédito do Pacote</Text>
+                                    <Text style={styles.packageBannerSubtitle}>
+                                        Restam {activePackage.lessons_total - activePackage.lessons_used} de {activePackage.lessons_total} aulas
+                                    </Text>
+                                </View>
+                            </View>
+                        )}
+
+                        {/* Price Card */}
+                        <View style={[
+                            styles.priceCard,
+                            { backgroundColor: activePackage ? '#dcfce7' : theme.primaryLight }
+                        ]}>
+                            <Text style={[
+                                styles.priceLabel,
+                                { color: activePackage ? '#166534' : theme.primary }
+                            ]}>
+                                {activePackage ? 'Usando Pacote' : 'Valor da Aula'}
+                            </Text>
+                            <Text style={[
+                                styles.priceValue,
+                                { color: activePackage ? '#166534' : theme.primary }
+                            ]}>
+                                {activePackage ? 'GRÁTIS' : formatPrice(getCurrentPrice())}
                             </Text>
                         </View>
 
@@ -747,6 +843,28 @@ const styles = StyleSheet.create({
     },
     vehicleSubtitle: {
         fontSize: 12,
+        marginTop: 2,
+    },
+    // Package Banner
+    packageBanner: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: 14,
+        borderRadius: 12,
+        marginBottom: 16,
+        gap: 12,
+    },
+    packageBannerInfo: {
+        flex: 1,
+    },
+    packageBannerTitle: {
+        fontSize: 14,
+        fontWeight: '600',
+        color: '#166534',
+    },
+    packageBannerSubtitle: {
+        fontSize: 12,
+        color: '#15803d',
         marginTop: 2,
     },
 });

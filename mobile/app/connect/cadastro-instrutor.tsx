@@ -39,7 +39,8 @@ export default function InstructorRegistrationScreen() {
         vehicle_transmission: 'manual' as 'manual' | 'automatic',
         // Class Info
         categories: [] as string[],
-        price_per_lesson: '',
+        price_instructor_car: '',
+        price_student_car: '',
     });
 
     const AVAILABLE_CATEGORIES = ['A', 'B', 'C', 'D', 'E'];
@@ -80,8 +81,8 @@ export default function InstructorRegistrationScreen() {
             Alert.alert('Erro', 'Selecione pelo menos uma categoria');
             return false;
         }
-        if (!formData.price_per_lesson) {
-            Alert.alert('Erro', 'Informe o preço da aula');
+        if (!formData.price_instructor_car || !formData.price_student_car) {
+            Alert.alert('Erro', 'Informe ambos os preços de aula');
             return false;
         }
         return true;
@@ -116,7 +117,9 @@ export default function InstructorRegistrationScreen() {
                 vehicle_transmission: formData.vehicle_transmission,
                 // Class Info
                 categories: formData.categories as any,
-                price_per_lesson: parseFloat(formData.price_per_lesson?.replace(',', '.') || '0'),
+                price_per_lesson: parseFloat(formData.price_instructor_car?.replace(',', '.') || '0'),
+                price_instructor_car: parseFloat(formData.price_instructor_car?.replace(',', '.') || '0'),
+                price_student_car: parseFloat(formData.price_student_car?.replace(',', '.') || '0'),
                 lesson_duration_minutes: 50, // Default duration
                 status: 'pending',
                 photo_url: profile?.avatar_url,
@@ -343,43 +346,66 @@ export default function InstructorRegistrationScreen() {
                 })}
             </View>
 
+            {/* Price for Instructor's Car */}
             <View style={styles.inputGroup}>
-                <Text style={[styles.label, { color: theme.textSecondary }]}>Preço por aula (50 min)</Text>
+                <Text style={[styles.label, { color: theme.textSecondary }]}>
+                    🚗 Preço - Seu Carro (50 min)
+                </Text>
                 <View style={[styles.priceInputContainer, { backgroundColor: theme.card, borderColor: theme.inputBorder }]}>
                     <Text style={[styles.currencyPrefix, { color: theme.textMuted }]}>R$</Text>
                     <TextInput
                         style={[styles.priceInput, { color: theme.text }]}
-                        value={formData.price_per_lesson}
-                        onChangeText={(text) => handleInputChange('price_per_lesson', text)}
-                        placeholder="0,00"
+                        value={formData.price_instructor_car}
+                        onChangeText={(text) => handleInputChange('price_instructor_car', text)}
+                        placeholder="80,00"
                         placeholderTextColor={theme.textMuted}
                         keyboardType="numeric"
                     />
                 </View>
                 <Text style={[styles.helperText, { color: theme.textMuted }]}>
-                    Valor que o aluno pagará por aula. A plataforma retém 15%.
+                    Valor quando o aluno usa seu veículo.
+                </Text>
+            </View>
+
+            {/* Price for Student's Car */}
+            <View style={styles.inputGroup}>
+                <Text style={[styles.label, { color: theme.textSecondary }]}>
+                    🔑 Preço - Carro do Aluno (50 min)
+                </Text>
+                <View style={[styles.priceInputContainer, { backgroundColor: theme.card, borderColor: theme.inputBorder }]}>
+                    <Text style={[styles.currencyPrefix, { color: theme.textMuted }]}>R$</Text>
+                    <TextInput
+                        style={[styles.priceInput, { color: theme.text }]}
+                        value={formData.price_student_car}
+                        onChangeText={(text) => handleInputChange('price_student_car', text)}
+                        placeholder="65,00"
+                        placeholderTextColor={theme.textMuted}
+                        keyboardType="numeric"
+                    />
+                </View>
+                <Text style={[styles.helperText, { color: theme.textMuted }]}>
+                    Valor quando o aluno traz o próprio veículo (geralmente menor).
                 </Text>
             </View>
 
             <View style={styles.summaryCard}>
                 <Text style={[styles.summaryTitle, { color: theme.text }]}>Resumo Financeiro</Text>
+
+                <Text style={[styles.summarySubtitle, { color: theme.textMuted }]}>Seu carro (você recebe):</Text>
                 <View style={styles.summaryRow}>
-                    <Text style={{ color: theme.textSecondary }}>Valor Aluno:</Text>
-                    <Text style={{ color: theme.text, fontWeight: 'bold' }}>
-                        R$ {parseFloat(formData.price_per_lesson || '0').toFixed(2)}
+                    <Text style={{ color: theme.textSecondary }}>Valor - 15% taxa:</Text>
+                    <Text style={{ color: '#10b981', fontWeight: 'bold', fontSize: 16 }}>
+                        R$ {(parseFloat(formData.price_instructor_car || '0') * 0.85).toFixed(2)}
                     </Text>
                 </View>
-                <View style={styles.summaryRow}>
-                    <Text style={{ color: theme.textSecondary }}>Taxa Vrumi (15%):</Text>
-                    <Text style={{ color: '#ef4444' }}>
-                        - R$ {(parseFloat(formData.price_per_lesson || '0') * 0.15).toFixed(2)}
-                    </Text>
-                </View>
+
                 <View style={[styles.divider, { backgroundColor: theme.cardBorder }]} />
+
+                <Text style={[styles.summarySubtitle, { color: theme.textMuted }]}>Carro do aluno (você recebe):</Text>
                 <View style={styles.summaryRow}>
-                    <Text style={{ color: theme.textSecondary }}>Você recebe:</Text>
-                    <Text style={{ color: '#10b981', fontWeight: 'bold', fontSize: 18 }}>
-                        R$ {(parseFloat(formData.price_per_lesson || '0') * 0.85).toFixed(2)}
+                    <Text style={{ color: theme.textSecondary }}>Valor - 15% taxa:</Text>
+                    <Text style={{ color: '#10b981', fontWeight: 'bold', fontSize: 16 }}>
+                        R$ {(parseFloat(formData.price_student_car || '0') * 0.85).toFixed(2)}
                     </Text>
                 </View>
             </View>
@@ -580,6 +606,12 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontWeight: '600',
         marginBottom: 12,
+    },
+    summarySubtitle: {
+        fontSize: 13,
+        fontWeight: '500',
+        marginTop: 4,
+        marginBottom: 8,
     },
     summaryRow: {
         flexDirection: 'row',

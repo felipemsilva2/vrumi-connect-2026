@@ -59,6 +59,16 @@ interface Availability {
     end_time: string;
 }
 
+interface LessonPackage {
+    id: string;
+    name: string;
+    total_lessons: number;
+    vehicle_type: string;
+    total_price: number;
+    discount_percent: number;
+    is_active: boolean;
+}
+
 const DAY_NAMES = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 
 export default function InstructorProfileScreen() {
@@ -68,6 +78,7 @@ export default function InstructorProfileScreen() {
     const [instructor, setInstructor] = useState<Instructor | null>(null);
     const [reviews, setReviews] = useState<Review[]>([]);
     const [availability, setAvailability] = useState<Availability[]>([]);
+    const [packages, setPackages] = useState<LessonPackage[]>([]);
     const [loading, setLoading] = useState(true);
     const [showReviewModal, setShowReviewModal] = useState(false);
     const [newRating, setNewRating] = useState(5);
@@ -110,6 +121,16 @@ export default function InstructorProfileScreen() {
                 .order('day_of_week');
 
             setAvailability(availabilityData || []);
+
+            // Fetch packages
+            const { data: packagesData } = await supabase
+                .from('lesson_packages')
+                .select('*')
+                .eq('instructor_id', id)
+                .eq('is_active', true)
+                .order('total_lessons');
+
+            setPackages((packagesData || []) as LessonPackage[]);
         } catch (error) {
             console.error('Error fetching instructor:', error);
         } finally {
@@ -385,6 +406,45 @@ export default function InstructorProfileScreen() {
                                         {formatTime(slot.start_time)} - {formatTime(slot.end_time)}
                                     </Text>
                                 </View>
+                            ))}
+                        </View>
+                    </View>
+                )}
+
+                {/* Packages */}
+                {packages.length > 0 && (
+                    <View style={[styles.section, { backgroundColor: theme.card }]}>
+                        <Text style={[styles.sectionTitle, { color: theme.text }]}>
+                            📦 Pacotes de Aulas
+                        </Text>
+                        <Text style={[styles.packageSubtitle, { color: theme.textMuted }]}>
+                            Economize comprando um pacote de aulas
+                        </Text>
+                        <View style={styles.packagesContainer}>
+                            {packages.map((pkg) => (
+                                <TouchableOpacity
+                                    key={pkg.id}
+                                    style={[styles.packageCard, { backgroundColor: theme.background, borderColor: theme.primaryLight }]}
+                                    onPress={() => router.push(`/connect/comprar-pacote/${pkg.id}`)}
+                                >
+                                    <View style={styles.packageCardHeader}>
+                                        <Text style={[styles.packageCardName, { color: theme.text }]}>
+                                            {pkg.name}
+                                        </Text>
+                                        <View style={[styles.packageDiscount, { backgroundColor: '#dcfce7' }]}>
+                                            <Text style={styles.packageDiscountText}>-{pkg.discount_percent}%</Text>
+                                        </View>
+                                    </View>
+                                    <Text style={[styles.packageCardLessons, { color: theme.textSecondary }]}>
+                                        {pkg.total_lessons} aulas • {pkg.vehicle_type === 'instructor' ? '🚗 Carro instrutor' : '🔑 Seu carro'}
+                                    </Text>
+                                    <Text style={[styles.packageCardPrice, { color: theme.primary }]}>
+                                        {formatPrice(pkg.total_price)}
+                                    </Text>
+                                    <Text style={[styles.packageCardPerLesson, { color: theme.textMuted }]}>
+                                        {formatPrice(pkg.total_price / pkg.total_lessons)}/aula
+                                    </Text>
+                                </TouchableOpacity>
                             ))}
                         </View>
                     </View>
@@ -897,5 +957,51 @@ const styles = StyleSheet.create({
         color: '#fff',
         fontSize: 16,
         fontWeight: 'bold',
+    },
+    // Packages
+    packageSubtitle: {
+        fontSize: 13,
+        marginTop: -8,
+        marginBottom: 16,
+    },
+    packagesContainer: {
+        gap: 12,
+    },
+    packageCard: {
+        padding: 16,
+        borderRadius: 14,
+        borderWidth: 2,
+    },
+    packageCardHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 8,
+    },
+    packageCardName: {
+        fontSize: 16,
+        fontWeight: '600',
+    },
+    packageDiscount: {
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+        borderRadius: 8,
+    },
+    packageDiscountText: {
+        color: '#166534',
+        fontSize: 12,
+        fontWeight: '700',
+    },
+    packageCardLessons: {
+        fontSize: 13,
+        marginBottom: 8,
+    },
+    packageCardPrice: {
+        fontSize: 22,
+        fontWeight: '700',
+    },
+    packageCardPerLesson: {
+        fontSize: 12,
+        marginTop: 2,
     },
 });
