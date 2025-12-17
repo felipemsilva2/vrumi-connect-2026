@@ -1,0 +1,1 @@
+ALTER TABLE bookings ADD COLUMN vehicle_type VARCHAR(20) DEFAULT 'instructor';

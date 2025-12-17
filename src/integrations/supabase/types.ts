@@ -103,6 +103,7 @@ export type Database = {
           stripe_payment_intent_id: string | null
           student_id: string
           updated_at: string | null
+          vehicle_type: string | null
         }
         Insert: {
           cancellation_reason?: string | null
@@ -126,6 +127,7 @@ export type Database = {
           stripe_payment_intent_id?: string | null
           student_id: string
           updated_at?: string | null
+          vehicle_type?: string | null
         }
         Update: {
           cancellation_reason?: string | null
@@ -149,6 +151,7 @@ export type Database = {
           stripe_payment_intent_id?: string | null
           student_id?: string
           updated_at?: string | null
+          vehicle_type?: string | null
         }
         Relationships: [
           {
