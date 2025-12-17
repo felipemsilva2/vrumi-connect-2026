@@ -561,6 +561,7 @@ export type Database = {
         Row: {
           availability: Json | null
           average_rating: number | null
+          background_check_url: string | null
           bio: string | null
           categories: Database["public"]["Enums"]["cnh_category"][]
           city: string
@@ -592,6 +593,7 @@ export type Database = {
         Insert: {
           availability?: Json | null
           average_rating?: number | null
+          background_check_url?: string | null
           bio?: string | null
           categories?: Database["public"]["Enums"]["cnh_category"][]
           city: string
@@ -623,6 +625,7 @@ export type Database = {
         Update: {
           availability?: Json | null
           average_rating?: number | null
+          background_check_url?: string | null
           bio?: string | null
           categories?: Database["public"]["Enums"]["cnh_category"][]
           city?: string
