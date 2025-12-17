@@ -55,6 +55,7 @@ export default function InstructorDashboardScreen() {
         reviewCount: 0,
     });
     const [upcomingLessons, setUpcomingLessons] = useState<UpcomingLesson[]>([]);
+    const [todayLessons, setTodayLessons] = useState<UpcomingLesson[]>([]);
     const [packages, setPackages] = useState<LessonPackage[]>([]);
 
     const fetchDashboardData = useCallback(async () => {
@@ -107,14 +108,28 @@ export default function InstructorDashboardScreen() {
                 .limit(5);
 
             if (bookings) {
-                setUpcomingLessons(bookings.map((b: any) => ({
-                    id: b.id,
-                    student_name: b.student?.full_name || 'Aluno',
-                    scheduled_date: b.scheduled_date,
-                    scheduled_time: b.scheduled_time,
-                    status: b.status,
-                    price: b.price
-                })));
+                const today = new Date().toISOString().split('T')[0];
+                const todayBookings: UpcomingLesson[] = [];
+                const futureBookings: UpcomingLesson[] = [];
+
+                bookings.forEach((b: any) => {
+                    const lesson = {
+                        id: b.id,
+                        student_name: b.student?.full_name || 'Aluno',
+                        scheduled_date: b.scheduled_date,
+                        scheduled_time: b.scheduled_time,
+                        status: b.status,
+                        price: b.price
+                    };
+                    if (b.scheduled_date === today) {
+                        todayBookings.push(lesson);
+                    } else {
+                        futureBookings.push(lesson);
+                    }
+                });
+
+                setTodayLessons(todayBookings);
+                setUpcomingLessons(futureBookings);
             }
 
             // 4. Get Instructor's Packages
@@ -211,6 +226,41 @@ export default function InstructorDashboardScreen() {
                         </Text>
                         <Text style={[styles.statLabel, { color: theme.textSecondary }]}>Nota Geral</Text>
                     </View>
+                </View>
+
+                {/* TODAY'S LESSONS - Prominent Section */}
+                <View style={[styles.todaySection, { backgroundColor: theme.primary }]}>
+                    <View style={styles.todayHeader}>
+                        <View>
+                            <Text style={styles.todayLabel}>📅 HOJE</Text>
+                            <Text style={styles.todayDate}>
+                                {new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'short' })}
+                            </Text>
+                        </View>
+                        <View style={styles.todayBadge}>
+                            <Text style={styles.todayCount}>{todayLessons.length}</Text>
+                            <Text style={styles.todayCountLabel}>aulas</Text>
+                        </View>
+                    </View>
+
+                    {todayLessons.length === 0 ? (
+                        <Text style={styles.todayEmpty}>Nenhuma aula agendada para hoje</Text>
+                    ) : (
+                        <View style={styles.todayLessons}>
+                            {todayLessons.map((lesson, idx) => (
+                                <View key={lesson.id} style={[
+                                    styles.todayLessonCard,
+                                    idx < todayLessons.length - 1 && styles.todayLessonBorder
+                                ]}>
+                                    <Text style={styles.todayTime}>{lesson.scheduled_time.substring(0, 5)}</Text>
+                                    <View style={styles.todayLessonInfo}>
+                                        <Text style={styles.todayStudent}>{lesson.student_name}</Text>
+                                        <Text style={styles.todayPrice}>{formatCurrency(lesson.price)}</Text>
+                                    </View>
+                                </View>
+                            ))}
+                        </View>
+                    )}
                 </View>
 
                 {/* Quick Actions */}
@@ -618,5 +668,85 @@ const styles = StyleSheet.create({
     packagePrice: {
         fontSize: 18,
         fontWeight: '700',
+    },
+    // TODAY Section Styles
+    todaySection: {
+        borderRadius: 20,
+        padding: 20,
+        marginBottom: 24,
+    },
+    todayHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 16,
+    },
+    todayLabel: {
+        fontSize: 14,
+        fontWeight: '700',
+        color: 'rgba(255,255,255,0.9)',
+    },
+    todayDate: {
+        fontSize: 12,
+        color: 'rgba(255,255,255,0.7)',
+        marginTop: 2,
+        textTransform: 'capitalize',
+    },
+    todayBadge: {
+        alignItems: 'center',
+        backgroundColor: 'rgba(255,255,255,0.2)',
+        paddingHorizontal: 16,
+        paddingVertical: 8,
+        borderRadius: 12,
+    },
+    todayCount: {
+        fontSize: 24,
+        fontWeight: '800',
+        color: '#fff',
+    },
+    todayCountLabel: {
+        fontSize: 10,
+        color: 'rgba(255,255,255,0.8)',
+    },
+    todayEmpty: {
+        color: 'rgba(255,255,255,0.7)',
+        textAlign: 'center',
+        fontSize: 13,
+    },
+    todayLessons: {
+        backgroundColor: 'rgba(255,255,255,0.15)',
+        borderRadius: 12,
+        padding: 4,
+    },
+    todayLessonCard: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingVertical: 12,
+        paddingHorizontal: 12,
+    },
+    todayLessonBorder: {
+        borderBottomWidth: 1,
+        borderBottomColor: 'rgba(255,255,255,0.15)',
+    },
+    todayTime: {
+        fontSize: 15,
+        fontWeight: '700',
+        color: '#fff',
+        width: 50,
+    },
+    todayLessonInfo: {
+        flex: 1,
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+    },
+    todayStudent: {
+        fontSize: 14,
+        color: '#fff',
+        fontWeight: '500',
+    },
+    todayPrice: {
+        fontSize: 13,
+        color: 'rgba(255,255,255,0.8)',
     },
 });

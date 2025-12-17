@@ -84,6 +84,9 @@ export default function InstructorProfileScreen() {
     const [newRating, setNewRating] = useState(5);
     const [newComment, setNewComment] = useState('');
     const [submittingReview, setSubmittingReview] = useState(false);
+    const [showPackageModal, setShowPackageModal] = useState(false);
+    const [selectedPackage, setSelectedPackage] = useState<LessonPackage | null>(null);
+    const [purchasingPackage, setPurchasingPackage] = useState(false);
 
     useEffect(() => {
         if (id) {
@@ -223,6 +226,61 @@ export default function InstructorProfileScreen() {
             return;
         }
         router.push(`/connect/agendar/${id}`);
+    };
+
+    const openPackageModal = (pkg: LessonPackage) => {
+        if (!user) {
+            router.push('/(auth)/login');
+            return;
+        }
+        setSelectedPackage(pkg);
+        setShowPackageModal(true);
+    };
+
+    const handlePurchasePackage = async () => {
+        if (!user || !selectedPackage || !instructor) return;
+
+        setPurchasingPackage(true);
+        try {
+            // Check for existing active package
+            const { data: existingPackage } = await supabase
+                .from('student_packages')
+                .select('id')
+                .eq('student_id', user.id)
+                .eq('status', 'active')
+                .single();
+
+            if (existingPackage) {
+                Alert.alert('Pacote Ativo', 'Você já possui um pacote ativo. Finalize-o antes de comprar outro.');
+                setShowPackageModal(false);
+                return;
+            }
+
+            const { error } = await supabase.from('student_packages').insert({
+                student_id: user.id,
+                package_id: selectedPackage.id,
+                instructor_id: instructor.id,
+                lessons_total: selectedPackage.total_lessons,
+                lessons_used: 0,
+                vehicle_type: selectedPackage.vehicle_type,
+                total_paid: selectedPackage.total_price,
+                status: 'active',
+            });
+
+            if (error) throw error;
+
+            Alert.alert(
+                'Compra Realizada! 🎉',
+                `Você adquiriu ${selectedPackage.total_lessons} aulas. Agora você pode agendar!`,
+                [{ text: 'Agendar Agora', onPress: () => router.push(`/connect/agendar/${id}`) }]
+            );
+            setShowPackageModal(false);
+        } catch (error: any) {
+            console.error('Purchase error:', error);
+            Alert.alert('Erro', error.message || 'Não foi possível completar a compra');
+        } finally {
+            setPurchasingPackage(false);
+        }
     };
 
     if (loading) {
@@ -425,7 +483,7 @@ export default function InstructorProfileScreen() {
                                 <TouchableOpacity
                                     key={pkg.id}
                                     style={[styles.packageCard, { backgroundColor: theme.background, borderColor: theme.primaryLight }]}
-                                    onPress={() => router.push(`/connect/comprar-pacote/${pkg.id}`)}
+                                    onPress={() => openPackageModal(pkg)}
                                 >
                                     <View style={styles.packageCardHeader}>
                                         <Text style={[styles.packageCardName, { color: theme.text }]}>
@@ -600,6 +658,76 @@ export default function InstructorProfileScreen() {
                         </TouchableOpacity>
                     </View>
                 </KeyboardAvoidingView>
+            </Modal>
+
+            {/* Package Purchase Modal */}
+            <Modal
+                visible={showPackageModal}
+                transparent
+                animationType="fade"
+                onRequestClose={() => setShowPackageModal(false)}
+            >
+                <View style={styles.modalOverlay}>
+                    <View style={[styles.packageModalContent, { backgroundColor: theme.card }]}>
+                        <View style={styles.modalHeader}>
+                            <Text style={[styles.modalTitle, { color: theme.text }]}>Comprar Pacote</Text>
+                            <TouchableOpacity onPress={() => setShowPackageModal(false)}>
+                                <Ionicons name="close" size={24} color={theme.textMuted} />
+                            </TouchableOpacity>
+                        </View>
+
+                        {selectedPackage && (
+                            <>
+                                <View style={[styles.packageModalCard, { backgroundColor: theme.background }]}>
+                                    <View style={styles.packageModalHeader}>
+                                        <Text style={[styles.packageModalName, { color: theme.text }]}>
+                                            {selectedPackage.name}
+                                        </Text>
+                                        <View style={[styles.packageDiscount, { backgroundColor: '#dcfce7' }]}>
+                                            <Text style={styles.packageDiscountText}>-{selectedPackage.discount_percent}%</Text>
+                                        </View>
+                                    </View>
+                                    <Text style={[styles.packageModalLessons, { color: theme.textMuted }]}>
+                                        {selectedPackage.total_lessons} aulas • {selectedPackage.vehicle_type === 'instructor' ? '🚗 Carro instrutor' : '🔑 Seu carro'}
+                                    </Text>
+                                </View>
+
+                                <View style={styles.packageModalBenefits}>
+                                    <View style={styles.benefitRow}>
+                                        <Ionicons name="checkmark-circle" size={18} color="#10b981" />
+                                        <Text style={[styles.benefitText, { color: theme.text }]}>Economia de {selectedPackage.discount_percent}%</Text>
+                                    </View>
+                                    <View style={styles.benefitRow}>
+                                        <Ionicons name="checkmark-circle" size={18} color="#10b981" />
+                                        <Text style={[styles.benefitText, { color: theme.text }]}>Sem prazo de validade</Text>
+                                    </View>
+                                </View>
+
+                                <View style={[styles.packageModalTotal, { borderTopColor: theme.cardBorder }]}>
+                                    <Text style={{ color: theme.textMuted }}>Total</Text>
+                                    <Text style={[styles.packageModalPrice, { color: theme.primary }]}>
+                                        {formatPrice(selectedPackage.total_price)}
+                                    </Text>
+                                </View>
+
+                                <TouchableOpacity
+                                    style={[styles.purchaseButton, { backgroundColor: theme.primary }]}
+                                    onPress={handlePurchasePackage}
+                                    disabled={purchasingPackage}
+                                >
+                                    {purchasingPackage ? (
+                                        <ActivityIndicator color="#fff" />
+                                    ) : (
+                                        <>
+                                            <Ionicons name="cart" size={20} color="#fff" />
+                                            <Text style={styles.purchaseButtonText}>Comprar Agora</Text>
+                                        </>
+                                    )}
+                                </TouchableOpacity>
+                            </>
+                        )}
+                    </View>
+                </View>
             </Modal>
         </SafeAreaView >
     );
@@ -1003,5 +1131,67 @@ const styles = StyleSheet.create({
     packageCardPerLesson: {
         fontSize: 12,
         marginTop: 2,
+    },
+    // Package Modal Styles
+    packageModalContent: {
+        width: '90%',
+        maxWidth: 380,
+        borderRadius: 24,
+        padding: 24,
+    },
+    packageModalCard: {
+        padding: 16,
+        borderRadius: 14,
+        marginBottom: 16,
+    },
+    packageModalHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 6,
+    },
+    packageModalName: {
+        fontSize: 18,
+        fontWeight: '700',
+    },
+    packageModalLessons: {
+        fontSize: 14,
+    },
+    packageModalBenefits: {
+        marginBottom: 16,
+    },
+    benefitRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 10,
+        marginBottom: 8,
+    },
+    benefitText: {
+        fontSize: 14,
+    },
+    packageModalTotal: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingTop: 16,
+        borderTopWidth: 1,
+        marginBottom: 20,
+    },
+    packageModalPrice: {
+        fontSize: 24,
+        fontWeight: '800',
+    },
+    purchaseButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 10,
+        height: 52,
+        borderRadius: 14,
+    },
+    purchaseButtonText: {
+        color: '#fff',
+        fontSize: 16,
+        fontWeight: '700',
     },
 });
