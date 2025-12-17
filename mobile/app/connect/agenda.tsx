@@ -35,7 +35,7 @@ interface Booking {
     student: {
         full_name: string;
         photo_url: string | null;
-        phone: string;
+        phone?: string;
     };
 }
 
@@ -73,7 +73,7 @@ export default function InstructorAgendaScreen() {
                     scheduled_date,
                     scheduled_time,
                     status,
-                    student:profiles(full_name, avatar_url, phone)
+                    student:profiles(full_name, avatar_url)
                 `)
                 .eq('instructor_id', instructor.id)
                 .in('status', ['confirmed', 'pending', 'completed'])
@@ -81,11 +81,13 @@ export default function InstructorAgendaScreen() {
 
             if (error) throw error;
 
-            setBookings((data as any)?.map((b: any) => ({
-                ...b,
-                status: b.status || 'pending',
-                student: Array.isArray(b.student) ? b.student[0] : b.student
-            })) || []);
+            setBookings((data as any)
+                ?.map((b: any) => ({
+                    ...b,
+                    status: b.status || 'pending',
+                    student: Array.isArray(b.student) ? b.student[0] : b.student
+                }))
+                .filter((b: any) => b.student && b.student.full_name) || []);
 
             // Process for calendar dots
             const marks: any = {};
@@ -105,11 +107,13 @@ export default function InstructorAgendaScreen() {
 
             setMarkedDates(marks);
 
-            const processedBookings = (data as any)?.map((b: any) => ({
-                ...b,
-                status: b.status || 'pending',
-                student: Array.isArray(b.student) ? b.student[0] : b.student
-            })) || [];
+            const processedBookings = (data as any)
+                ?.map((b: any) => ({
+                    ...b,
+                    status: b.status || 'pending',
+                    student: Array.isArray(b.student) ? b.student[0] : b.student
+                }))
+                .filter((b: any) => b.student && b.student.full_name) || [];
 
             updateDayBookings(selectedDate, processedBookings);
 

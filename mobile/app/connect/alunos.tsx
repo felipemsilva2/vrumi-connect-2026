@@ -57,7 +57,7 @@ export default function InstructorStudentsScreen() {
                 .from('bookings')
                 .select(`
                     scheduled_date,
-                    student:profiles(user_id, full_name, avatar_url, phone)
+                    student:profiles(id, full_name, avatar_url)
                 `)
                 .eq('instructor_id', instructor.id)
                 .order('scheduled_date', { ascending: false });
@@ -72,14 +72,14 @@ export default function InstructorStudentsScreen() {
 
                 if (!studentData) return;
 
-                const studentId = studentData.user_id; // assuming profile has user_id or id
+                const studentId = studentData.id; // Correct PK is id
 
                 if (!studentMap.has(studentId)) {
                     studentMap.set(studentId, {
                         id: studentId,
                         full_name: studentData.full_name || 'Aluno',
                         photo_url: studentData.avatar_url,
-                        phone: studentData.phone,
+                        phone: null, // Phone not available in profiles table yet
                         total_lessons: 0,
                         last_lesson: booking.scheduled_date
                     });

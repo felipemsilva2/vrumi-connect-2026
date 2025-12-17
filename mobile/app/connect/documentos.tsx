@@ -20,6 +20,8 @@ import { supabase } from '../../src/lib/supabase';
 interface DocumentStatus {
     cnh_document_url: string | null;
     vehicle_document_url: string | null;
+    credential_document_url: string | null;
+    background_check_url: string | null;
     documents_status: 'pending' | 'submitted' | 'verified' | 'rejected';
 }
 
@@ -27,7 +29,7 @@ export default function DocumentUploadScreen() {
     const { theme, isDark } = useTheme();
     const { user } = useAuth();
     const [loading, setLoading] = useState(true);
-    const [uploading, setUploading] = useState<'cnh' | 'vehicle' | null>(null);
+    const [uploading, setUploading] = useState<'cnh' | 'vehicle' | 'credential' | 'background' | null>(null);
     const [status, setStatus] = useState<DocumentStatus | null>(null);
     const [instructorId, setInstructorId] = useState<string | null>(null);
 
@@ -41,7 +43,7 @@ export default function DocumentUploadScreen() {
         try {
             const { data, error } = await (supabase as any)
                 .from('instructors')
-                .select('id, cnh_document_url, vehicle_document_url, documents_status')
+                .select('id, cnh_document_url, vehicle_document_url, credential_document_url, background_check_url, documents_status')
                 .eq('user_id', user.id)
                 .single();
 
@@ -51,6 +53,8 @@ export default function DocumentUploadScreen() {
             setStatus({
                 cnh_document_url: data.cnh_document_url || null,
                 vehicle_document_url: data.vehicle_document_url || null,
+                credential_document_url: data.credential_document_url || null,
+                background_check_url: data.background_check_url || null,
                 documents_status: data.documents_status || 'pending',
             });
         } catch (error) {
@@ -60,7 +64,7 @@ export default function DocumentUploadScreen() {
         }
     };
 
-    const pickAndUploadDocument = async (type: 'cnh' | 'vehicle') => {
+    const pickAndUploadDocument = async (type: 'cnh' | 'vehicle' | 'credential' | 'background') => {
         if (!user?.id || !instructorId) return;
 
         try {
@@ -105,7 +109,11 @@ export default function DocumentUploadScreen() {
                 .getPublicUrl(fileName);
 
             // Update instructor record
-            const updateField = type === 'cnh' ? 'cnh_document_url' : 'vehicle_document_url';
+            let updateField = 'cnh_document_url';
+            if (type === 'vehicle') updateField = 'vehicle_document_url';
+            if (type === 'credential') updateField = 'credential_document_url';
+            if (type === 'background') updateField = 'background_check_url';
+
             const { error: updateError } = await (supabase as any)
                 .from('instructors')
                 .update({
@@ -153,6 +161,55 @@ export default function DocumentUploadScreen() {
 
     const statusConfig = getStatusConfig();
 
+    const renderDocumentCard = (
+        type: 'cnh' | 'vehicle' | 'credential' | 'background',
+        title: string,
+        icon: any,
+        currentUrl: string | null,
+        description?: string
+    ) => (
+        <View style={[styles.documentCard, { backgroundColor: theme.card }]}>
+            <View style={styles.documentHeader}>
+                <Ionicons name={icon} size={24} color={theme.primary} />
+                <View style={{ flex: 1 }}>
+                    <Text style={[styles.documentTitle, { color: theme.text }]}>{title}</Text>
+                    {description && (
+                        <Text style={[styles.documentDescription, { color: theme.textSecondary }]}>
+                            {description}
+                        </Text>
+                    )}
+                </View>
+            </View>
+
+            {currentUrl ? (
+                <View style={styles.documentPreview}>
+                    <Image source={{ uri: currentUrl }} style={styles.documentImage} />
+                    <View style={styles.documentOverlay}>
+                        <Ionicons name="checkmark-circle" size={24} color="#10b981" />
+                        <Text style={styles.documentOverlayText}>Enviado</Text>
+                    </View>
+                </View>
+            ) : (
+                <TouchableOpacity
+                    style={[styles.uploadButton, { borderColor: theme.primary }]}
+                    onPress={() => pickAndUploadDocument(type)}
+                    disabled={uploading !== null}
+                >
+                    {uploading === type ? (
+                        <ActivityIndicator color={theme.primary} />
+                    ) : (
+                        <>
+                            <Ionicons name="cloud-upload-outline" size={32} color={theme.primary} />
+                            <Text style={[styles.uploadText, { color: theme.primary }]}>
+                                Fazer Upload
+                            </Text>
+                        </>
+                    )}
+                </TouchableOpacity>
+            )}
+        </View>
+    );
+
     return (
         <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]} edges={['top']}>
             {/* Header */}
@@ -181,95 +238,48 @@ export default function DocumentUploadScreen() {
                             Seus documentos foram verificados! Você agora tem o selo de instrutor verificado.
                         </Text>
                     )}
-                    {status?.documents_status === 'submitted' && (
-                        <Text style={[styles.statusDescription, { color: theme.textMuted }]}>
-                            Seus documentos estão em análise. Isso pode levar até 24 horas.
-                        </Text>
-                    )}
-                    {status?.documents_status === 'rejected' && (
-                        <Text style={[styles.statusDescription, { color: '#ef4444' }]}>
-                            Seus documentos foram rejeitados. Por favor, envie novamente.
-                        </Text>
-                    )}
-                </View>
-
-                {/* CNH Upload */}
-                <View style={[styles.documentCard, { backgroundColor: theme.card }]}>
-                    <View style={styles.documentHeader}>
-                        <Ionicons name="card-outline" size={24} color={theme.primary} />
-                        <Text style={[styles.documentTitle, { color: theme.text }]}>CNH (Carteira de Motorista)</Text>
-                    </View>
-
-                    {status?.cnh_document_url ? (
-                        <View style={styles.documentPreview}>
-                            <Image source={{ uri: status.cnh_document_url }} style={styles.documentImage} />
-                            <View style={styles.documentOverlay}>
-                                <Ionicons name="checkmark-circle" size={24} color="#10b981" />
-                                <Text style={styles.documentOverlayText}>Enviado</Text>
-                            </View>
-                        </View>
-                    ) : (
-                        <TouchableOpacity
-                            style={[styles.uploadButton, { borderColor: theme.primary }]}
-                            onPress={() => pickAndUploadDocument('cnh')}
-                            disabled={uploading !== null}
-                        >
-                            {uploading === 'cnh' ? (
-                                <ActivityIndicator color={theme.primary} />
-                            ) : (
-                                <>
-                                    <Ionicons name="cloud-upload-outline" size={32} color={theme.primary} />
-                                    <Text style={[styles.uploadText, { color: theme.primary }]}>
-                                        Fazer Upload da CNH
-                                    </Text>
-                                </>
-                            )}
-                        </TouchableOpacity>
-                    )}
-                </View>
-
-                {/* Vehicle Document Upload */}
-                <View style={[styles.documentCard, { backgroundColor: theme.card }]}>
-                    <View style={styles.documentHeader}>
-                        <Ionicons name="car-outline" size={24} color={theme.primary} />
-                        <Text style={[styles.documentTitle, { color: theme.text }]}>Documento do Veículo (CRLV)</Text>
-                    </View>
-
-                    {status?.vehicle_document_url ? (
-                        <View style={styles.documentPreview}>
-                            <Image source={{ uri: status.vehicle_document_url }} style={styles.documentImage} />
-                            <View style={styles.documentOverlay}>
-                                <Ionicons name="checkmark-circle" size={24} color="#10b981" />
-                                <Text style={styles.documentOverlayText}>Enviado</Text>
-                            </View>
-                        </View>
-                    ) : (
-                        <TouchableOpacity
-                            style={[styles.uploadButton, { borderColor: theme.primary }]}
-                            onPress={() => pickAndUploadDocument('vehicle')}
-                            disabled={uploading !== null}
-                        >
-                            {uploading === 'vehicle' ? (
-                                <ActivityIndicator color={theme.primary} />
-                            ) : (
-                                <>
-                                    <Ionicons name="cloud-upload-outline" size={32} color={theme.primary} />
-                                    <Text style={[styles.uploadText, { color: theme.primary }]}>
-                                        Fazer Upload do CRLV
-                                    </Text>
-                                </>
-                            )}
-                        </TouchableOpacity>
-                    )}
                 </View>
 
                 {/* Info */}
                 <View style={[styles.infoCard, { backgroundColor: theme.primaryLight }]}>
-                    <Ionicons name="information-circle" size={20} color={theme.primary} />
+                    <Ionicons name="shield-checkmark" size={20} color={theme.primary} />
                     <Text style={[styles.infoText, { color: theme.primary }]}>
-                        A verificação de documentos garante aos alunos que você é um instrutor credenciado. Instrutores verificados recebem mais aulas!
+                        Para sua segurança e dos alunos, exigimos documentação completa.
+                        Dados verificados aumentam sua credibilidade.
                     </Text>
                 </View>
+
+                {renderDocumentCard(
+                    'cnh',
+                    'CNH com EAR',
+                    'card-outline',
+                    status?.cnh_document_url || null,
+                    'Carteira de Motorista com observação "Exerce Atividade Remunerada".'
+                )}
+
+                {renderDocumentCard(
+                    'vehicle',
+                    'Documento do Veículo (CRLV)',
+                    'car-outline',
+                    status?.vehicle_document_url || null,
+                    'Certificado de Registro e Licenciamento de Veículo atualizado.'
+                )}
+
+                {renderDocumentCard(
+                    'credential',
+                    'Certificado de Instrutor (CFC)',
+                    'school-outline',
+                    status?.credential_document_url || null,
+                    'Credencial de Instrutor de Trânsito emitida pelo DETRAN.'
+                )}
+
+                {renderDocumentCard(
+                    'background',
+                    'Antecedentes Criminais',
+                    'shield-checkmark-outline',
+                    status?.background_check_url || null,
+                    'Atestado de Antecedentes Criminais (Federal ou Estadual) recente.'
+                )}
 
                 <View style={{ height: 40 }} />
             </ScrollView>
@@ -338,19 +348,24 @@ const styles = StyleSheet.create({
     },
     documentHeader: {
         flexDirection: 'row',
-        alignItems: 'center',
+        alignItems: 'flex-start',
         gap: 10,
         marginBottom: 16,
     },
     documentTitle: {
         fontSize: 16,
         fontWeight: '600',
+        marginBottom: 4,
+    },
+    documentDescription: {
+        fontSize: 12,
+        lineHeight: 16,
     },
     uploadButton: {
         borderWidth: 2,
         borderStyle: 'dashed',
         borderRadius: 12,
-        padding: 30,
+        padding: 20,
         alignItems: 'center',
         gap: 8,
     },
