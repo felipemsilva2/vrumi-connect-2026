@@ -44,3 +44,9 @@ verify_jwt = true
 
 [functions.generate-sign-questions]
 verify_jwt = true
+
+[functions.connect-create-account]
+verify_jwt = true
+
+[functions.connect-onboarding-link]
+verify_jwt = true
