@@ -38,7 +38,20 @@
           "icon": "./assets/icon.png",
           "color": "#10b981"
         }
+      ],
+      [
+        "@stripe/stripe-react-native",
+        {
+          "merchantIdentifier": "merchant.com.vrumi.connect",
+          "enableGooglePay": true
+        }
       ]
-    ]
+    ],
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "5486859d-9a64-495f-9fc1-022ce90adc25"
+      }
+    }
   }
 }

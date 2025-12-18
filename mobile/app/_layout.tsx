@@ -5,6 +5,7 @@ import { ThemeProvider, useTheme } from '../contexts/ThemeContext';
 import { QuizLockProvider } from '../contexts/QuizLockContext';
 import { GamificationProvider } from '../contexts/GamificationContext';
 import { CacheProvider } from '../contexts/CacheContext';
+import { StripeProvider } from '../contexts/StripeContext';
 import { usePushNotifications } from '../hooks/usePushNotifications';
 
 function AppContent() {
@@ -65,7 +66,9 @@ export default function RootLayout() {
                 <CacheProvider>
                     <GamificationProvider>
                         <QuizLockProvider>
-                            <AppContent />
+                            <StripeProvider>
+                                <AppContent />
+                            </StripeProvider>
                         </QuizLockProvider>
                     </GamificationProvider>
                 </CacheProvider>

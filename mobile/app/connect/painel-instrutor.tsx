@@ -8,6 +8,7 @@ import {
     RefreshControl,
     Image,
     Alert,
+    Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -15,6 +16,8 @@ import { router } from 'expo-router';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../src/lib/supabase';
+
+const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL || 'https://xzpfutgktapdqfyqnqxq.supabase.co';
 
 interface DashboardStats {
     totalLessons: number;
@@ -44,10 +47,13 @@ interface LessonPackage {
 
 export default function InstructorDashboardScreen() {
     const { theme, isDark } = useTheme();
-    const { user } = useAuth();
+    const { user, session } = useAuth();
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     const [instructorId, setInstructorId] = useState<string | null>(null);
+    const [stripeAccountId, setStripeAccountId] = useState<string | null>(null);
+    const [stripeOnboarded, setStripeOnboarded] = useState(false);
+    const [stripeLoading, setStripeLoading] = useState(false);
     const [stats, setStats] = useState<DashboardStats>({
         totalLessons: 0,
         totalEarnings: 0,
@@ -62,15 +68,24 @@ export default function InstructorDashboardScreen() {
         if (!user?.id) return;
 
         try {
-            // 1. Get Instructor ID & Basic Stats
+            // 1. Get Instructor ID & Basic Stats + Stripe info
             const { data: instructor, error: instructorError } = await supabase
                 .from('instructors')
-                .select('id, total_lessons, average_rating, total_reviews')
+                .select('id, total_lessons, average_rating, total_reviews, stripe_account_id, stripe_onboarding_complete')
                 .eq('user_id', user.id)
                 .single();
 
             if (instructorError) throw instructorError;
             setInstructorId(instructor.id);
+            setStripeAccountId(instructor.stripe_account_id);
+            setStripeOnboarded(instructor.stripe_onboarding_complete || false);
+
+            // DEBUG - remove after testing
+            console.log('🔶 STRIPE DEBUG:', {
+                stripe_account_id: instructor.stripe_account_id,
+                stripe_onboarding_complete: instructor.stripe_onboarding_complete,
+                showBanner: !(instructor.stripe_onboarding_complete || false)
+            });
 
             // 2. Calculate Earnings (completed lessons * price * 0.85)
             // Note: In a real app, this should be a separate table or aggregate query
@@ -163,6 +178,57 @@ export default function InstructorDashboardScreen() {
         fetchDashboardData();
     };
 
+    const handleActivateStripe = async () => {
+        if (!session?.access_token) {
+            Alert.alert('Erro', 'Por favor, faça login novamente.');
+            return;
+        }
+
+        setStripeLoading(true);
+        try {
+            // Step 1: Create Stripe account if doesn't exist
+            if (!stripeAccountId) {
+                const createResponse = await fetch(`${SUPABASE_URL}/functions/v1/connect-create-account`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${session.access_token}`,
+                    },
+                });
+
+                const createResult = await createResponse.json();
+                if (!createResponse.ok) {
+                    throw new Error(createResult.error || 'Falha ao criar conta Stripe');
+                }
+
+                setStripeAccountId(createResult.accountId);
+            }
+
+            // Step 2: Get onboarding link
+            const linkResponse = await fetch(`${SUPABASE_URL}/functions/v1/connect-onboarding-link`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${session.access_token}`,
+                },
+            });
+
+            const linkResult = await linkResponse.json();
+            if (!linkResponse.ok) {
+                throw new Error(linkResult.error || 'Falha ao gerar link de onboarding');
+            }
+
+            // Step 3: Open onboarding URL in browser
+            await Linking.openURL(linkResult.url);
+
+        } catch (error: any) {
+            console.error('Stripe activation error:', error);
+            Alert.alert('Erro', error.message || 'Não foi possível ativar recebimentos.');
+        } finally {
+            setStripeLoading(false);
+        }
+    };
+
     const formatCurrency = (value: number) => {
         return new Intl.NumberFormat('pt-BR', {
             style: 'currency',
@@ -230,6 +296,40 @@ export default function InstructorDashboardScreen() {
                         <Text style={[styles.statLabel, { color: theme.textSecondary }]}>Nota Geral</Text>
                     </View>
                 </View>
+
+                {/* Stripe Activation Banner - ALWAYS SHOWING FOR DEBUG */}
+                {true && (
+                    <TouchableOpacity
+                        style={[styles.stripeBanner, { backgroundColor: stripeAccountId ? '#fef3c7' : '#fee2e2' }]}
+                        onPress={handleActivateStripe}
+                        disabled={stripeLoading}
+                    >
+                        <View style={styles.stripeBannerContent}>
+                            <Ionicons
+                                name={stripeAccountId ? "alert-circle" : "card-outline"}
+                                size={24}
+                                color={stripeAccountId ? "#d97706" : "#dc2626"}
+                            />
+                            <View style={styles.stripeBannerText}>
+                                <Text style={[styles.stripeBannerTitle, { color: stripeAccountId ? '#92400e' : '#991b1b' }]}>
+                                    {stripeAccountId ? 'Complete seu cadastro' : 'Ative os recebimentos'}
+                                </Text>
+                                <Text style={[styles.stripeBannerSubtitle, { color: stripeAccountId ? '#b45309' : '#b91c1c' }]}>
+                                    {stripeAccountId
+                                        ? 'Finalize o cadastro no Stripe para receber pagamentos'
+                                        : 'Configure sua conta para receber pagamentos dos alunos'}
+                                </Text>
+                            </View>
+                        </View>
+                        <View style={[styles.stripeBannerButton, { backgroundColor: stripeAccountId ? '#d97706' : '#dc2626' }]}>
+                            {stripeLoading ? (
+                                <Text style={styles.stripeBannerButtonText}>...</Text>
+                            ) : (
+                                <Ionicons name="arrow-forward" size={18} color="#fff" />
+                            )}
+                        </View>
+                    </TouchableOpacity>
+                )}
 
                 {/* TODAY'S LESSONS - Prominent Section */}
                 <View style={[styles.todaySection, { backgroundColor: theme.primary }]}>
@@ -751,5 +851,43 @@ const styles = StyleSheet.create({
     todayPrice: {
         fontSize: 13,
         color: 'rgba(255,255,255,0.8)',
+    },
+    // Stripe Banner
+    stripeBanner: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: 16,
+        borderRadius: 16,
+        marginBottom: 20,
+    },
+    stripeBannerContent: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        flex: 1,
+        gap: 12,
+    },
+    stripeBannerText: {
+        flex: 1,
+    },
+    stripeBannerTitle: {
+        fontSize: 14,
+        fontWeight: '700',
+        marginBottom: 2,
+    },
+    stripeBannerSubtitle: {
+        fontSize: 12,
+    },
+    stripeBannerButton: {
+        width: 36,
+        height: 36,
+        borderRadius: 18,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    stripeBannerButtonText: {
+        color: '#fff',
+        fontSize: 14,
+        fontWeight: '700',
     },
 });

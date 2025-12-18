@@ -16,8 +16,12 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useTheme } from '../../../contexts/ThemeContext';
 import { useAuth } from '../../../contexts/AuthContext';
 import { supabase } from '../../../src/lib/supabase';
+import { useStripe } from '@stripe/stripe-react-native';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
+
+// Supabase Edge Function URL
+const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL || 'https://xzpfutgktapdqfyqnqxq.supabase.co';
 
 interface Booking {
     id: string;
@@ -30,6 +34,7 @@ interface Booking {
         photo_url: string | null;
         city: string;
         state: string;
+        stripe_account_id: string | null;
     };
 }
 
@@ -41,6 +46,7 @@ interface StudentPackage {
     instructor: {
         full_name: string;
         photo_url: string | null;
+        stripe_account_id: string | null;
     };
 }
 
@@ -52,11 +58,13 @@ export default function CheckoutScreen() {
         old_id?: string
     }>();
     const { theme, isDark } = useTheme();
-    const { user } = useAuth();
+    const { user, session } = useAuth();
+    const { initPaymentSheet, presentPaymentSheet } = useStripe();
 
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
     const [data, setData] = useState<any>(null);
+    const [paymentReady, setPaymentReady] = useState(false);
 
     useEffect(() => {
         if (id) {
@@ -75,13 +83,18 @@ export default function CheckoutScreen() {
                         scheduled_time,
                         price,
                         instructor_id,
-                        instructor:instructors(full_name, photo_url, city, state)
+                        instructor:instructors(full_name, photo_url, city, state, stripe_account_id)
                     `)
                     .eq('id', id)
                     .single();
 
                 if (error) throw error;
                 setData(booking);
+
+                // Initialize payment sheet after fetching data
+                if (booking) {
+                    await initializePaymentSheet(booking.instructor_id, booking.price * 100, booking.id);
+                }
             } else {
                 const { data: pkg, error } = await supabase
                     .from('student_packages')
@@ -90,13 +103,18 @@ export default function CheckoutScreen() {
                         lessons_total,
                         total_paid,
                         instructor_id,
-                        instructor:instructors(full_name, photo_url)
+                        instructor:instructors(full_name, photo_url, stripe_account_id)
                     `)
                     .eq('id', id)
                     .single();
 
                 if (error) throw error;
                 setData(pkg);
+
+                // Initialize payment sheet after fetching data
+                if (pkg && pkg.instructor_id) {
+                    await initializePaymentSheet(pkg.instructor_id, pkg.total_paid * 100);
+                }
             }
         } catch (error) {
             console.error('Error fetching checkout data:', error);
@@ -106,84 +124,169 @@ export default function CheckoutScreen() {
         }
     };
 
+    const initializePaymentSheet = async (instructorId: string, amountCents: number, bookingId?: string) => {
+        try {
+            if (!session?.access_token) {
+                console.warn('No session token for payment initialization');
+                return;
+            }
+
+            // Call Edge Function to create PaymentIntent
+            const response = await fetch(`${SUPABASE_URL}/functions/v1/connect-create-payment`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${session.access_token}`,
+                },
+                body: JSON.stringify({
+                    instructorId,
+                    amount: Math.round(amountCents),
+                    bookingId,
+                }),
+            });
+
+            const result = await response.json();
+
+            if (!response.ok) {
+                throw new Error(result.error || 'Failed to create payment intent');
+            }
+
+            console.log('PaymentIntent created:', result.paymentIntentId);
+
+            // Initialize the Payment Sheet
+            const { error: initError } = await initPaymentSheet({
+                paymentIntentClientSecret: result.clientSecret,
+                merchantDisplayName: 'Vrumi Connect',
+                returnURL: 'vrumi://checkout/complete',
+                allowsDelayedPaymentMethods: false,
+            });
+
+            if (initError) {
+                console.error('Payment Sheet init error:', initError);
+                // Don't throw - allow fallback to mock
+            } else {
+                setPaymentReady(true);
+            }
+        } catch (error) {
+            console.error('Payment initialization error:', error);
+            // Don't show alert - allow fallback to mock payment
+        }
+    };
+
     const handlePayment = async () => {
         setSubmitting(true);
         try {
-            // Mock payment logic
-            // In the future, this will open Stripe Sheet
-            await new Promise(resolve => setTimeout(resolve, 2000));
+            // Check if instructor has Stripe account
+            const instructorData = data?.instructor;
+            const hasStripeAccount = instructorData?.stripe_account_id;
 
-            // Update status in DB
-            if (type === 'booking') {
-                const { error } = await supabase
-                    .from('bookings')
-                    .update({ payment_status: 'paid' })
-                    .eq('id', id);
-                if (error) throw error;
-            } else {
-                if (action === 'sum' && old_id) {
-                    // 1. Get current package lessons
-                    const { data: oldPkg } = await supabase
-                        .from('student_packages')
-                        .select('lessons_total')
-                        .eq('id', old_id)
-                        .single();
+            if (paymentReady && hasStripeAccount) {
+                // Use real Stripe Payment Sheet
+                const { error: paymentError } = await presentPaymentSheet();
 
-                    if (oldPkg) {
-                        // 2. Add new lessons to old package
-                        const { error: sumError } = await supabase
-                            .from('student_packages')
-                            .update({
-                                lessons_total: oldPkg.lessons_total + data.lessons_total,
-                                status: 'active' // Just in case
-                            })
-                            .eq('id', old_id);
-
-                        if (sumError) throw sumError;
-
-                        // 3. Mark the NEW package as merged/completed so it doesn't show as active
-                        await supabase
-                            .from('student_packages')
-                            .update({ status: 'completed' })
-                            .eq('id', id);
+                if (paymentError) {
+                    if (paymentError.code === 'Canceled') {
+                        // User cancelled - just return silently
+                        setSubmitting(false);
+                        return;
                     }
-                } else if (action === 'switch' && old_id) {
-                    // 1. Mark OLD as completed
-                    const { error: oldError } = await supabase
-                        .from('student_packages')
-                        .update({ status: 'completed', completed_at: new Date().toISOString() })
-                        .eq('id', old_id);
-                    if (oldError) throw oldError;
-
-                    // 2. Mark NEW as active
-                    const { error: newError } = await supabase
-                        .from('student_packages')
-                        .update({ status: 'active' })
-                        .eq('id', id);
-                    if (newError) throw newError;
-                } else {
-                    // Standard activation
-                    const { error } = await supabase
-                        .from('student_packages')
-                        .update({ status: 'active' })
-                        .eq('id', id);
-                    if (error) throw error;
+                    throw new Error(paymentError.message);
                 }
-            }
 
-            Alert.alert(
-                'Pagamento Confirmado! 🎉',
-                type === 'booking'
-                    ? 'Seu instrutor foi notificado e logo confirmará a aula.'
-                    : 'Seu pacote já está disponível para uso.',
-                [{ text: 'OK', onPress: () => router.push(type === 'booking' ? '/(tabs)/aulas' : `/connect/instrutor/${data.instructor_id}`) }]
-            );
-        } catch (error) {
+                // Payment succeeded - update database
+                await updateDatabaseAfterPayment();
+            } else {
+                // Fallback: Mock payment (instructor doesn't have Stripe account yet)
+                Alert.alert(
+                    'Instrutor não configurado',
+                    'Este instrutor ainda não configurou o recebimento de pagamentos. Deseja prosseguir com pagamento simulado para teste?',
+                    [
+                        { text: 'Cancelar', style: 'cancel', onPress: () => setSubmitting(false) },
+                        {
+                            text: 'Simular',
+                            onPress: async () => {
+                                await new Promise(resolve => setTimeout(resolve, 1500));
+                                await updateDatabaseAfterPayment();
+                            }
+                        }
+                    ]
+                );
+                return;
+            }
+        } catch (error: any) {
             console.error('Payment error:', error);
-            Alert.alert('Erro no Pagamento', 'Tente novamente em alguns instantes.');
+            Alert.alert('Erro no Pagamento', error.message || 'Tente novamente em alguns instantes.');
         } finally {
             setSubmitting(false);
         }
+    };
+
+    const updateDatabaseAfterPayment = async () => {
+        // Update status in DB
+        if (type === 'booking') {
+            const { error } = await supabase
+                .from('bookings')
+                .update({ payment_status: 'paid' })
+                .eq('id', id);
+            if (error) throw error;
+        } else {
+            if (action === 'sum' && old_id) {
+                // 1. Get current package lessons
+                const { data: oldPkg } = await supabase
+                    .from('student_packages')
+                    .select('lessons_total')
+                    .eq('id', old_id)
+                    .single();
+
+                if (oldPkg) {
+                    // 2. Add new lessons to old package
+                    const { error: sumError } = await supabase
+                        .from('student_packages')
+                        .update({
+                            lessons_total: oldPkg.lessons_total + data.lessons_total,
+                            status: 'active'
+                        })
+                        .eq('id', old_id);
+
+                    if (sumError) throw sumError;
+
+                    // 3. Mark the NEW package as merged/completed
+                    await supabase
+                        .from('student_packages')
+                        .update({ status: 'completed' })
+                        .eq('id', id);
+                }
+            } else if (action === 'switch' && old_id) {
+                // 1. Mark OLD as completed
+                const { error: oldError } = await supabase
+                    .from('student_packages')
+                    .update({ status: 'completed', completed_at: new Date().toISOString() })
+                    .eq('id', old_id);
+                if (oldError) throw oldError;
+
+                // 2. Mark NEW as active
+                const { error: newError } = await supabase
+                    .from('student_packages')
+                    .update({ status: 'active' })
+                    .eq('id', id);
+                if (newError) throw newError;
+            } else {
+                // Standard activation
+                const { error } = await supabase
+                    .from('student_packages')
+                    .update({ status: 'active' })
+                    .eq('id', id);
+                if (error) throw error;
+            }
+        }
+
+        Alert.alert(
+            'Pagamento Confirmado! 🎉',
+            type === 'booking'
+                ? 'Seu instrutor foi notificado e logo confirmará a aula.'
+                : 'Seu pacote já está disponível para uso.',
+            [{ text: 'OK', onPress: () => router.push(type === 'booking' ? '/(tabs)/aulas' : `/connect/instrutor/${data.instructor_id}`) }]
+        );
     };
 
     const formatPrice = (price: number) => {
@@ -198,6 +301,7 @@ export default function CheckoutScreen() {
             <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
                 <View style={styles.loadingContainer}>
                     <ActivityIndicator size="large" color={theme.primary} />
+                    <Text style={[styles.loadingText, { color: theme.textMuted }]}>Preparando pagamento...</Text>
                 </View>
             </SafeAreaView>
         );
@@ -206,6 +310,7 @@ export default function CheckoutScreen() {
     if (!data) return null;
 
     const totalAmount = type === 'booking' ? data.price : data.total_paid;
+    const hasStripeAccount = data.instructor?.stripe_account_id;
 
     return (
         <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]} edges={['top']}>
@@ -280,7 +385,9 @@ export default function CheckoutScreen() {
                     </View>
                     <View style={styles.methodInfo}>
                         <Text style={[styles.methodTitle, { color: theme.text }]}>Cartão de Crédito</Text>
-                        <Text style={[styles.methodSubtitle, { color: theme.textMuted }]}>Até 12x no cartão</Text>
+                        <Text style={[styles.methodSubtitle, { color: theme.textMuted }]}>
+                            {paymentReady && hasStripeAccount ? 'Via Stripe' : 'Até 12x no cartão'}
+                        </Text>
                     </View>
                     <Ionicons name="checkmark-circle" size={24} color={theme.primary} />
                 </TouchableOpacity>
@@ -295,6 +402,15 @@ export default function CheckoutScreen() {
                     </View>
                     <View style={styles.comingSoon}><Text style={styles.comingSoonText}>EM BREVE</Text></View>
                 </TouchableOpacity>
+
+                {!hasStripeAccount && (
+                    <View style={[styles.warningBox, { backgroundColor: '#fef3c7' }]}>
+                        <Ionicons name="warning" size={20} color="#d97706" />
+                        <Text style={styles.warningText}>
+                            Este instrutor ainda não configurou o recebimento de pagamentos. Você pode prosseguir com pagamento simulado para teste.
+                        </Text>
+                    </View>
+                )}
 
                 <View style={styles.securityNote}>
                     <Ionicons name="shield-checkmark" size={16} color="#10b981" />
@@ -325,7 +441,8 @@ export default function CheckoutScreen() {
 
 const styles = StyleSheet.create({
     container: { flex: 1 },
-    loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+    loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', gap: 16 },
+    loadingText: { fontSize: 14, fontWeight: '500' },
     header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingVertical: 12 },
     backButton: { width: 44, height: 44, borderRadius: 22, justifyContent: 'center', alignItems: 'center' },
     headerTitle: { fontSize: 20, fontWeight: '800' },
@@ -359,6 +476,9 @@ const styles = StyleSheet.create({
     methodSubtitle: { fontSize: 13, fontWeight: '500' },
     comingSoon: { backgroundColor: '#f3f4f6', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 },
     comingSoonText: { fontSize: 10, fontWeight: '800', color: '#6b7280' },
+
+    warningBox: { flexDirection: 'row', alignItems: 'flex-start', gap: 12, padding: 16, borderRadius: 12, marginTop: 16 },
+    warningText: { flex: 1, fontSize: 13, color: '#92400e', lineHeight: 18 },
 
     securityNote: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 24 },
     securityText: { fontSize: 13, color: '#10b981', fontWeight: '600' },

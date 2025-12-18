@@ -102,7 +102,6 @@ export default function StudentDetailsScreen() {
             if (pkg) {
                 setActivePackage({
                     ...pkg,
-                    created_at: pkg.created_at || new Date().toISOString(),
                     package_name: (pkg.package as any)?.name || 'Pacote Personalizado'
                 } as any);
             } else {
