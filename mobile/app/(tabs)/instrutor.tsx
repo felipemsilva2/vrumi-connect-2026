@@ -6,10 +6,7 @@ import {
     TouchableOpacity,
     ScrollView,
     RefreshControl,
-    Image,
     Alert,
-    StatusBar,
-    Dimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -18,23 +15,20 @@ import { useTheme } from '../../contexts/ThemeContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../src/lib/supabase';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
-
-interface DashboardStats {
-    totalLessons: number;
-    pendingLessons: number;
+interface Stats {
     totalEarnings: number;
+    todayLessons: number;
+    totalLessons: number;
     rating: number;
-    reviewCount: number;
 }
 
-interface UpcomingLesson {
+interface NextLesson {
     id: string;
     student_name: string;
     scheduled_date: string;
     scheduled_time: string;
-    status: string;
     price: number;
+    isToday: boolean;
 }
 
 export default function InstrutorTab() {
@@ -42,72 +36,79 @@ export default function InstrutorTab() {
     const { user } = useAuth();
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
-    const [instructorInfo, setInstructorInfo] = useState<any>(null);
-    const [stats, setStats] = useState<DashboardStats>({
-        totalLessons: 0,
-        pendingLessons: 0,
-        totalEarnings: 0,
-        rating: 0,
-        reviewCount: 0,
-    });
-    const [upcomingLessons, setUpcomingLessons] = useState<UpcomingLesson[]>([]);
+    const [instructorId, setInstructorId] = useState<string | null>(null);
+    const [stats, setStats] = useState<Stats>({ totalEarnings: 0, todayLessons: 0, totalLessons: 0, rating: 0 });
+    const [nextLesson, setNextLesson] = useState<NextLesson | null>(null);
 
     const fetchData = useCallback(async () => {
         if (!user?.id) return;
 
         try {
-            // Get instructor info
-            const { data: instructor } = await supabase
+            // Get instructor
+            const { data: instructor, error } = await supabase
                 .from('instructors')
-                .select('*')
+                .select('id, total_lessons, average_rating')
                 .eq('user_id', user.id)
                 .single();
 
-            if (!instructor) {
-                router.replace('/(tabs)/perfil');
+            if (error || !instructor) {
+                router.replace('/connect/cadastro-instrutor');
                 return;
             }
+            setInstructorId(instructor.id);
 
-            setInstructorInfo(instructor);
+            const today = new Date().toISOString().split('T')[0];
 
-            // Get stats
-            const { data: bookings } = await supabase
+            // Get earnings
+            const { data: completedBookings } = await supabase
                 .from('bookings')
-                .select('id, status, price, scheduled_date, scheduled_time, student:profiles(full_name)')
-                .eq('instructor_id', instructor.id);
+                .select('price')
+                .eq('instructor_id', instructor.id)
+                .eq('status', 'completed');
 
-            const completed = bookings?.filter(b => b.status === 'completed') || [];
-            const pending = bookings?.filter(b => ['pending', 'confirmed'].includes(b.status || '')) || [];
-            const totalEarnings = completed.reduce((sum, b) => sum + (b.price || 0), 0);
+            const totalEarnings = completedBookings?.reduce((acc, b) => acc + (b.price * 0.85), 0) || 0;
+
+            // Get today's lessons count
+            const { count: todayCount } = await supabase
+                .from('bookings')
+                .select('id', { count: 'exact', head: true })
+                .eq('instructor_id', instructor.id)
+                .eq('scheduled_date', today)
+                .in('status', ['confirmed', 'pending']);
+
+            // Get next lesson
+            const { data: upcomingBookings } = await supabase
+                .from('bookings')
+                .select(`id, scheduled_date, scheduled_time, price, student:profiles(full_name)`)
+                .eq('instructor_id', instructor.id)
+                .gte('scheduled_date', today)
+                .in('status', ['confirmed', 'pending'])
+                .order('scheduled_date', { ascending: true })
+                .order('scheduled_time', { ascending: true })
+                .limit(1);
 
             setStats({
-                totalLessons: completed.length,
-                pendingLessons: pending.length,
                 totalEarnings,
-                rating: instructor.average_rating || 0,
-                reviewCount: instructor.total_reviews || 0,
+                todayLessons: todayCount || 0,
+                totalLessons: instructor.total_lessons || 0,
+                rating: instructor.average_rating || 5.0,
             });
 
-            // Get upcoming lessons
-            const now = new Date().toISOString().split('T')[0];
-            const upcoming = bookings
-                ?.filter(b =>
-                    ['pending', 'confirmed'].includes(b.status || '') &&
-                    b.scheduled_date >= now
-                )
-                .slice(0, 5)
-                .map(b => ({
+            if (upcomingBookings && upcomingBookings.length > 0) {
+                const b = upcomingBookings[0];
+                setNextLesson({
                     id: b.id,
                     student_name: (b.student as any)?.full_name || 'Aluno',
                     scheduled_date: b.scheduled_date,
                     scheduled_time: b.scheduled_time,
-                    status: b.status || 'pending',
                     price: b.price,
-                })) || [];
-
-            setUpcomingLessons(upcoming);
+                    isToday: b.scheduled_date === today,
+                });
+            } else {
+                setNextLesson(null);
+            }
         } catch (error) {
-            console.error('Error fetching data:', error);
+            console.error('Error:', error);
         } finally {
             setLoading(false);
             setRefreshing(false);
@@ -118,441 +119,311 @@ export default function InstrutorTab() {
         fetchData();
     }, [fetchData]);
 
-    const onRefresh = () => {
-        setRefreshing(true);
-        fetchData();
-    };
-
     const formatCurrency = (value: number) => {
-        return new Intl.NumberFormat('pt-BR', {
-            style: 'currency',
-            currency: 'BRL',
-        }).format(value);
+        return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
     };
 
-    const formatDate = (date: string) => {
-        return new Date(date + 'T00:00:00').toLocaleDateString('pt-BR', {
-            weekday: 'short',
-            day: 'numeric',
-            month: 'short',
-        });
+    const formatDate = (date: string, time: string) => {
+        const d = new Date(date + 'T00:00:00');
+        const today = new Date();
+        const isToday = d.toDateString() === today.toDateString();
+
+        if (isToday) return `Hoje às ${time.substring(0, 5)}`;
+        return d.toLocaleDateString('pt-BR', { weekday: 'short', day: 'numeric', month: 'short' }) + ` às ${time.substring(0, 5)}`;
     };
 
-    const getStatusColor = (status: string) => {
-        switch (status) {
-            case 'confirmed': return '#10b981';
-            case 'pending': return '#f59e0b';
-            default: return '#6b7280';
-        }
-    };
+    const actions = [
+        { icon: 'calendar', label: 'Agenda', color: '#7e22ce', bg: '#f3e8ff', route: '/connect/agenda' },
+        { icon: 'wallet', label: 'Financeiro', color: '#4d7c0f', bg: '#ecfccb', route: '/connect/financeiro' },
+        { icon: 'time', label: 'Horários', color: '#0891b2', bg: '#cffafe', route: '/connect/horarios' },
+        { icon: 'pricetag', label: 'Preços', color: '#166534', bg: '#dcfce7', route: '/connect/precos-pacotes' },
+    ];
+
+    if (loading) {
+        return (
+            <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
+                <View style={styles.loadingContainer}>
+                    <Text style={{ color: theme.textMuted }}>Carregando...</Text>
+                </View>
+            </SafeAreaView>
+        );
+    }
 
     return (
-        <View style={[styles.container, { backgroundColor: theme.background }]}>
-            <StatusBar barStyle="light-content" backgroundColor="#064e3b" />
-
-            {/* Header */}
-            <View style={styles.headerSection}>
-                <SafeAreaView edges={['top']} style={styles.safeHeader}>
-                    <View style={styles.headerRow}>
-                        <View style={styles.headerInfo}>
-                            <Text style={styles.headerTitle}>Painel do Instrutor</Text>
-                            <Text style={styles.headerSubtitle}>
-                                Olá, {instructorInfo?.full_name?.split(' ')[0] || 'Instrutor'}!
-                            </Text>
-                        </View>
-                        <TouchableOpacity
-                            style={styles.settingsBtn}
-                            onPress={() => router.push('/connect/documentos')}
-                        >
-                            <Ionicons name="settings-outline" size={22} color="#fff" />
-                        </TouchableOpacity>
-                    </View>
-                </SafeAreaView>
-            </View>
-
+        <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]} edges={['top']}>
             <ScrollView
                 style={styles.scrollView}
                 contentContainerStyle={styles.scrollContent}
-                showsVerticalScrollIndicator={false}
-                refreshControl={
-                    <RefreshControl
-                        refreshing={refreshing}
-                        onRefresh={onRefresh}
-                        tintColor="#10b981"
-                    />
-                }
+                refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); fetchData(); }} tintColor={theme.primary} />}
             >
-                {/* Stats Cards */}
-                <View style={styles.statsGrid}>
-                    <View style={[styles.statCard, { backgroundColor: theme.card, borderColor: theme.cardBorder, borderWidth: 1 }]}>
-                        <View style={[styles.statIcon, { backgroundColor: isDark ? theme.primaryLight : '#ecfdf5' }]}>
-                            <Ionicons name="cash" size={20} color="#10b981" />
+                {/* Header Stats */}
+                <View style={[styles.headerCard, { backgroundColor: theme.primary }]}>
+                    <View style={styles.headerRow}>
+                        <View>
+                            <Text style={styles.headerLabel}>Ganhos este mês</Text>
+                            <Text style={styles.headerValue}>{formatCurrency(stats.totalEarnings)}</Text>
                         </View>
-                        <Text style={[styles.statValue, { color: theme.text }]}>{formatCurrency(stats.totalEarnings)}</Text>
-                        <Text style={[styles.statLabel, { color: theme.textSecondary }]}>Total Ganho</Text>
+                        <TouchableOpacity
+                            style={styles.settingsButton}
+                            onPress={() => router.push('/connect/cadastro-instrutor')}
+                        >
+                            <Ionicons name="settings-outline" size={24} color="rgba(255,255,255,0.9)" />
+                        </TouchableOpacity>
                     </View>
-                    <View style={[styles.statCard, { backgroundColor: theme.card, borderColor: theme.cardBorder, borderWidth: 1 }]}>
-                        <View style={[styles.statIcon, { backgroundColor: isDark ? theme.warningLight : '#fef3c7' }]}>
-                            <Ionicons name="calendar" size={20} color="#f59e0b" />
+                    <View style={styles.headerDivider} />
+                    <View style={styles.headerStats}>
+                        <View style={styles.headerStat}>
+                            <Text style={styles.headerStatValue}>{stats.todayLessons}</Text>
+                            <Text style={styles.headerStatLabel}>Aulas hoje</Text>
                         </View>
-                        <Text style={[styles.statValue, { color: theme.text }]}>{stats.pendingLessons}</Text>
-                        <Text style={[styles.statLabel, { color: theme.textSecondary }]}>Aulas Pendentes</Text>
-                    </View>
-                    <View style={[styles.statCard, { backgroundColor: theme.card, borderColor: theme.cardBorder, borderWidth: 1 }]}>
-                        <View style={[styles.statIcon, { backgroundColor: isDark ? theme.infoLight : '#dbeafe' }]}>
-                            <Ionicons name="checkmark-circle" size={20} color="#3b82f6" />
+                        <View style={styles.headerStatSeparator} />
+                        <View style={styles.headerStat}>
+                            <Text style={styles.headerStatValue}>{stats.totalLessons}</Text>
+                            <Text style={styles.headerStatLabel}>Total de aulas</Text>
                         </View>
-                        <Text style={[styles.statValue, { color: theme.text }]}>{stats.totalLessons}</Text>
-                        <Text style={[styles.statLabel, { color: theme.textSecondary }]}>Aulas Concluídas</Text>
-                    </View>
-                    <View style={[styles.statCard, { backgroundColor: theme.card, borderColor: theme.cardBorder, borderWidth: 1 }]}>
-                        <View style={[styles.statIcon, { backgroundColor: isDark ? theme.warningLight : '#fef3c7' }]}>
-                            <Ionicons name="star" size={20} color="#f59e0b" />
+                        <View style={styles.headerStatSeparator} />
+                        <View style={styles.headerStat}>
+                            <Text style={styles.headerStatValue}>⭐ {stats.rating.toFixed(1)}</Text>
+                            <Text style={styles.headerStatLabel}>Avaliação</Text>
                         </View>
-                        <Text style={[styles.statValue, { color: theme.text }]}>{stats.rating.toFixed(1)}</Text>
-                        <Text style={[styles.statLabel, { color: theme.textSecondary }]}>{stats.reviewCount} avaliações</Text>
                     </View>
                 </View>
 
-                {/* Quick Actions */}
-                {/* Quick Actions */}
-                <Text style={[styles.sectionTitle, { color: theme.text }]}>Acesso Rápido</Text>
-                <View style={styles.actionsGrid}>
-                    <TouchableOpacity
-                        style={styles.actionCardWrapper}
-                        onPress={() => router.push('/connect/agenda')}
-                    >
-                        <View style={[styles.actionCard, { backgroundColor: theme.card, borderColor: theme.cardBorder, borderWidth: 1 }]}>
-                            <View style={[styles.actionIcon, { backgroundColor: '#f3e8ff' }]}>
-                                <Ionicons name="calendar" size={24} color="#7e22ce" />
-                            </View>
-                            <Text style={[styles.actionLabel, { color: theme.text }]}>Agenda</Text>
-                        </View>
-                    </TouchableOpacity>
+                {/* Next Lesson Card */}
+                <View style={[styles.nextLessonCard, { backgroundColor: theme.card }]}>
+                    <Text style={[styles.sectionTitle, { color: theme.text }]}>📚 Próxima Aula</Text>
 
-                    <TouchableOpacity
-                        style={styles.actionCardWrapper}
-                        onPress={() => router.push('/connect/financeiro')}
-                    >
-                        <View style={[styles.actionCard, { backgroundColor: theme.card, borderColor: theme.cardBorder, borderWidth: 1 }]}>
-                            <View style={[styles.actionIcon, { backgroundColor: '#ecfccb' }]}>
-                                <Ionicons name="wallet" size={24} color="#4d7c0f" />
+                    {nextLesson ? (
+                        <TouchableOpacity
+                            style={[styles.lessonContent, { backgroundColor: nextLesson.isToday ? '#dcfce7' : theme.background }]}
+                            onPress={() => router.push('/connect/agenda')}
+                        >
+                            <View style={styles.lessonTime}>
+                                <Ionicons name="time" size={20} color={nextLesson.isToday ? '#166534' : theme.primary} />
+                                <Text style={[styles.lessonTimeText, { color: nextLesson.isToday ? '#166534' : theme.text }]}>
+                                    {formatDate(nextLesson.scheduled_date, nextLesson.scheduled_time)}
+                                </Text>
                             </View>
-                            <Text style={[styles.actionLabel, { color: theme.text }]}>Financeiro</Text>
-                        </View>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                        style={styles.actionCardWrapper}
-                        onPress={() => router.push('/connect/horarios')}
-                    >
-                        <View style={[styles.actionCard, { backgroundColor: theme.card, borderColor: theme.cardBorder, borderWidth: 1 }]}>
-                            <View style={[styles.actionIcon, { backgroundColor: isDark ? theme.primaryLight : '#ecfdf5' }]}>
-                                <Ionicons name="time" size={24} color="#10b981" />
+                            <View style={styles.lessonDetails}>
+                                <Text style={[styles.studentName, { color: nextLesson.isToday ? '#166534' : theme.text }]}>
+                                    {nextLesson.student_name}
+                                </Text>
+                                <Text style={[styles.lessonPrice, { color: theme.textMuted }]}>
+                                    {formatCurrency(nextLesson.price)}
+                                </Text>
                             </View>
-                            <Text style={[styles.actionLabel, { color: theme.textSecondary }]}>Horários</Text>
-                        </View>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                        style={styles.actionCardWrapper}
-                        onPress={() => router.push('/connect/alunos')}
-                    >
-                        <View style={[styles.actionCard, { backgroundColor: theme.card, borderColor: theme.cardBorder, borderWidth: 1 }]}>
-                            <View style={[styles.actionIcon, { backgroundColor: '#ffedd5' }]}>
-                                <Ionicons name="people" size={24} color="#c2410c" />
+                            <View style={styles.lessonArrow}>
+                                <Ionicons name="chevron-forward" size={20} color={theme.textMuted} />
                             </View>
-                            <Text style={[styles.actionLabel, { color: theme.text }]}>Alunos</Text>
-                        </View>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                        style={styles.actionCardWrapper}
-                        onPress={() => router.push('/connect/documentos')}
-                    >
-                        <View style={[styles.actionCard, { backgroundColor: theme.card, borderColor: theme.cardBorder, borderWidth: 1 }]}>
-                            <View style={[styles.actionIcon, { backgroundColor: '#fce7f3' }]}>
-                                <Ionicons name="shield-checkmark" size={24} color="#be185d" />
-                            </View>
-                            <Text style={[styles.actionLabel, { color: theme.text }]}>Documentos</Text>
-                        </View>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                        style={styles.actionCardWrapper}
-                        onPress={() => router.push('/connect/cadastro-instrutor')}
-                    >
-                        <View style={[styles.actionCard, { backgroundColor: theme.card, borderColor: theme.cardBorder, borderWidth: 1 }]}>
-                            <View style={[styles.actionIcon, { backgroundColor: isDark ? theme.infoLight : '#e0f2fe' }]}>
-                                <Ionicons name="person" size={24} color="#0284c7" />
-                            </View>
-                            <Text style={[styles.actionLabel, { color: theme.textSecondary }]}>Editar Perfil</Text>
-                        </View>
-                    </TouchableOpacity>
-                </View>
-
-                {/* Upcoming Lessons */}
-                <View style={styles.lessonsHeader}>
-                    <Text style={[styles.sectionTitle, { color: theme.text }]}>Próximas Aulas</Text>
-                    {upcomingLessons.length > 0 && (
-                        <View style={styles.lessonCountBadge}>
-                            <Text style={styles.lessonCountText}>{upcomingLessons.length}</Text>
+                        </TouchableOpacity>
+                    ) : (
+                        <View style={[styles.emptyLesson, { backgroundColor: theme.background }]}>
+                            <Ionicons name="calendar-outline" size={32} color={theme.textMuted} />
+                            <Text style={[styles.emptyText, { color: theme.textMuted }]}>
+                                Nenhuma aula agendada
+                            </Text>
                         </View>
                     )}
                 </View>
 
-                {upcomingLessons.length === 0 ? (
-                    <View style={[styles.emptyState, { backgroundColor: theme.card }]}>
-                        <Ionicons name="calendar-outline" size={48} color={theme.textMuted} />
-                        <Text style={[styles.emptyTitle, { color: theme.text }]}>Nenhuma aula agendada</Text>
-                        <Text style={[styles.emptySubtitle, { color: theme.textMuted }]}>
-                            Novas aulas aparecerão aqui quando alunos agendarem
-                        </Text>
-                    </View>
-                ) : (
-                    <View style={styles.lessonsList}>
-                        {upcomingLessons.map((lesson) => (
-                            <TouchableOpacity
-                                key={lesson.id}
-                                style={[styles.lessonCard, { backgroundColor: theme.card, borderColor: theme.cardBorder, borderWidth: 1 }]}
-                                onPress={() => router.push(`/connect/aula/${lesson.id}`)}
-                            >
-                                <View style={styles.lessonInfo}>
-                                    <Text style={[styles.lessonStudent, { color: theme.text }]}>{lesson.student_name}</Text>
-                                    <View style={styles.lessonMeta}>
-                                        <Ionicons name="calendar" size={14} color={theme.textSecondary} />
-                                        <Text style={[styles.lessonMetaText, { color: theme.textSecondary }]}>
-                                            {formatDate(lesson.scheduled_date)} às {lesson.scheduled_time.slice(0, 5)}
-                                        </Text>
-                                    </View>
-                                </View>
-                                <View style={styles.lessonRight}>
-                                    <View style={[styles.statusDot, { backgroundColor: getStatusColor(lesson.status) }]} />
-                                    <Text style={styles.lessonPrice}>{formatCurrency(lesson.price)}</Text>
-                                </View>
-                            </TouchableOpacity>
-                        ))}
-                    </View>
-                )}
+                {/* Quick Actions */}
+                <Text style={[styles.sectionTitle, { color: theme.text, marginTop: 24 }]}>⚡ Acesso Rápido</Text>
+                <View style={styles.actionsGrid}>
+                    {actions.map((action, idx) => (
+                        <TouchableOpacity
+                            key={idx}
+                            style={[styles.actionCard, { backgroundColor: theme.card }]}
+                            onPress={() => router.push(action.route as any)}
+                        >
+                            <View style={[styles.actionIcon, { backgroundColor: action.bg }]}>
+                                <Ionicons name={action.icon as any} size={24} color={action.color} />
+                            </View>
+                            <Text style={[styles.actionLabel, { color: theme.text }]}>{action.label}</Text>
+                        </TouchableOpacity>
+                    ))}
+                </View>
 
-                <View style={{ height: 100 }} />
+                {/* More Options */}
+                <View style={[styles.moreOptions, { backgroundColor: theme.card }]}>
+                    <TouchableOpacity style={styles.moreOption} onPress={() => router.push('/connect/alunos')}>
+                        <Ionicons name="people-outline" size={20} color={theme.textMuted} />
+                        <Text style={[styles.moreOptionText, { color: theme.text }]}>Meus Alunos</Text>
+                        <Ionicons name="chevron-forward" size={18} color={theme.textMuted} />
+                    </TouchableOpacity>
+                    <View style={[styles.optionDivider, { backgroundColor: theme.cardBorder }]} />
+                    <TouchableOpacity style={styles.moreOption} onPress={() => router.push('/connect/documentos')}>
+                        <Ionicons name="document-outline" size={20} color={theme.textMuted} />
+                        <Text style={[styles.moreOptionText, { color: theme.text }]}>Documentos</Text>
+                        <Ionicons name="chevron-forward" size={18} color={theme.textMuted} />
+                    </TouchableOpacity>
+                    <View style={[styles.optionDivider, { backgroundColor: theme.cardBorder }]} />
+                    <TouchableOpacity style={styles.moreOption} onPress={() => instructorId && router.push(`/connect/instrutor/${instructorId}`)}>
+                        <Ionicons name="eye-outline" size={20} color={theme.textMuted} />
+                        <Text style={[styles.moreOptionText, { color: theme.text }]}>Ver Meu Perfil Público</Text>
+                        <Ionicons name="chevron-forward" size={18} color={theme.textMuted} />
+                    </TouchableOpacity>
+                </View>
             </ScrollView>
-        </View>
+        </SafeAreaView>
     );
 }
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: '#f9fafb',
-    },
+    container: { flex: 1 },
+    loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+    scrollView: { flex: 1 },
+    scrollContent: { padding: 20, paddingBottom: 100 },
+
     // Header
-    headerSection: {
-        backgroundColor: '#064e3b',
-        paddingBottom: 20,
-        borderBottomLeftRadius: 24,
-        borderBottomRightRadius: 24,
-    },
-    safeHeader: {
-        paddingHorizontal: 20,
+    headerCard: {
+        borderRadius: 20,
+        padding: 20,
+        marginBottom: 20,
     },
     headerRow: {
         flexDirection: 'row',
-        alignItems: 'center',
         justifyContent: 'space-between',
-        marginTop: 8,
+        alignItems: 'flex-start',
     },
-    headerInfo: {
-        flex: 1,
+    headerLabel: {
+        color: 'rgba(255,255,255,0.8)',
+        fontSize: 13,
     },
-    headerTitle: {
-        fontSize: 24,
-        fontWeight: '800',
+    headerValue: {
         color: '#fff',
+        fontSize: 32,
+        fontWeight: '800',
+        marginTop: 4,
     },
-    headerSubtitle: {
-        fontSize: 14,
-        color: 'rgba(255,255,255,0.7)',
-        marginTop: 2,
-    },
-    settingsBtn: {
-        width: 44,
-        height: 44,
-        borderRadius: 22,
+    settingsButton: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
         backgroundColor: 'rgba(255,255,255,0.15)',
         justifyContent: 'center',
         alignItems: 'center',
     },
-    // Content
-    scrollView: {
-        flex: 1,
+    headerDivider: {
+        height: 1,
+        backgroundColor: 'rgba(255,255,255,0.2)',
+        marginVertical: 16,
     },
-    scrollContent: {
-        paddingHorizontal: 20,
-        paddingTop: 20,
-    },
-    // Stats Grid
-    statsGrid: {
+    headerStats: {
         flexDirection: 'row',
-        flexWrap: 'wrap',
-        gap: 12,
-        marginBottom: 24,
+        justifyContent: 'space-around',
     },
-    statCard: {
-        width: (SCREEN_WIDTH - 52) / 2,
-        backgroundColor: '#fff',
-        borderRadius: 16,
-        padding: 16,
+    headerStat: {
         alignItems: 'center',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.05,
-        shadowRadius: 8,
-        elevation: 2,
     },
-    statIcon: {
-        width: 40,
-        height: 40,
-        borderRadius: 12,
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginBottom: 8,
-    },
-    statValue: {
-        fontSize: 20,
-        fontWeight: '800',
-        color: '#1f2937',
-    },
-    statLabel: {
-        fontSize: 12,
-        color: '#6b7280',
-        marginTop: 2,
-    },
-    // Section
-    sectionTitle: {
+    headerStatValue: {
+        color: '#fff',
         fontSize: 18,
         fontWeight: '700',
-        color: '#1f2937',
+    },
+    headerStatLabel: {
+        color: 'rgba(255,255,255,0.7)',
+        fontSize: 11,
+        marginTop: 2,
+    },
+    headerStatSeparator: {
+        width: 1,
+        backgroundColor: 'rgba(255,255,255,0.2)',
+    },
+
+    // Next Lesson
+    nextLessonCard: {
+        borderRadius: 16,
+        padding: 16,
+    },
+    sectionTitle: {
+        fontSize: 16,
+        fontWeight: '600',
         marginBottom: 12,
     },
+    lessonContent: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: 14,
+        borderRadius: 12,
+    },
+    lessonTime: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+    },
+    lessonTimeText: {
+        fontSize: 14,
+        fontWeight: '600',
+    },
+    lessonDetails: {
+        flex: 1,
+        marginLeft: 16,
+    },
+    studentName: {
+        fontSize: 15,
+        fontWeight: '600',
+    },
+    lessonPrice: {
+        fontSize: 13,
+        marginTop: 2,
+    },
+    lessonArrow: {
+        marginLeft: 8,
+    },
+    emptyLesson: {
+        alignItems: 'center',
+        padding: 24,
+        borderRadius: 12,
+        gap: 8,
+    },
+    emptyText: {
+        fontSize: 14,
+    },
+
     // Actions
-    // Actions Grid
     actionsGrid: {
         flexDirection: 'row',
         flexWrap: 'wrap',
         gap: 12,
-        marginBottom: 24,
-    },
-    actionCardWrapper: {
-        width: '48%', // 2 columns
+        marginTop: 12,
     },
     actionCard: {
-        borderRadius: 14,
+        width: '47%',
         padding: 16,
+        borderRadius: 14,
         alignItems: 'center',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.05,
-        shadowRadius: 4,
-        elevation: 1,
-        width: '100%',
     },
     actionIcon: {
         width: 48,
         height: 48,
-        borderRadius: 24,
+        borderRadius: 14,
         justifyContent: 'center',
         alignItems: 'center',
-        marginBottom: 8,
+        marginBottom: 10,
     },
     actionLabel: {
-        fontSize: 12,
-        fontWeight: '600',
-        textAlign: 'center',
-    },
-    // Lessons
-    lessonsHeader: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 8,
-        marginBottom: 12,
-    },
-    lessonCountBadge: {
-        backgroundColor: '#10b981',
-        paddingHorizontal: 8,
-        paddingVertical: 2,
-        borderRadius: 10,
-    },
-    lessonCountText: {
-        color: '#fff',
-        fontSize: 12,
-        fontWeight: '700',
-    },
-    lessonsList: {
-        gap: 10,
-    },
-    lessonCard: {
-        backgroundColor: '#fff',
-        borderRadius: 14,
-        padding: 14,
-        flexDirection: 'row',
-        alignItems: 'center',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.05,
-        shadowRadius: 4,
-        elevation: 1,
-    },
-    lessonInfo: {
-        flex: 1,
-    },
-    lessonStudent: {
-        fontSize: 15,
-        fontWeight: '600',
-        color: '#1f2937',
-        marginBottom: 4,
-    },
-    lessonMeta: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 4,
-    },
-    lessonMetaText: {
-        fontSize: 13,
-        color: '#6b7280',
-    },
-    lessonRight: {
-        alignItems: 'flex-end',
-    },
-    statusDot: {
-        width: 8,
-        height: 8,
-        borderRadius: 4,
-        marginBottom: 4,
-    },
-    lessonPrice: {
         fontSize: 14,
-        fontWeight: '700',
-        color: '#10b981',
-    },
-    // Empty State
-    emptyState: {
-        alignItems: 'center',
-        paddingVertical: 40,
-        backgroundColor: '#fff',
-        borderRadius: 16,
-    },
-    emptyTitle: {
-        fontSize: 16,
         fontWeight: '600',
-        color: '#1f2937',
-        marginTop: 12,
     },
-    emptySubtitle: {
-        fontSize: 13,
-        color: '#9ca3af',
-        textAlign: 'center',
-        marginTop: 4,
-        paddingHorizontal: 20,
+
+    // More Options
+    moreOptions: {
+        borderRadius: 14,
+        marginTop: 24,
+        overflow: 'hidden',
+    },
+    moreOption: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: 16,
+        gap: 12,
+    },
+    moreOptionText: {
+        flex: 1,
+        fontSize: 15,
+    },
+    optionDivider: {
+        height: 1,
+        marginLeft: 48,
     },
 });

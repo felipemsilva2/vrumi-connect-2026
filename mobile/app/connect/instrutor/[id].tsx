@@ -14,6 +14,7 @@ import {
     KeyboardAvoidingView,
     Platform,
     Alert,
+    StatusBar,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -96,7 +97,6 @@ export default function InstructorProfileScreen() {
 
     const fetchInstructorData = async () => {
         try {
-            // Fetch instructor
             const { data: instructorData, error: instructorError } = await supabase
                 .from('instructors')
                 .select('*')
@@ -106,7 +106,6 @@ export default function InstructorProfileScreen() {
             if (instructorError) throw instructorError;
             setInstructor(instructorData as Instructor);
 
-            // Fetch reviews
             const { data: reviewsData } = await supabase
                 .from('reviews')
                 .select('id, rating, comment, created_at, student_id')
@@ -116,7 +115,6 @@ export default function InstructorProfileScreen() {
 
             setReviews((reviewsData || []) as Review[]);
 
-            // Fetch availability
             const { data: availabilityData } = await supabase
                 .from('instructor_availability')
                 .select('day_of_week, start_time, end_time')
@@ -125,7 +123,6 @@ export default function InstructorProfileScreen() {
 
             setAvailability(availabilityData || []);
 
-            // Fetch packages
             const { data: packagesData } = await supabase
                 .from('lesson_packages')
                 .select('*')
@@ -141,6 +138,42 @@ export default function InstructorProfileScreen() {
         }
     };
 
+    const handleOpenChat = async () => {
+        if (!user || !instructor) return;
+
+        try {
+            // Find existing room
+            const { data: room } = await supabase
+                .from('connect_chat_rooms')
+                .select('id')
+                .eq('student_id', user.id)
+                .eq('instructor_id', instructor.id)
+                .single();
+
+            if (room) {
+                router.push(`/connect/chat/${room.id}`);
+                return;
+            }
+
+            // Create new room if not exists
+            const { data: newRoom, error: createError } = await supabase
+                .from('connect_chat_rooms')
+                .insert({
+                    student_id: user.id,
+                    instructor_id: instructor.id
+                })
+                .select()
+                .single();
+
+            if (createError) throw createError;
+            if (newRoom) router.push(`/connect/chat/${newRoom.id}`);
+
+        } catch (error) {
+            console.error('Error opening chat:', error);
+            Alert.alert('Erro', 'Não foi possível iniciar a conversa.');
+        }
+    };
+
     const formatPrice = (price: number) => {
         return new Intl.NumberFormat('pt-BR', {
             style: 'currency',
@@ -150,20 +183,6 @@ export default function InstructorProfileScreen() {
 
     const formatTime = (time: string) => {
         return time.substring(0, 5);
-    };
-
-    const handleContact = () => {
-        if (instructor?.phone) {
-            const phoneNumber = instructor.phone.replace(/\D/g, '');
-            Linking.openURL(`tel:${phoneNumber}`);
-        }
-    };
-
-    const handleWhatsApp = () => {
-        if (instructor?.phone) {
-            const phoneNumber = instructor.phone.replace(/\D/g, '');
-            Linking.openURL(`https://wa.me/55${phoneNumber}`);
-        }
     };
 
     const handleSubmitReview = async () => {
@@ -180,7 +199,6 @@ export default function InstructorProfileScreen() {
 
         setSubmittingReview(true);
         try {
-            // First, find a valid booking for this student and instructor
             const { data: bookingData, error: bookingError } = await supabase
                 .from('bookings')
                 .select('id')
@@ -199,7 +217,7 @@ export default function InstructorProfileScreen() {
             const { error } = await supabase.from('reviews').insert({
                 instructor_id: id,
                 student_id: user.id,
-                booking_id: bookingData.id, // Linked to the booking
+                booking_id: bookingData.id,
                 rating: newRating,
                 comment: newComment,
                 created_at: new Date().toISOString(),
@@ -211,7 +229,7 @@ export default function InstructorProfileScreen() {
             setShowReviewModal(false);
             setNewComment('');
             setNewRating(5);
-            fetchInstructorData(); // Refresh reviews
+            fetchInstructorData();
         } catch (error: any) {
             console.error('Error submitting review:', error);
             Alert.alert('Erro', 'Não foi possível enviar a avaliação.');
@@ -242,7 +260,6 @@ export default function InstructorProfileScreen() {
 
         setPurchasingPackage(true);
         try {
-            // Check for existing active package
             const { data: existingPackage } = await supabase
                 .from('student_packages')
                 .select('id')
@@ -296,902 +313,419 @@ export default function InstructorProfileScreen() {
     if (!instructor) {
         return (
             <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]} edges={['top']}>
-                <View style={styles.header}>
-                    <TouchableOpacity
-                        style={[styles.backButton, { backgroundColor: theme.card }]}
-                        onPress={() => router.back()}
-                    >
-                        <Ionicons name="arrow-back" size={22} color={theme.text} />
-                    </TouchableOpacity>
-                </View>
+                <TouchableOpacity style={[styles.backButtonFixed, { backgroundColor: theme.card }]} onPress={() => router.back()}>
+                    <Ionicons name="arrow-back" size={22} color={theme.text} />
+                </TouchableOpacity>
                 <View style={styles.loadingContainer}>
-                    <Text style={[styles.errorText, { color: theme.text }]}>
-                        Instrutor não encontrado
-                    </Text>
+                    <Text style={[styles.errorText, { color: theme.text }]}>Instrutor não encontrado</Text>
                 </View>
             </SafeAreaView>
         );
     }
 
     return (
-        <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]} edges={['top']}>
-            {/* Header */}
-            <View style={styles.header}>
-                <TouchableOpacity
-                    style={[styles.backButton, { backgroundColor: theme.card }]}
-                    onPress={() => router.back()}
-                >
-                    <Ionicons name="arrow-back" size={22} color={theme.text} />
-                </TouchableOpacity>
-                <Text style={[styles.headerTitle, { color: theme.text }]}>Perfil</Text>
-                <View style={{ width: 44 }} />
-            </View>
+        <View style={[styles.container, { backgroundColor: theme.background }]}>
+            <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
 
-            <ScrollView
-                style={styles.scrollView}
-                contentContainerStyle={styles.scrollContent}
-                showsVerticalScrollIndicator={false}
-            >
-                {/* Profile Card */}
-                <View style={[styles.profileCard, { backgroundColor: theme.card }]}>
-                    {/* Photo */}
-                    <View style={styles.photoSection}>
-                        {instructor.photo_url ? (
-                            <Image
-                                source={{ uri: instructor.photo_url }}
-                                style={styles.profilePhoto}
-                                resizeMode="cover"
-                            />
-                        ) : (
-                            <View style={[styles.photoPlaceholder, { backgroundColor: theme.primary }]}>
-                                <Text style={styles.photoInitial}>
-                                    {instructor.full_name.charAt(0).toUpperCase()}
-                                </Text>
-                            </View>
-                        )}
-                        {instructor.is_verified && (
-                            <View style={[styles.verifiedBadge, { backgroundColor: theme.primary }]}>
-                                <Ionicons name="checkmark" size={14} color="#fff" />
-                            </View>
-                        )}
-                    </View>
-
-                    {/* Info */}
-                    <Text style={[styles.instructorName, { color: theme.text }]}>
-                        {instructor.full_name}
-                    </Text>
-
-                    {/* Vehicle Info Badge */}
-                    {(instructor.vehicle_model || instructor.vehicle_transmission) && (
-                        <View style={[styles.vehicleBadgeContainer, { backgroundColor: theme.background }]}>
-                            <Ionicons name="car-sport-outline" size={14} color={theme.primary} />
-                            <Text style={[styles.vehicleText, { color: theme.text }]}>
-                                {instructor.vehicle_model ? instructor.vehicle_model : 'Carro'} • {instructor.vehicle_transmission === 'automatic' ? 'Automático' : 'Manual'}
-                            </Text>
+            <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+                {/* Immersive Header */}
+                <View style={styles.immersiveHeader}>
+                    {instructor.photo_url ? (
+                        <Image source={{ uri: instructor.photo_url }} style={styles.headerImage} />
+                    ) : (
+                        <View style={[styles.headerImagePlaceholder, { backgroundColor: theme.primary }]}>
+                            <Text style={styles.photoInitialLarge}>{instructor.full_name.charAt(0).toUpperCase()}</Text>
                         </View>
                     )}
+                    <View style={styles.headerOverlay} />
 
-                    <View style={styles.locationRow}>
-                        <Ionicons name="location-outline" size={16} color={theme.textMuted} />
-                        <Text style={[styles.locationText, { color: theme.textMuted }]}>
-                            {instructor.city}, {instructor.state}
-                        </Text>
-                    </View>
+                    <TouchableOpacity style={styles.backButtonFixed} onPress={() => router.back()}>
+                        <Ionicons name="arrow-back" size={22} color="#fff" />
+                    </TouchableOpacity>
 
-                    {/* Rating */}
-                    <View style={styles.ratingContainer}>
-                        <View style={styles.starsRow}>
-                            {[1, 2, 3, 4, 5].map((star) => (
-                                <Ionicons
-                                    key={star}
-                                    name={star <= Math.round(instructor.average_rating) ? 'star' : 'star-outline'}
-                                    size={20}
-                                    color="#f59e0b"
-                                />
-                            ))}
+                    <View style={styles.headerInfo}>
+                        <View style={styles.nameRow}>
+                            <Text style={styles.instructorNameWhite}>{instructor.full_name}</Text>
+                            {instructor.is_verified && (
+                                <View style={styles.verifiedBadgeMini}>
+                                    <Ionicons name="checkmark-circle" size={20} color="#fff" />
+                                </View>
+                            )}
                         </View>
-                        <Text style={[styles.ratingText, { color: theme.text }]}>
-                            {Number(instructor.average_rating).toFixed(1)}
-                        </Text>
-                        <Text style={[styles.reviewsText, { color: theme.textMuted }]}>
-                            ({instructor.total_reviews} avaliações)
-                        </Text>
-                    </View>
-
-                    {/* Categories */}
-                    <View style={styles.categoriesRow}>
-                        {instructor.categories.map((cat) => (
-                            <View
-                                key={cat}
-                                style={[styles.categoryBadge, { backgroundColor: theme.primaryLight }]}
-                            >
-                                <Text style={[styles.categoryText, { color: theme.primary }]}>
-                                    Categoria {cat}
-                                </Text>
-                            </View>
-                        ))}
-                    </View>
-
-                    {/* Stats */}
-                    <View style={[styles.statsRow, { borderTopColor: theme.cardBorder }]}>
-                        <View style={styles.statItem}>
-                            <Text style={[styles.statValue, { color: theme.primary }]}>
-                                {instructor.total_lessons}
-                            </Text>
-                            <Text style={[styles.statLabel, { color: theme.textMuted }]}>Aulas</Text>
-                        </View>
-                        <View style={[styles.statDivider, { backgroundColor: theme.cardBorder }]} />
-                        <View style={styles.statItem}>
-                            <Text style={[styles.statValue, { color: theme.primary }]}>
-                                {instructor.lesson_duration_minutes}min
-                            </Text>
-                            <Text style={[styles.statLabel, { color: theme.textMuted }]}>Duração</Text>
-                        </View>
-                        <View style={[styles.statDivider, { backgroundColor: theme.cardBorder }]} />
-                        <View style={styles.statItem}>
-                            <Text style={[styles.statValue, { color: theme.primary }]}>
-                                {formatPrice(instructor.price_per_lesson)}
-                            </Text>
-                            <Text style={[styles.statLabel, { color: theme.textMuted }]}>Por aula</Text>
+                        <View style={styles.locationRowWhite}>
+                            <Ionicons name="location" size={14} color="rgba(255,255,255,0.8)" />
+                            <Text style={styles.locationTextWhite}>{instructor.city}, {instructor.state}</Text>
                         </View>
                     </View>
                 </View>
 
-                {/* Bio */}
-                {instructor.bio && (
-                    <View style={[styles.section, { backgroundColor: theme.card }]}>
-                        <Text style={[styles.sectionTitle, { color: theme.text }]}>Sobre</Text>
-                        <Text style={[styles.bioText, { color: theme.textSecondary }]}>
-                            {instructor.bio}
-                        </Text>
-                    </View>
-                )}
-
-                {/* Availability */}
-                {availability.length > 0 && (
-                    <View style={[styles.section, { backgroundColor: theme.card }]}>
-                        <Text style={[styles.sectionTitle, { color: theme.text }]}>Disponibilidade</Text>
-                        <View style={styles.availabilityGrid}>
-                            {availability.map((slot, index) => (
-                                <View
-                                    key={index}
-                                    style={[styles.availabilityItem, { backgroundColor: theme.background }]}
-                                >
-                                    <Text style={[styles.dayName, { color: theme.text }]}>
-                                        {DAY_NAMES[slot.day_of_week]}
-                                    </Text>
-                                    <Text style={[styles.timeRange, { color: theme.textMuted }]}>
-                                        {formatTime(slot.start_time)} - {formatTime(slot.end_time)}
-                                    </Text>
-                                </View>
-                            ))}
+                {/* Trust Bar */}
+                <View style={[styles.trustBar, { backgroundColor: theme.card, borderBottomColor: theme.cardBorder }]}>
+                    <View style={styles.trustItem}>
+                        <Text style={[styles.trustValue, { color: theme.text }]}>{Number(instructor.average_rating).toFixed(1)}</Text>
+                        <View style={styles.trustLabelRow}>
+                            <Ionicons name="star" size={12} color="#f59e0b" />
+                            <Text style={[styles.trustLabel, { color: theme.textMuted }]}>{instructor.total_reviews} avaliações</Text>
                         </View>
                     </View>
-                )}
+                    <View style={[styles.trustDivider, { backgroundColor: theme.cardBorder }]} />
+                    <View style={styles.trustItem}>
+                        <Text style={[styles.trustValue, { color: theme.text }]}>{instructor.total_lessons}</Text>
+                        <Text style={[styles.trustLabel, { color: theme.textMuted }]}>Aulas dadas</Text>
+                    </View>
+                    <View style={[styles.trustDivider, { backgroundColor: theme.cardBorder }]} />
+                    <View style={styles.trustItem}>
+                        <Text style={[styles.trustValue, { color: theme.text }]}>{instructor.categories.join(', ')}</Text>
+                        <Text style={[styles.trustLabel, { color: theme.textMuted }]}>Categorias</Text>
+                    </View>
+                </View>
 
-                {/* Packages */}
-                {packages.length > 0 && (
-                    <View style={[styles.section, { backgroundColor: theme.card }]}>
-                        <Text style={[styles.sectionTitle, { color: theme.text }]}>
-                            📦 Pacotes de Aulas
-                        </Text>
-                        <Text style={[styles.packageSubtitle, { color: theme.textMuted }]}>
-                            Economize comprando um pacote de aulas
-                        </Text>
-                        <View style={styles.packagesContainer}>
-                            {packages.map((pkg) => (
-                                <TouchableOpacity
-                                    key={pkg.id}
-                                    style={[styles.packageCard, { backgroundColor: theme.background, borderColor: theme.primaryLight }]}
-                                    onPress={() => openPackageModal(pkg)}
-                                >
-                                    <View style={styles.packageCardHeader}>
-                                        <Text style={[styles.packageCardName, { color: theme.text }]}>
-                                            {pkg.name}
-                                        </Text>
-                                        <View style={[styles.packageDiscount, { backgroundColor: '#dcfce7' }]}>
-                                            <Text style={styles.packageDiscountText}>-{pkg.discount_percent}%</Text>
+                <View style={styles.contentPadding}>
+                    {/* Bio Section */}
+                    {instructor.bio && (
+                        <View style={styles.sectionHeaderless}>
+                            <Text style={[styles.bioTextLarge, { color: theme.textSecondary }]}>{instructor.bio}</Text>
+                        </View>
+                    )}
+
+                    {/* Vehicle Card */}
+                    {(instructor.vehicle_model || instructor.vehicle_transmission) && (
+                        <View style={[styles.vehiclePremiumCard, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
+                            <View style={[styles.vehicleIconCircle, { backgroundColor: theme.primaryLight }]}>
+                                <Ionicons name="car-sport" size={24} color={theme.primary} />
+                            </View>
+                            <View style={styles.vehicleInfoPrimary}>
+                                <Text style={[styles.vehicleTitle, { color: theme.text }]}>Carro de Treino</Text>
+                                <Text style={[styles.vehicleModelText, { color: theme.textSecondary }]}>
+                                    {instructor.vehicle_model || 'Não informado'} • {instructor.vehicle_transmission === 'automatic' ? 'Automático' : 'Manual'}
+                                </Text>
+                                <View style={styles.vehicleTags}>
+                                    <View style={[styles.vTag, { backgroundColor: theme.background }]}><Text style={[styles.vTagText, { color: theme.textMuted }]}>Ar condicionado</Text></View>
+                                    <View style={[styles.vTag, { backgroundColor: theme.background }]}><Text style={[styles.vTagText, { color: theme.textMuted }]}>Direção hidráulica</Text></View>
+                                </View>
+                            </View>
+                        </View>
+                    )}
+
+                    {/* Packages Horizontal Carousel */}
+                    {packages.length > 0 && (
+                        <View style={styles.sectionMargin}>
+                            <View style={styles.sectionTitleRow}>
+                                <Text style={[styles.sectionTitlePremium, { color: theme.text }]}>Economize com Pacotes</Text>
+                                <View style={styles.popularBadge}><Text style={styles.popularBadgeText}>MELHOR VALOR</Text></View>
+                            </View>
+                            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.packagesCarousel}>
+                                {packages.map((pkg) => (
+                                    <TouchableOpacity
+                                        key={pkg.id}
+                                        style={[styles.packageCardPremium, { backgroundColor: theme.card, borderColor: theme.primaryLight }]}
+                                        onPress={() => openPackageModal(pkg)}
+                                    >
+                                        <View style={styles.packageDiscountBadge}>
+                                            <Text style={styles.discountBadgeText}>-{pkg.discount_percent}%</Text>
+                                        </View>
+                                        <Text style={[styles.packageCardNameP, { color: theme.text }]}>{pkg.name}</Text>
+                                        <Text style={[styles.packageCardLessonsP, { color: theme.textMuted }]}>{pkg.total_lessons} aulas</Text>
+                                        <Text style={[styles.packageCardPriceP, { color: theme.primary }]}>{formatPrice(pkg.total_price)}</Text>
+                                        <View style={styles.perLessonRow}>
+                                            <Text style={[styles.perLessonText, { color: theme.textMuted }]}>{formatPrice(pkg.total_price / pkg.total_lessons)}/aula</Text>
+                                        </View>
+                                    </TouchableOpacity>
+                                ))}
+                            </ScrollView>
+                        </View>
+                    )}
+
+                    {/* Availability */}
+                    {availability.length > 0 && (
+                        <View style={styles.sectionMargin}>
+                            <Text style={[styles.sectionTitlePremium, { color: theme.text }]}>Disponibilidade</Text>
+                            <View style={styles.availabilityListAlt}>
+                                {availability.slice(0, 3).map((slot, index) => (
+                                    <View key={index} style={styles.availabilityRowAlt}>
+                                        <Text style={[styles.dayLabelAlt, { color: theme.text }]}>{DAY_NAMES[slot.day_of_week]}</Text>
+                                        <View style={[styles.timeTagAlt, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
+                                            <Text style={[styles.timeLabelAlt, { color: theme.textMuted }]}>{formatTime(slot.start_time)} - {formatTime(slot.end_time)}</Text>
                                         </View>
                                     </View>
-                                    <Text style={[styles.packageCardLessons, { color: theme.textSecondary }]}>
-                                        {pkg.total_lessons} aulas • {pkg.vehicle_type === 'instructor' ? '🚗 Carro instrutor' : '🔑 Seu carro'}
-                                    </Text>
-                                    <Text style={[styles.packageCardPrice, { color: theme.primary }]}>
-                                        {formatPrice(pkg.total_price)}
-                                    </Text>
-                                    <Text style={[styles.packageCardPerLesson, { color: theme.textMuted }]}>
-                                        {formatPrice(pkg.total_price / pkg.total_lessons)}/aula
-                                    </Text>
+                                ))}
+                                <TouchableOpacity style={styles.seeFullSchedule} onPress={handleBooking}>
+                                    <Text style={[styles.seeFullScheduleText, { color: theme.primary }]}>Ver agenda completa</Text>
                                 </TouchableOpacity>
-                            ))}
-                        </View>
-                    </View>
-                )}
-
-                {/* Reviews */}
-                <View style={[styles.section, { backgroundColor: theme.card }]}>
-                    <View style={styles.reviewsHeaderContainer}>
-                        <Text style={[styles.sectionTitle, { color: theme.text, marginBottom: 0 }]}>Avaliações</Text>
-                        <TouchableOpacity
-                            style={[styles.addReviewButton, { borderColor: theme.primary }]}
-                            onPress={() => setShowReviewModal(true)}
-                        >
-                            <Text style={[styles.addReviewText, { color: theme.primary }]}>Avaliar</Text>
-                        </TouchableOpacity>
-                    </View>
-                    {reviews.length === 0 ? (
-                        <Text style={{ color: theme.textMuted, marginTop: 12, fontStyle: 'italic' }}>
-                            Seja o primeiro a avaliar este instrutor!
-                        </Text>
-                    ) : (
-                        reviews.map((review) => (
-                            <View
-                                key={review.id}
-                                style={[styles.reviewItem, { borderBottomColor: theme.cardBorder }]}
-                            >
-                                <View style={styles.reviewHeader}>
-                                    <View style={styles.reviewStars}>
-                                        {[1, 2, 3, 4, 5].map((star) => (
-                                            <Ionicons
-                                                key={star}
-                                                name={star <= review.rating ? 'star' : 'star-outline'}
-                                                size={14}
-                                                color="#f59e0b"
-                                            />
-                                        ))}
-                                    </View>
-                                    <Text style={[styles.reviewDate, { color: theme.textMuted }]}>
-                                        {new Date(review.created_at).toLocaleDateString('pt-BR')}
-                                    </Text>
-                                </View>
-                                {review.comment && (
-                                    <Text style={[styles.reviewComment, { color: theme.textSecondary }]}>
-                                        {review.comment}
-                                    </Text>
-                                )}
                             </View>
-                        ))
+                        </View>
                     )}
-                </View>
 
-                {/* Contact info only available after booking */}
-                <View style={[styles.section, { backgroundColor: theme.card }]}>
-                    <View style={styles.contactInfoLocked}>
-                        <Ionicons name="lock-closed" size={24} color={theme.textMuted} />
-                        <Text style={[styles.contactLockedTitle, { color: theme.text }]}>
-                            Dados de contato
-                        </Text>
-                        <Text style={[styles.contactLockedText, { color: theme.textMuted }]}>
-                            Telefone e WhatsApp disponíveis após agendar e pagar a aula
-                        </Text>
+                    {/* Reviews */}
+                    <View style={styles.sectionMargin}>
+                        <View style={styles.sectionTitleRow}>
+                            <Text style={[styles.sectionTitlePremium, { color: theme.text }]}>O que dizem os alunos</Text>
+                            <TouchableOpacity onPress={() => setShowReviewModal(true)}>
+                                <Text style={[styles.leaveReviewText, { color: theme.primary }]}>Avaliar</Text>
+                            </TouchableOpacity>
+                        </View>
+
+                        {reviews.length === 0 ? (
+                            <View style={[styles.emptyStateBox, { backgroundColor: theme.card }]}>
+                                <Text style={[styles.emptyStateText, { color: theme.textMuted }]}>Nenhuma avaliação ainda.</Text>
+                            </View>
+                        ) : (
+                            reviews.map((review) => (
+                                <View key={review.id} style={[styles.reviewCardAlt, { borderBottomColor: theme.cardBorder }]}>
+                                    <View style={styles.reviewHeaderAlt}>
+                                        <View style={styles.starsMini}>
+                                            {[1, 2, 3, 4, 5].map((s) => (
+                                                <Ionicons key={s} name={s <= review.rating ? 'star' : 'star-outline'} size={12} color="#f59e0b" />
+                                            ))}
+                                        </View>
+                                        <Text style={[styles.reviewDateAlt, { color: theme.textMuted }]}>{new Date(review.created_at).toLocaleDateString('pt-BR')}</Text>
+                                    </View>
+                                    <Text style={[styles.reviewCommentAlt, { color: theme.textSecondary }]}>{review.comment}</Text>
+                                </View>
+                            ))
+                        )}
                     </View>
                 </View>
 
-                <View style={{ height: 100 }} />
+                <View style={{ height: 120 }} />
             </ScrollView>
 
-            {/* Book Button */}
-            <View style={[styles.bookButtonContainer, { backgroundColor: theme.background }]}>
-                {user?.id === instructor.user_id ? (
-                    <View style={[styles.bookButton, { backgroundColor: theme.cardBorder }]}>
-                        <Ionicons name="person" size={22} color={theme.textMuted} />
-                        <Text style={[styles.bookButtonText, { color: theme.textMuted }]}>
-                            Este é seu perfil
-                        </Text>
-                    </View>
-                ) : (
+            {/* Sticky Action Button */}
+            <View style={[styles.bottomActionBar, { backgroundColor: theme.background, borderTopColor: theme.cardBorder }]}>
+                <View style={styles.actionPriceInfo}>
+                    <Text style={[styles.priceTagSmall, { color: theme.textMuted }]}>Preço da aula</Text>
+                    <Text style={[styles.priceTagLarge, { color: theme.text }]}>{formatPrice(instructor.price_per_lesson)}</Text>
+                </View>
+
+                <View style={styles.actionButtonsRow}>
                     <TouchableOpacity
-                        style={[styles.bookButton, { backgroundColor: theme.primary }]}
-                        onPress={handleBooking}
-                        activeOpacity={0.8}
+                        style={[styles.chatIconButton, { borderColor: theme.cardBorder, borderWidth: 1 }]}
+                        onPress={handleOpenChat}
+                        activeOpacity={0.7}
                     >
-                        <Ionicons name="calendar-outline" size={22} color="#fff" />
-                        <Text style={styles.bookButtonText}>Agendar Aula</Text>
-                        <Text style={styles.bookButtonPrice}>
-                            {formatPrice(instructor.price_per_lesson)}
-                        </Text>
+                        <Ionicons name="chatbubble-ellipses-outline" size={24} color={theme.text} />
                     </TouchableOpacity>
-                )}
+
+                    <TouchableOpacity
+                        style={[styles.primaryActionButton, { backgroundColor: theme.primary }]}
+                        onPress={handleBooking}
+                        activeOpacity={0.9}
+                    >
+                        <Text style={styles.primaryActionButtonText}>Agendar Aula</Text>
+                    </TouchableOpacity>
+                </View>
             </View>
 
-            <Modal
-                visible={showReviewModal}
-                transparent
-                animationType="slide"
-                onRequestClose={() => setShowReviewModal(false)}
-            >
-                <KeyboardAvoidingView
-                    behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                    style={styles.modalOverlay}
-                >
-                    <View style={[styles.modalContent, { backgroundColor: theme.card }]}>
-                        <View style={styles.modalHeader}>
-                            <Text style={[styles.modalTitle, { color: theme.text }]}>Avaliar Instrutor</Text>
+            {/* Modals remain similarly structured but with themed styling updates */}
+            <Modal visible={showReviewModal} transparent animationType="slide">
+                <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.modalOverlay}>
+                    <View style={[styles.modalContentAlt, { backgroundColor: theme.card }]}>
+                        <View style={styles.modalHeaderAlt}>
+                            <Text style={[styles.modalTitleAlt, { color: theme.text }]}>Avaliar Instrutor</Text>
                             <TouchableOpacity onPress={() => setShowReviewModal(false)}>
                                 <Ionicons name="close" size={24} color={theme.textMuted} />
                             </TouchableOpacity>
                         </View>
-
-                        <View style={styles.ratingInputContainer}>
-                            <Text style={[styles.ratingLabel, { color: theme.textSecondary }]}>Sua nota:</Text>
-                            <View style={styles.starsInput}>
-                                {[1, 2, 3, 4, 5].map((star) => (
-                                    <TouchableOpacity key={star} onPress={() => setNewRating(star)}>
-                                        <Ionicons
-                                            name={star <= newRating ? 'star' : 'star-outline'}
-                                            size={32}
-                                            color="#f59e0b"
-                                        />
+                        <View style={styles.ratingInputBox}>
+                            <Text style={[styles.ratingLabelAlt, { color: theme.textSecondary }]}>Sua experiência:</Text>
+                            <View style={styles.starsInputAlt}>
+                                {[1, 2, 3, 4, 5].map(s => (
+                                    <TouchableOpacity key={s} onPress={() => setNewRating(s)}>
+                                        <Ionicons name={s <= newRating ? 'star' : 'star-outline'} size={36} color="#f59e0b" />
                                     </TouchableOpacity>
                                 ))}
                             </View>
                         </View>
-
                         <TextInput
-                            style={[
-                                styles.commentInput,
-                                {
-                                    backgroundColor: theme.background,
-                                    color: theme.text,
-                                    borderColor: theme.inputBorder
-                                }
-                            ]}
-                            placeholder="Escreva seu comentário sobre a aula..."
+                            style={[styles.commentInputAlt, { backgroundColor: theme.background, color: theme.text, borderColor: theme.cardBorder }]}
+                            placeholder="Conte como foi sua aula..."
                             placeholderTextColor={theme.textMuted}
                             multiline
-                            numberOfLines={4}
                             textAlignVertical="top"
                             value={newComment}
                             onChangeText={setNewComment}
                         />
-
-                        <TouchableOpacity
-                            style={[styles.submitReviewButton, { backgroundColor: theme.primary }]}
-                            onPress={handleSubmitReview}
-                            disabled={submittingReview}
-                        >
-                            {submittingReview ? (
-                                <ActivityIndicator color="#fff" />
-                            ) : (
-                                <Text style={styles.submitReviewText}>Enviar Avaliação</Text>
-                            )}
+                        <TouchableOpacity style={[styles.modalSubmitBtn, { backgroundColor: theme.primary }]} onPress={handleSubmitReview} disabled={submittingReview}>
+                            {submittingReview ? <ActivityIndicator color="#fff" /> : <Text style={styles.modalSubmitBtnText}>Enviar</Text>}
                         </TouchableOpacity>
                     </View>
                 </KeyboardAvoidingView>
             </Modal>
 
-            {/* Package Purchase Modal */}
-            <Modal
-                visible={showPackageModal}
-                transparent
-                animationType="fade"
-                onRequestClose={() => setShowPackageModal(false)}
-            >
-                <View style={styles.modalOverlay}>
-                    <View style={[styles.packageModalContent, { backgroundColor: theme.card }]}>
-                        <View style={styles.modalHeader}>
-                            <Text style={[styles.modalTitle, { color: theme.text }]}>Comprar Pacote</Text>
+            <Modal visible={showPackageModal} transparent animationType="fade">
+                <View style={styles.modalOverlayCenter}>
+                    <View style={[styles.packagePurchaseCard, { backgroundColor: theme.card }]}>
+                        <View style={styles.modalHeaderAlt}>
+                            <Text style={[styles.modalTitleAlt, { color: theme.text }]}>Confirme sua compra</Text>
                             <TouchableOpacity onPress={() => setShowPackageModal(false)}>
                                 <Ionicons name="close" size={24} color={theme.textMuted} />
                             </TouchableOpacity>
                         </View>
-
                         {selectedPackage && (
                             <>
-                                <View style={[styles.packageModalCard, { backgroundColor: theme.background }]}>
-                                    <View style={styles.packageModalHeader}>
-                                        <Text style={[styles.packageModalName, { color: theme.text }]}>
-                                            {selectedPackage.name}
-                                        </Text>
-                                        <View style={[styles.packageDiscount, { backgroundColor: '#dcfce7' }]}>
-                                            <Text style={styles.packageDiscountText}>-{selectedPackage.discount_percent}%</Text>
-                                        </View>
+                                <View style={[styles.packagePreviewBox, { backgroundColor: theme.background }]}>
+                                    <View style={styles.packagePreviewHeader}>
+                                        <Text style={[styles.pPName, { color: theme.text }]}>{selectedPackage.name}</Text>
+                                        <View style={styles.pPDiscount}><Text style={styles.pPDiscountText}>-{selectedPackage.discount_percent}%</Text></View>
                                     </View>
-                                    <Text style={[styles.packageModalLessons, { color: theme.textMuted }]}>
-                                        {selectedPackage.total_lessons} aulas • {selectedPackage.vehicle_type === 'instructor' ? '🚗 Carro instrutor' : '🔑 Seu carro'}
-                                    </Text>
+                                    <Text style={[styles.pPInfo, { color: theme.textMuted }]}>{selectedPackage.total_lessons} aulas • {selectedPackage.vehicle_type === 'instructor' ? '🚗 Carro instrutor' : '🔑 Seu carro'}</Text>
                                 </View>
-
-                                <View style={styles.packageModalBenefits}>
-                                    <View style={styles.benefitRow}>
-                                        <Ionicons name="checkmark-circle" size={18} color="#10b981" />
-                                        <Text style={[styles.benefitText, { color: theme.text }]}>Economia de {selectedPackage.discount_percent}%</Text>
-                                    </View>
-                                    <View style={styles.benefitRow}>
-                                        <Ionicons name="checkmark-circle" size={18} color="#10b981" />
-                                        <Text style={[styles.benefitText, { color: theme.text }]}>Sem prazo de validade</Text>
-                                    </View>
+                                <View style={styles.benefitsBox}>
+                                    <View style={styles.benefitItem}><Ionicons name="checkmark-circle" size={18} color="#10b981" /><Text style={[styles.benefitTextP, { color: theme.text }]}>Uso ilimitado (sem validade)</Text></View>
+                                    <View style={styles.benefitItem}><Ionicons name="checkmark-circle" size={18} color="#10b981" /><Text style={[styles.benefitTextP, { color: theme.text }]}>Flexibilidade total de agenda</Text></View>
                                 </View>
-
-                                <View style={[styles.packageModalTotal, { borderTopColor: theme.cardBorder }]}>
-                                    <Text style={{ color: theme.textMuted }}>Total</Text>
-                                    <Text style={[styles.packageModalPrice, { color: theme.primary }]}>
-                                        {formatPrice(selectedPackage.total_price)}
-                                    </Text>
+                                <View style={[styles.packageTotalRow, { borderTopColor: theme.cardBorder }]}>
+                                    <Text style={[styles.totalLabelP, { color: theme.textMuted }]}>Total a pagar</Text>
+                                    <Text style={[styles.totalPriceP, { color: theme.primary }]}>{formatPrice(selectedPackage.total_price)}</Text>
                                 </View>
-
-                                <TouchableOpacity
-                                    style={[styles.purchaseButton, { backgroundColor: theme.primary }]}
-                                    onPress={handlePurchasePackage}
-                                    disabled={purchasingPackage}
-                                >
-                                    {purchasingPackage ? (
-                                        <ActivityIndicator color="#fff" />
-                                    ) : (
-                                        <>
-                                            <Ionicons name="cart" size={20} color="#fff" />
-                                            <Text style={styles.purchaseButtonText}>Comprar Agora</Text>
-                                        </>
-                                    )}
+                                <TouchableOpacity style={[styles.confirmPurchaseBtn, { backgroundColor: theme.primary }]} onPress={handlePurchasePackage} disabled={purchasingPackage}>
+                                    {purchasingPackage ? <ActivityIndicator color="#fff" /> : <Text style={styles.confirmPurchaseBtnText}>Confirmar e Pagar</Text>}
                                 </TouchableOpacity>
                             </>
                         )}
                     </View>
                 </View>
             </Modal>
-        </SafeAreaView >
+        </View>
     );
 }
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-    },
-    // ... existing styles ...
-    loadingContainer: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    errorText: {
-        fontSize: 16,
-    },
+    container: { flex: 1 },
+    scrollView: { flex: 1 },
+    loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+    errorText: { fontSize: 16 },
+
     // Header
-    header: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        paddingHorizontal: 20,
-        paddingVertical: 12,
-    },
-    backButton: {
-        width: 44,
-        height: 44,
-        borderRadius: 22,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    headerTitle: {
-        fontSize: 18,
-        fontWeight: '700',
-    },
-    // Scroll
-    scrollView: {
-        flex: 1,
-    },
-    scrollContent: {
-        paddingHorizontal: 20,
-    },
-    // Profile Card
-    profileCard: {
-        borderRadius: 20,
-        padding: 24,
-        alignItems: 'center',
-        marginBottom: 16,
-    },
-    photoSection: {
-        position: 'relative',
-        marginBottom: 16,
-    },
-    profilePhoto: {
-        width: 120,
-        height: 120,
-        borderRadius: 60,
-    },
-    photoPlaceholder: {
-        width: 120,
-        height: 120,
-        borderRadius: 60,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    photoInitial: {
-        fontSize: 48,
-        fontWeight: '700',
-        color: '#fff',
-    },
-    verifiedBadge: {
-        position: 'absolute',
-        bottom: 0,
-        right: 0,
-        width: 32,
-        height: 32,
-        borderRadius: 16,
-        justifyContent: 'center',
-        alignItems: 'center',
-        borderWidth: 3,
-        borderColor: '#fff',
-    },
-    instructorName: {
-        fontSize: 24,
-        fontWeight: '700',
-        marginBottom: 8,
-    },
-    vehicleBadgeContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        paddingHorizontal: 12,
-        paddingVertical: 6,
-        borderRadius: 12,
-        marginBottom: 12,
-        gap: 6,
-        borderWidth: 1,
-        borderColor: 'rgba(0,0,0,0.05)',
-    },
-    vehicleText: {
-        fontSize: 14,
-        fontWeight: '600',
-    },
-    locationRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 6,
-        marginBottom: 16,
-    },
-    locationText: {
-        fontSize: 14,
-    },
-    ratingContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 8,
-        marginBottom: 16,
-    },
-    starsRow: {
-        flexDirection: 'row',
-        gap: 2,
-    },
-    ratingText: {
-        fontSize: 16,
-        fontWeight: '700',
-    },
-    reviewsText: {
-        fontSize: 14,
-    },
-    categoriesRow: {
-        flexDirection: 'row',
-        gap: 8,
-        marginBottom: 20,
-    },
-    categoryBadge: {
-        paddingHorizontal: 14,
-        paddingVertical: 6,
-        borderRadius: 20,
-    },
-    categoryText: {
-        fontSize: 13,
-        fontWeight: '600',
-    },
-    statsRow: {
-        flexDirection: 'row',
-        width: '100%',
-        borderTopWidth: 1,
-        paddingTop: 20,
-    },
-    statItem: {
-        flex: 1,
-        alignItems: 'center',
-    },
-    statValue: {
-        fontSize: 18,
-        fontWeight: '700',
-        marginBottom: 4,
-    },
-    statLabel: {
-        fontSize: 12,
-    },
-    statDivider: {
-        width: 1,
-        height: 40,
-    },
-    // Section
-    section: {
-        borderRadius: 16,
-        padding: 20,
-        marginBottom: 16,
-    },
-    sectionTitle: {
-        fontSize: 16,
-        fontWeight: '700',
-        marginBottom: 12,
-    },
-    bioText: {
-        fontSize: 14,
-        lineHeight: 22,
-    },
+    immersiveHeader: { width: '100%', height: 350, position: 'relative' },
+    headerImage: { width: '100%', height: '100%' },
+    headerImagePlaceholder: { width: '100%', height: '100%', justifyContent: 'center', alignItems: 'center' },
+    photoInitialLarge: { fontSize: 72, fontWeight: '800', color: '#fff' },
+    headerOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.3)' },
+    backButtonFixed: { position: 'absolute', top: 50, left: 20, width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(0,0,0,0.3)', justifyContent: 'center', alignItems: 'center', zIndex: 10 },
+    headerInfo: { position: 'absolute', bottom: 30, left: 24, right: 24 },
+    nameRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+    instructorNameWhite: { fontSize: 32, fontWeight: '800', color: '#fff' },
+    verifiedBadgeMini: { marginTop: 4 },
+    locationRowWhite: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4 },
+    locationTextWhite: { fontSize: 15, color: 'rgba(255,255,255,0.9)', fontWeight: '500' },
+
+    // Trust Bar
+    trustBar: { flexDirection: 'row', paddingVertical: 18, borderBottomWidth: 1 },
+    trustItem: { flex: 1, alignItems: 'center' },
+    trustValue: { fontSize: 18, fontWeight: '700' },
+    trustLabelRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 },
+    trustLabel: { fontSize: 12, fontWeight: '500' },
+    trustDivider: { width: 1, height: '60%', alignSelf: 'center' },
+
+    // Content
+    contentPadding: { paddingHorizontal: 20 },
+    sectionHeaderless: { marginTop: 24 },
+    bioTextLarge: { fontSize: 16, lineHeight: 24 },
+    sectionMargin: { marginTop: 32 },
+    sectionTitlePremium: { fontSize: 18, fontWeight: '700' },
+    sectionTitleRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
+
+    // Vehicle Card
+    vehiclePremiumCard: { padding: 20, borderRadius: 16, marginTop: 24, flexDirection: 'row', gap: 16, borderWidth: 1 },
+    vehicleIconCircle: { width: 52, height: 52, borderRadius: 26, justifyContent: 'center', alignItems: 'center' },
+    vehicleInfoPrimary: { flex: 1 },
+    vehicleTitle: { fontSize: 16, fontWeight: '700', marginBottom: 4 },
+    vehicleModelText: { fontSize: 14, fontWeight: '500', marginBottom: 10 },
+    vehicleTags: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
+    vTag: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 },
+    vTagText: { fontSize: 11, fontWeight: '600' },
+
+    // Packages Carousel
+    packagesCarousel: { marginHorizontal: -20, paddingLeft: 20, marginTop: 16 },
+    packageCardPremium: { width: 160, padding: 16, borderRadius: 16, marginRight: 16, borderWidth: 2, position: 'relative' },
+    packageDiscountBadge: { position: 'absolute', top: 12, right: 12, backgroundColor: '#dcfce7', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6 },
+    discountBadgeText: { fontSize: 11, fontWeight: '800', color: '#166534' },
+    packageCardNameP: { fontSize: 15, fontWeight: '700', marginTop: 8 },
+    packageCardLessonsP: { fontSize: 13, marginTop: 2 },
+    packageCardPriceP: { fontSize: 18, fontWeight: '800', marginTop: 12 },
+    perLessonRow: { marginTop: 4 },
+    perLessonText: { fontSize: 11, fontWeight: '600' },
+    popularBadge: { backgroundColor: '#10b981', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 },
+    popularBadgeText: { color: '#fff', fontSize: 10, fontWeight: '800' },
+
     // Availability
-    availabilityGrid: {
-        flexDirection: 'row',
-        flexWrap: 'wrap',
-        gap: 8,
-    },
-    availabilityItem: {
-        paddingHorizontal: 12,
-        paddingVertical: 8,
-        borderRadius: 12,
-    },
-    dayName: {
-        fontSize: 13,
-        fontWeight: '600',
-    },
-    timeRange: {
-        fontSize: 11,
-    },
+    availabilityListAlt: { marginTop: 12 },
+    availabilityRowAlt: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
+    dayLabelAlt: { fontSize: 15, fontWeight: '600' },
+    timeTagAlt: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8, borderWidth: 1 },
+    timeLabelAlt: { fontSize: 13, fontWeight: '600' },
+    seeFullSchedule: { marginTop: 12 },
+    seeFullScheduleText: { fontSize: 14, fontWeight: '700' },
+
     // Reviews
-    reviewsHeaderContainer: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: 12,
-    },
-    addReviewButton: {
-        paddingVertical: 6,
-        paddingHorizontal: 12,
-        borderRadius: 8,
-        borderWidth: 1,
-    },
-    addReviewText: {
-        fontSize: 12,
-        fontWeight: '600',
-    },
-    reviewItem: {
-        paddingVertical: 12,
-        borderBottomWidth: 1,
-    },
-    reviewHeader: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: 8,
-    },
-    reviewStars: {
-        flexDirection: 'row',
-        gap: 2,
-    },
-    reviewDate: {
-        fontSize: 12,
-    },
-    reviewComment: {
-        fontSize: 14,
-        lineHeight: 20,
-    },
-    // Contact Buttons
-    contactButtons: {
-        flexDirection: 'row',
-        gap: 12,
-        marginBottom: 16,
-    },
-    contactButton: {
+    emptyStateBox: { padding: 20, borderRadius: 12, alignItems: 'center', marginTop: 8 },
+    emptyStateText: { fontSize: 14, fontStyle: 'italic' },
+    reviewCardAlt: { paddingVertical: 16, borderBottomWidth: 1 },
+    reviewHeaderAlt: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
+    starsMini: { flexDirection: 'row', gap: 2 },
+    reviewDateAlt: { fontSize: 12 },
+    reviewCommentAlt: { fontSize: 14, lineHeight: 20 },
+    leaveReviewText: { fontSize: 14, fontWeight: '700' },
+
+    // Bottom Action Bar
+    bottomActionBar: { position: 'absolute', bottom: 0, left: 0, right: 0, height: 100, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 24, paddingBottom: 20, borderTopWidth: 1, gap: 16 },
+    actionPriceInfo: { flex: 1 },
+    priceTagSmall: { fontSize: 12, fontWeight: '600' },
+    priceTagLarge: { fontSize: 24, fontWeight: '800' },
+    primaryActionButton: {
         flex: 1,
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: 8,
-        paddingVertical: 14,
-        borderRadius: 14,
-    },
-    contactButtonText: {
-        fontSize: 14,
-        fontWeight: '600',
-    },
-    // Locked Contact Info
-    contactInfoLocked: {
-        alignItems: 'center',
-        paddingVertical: 16,
-        gap: 8,
-    },
-    contactLockedTitle: {
-        fontSize: 16,
-        fontWeight: '600',
-        marginTop: 4,
-    },
-    contactLockedText: {
-        fontSize: 13,
-        textAlign: 'center',
-        lineHeight: 18,
-    },
-    // Book Button
-    bookButtonContainer: {
-        position: 'absolute',
-        bottom: 0,
-        left: 0,
-        right: 0,
-        paddingHorizontal: 20,
-        paddingVertical: 16,
-        paddingBottom: 32,
-    },
-    bookButton: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: 10,
-        paddingVertical: 18,
-        borderRadius: 16,
-        shadowColor: '#10b981',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.3,
-        shadowRadius: 8,
-        elevation: 4,
-    },
-    bookButtonText: {
-        fontSize: 16,
-        fontWeight: '700',
-        color: '#fff',
-    },
-    bookButtonPrice: {
-        fontSize: 16,
-        fontWeight: '700',
-        color: '#fff',
-        opacity: 0.9,
-    },
-    // Modal
-    modalOverlay: {
-        flex: 1,
-        backgroundColor: 'rgba(0,0,0,0.5)',
-        justifyContent: 'flex-end',
-    },
-    modalContent: {
-        borderTopLeftRadius: 24,
-        borderTopRightRadius: 24,
-        padding: 24,
-        paddingBottom: 40,
-    },
-    modalHeader: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: 24,
-    },
-    modalTitle: {
-        fontSize: 20,
-        fontWeight: 'bold',
-    },
-    ratingInputContainer: {
-        alignItems: 'center',
-        marginBottom: 24,
-    },
-    ratingLabel: {
-        fontSize: 16,
-        marginBottom: 12,
-    },
-    starsInput: {
-        flexDirection: 'row',
-        gap: 8,
-    },
-    commentInput: {
-        borderRadius: 12,
-        padding: 16,
-        borderWidth: 1,
-        marginBottom: 24,
-        height: 120,
-    },
-    submitReviewButton: {
         height: 56,
         borderRadius: 16,
         justifyContent: 'center',
         alignItems: 'center',
     },
-    submitReviewText: {
+    primaryActionButtonText: {
         color: '#fff',
-        fontSize: 16,
-        fontWeight: 'bold',
-    },
-    // Packages
-    packageSubtitle: {
-        fontSize: 13,
-        marginTop: -8,
-        marginBottom: 16,
-    },
-    packagesContainer: {
-        gap: 12,
-    },
-    packageCard: {
-        padding: 16,
-        borderRadius: 14,
-        borderWidth: 2,
-    },
-    packageCardHeader: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: 8,
-    },
-    packageCardName: {
-        fontSize: 16,
-        fontWeight: '600',
-    },
-    packageDiscount: {
-        paddingHorizontal: 8,
-        paddingVertical: 4,
-        borderRadius: 8,
-    },
-    packageDiscountText: {
-        color: '#166534',
-        fontSize: 12,
-        fontWeight: '700',
-    },
-    packageCardLessons: {
-        fontSize: 13,
-        marginBottom: 8,
-    },
-    packageCardPrice: {
-        fontSize: 22,
-        fontWeight: '700',
-    },
-    packageCardPerLesson: {
-        fontSize: 12,
-        marginTop: 2,
-    },
-    // Package Modal Styles
-    packageModalContent: {
-        width: '90%',
-        maxWidth: 380,
-        borderRadius: 24,
-        padding: 24,
-    },
-    packageModalCard: {
-        padding: 16,
-        borderRadius: 14,
-        marginBottom: 16,
-    },
-    packageModalHeader: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: 6,
-    },
-    packageModalName: {
         fontSize: 18,
-        fontWeight: '700',
-    },
-    packageModalLessons: {
-        fontSize: 14,
-    },
-    packageModalBenefits: {
-        marginBottom: 16,
-    },
-    benefitRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 10,
-        marginBottom: 8,
-    },
-    benefitText: {
-        fontSize: 14,
-    },
-    packageModalTotal: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        paddingTop: 16,
-        borderTopWidth: 1,
-        marginBottom: 20,
-    },
-    packageModalPrice: {
-        fontSize: 24,
         fontWeight: '800',
     },
-    purchaseButton: {
+    actionButtonsRow: {
+        flex: 2,
         flexDirection: 'row',
         alignItems: 'center',
+        gap: 12,
+    },
+    chatIconButton: {
+        width: 56,
+        height: 56,
+        borderRadius: 16,
         justifyContent: 'center',
-        gap: 10,
-        height: 52,
-        borderRadius: 14,
+        alignItems: 'center',
     },
-    purchaseButtonText: {
-        color: '#fff',
-        fontSize: 16,
-        fontWeight: '700',
-    },
+
+    // Modal Overlays
+    modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
+    modalOverlayCenter: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' },
+    modalContentAlt: { borderTopLeftRadius: 32, borderTopRightRadius: 32, padding: 24, paddingBottom: 40 },
+    modalHeaderAlt: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 },
+    modalTitleAlt: { fontSize: 22, fontWeight: '800' },
+    ratingInputBox: { alignItems: 'center', marginBottom: 24 },
+    ratingLabelAlt: { fontSize: 16, marginBottom: 12, fontWeight: '600' },
+    starsInputAlt: { flexDirection: 'row', gap: 10 },
+    commentInputAlt: { height: 120, borderRadius: 16, padding: 16, fontSize: 16, borderWidth: 1, marginBottom: 24 },
+    modalSubmitBtn: { height: 56, borderRadius: 16, justifyContent: 'center', alignItems: 'center' },
+    modalSubmitBtnText: { color: '#fff', fontSize: 18, fontWeight: '800' },
+
+    // Package Purchase Modal
+    packagePurchaseCard: { width: '92%', borderRadius: 24, padding: 24 },
+    packagePreviewBox: { padding: 20, borderRadius: 16, marginBottom: 20 },
+    packagePreviewHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 4 },
+    pPName: { fontSize: 18, fontWeight: '700', flex: 1, marginRight: 8 },
+    pPDiscount: { backgroundColor: '#dcfce7', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8 },
+    pPDiscountText: { color: '#166534', fontSize: 12, fontWeight: '800' },
+    pPInfo: { fontSize: 14, fontWeight: '500' },
+    benefitsBox: { gap: 12, marginBottom: 24 },
+    benefitItem: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+    benefitTextP: { fontSize: 14, fontWeight: '500' },
+    packageTotalRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingTop: 20, borderTopWidth: 1 },
+    totalLabelP: { fontSize: 14, fontWeight: '600' },
+    totalPriceP: { fontSize: 24, fontWeight: '800' },
+    confirmPurchaseBtn: { height: 56, borderRadius: 16, justifyContent: 'center', alignItems: 'center', marginTop: 24 },
+    confirmPurchaseBtnText: { color: '#fff', fontSize: 18, fontWeight: '800' },
 });

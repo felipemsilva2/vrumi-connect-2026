@@ -113,6 +113,42 @@ export default function AulasScreen() {
         fetchBookings();
     }, [fetchBookings]);
 
+    const handleOpenChat = async (instructorId: string) => {
+        if (!user) return;
+
+        try {
+            // Find existing room
+            const { data: room } = await supabase
+                .from('connect_chat_rooms')
+                .select('id')
+                .eq('student_id', user.id)
+                .eq('instructor_id', instructorId)
+                .single();
+
+            if (room) {
+                router.push(`/connect/chat/${room.id}`);
+                return;
+            }
+
+            // Create new room if not exists
+            const { data: newRoom, error: createError } = await supabase
+                .from('connect_chat_rooms')
+                .insert({
+                    student_id: user.id,
+                    instructor_id: instructorId
+                })
+                .select()
+                .single();
+
+            if (createError) throw createError;
+            if (newRoom) router.push(`/connect/chat/${newRoom.id}`);
+
+        } catch (error) {
+            console.error('Error opening chat:', error);
+            Alert.alert('Erro', 'Não foi possível iniciar a conversa.');
+        }
+    };
+
     const onRefresh = () => {
         setRefreshing(true);
         fetchBookings();
@@ -239,20 +275,27 @@ export default function AulasScreen() {
                     </View>
                 </View>
 
-                {/* Actions */}
-                {['confirmed'].includes(booking.status) && !expired && (
-                    <TouchableOpacity
-                        style={styles.primaryButton}
-                        onPress={() => router.push(`/connect/aula/${booking.id}`)}
-                    >
-                        <Ionicons name="scan-outline" size={20} color="#fff" />
-                        <Text style={styles.primaryButtonText}>Confirmar Presença</Text>
-                    </TouchableOpacity>
-                )}
+                {/* Action Buttons */}
+                <View style={styles.actionButtonsContainer}>
+                    {['confirmed'].includes(booking.status) && !expired && (
+                        <TouchableOpacity
+                            style={styles.primaryButton}
+                            onPress={() => router.push(`/connect/aula/${booking.id}`)}
+                        >
+                            <Ionicons name="scan-outline" size={20} color="#fff" />
+                            <Text style={styles.primaryButtonText}>Confirmar Presença</Text>
+                        </TouchableOpacity>
+                    )}
 
-                {/* Expired Lesson Recovery Actions */}
-                {expired && ['confirmed', 'pending'].includes(booking.status) && (
-                    <View style={styles.recoveryActions}>
+                    <TouchableOpacity
+                        style={[styles.chatButton, { borderColor: theme.primary, borderWidth: 1 }]}
+                        onPress={() => handleOpenChat(booking.instructor.id)}
+                    >
+                        <Ionicons name="chatbubble-ellipses-outline" size={20} color={theme.primary} />
+                        <Text style={[styles.chatButtonText, { color: theme.primary }]}>Conversar pelo Vrumi</Text>
+                    </TouchableOpacity>
+
+                    {expired && ['confirmed', 'pending'].includes(booking.status) && (
                         <TouchableOpacity
                             style={styles.rebookButton}
                             onPress={() => router.push(`/connect/instrutor/${booking.instructor.id}`)}
@@ -260,44 +303,9 @@ export default function AulasScreen() {
                             <Ionicons name="calendar" size={20} color="#fff" />
                             <Text style={styles.rebookButtonText}>Reagendar Aula</Text>
                         </TouchableOpacity>
+                    )}
+                </View>
 
-                        <TouchableOpacity
-                            style={styles.whatsappOutlineBtn}
-                            onPress={() => {
-                                const phone = booking.instructor?.phone?.replace(/\D/g, '');
-                                if (phone) Linking.openURL(`https://wa.me/55${phone}`);
-                            }}
-                        >
-                            <Ionicons name="logo-whatsapp" size={20} color="#10b981" />
-                            <Text style={styles.whatsappOutlineText}>Falar com Instrutor</Text>
-                        </TouchableOpacity>
-                    </View>
-                )}
-
-                {booking.payment_status === 'paid' && (
-                    <View style={styles.contactButtonsRow}>
-                        <TouchableOpacity
-                            style={styles.contactBtn}
-                            onPress={() => {
-                                const phone = booking.instructor?.phone?.replace(/\D/g, '');
-                                if (phone) Linking.openURL(`tel:${phone}`);
-                            }}
-                        >
-                            <Ionicons name="call" size={18} color="#10b981" />
-                            <Text style={styles.contactBtnText}>Ligar</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                            style={[styles.contactBtn, styles.whatsappBtn]}
-                            onPress={() => {
-                                const phone = booking.instructor?.phone?.replace(/\D/g, '');
-                                if (phone) Linking.openURL(`https://wa.me/55${phone}`);
-                            }}
-                        >
-                            <Ionicons name="logo-whatsapp" size={18} color="#fff" />
-                            <Text style={[styles.contactBtnText, { color: '#fff' }]}>WhatsApp</Text>
-                        </TouchableOpacity>
-                    </View>
-                )}
 
                 {canCancel && (
                     <TouchableOpacity
@@ -635,43 +643,35 @@ const styles = StyleSheet.create({
         color: '#1f2937',
     },
     // Buttons
+    actionButtonsContainer: {
+        gap: 12,
+        marginTop: 16,
+    },
     primaryButton: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
         gap: 8,
-        marginTop: 16,
         paddingVertical: 14,
         borderRadius: 14,
         backgroundColor: '#10b981',
+    },
+    chatButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 8,
+        paddingVertical: 14,
+        borderRadius: 14,
+    },
+    chatButtonText: {
+        fontSize: 15,
+        fontWeight: '700',
     },
     primaryButtonText: {
         color: '#fff',
         fontSize: 15,
         fontWeight: '700',
-    },
-    contactButtonsRow: {
-        flexDirection: 'row',
-        gap: 12,
-        marginTop: 12,
-    },
-    contactBtn: {
-        flex: 1,
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: 6,
-        paddingVertical: 12,
-        borderRadius: 12,
-        backgroundColor: '#ecfdf5',
-    },
-    whatsappBtn: {
-        backgroundColor: '#25D366',
-    },
-    contactBtnText: {
-        fontSize: 13,
-        fontWeight: '600',
-        color: '#10b981',
     },
     cancelButton: {
         flexDirection: 'row',
@@ -690,47 +690,18 @@ const styles = StyleSheet.create({
         fontSize: 13,
         fontWeight: '600',
     },
-    // Recovery Actions
-    recoveryActions: {
-        flexDirection: 'row',
-        gap: 12,
-        marginTop: 16,
-    },
     rebookButton: {
-        flex: 1.2,
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
         gap: 8,
-        paddingVertical: 12,
-        borderRadius: 12,
-        backgroundColor: '#10b981',
-        shadowColor: '#10b981',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.2,
-        shadowRadius: 4,
-        elevation: 2,
+        paddingVertical: 14,
+        borderRadius: 14,
+        backgroundColor: '#064e3b',
     },
     rebookButtonText: {
         color: '#fff',
-        fontSize: 13,
+        fontSize: 15,
         fontWeight: '700',
-    },
-    whatsappOutlineBtn: {
-        flex: 1,
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: 6,
-        paddingVertical: 12,
-        borderRadius: 12,
-        borderWidth: 1,
-        borderColor: '#10b981',
-        backgroundColor: 'transparent',
-    },
-    whatsappOutlineText: {
-        color: '#10b981',
-        fontSize: 12,
-        fontWeight: '600',
     },
 });

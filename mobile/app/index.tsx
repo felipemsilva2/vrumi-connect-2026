@@ -14,9 +14,7 @@ export default function Index() {
     useEffect(() => {
         const checkOnboarding = async () => {
             try {
-                // TEMP: Force reset onboarding for testing
-                await AsyncStorage.removeItem('@vrumi_onboarding_complete');
-
+                // Onboarding complete check
                 const value = await AsyncStorage.getItem('@vrumi_onboarding_complete');
                 console.log('Onboarding value:', value);
                 setHasSeenOnboarding(value === 'true');
