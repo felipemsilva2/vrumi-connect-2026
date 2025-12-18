@@ -103,6 +103,7 @@ export type Database = {
           stripe_payment_intent_id: string | null
           student_id: string
           updated_at: string | null
+          use_package_id: string | null
           vehicle_type: string | null
         }
         Insert: {
@@ -127,6 +128,7 @@ export type Database = {
           stripe_payment_intent_id?: string | null
           student_id: string
           updated_at?: string | null
+          use_package_id?: string | null
           vehicle_type?: string | null
         }
         Update: {
@@ -151,6 +153,7 @@ export type Database = {
           stripe_payment_intent_id?: string | null
           student_id?: string
           updated_at?: string | null
+          use_package_id?: string | null
           vehicle_type?: string | null
         }
         Relationships: [
@@ -166,6 +169,13 @@ export type Database = {
             columns: ["student_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookings_use_package_id_fkey"
+            columns: ["use_package_id"]
+            isOneToOne: false
+            referencedRelation: "student_packages"
             referencedColumns: ["id"]
           },
         ]
