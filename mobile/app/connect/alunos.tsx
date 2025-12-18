@@ -175,22 +175,27 @@ export default function InstructorStudentsScreen() {
                     <View style={styles.listContainer}>
                         {students.map((student) => (
                             <View key={student.id} style={[styles.studentCard, { backgroundColor: theme.card }]}>
-                                {student.photo_url ? (
-                                    <Image source={{ uri: student.photo_url }} style={styles.avatar} />
-                                ) : (
-                                    <View style={[styles.avatarPlaceholder, { backgroundColor: theme.primary }]}>
-                                        <Text style={styles.avatarInitial}>
-                                            {student.full_name.charAt(0)}
+                                <TouchableOpacity
+                                    style={styles.studentCardMain}
+                                    onPress={() => router.push(`/connect/aluno/${student.id}`)}
+                                >
+                                    {student.photo_url ? (
+                                        <Image source={{ uri: student.photo_url }} style={styles.avatar} />
+                                    ) : (
+                                        <View style={[styles.avatarPlaceholder, { backgroundColor: theme.primary }]}>
+                                            <Text style={styles.avatarInitial}>
+                                                {student.full_name.charAt(0)}
+                                            </Text>
+                                        </View>
+                                    )}
+
+                                    <View style={styles.studentInfo}>
+                                        <Text style={[styles.studentName, { color: theme.text }]}>{student.full_name}</Text>
+                                        <Text style={[styles.studentMeta, { color: theme.textSecondary }]}>
+                                            {student.total_lessons} aula{student.total_lessons !== 1 ? 's' : ''} • Última: {new Date(student.last_lesson).toLocaleDateString('pt-BR')}
                                         </Text>
                                     </View>
-                                )}
-
-                                <View style={styles.studentInfo}>
-                                    <Text style={[styles.studentName, { color: theme.text }]}>{student.full_name}</Text>
-                                    <Text style={[styles.studentMeta, { color: theme.textSecondary }]}>
-                                        {student.total_lessons} aula{student.total_lessons !== 1 ? 's' : ''} • Última: {new Date(student.last_lesson).toLocaleDateString('pt-BR')}
-                                    </Text>
-                                </View>
+                                </TouchableOpacity>
 
                                 <TouchableOpacity
                                     style={[styles.contactButton, { backgroundColor: '#dcfce7' }]}
@@ -287,13 +292,18 @@ const styles = StyleSheet.create({
     studentCard: {
         flexDirection: 'row',
         alignItems: 'center',
-        padding: 16,
+        padding: 12,
         borderRadius: 16,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.03,
         shadowRadius: 4,
         elevation: 1,
+    },
+    studentCardMain: {
+        flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
     },
     avatar: {
         width: 48,

@@ -38,6 +38,15 @@ interface Booking {
     status: string;
     payment_status: string;
     instructor: Instructor;
+    student?: {
+        full_name: string;
+        avatar_url: string | null;
+    };
+    student_id: string;
+    instructor_id: string;
+    unread_messages?: number;
+    chat_room_id?: string;
+    isInstructorRole?: boolean;
 }
 
 export default function AulasScreen() {
@@ -53,8 +62,20 @@ export default function AulasScreen() {
         if (!user?.id) return;
 
         try {
-            // Fetch all relevant bookings without pre-filtering by date/status for tabs
-            let query = supabase
+            // 1. Check if user is an instructor
+            const { data: instructorProfile } = await supabase
+                .from('instructors')
+                .select('id')
+                .eq('user_id', user.id)
+                .single();
+
+            // 2. Build or filter for both roles
+            let orFilter = `student_id.eq.${user.id}`;
+            if (instructorProfile?.id) {
+                orFilter += `,instructor_id.eq.${instructorProfile.id}`;
+            }
+
+            const { data, error } = await supabase
                 .from('bookings')
                 .select(`
                     id,
@@ -64,38 +85,65 @@ export default function AulasScreen() {
                     price,
                     status,
                     payment_status,
-                    instructor:instructors(id, full_name, photo_url, city, state, phone)
+                    instructor_id,
+                    student_id,
+                    instructor:instructors(id, full_name, photo_url, city, state, phone),
+                    student:profiles(id, full_name, avatar_url)
                 `)
-                .eq('student_id', user.id)
-                .order('scheduled_date', { ascending: true }) // Order by date for consistent processing
+                .or(orFilter)
+                .order('scheduled_date', { ascending: true })
                 .order('scheduled_time', { ascending: true });
-
-            const { data, error } = await query;
 
             if (error) throw error;
 
             if (data) {
-                const formattedData = data.map((booking: any) => ({
-                    ...booking,
-                    instructor: booking.instructor[0] || booking.instructor,
-                })) || [];
+                // Fetch chat rooms for counts
+                const { data: chatRooms } = await supabase
+                    .from('connect_chat_rooms')
+                    .select('id, student_id, instructor_id, unread_count_student, unread_count_instructor')
+                    .or(`student_id.eq.${user.id}${instructorProfile?.id ? `,instructor_id.eq.${instructorProfile.id}` : ''}`);
+
+                const formattedData = data.map((booking: any) => {
+                    const isInstructorRole = instructorProfile?.id === booking.instructor_id;
+                    const instructor = Array.isArray(booking.instructor) ? booking.instructor[0] : booking.instructor;
+                    const student = Array.isArray(booking.student) ? booking.student[0] : booking.student;
+
+                    const chatRoom = chatRooms?.find(room =>
+                        room.student_id === booking.student_id &&
+                        room.instructor_id === booking.instructor_id
+                    );
+
+                    const unreadCount = isInstructorRole
+                        ? (chatRoom?.unread_count_instructor || 0)
+                        : (chatRoom?.unread_count_student || 0);
+
+                    return {
+                        ...booking,
+                        instructor: instructor,
+                        student: student,
+                        unread_messages: unreadCount,
+                        chat_room_id: chatRoom?.id,
+                        isInstructorRole
+                    };
+                }) || [];
 
                 // Separate bookings into upcoming and history
-                const upcoming = formattedData.filter(booking => {
-                    // Check if lesson is expired (past time + 30min tolerance)
-                    const expired = isLessonExpired(booking.scheduled_date, booking.scheduled_time);
+                const now = new Date();
+                const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 
-                    // Lesson is upcoming if status is confirmed/pending AND not expired
-                    return ['pending', 'confirmed'].includes(booking.status) && !expired;
+                const upcoming = formattedData.filter(booking => {
+                    // Keep in upcoming if:
+                    // 1. Status is confirmed or pending
+                    // 2. AND (it's today OR it's in the future OR it's not explicitly cancelled/completed)
+                    // We only move to history if it's explicitly done, cancelled, or from a past date.
+                    const isFutureOrToday = booking.scheduled_date >= todayStr;
+                    return ['pending', 'confirmed'].includes(booking.status) && isFutureOrToday;
                 });
 
                 const history = formattedData.filter(booking => {
-                    const expired = isLessonExpired(booking.scheduled_date, booking.scheduled_time);
-                    // History includes:
-                    // 1. Completed/Cancelled lessons
-                    // 2. Confirmed/Pending lessons that are EXPIRED
+                    const isPast = booking.scheduled_date < todayStr;
                     return ['completed', 'cancelled'].includes(booking.status) ||
-                        (['pending', 'confirmed'].includes(booking.status) && expired);
+                        (['pending', 'confirmed'].includes(booking.status) && isPast);
                 });
 
                 setUpcomingBookings(upcoming);
@@ -113,7 +161,7 @@ export default function AulasScreen() {
         fetchBookings();
     }, [fetchBookings]);
 
-    const handleOpenChat = async (instructorId: string) => {
+    const handleOpenChat = async (studentId: string, instructorId: string) => {
         if (!user) return;
 
         try {
@@ -121,7 +169,7 @@ export default function AulasScreen() {
             const { data: room } = await supabase
                 .from('connect_chat_rooms')
                 .select('id')
-                .eq('student_id', user.id)
+                .eq('student_id', studentId)
                 .eq('instructor_id', instructorId)
                 .single();
 
@@ -134,7 +182,7 @@ export default function AulasScreen() {
             const { data: newRoom, error: createError } = await supabase
                 .from('connect_chat_rooms')
                 .insert({
-                    student_id: user.id,
+                    student_id: studentId,
                     instructor_id: instructorId
                 })
                 .select()
@@ -201,7 +249,7 @@ export default function AulasScreen() {
         );
     };
 
-    const renderBookingCard = (booking: Booking) => {
+    const renderBookingCard = (booking: Booking & { isInstructorRole?: boolean, student?: any }) => {
         // Check if expired to adjust badge visualization
         const expired = isLessonExpired(booking.scheduled_date, booking.scheduled_time);
         const displayStatus = (['pending', 'confirmed'].includes(booking.status) && expired)
@@ -213,31 +261,40 @@ export default function AulasScreen() {
         const isPast = new Date(booking.scheduled_date) < new Date();
         const canCancel = !isPast && ['pending', 'confirmed'].includes(booking.status);
 
+        // UI adaptation based on role
+        const otherPartyName = booking.isInstructorRole
+            ? booking.student?.full_name || 'Aluno'
+            : booking.instructor?.full_name || 'Instrutor';
+
+        const otherPartyPhoto = booking.isInstructorRole
+            ? booking.student?.avatar_url
+            : booking.instructor?.photo_url;
+
         return (
             <View key={booking.id} style={[styles.bookingCard, { backgroundColor: theme.card, borderColor: theme.cardBorder, borderWidth: 1 }]}>
                 {/* Header Row */}
                 <View style={styles.bookingHeader}>
-                    {booking.instructor?.photo_url ? (
+                    {otherPartyPhoto ? (
                         <Image
-                            source={{ uri: booking.instructor.photo_url }}
+                            source={{ uri: otherPartyPhoto }}
                             style={styles.instructorPhoto}
                         />
                     ) : (
-                        <View style={styles.instructorPhotoPlaceholder}>
+                        <View style={[styles.instructorPhotoPlaceholder, { backgroundColor: theme.primary }]}>
                             <Text style={styles.instructorInitial}>
-                                {booking.instructor?.full_name?.charAt(0) || 'I'}
+                                {otherPartyName.charAt(0) || '?'}
                             </Text>
                         </View>
                     )}
 
                     <View style={styles.bookingInfo}>
                         <Text style={[styles.instructorName, { color: theme.text }]}>
-                            {booking.instructor?.full_name || 'Instrutor'}
+                            {otherPartyName}
                         </Text>
                         <View style={styles.locationRow}>
                             <Ionicons name="location" size={12} color={theme.textMuted} />
                             <Text style={[styles.locationText, { color: theme.textMuted }]}>
-                                {booking.instructor?.city}, {booking.instructor?.state}
+                                {booking.isInstructorRole ? 'Sua aula' : `${booking.instructor?.city}, ${booking.instructor?.state}`}
                             </Text>
                         </View>
                     </View>
@@ -289,10 +346,15 @@ export default function AulasScreen() {
 
                     <TouchableOpacity
                         style={[styles.chatButton, { borderColor: theme.primary, borderWidth: 1 }]}
-                        onPress={() => handleOpenChat(booking.instructor.id)}
+                        onPress={() => handleOpenChat(booking.student_id, booking.instructor_id)}
                     >
                         <Ionicons name="chatbubble-ellipses-outline" size={20} color={theme.primary} />
                         <Text style={[styles.chatButtonText, { color: theme.primary }]}>Conversar pelo Vrumi</Text>
+                        {(booking.unread_messages ?? 0) > 0 && (
+                            <View style={[styles.chatBadge, { backgroundColor: theme.primary }]}>
+                                <Text style={styles.chatBadgeText}>{booking.unread_messages}</Text>
+                            </View>
+                        )}
                     </TouchableOpacity>
 
                     {expired && ['confirmed', 'pending'].includes(booking.status) && (
@@ -703,5 +765,23 @@ const styles = StyleSheet.create({
         color: '#fff',
         fontSize: 15,
         fontWeight: '700',
+    },
+    chatBadge: {
+        position: 'absolute',
+        top: -8,
+        right: -8,
+        minWidth: 20,
+        height: 20,
+        borderRadius: 10,
+        justifyContent: 'center',
+        alignItems: 'center',
+        paddingHorizontal: 4,
+        borderWidth: 2,
+        borderColor: '#fff',
+    },
+    chatBadgeText: {
+        color: '#fff',
+        fontSize: 10,
+        fontWeight: 'bold',
     },
 });

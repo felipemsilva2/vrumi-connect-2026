@@ -72,15 +72,15 @@ export default function CriarPacoteScreen() {
         const { data, error } = await supabase
             .from('lesson_packages')
             .select('*')
-            .eq('id', params.id)
+            .eq('id', params.id as string)
             .single();
 
         if (!error && data) {
             setFormData({
                 name: data.name,
-                total_lessons: data.total_lessons.toString(),
-                vehicle_type: data.vehicle_type,
-                discount_percent: data.discount_percent.toString(),
+                total_lessons: (data.total_lessons || 5).toString(),
+                vehicle_type: data.vehicle_type as 'instructor' | 'student',
+                discount_percent: (data.discount_percent || 0).toString(),
             });
         }
     };
@@ -134,7 +134,7 @@ export default function CriarPacoteScreen() {
                 const { error } = await supabase
                     .from('lesson_packages')
                     .update(packageData)
-                    .eq('id', params.id);
+                    .eq('id', params.id as string);
                 if (error) throw error;
             } else {
                 const { error } = await supabase

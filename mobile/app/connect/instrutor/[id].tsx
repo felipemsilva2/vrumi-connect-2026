@@ -88,6 +88,7 @@ export default function InstructorProfileScreen() {
     const [showPackageModal, setShowPackageModal] = useState(false);
     const [selectedPackage, setSelectedPackage] = useState<LessonPackage | null>(null);
     const [purchasingPackage, setPurchasingPackage] = useState(false);
+    const [hasAccess, setHasAccess] = useState(false);
 
     useEffect(() => {
         if (id) {
@@ -131,10 +132,50 @@ export default function InstructorProfileScreen() {
                 .order('total_lessons');
 
             setPackages((packagesData || []) as LessonPackage[]);
+
+            if (user?.id) {
+                checkUserAccess();
+            }
         } catch (error) {
             console.error('Error fetching instructor:', error);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const checkUserAccess = async () => {
+        if (!user?.id || !id) return;
+
+        try {
+            // Check for bookings
+            const { data: booking } = await supabase
+                .from('bookings')
+                .select('id')
+                .eq('student_id', user.id)
+                .eq('instructor_id', id)
+                .limit(1)
+                .maybeSingle();
+
+            if (booking) {
+                setHasAccess(true);
+                return;
+            }
+
+            // Check for packages
+            const { data: pkg } = await supabase
+                .from('student_packages')
+                .select('id')
+                .eq('student_id', user.id)
+                .eq('instructor_id', id)
+                .eq('status', 'active')
+                .limit(1)
+                .maybeSingle();
+
+            if (pkg) {
+                setHasAccess(true);
+            }
+        } catch (error) {
+            console.log('Access check:', error);
         }
     };
 
@@ -262,18 +303,51 @@ export default function InstructorProfileScreen() {
         try {
             const { data: existingPackage } = await supabase
                 .from('student_packages')
-                .select('id')
+                .select('id, instructor_id, lessons_total')
                 .eq('student_id', user.id)
                 .eq('status', 'active')
-                .single();
+                .maybeSingle();
 
             if (existingPackage) {
-                Alert.alert('Pacote Ativo', 'Você já possui um pacote ativo. Finalize-o antes de comprar outro.');
+                if (existingPackage.instructor_id === instructor.id) {
+                    // Offer options for same instructor
+                    Alert.alert(
+                        'Pacote Ativo',
+                        'Você já possui um pacote ativo com este instrutor. O que deseja fazer?',
+                        [
+                            {
+                                text: 'Somar Aulas',
+                                onPress: () => initiatePurchase('sum', existingPackage.id)
+                            },
+                            {
+                                text: 'Trocar Plano',
+                                onPress: () => initiatePurchase('switch', existingPackage.id)
+                            },
+                            { text: 'Cancelar', style: 'cancel' }
+                        ]
+                    );
+                } else {
+                    Alert.alert('Pacote Ativo', 'Você já possui um pacote ativo com outro instrutor. Finalize-o antes de comprar outro.');
+                }
                 setShowPackageModal(false);
                 return;
             }
 
-            const { error } = await supabase.from('student_packages').insert({
+            await initiatePurchase();
+        } catch (error: any) {
+            console.error('Purchase check error:', error);
+            Alert.alert('Erro', 'Não foi possível verificar pacotes existentes.');
+        } finally {
+            setPurchasingPackage(false);
+        }
+    };
+
+    const initiatePurchase = async (action?: 'sum' | 'switch', oldPackageId?: string) => {
+        if (!user || !selectedPackage || !instructor) return;
+
+        setPurchasingPackage(true);
+        try {
+            const { data: newPkg, error } = await supabase.from('student_packages').insert({
                 student_id: user.id,
                 package_id: selectedPackage.id,
                 instructor_id: instructor.id,
@@ -281,17 +355,16 @@ export default function InstructorProfileScreen() {
                 lessons_used: 0,
                 vehicle_type: selectedPackage.vehicle_type,
                 total_paid: selectedPackage.total_price,
-                status: 'active',
-            });
+                status: 'pending',
+                metadata: action ? { action, old_package_id: oldPackageId } : {}
+            }).select().single();
 
             if (error) throw error;
 
-            Alert.alert(
-                'Compra Realizada! 🎉',
-                `Você adquiriu ${selectedPackage.total_lessons} aulas. Agora você pode agendar!`,
-                [{ text: 'Agendar Agora', onPress: () => router.push(`/connect/agendar/${id}`) }]
-            );
+            // Redirect to Checkout with action param
             setShowPackageModal(false);
+            const actionParam = action ? `&action=${action}&old_id=${oldPackageId}` : '';
+            router.push(`/connect/checkout/${newPkg.id}?type=package${actionParam}`);
         } catch (error: any) {
             console.error('Purchase error:', error);
             Alert.alert('Erro', error.message || 'Não foi possível completar a compra');
@@ -498,13 +571,15 @@ export default function InstructorProfileScreen() {
                 </View>
 
                 <View style={styles.actionButtonsRow}>
-                    <TouchableOpacity
-                        style={[styles.chatIconButton, { borderColor: theme.cardBorder, borderWidth: 1 }]}
-                        onPress={handleOpenChat}
-                        activeOpacity={0.7}
-                    >
-                        <Ionicons name="chatbubble-ellipses-outline" size={24} color={theme.text} />
-                    </TouchableOpacity>
+                    {hasAccess && (
+                        <TouchableOpacity
+                            style={[styles.chatIconButton, { borderColor: theme.cardBorder, borderWidth: 1 }]}
+                            onPress={handleOpenChat}
+                            activeOpacity={0.7}
+                        >
+                            <Ionicons name="chatbubble-ellipses-outline" size={24} color={theme.text} />
+                        </TouchableOpacity>
+                    )}
 
                     <TouchableOpacity
                         style={[styles.primaryActionButton, { backgroundColor: theme.primary }]}

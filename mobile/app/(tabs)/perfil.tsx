@@ -274,6 +274,18 @@ export default function PerfilScreen() {
                         <Ionicons name="chevron-forward" size={18} color={theme.textMuted} />
                     </TouchableOpacity>
 
+                    {/* My Messages */}
+                    <TouchableOpacity
+                        style={[styles.menuItem, { backgroundColor: theme.card }]}
+                        onPress={() => router.push('/connect/chat')}
+                    >
+                        <View style={[styles.menuIcon, { backgroundColor: '#ffedd5' }]}>
+                            <Ionicons name="chatbubble-ellipses" size={20} color="#ea580c" />
+                        </View>
+                        <Text style={[styles.menuItemText, { color: theme.text }]}>Minhas Mensagens</Text>
+                        <Ionicons name="chevron-forward" size={18} color={theme.textMuted} />
+                    </TouchableOpacity>
+
 
                     {/* Conditional Instructor Options */}
                     {instructorStatus === 'none' && (

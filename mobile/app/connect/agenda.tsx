@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { Calendar, LocaleConfig } from 'react-native-calendars';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useAuth } from '../../contexts/AuthContext';
@@ -33,23 +33,35 @@ interface Booking {
     scheduled_time: string;
     status: string;
     student: {
+        id: string; // Added student ID
         full_name: string;
         photo_url: string | null;
         phone?: string;
     };
+    unread_messages?: number; // Added unread count
+    chat_room_id?: string; // Added chat room ID
 }
 
 export default function InstructorAgendaScreen() {
     const { theme, isDark } = useTheme();
     const { user } = useAuth();
+    const params = useLocalSearchParams<{ date?: string }>();
     const [loading, setLoading] = useState(true);
-    const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+    const [selectedDate, setSelectedDate] = useState(params.date || new Date().toISOString().split('T')[0]);
     const [bookings, setBookings] = useState<Booking[]>([]);
     const [markedDates, setMarkedDates] = useState<any>({});
     const [dayBookings, setDayBookings] = useState<Booking[]>([]);
 
-    const fetchBookings = useCallback(async () => {
+    useEffect(() => {
+        if (params.date) {
+            setSelectedDate(params.date);
+        }
+    }, [params.date]);
+
+    const fetchBookings = useCallback(async (targetDate?: string) => {
         if (!user?.id) return;
+
+        const dateToUse = targetDate || selectedDate;
 
         try {
             // Get instructor ID
@@ -66,32 +78,58 @@ export default function InstructorAgendaScreen() {
             }
 
             // Fetch all bookings for this instructor
-            const { data, error } = await supabase
+            const { data: bookingsData, error: bookingsError } = await supabase
                 .from('bookings')
                 .select(`
                     id,
                     scheduled_date,
                     scheduled_time,
                     status,
-                    student:profiles(full_name, avatar_url)
+                    student_id,
+                    student:profiles(id, full_name, avatar_url)
                 `)
                 .eq('instructor_id', instructor.id)
                 .in('status', ['confirmed', 'pending', 'completed'])
                 .order('scheduled_time');
 
-            if (error) throw error;
+            if (bookingsError) throw bookingsError;
 
-            setBookings((data as any)
-                ?.map((b: any) => ({
-                    ...b,
-                    status: b.status || 'pending',
-                    student: Array.isArray(b.student) ? b.student[0] : b.student
-                }))
-                .filter((b: any) => b.student && b.student.full_name) || []);
+            // Fetch chat rooms for this instructor to get unread counts
+            const { data: chatRooms } = await supabase
+                .from('connect_chat_rooms')
+                .select('id, student_id, unread_count_instructor')
+                .eq('instructor_id', instructor.id);
+
+            const chatMap = new Map();
+            chatRooms?.forEach(room => {
+                chatMap.set(room.student_id, {
+                    id: room.id,
+                    count: room.unread_count_instructor
+                });
+            });
+
+            const processed = (bookingsData as any)
+                ?.map((b: any) => {
+                    const student = Array.isArray(b.student) ? b.student[0] : b.student;
+                    const chatInfo = chatMap.get(b.student_id);
+                    return {
+                        ...b,
+                        status: b.status || 'pending',
+                        student: {
+                            ...student,
+                            photo_url: student?.avatar_url
+                        },
+                        unread_messages: chatInfo?.count || 0,
+                        chat_room_id: chatInfo?.id
+                    };
+                })
+                .filter((b: any) => b.student) || [];
+
+            setBookings(processed);
 
             // Process for calendar dots
             const marks: any = {};
-            data?.forEach((b: any) => {
+            processed.forEach((b: any) => {
                 const date = b.scheduled_date;
                 if (!marks[date]) {
                     marks[date] = { marked: true, dotColor: theme.primary };
@@ -106,17 +144,7 @@ export default function InstructorAgendaScreen() {
             };
 
             setMarkedDates(marks);
-
-            const processedBookings = (data as any)
-                ?.map((b: any) => ({
-                    ...b,
-                    status: b.status || 'pending',
-                    student: Array.isArray(b.student) ? b.student[0] : b.student
-                }))
-                .filter((b: any) => b.student && b.student.full_name) || [];
-
-            updateDayBookings(selectedDate, processedBookings);
-
+            updateDayBookings(dateToUse, processed);
         } catch (error) {
             console.error('Error fetching bookings:', error);
             Alert.alert('Erro', 'Não foi possível carregar a agenda.');
@@ -126,8 +154,8 @@ export default function InstructorAgendaScreen() {
     }, [user?.id, selectedDate, theme.primary]);
 
     useEffect(() => {
-        fetchBookings();
-    }, [fetchBookings]);
+        fetchBookings(selectedDate);
+    }, [fetchBookings, selectedDate]);
 
     const updateDayBookings = (date: string, allBookings: Booking[]) => {
         const filtered = allBookings.filter(b => b.scheduled_date === date);
@@ -264,11 +292,11 @@ export default function InstructorAgendaScreen() {
                                         ) : (
                                             <View style={[styles.avatarPlaceholder, { backgroundColor: theme.primary }]}>
                                                 <Text style={styles.avatarInitial}>
-                                                    {param.student.full_name.charAt(0)}
+                                                    {param.student.full_name?.charAt(0) || '?'}
                                                 </Text>
                                             </View>
                                         )}
-                                        <View>
+                                        <View style={styles.studentInfoCol}>
                                             <Text style={[styles.studentName, { color: theme.text }]}>
                                                 {param.student.full_name}
                                             </Text>
@@ -276,6 +304,21 @@ export default function InstructorAgendaScreen() {
                                                 {getStatusLabel(param.status)}
                                             </Text>
                                         </View>
+
+                                        {(param.unread_messages ?? 0) > 0 && (
+                                            <TouchableOpacity
+                                                style={[styles.chatIndicator, { backgroundColor: theme.primaryLight }]}
+                                                onPress={(e) => {
+                                                    e.stopPropagation();
+                                                    if (param.chat_room_id) {
+                                                        router.push(`/connect/chat/${param.chat_room_id}`);
+                                                    }
+                                                }}
+                                            >
+                                                <Ionicons name="chatbubble-ellipses" size={16} color={theme.primary} />
+                                                <Text style={[styles.chatBadge, { color: theme.primary }]}>{param.unread_messages}</Text>
+                                            </TouchableOpacity>
+                                        )}
                                     </View>
                                 </View>
 
@@ -413,5 +456,20 @@ const styles = StyleSheet.create({
     statusText: {
         fontSize: 12,
         fontWeight: '500',
+    },
+    studentInfoCol: {
+        flex: 1,
+    },
+    chatIndicator: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+        borderRadius: 12,
+        gap: 4,
+    },
+    chatBadge: {
+        fontSize: 12,
+        fontWeight: '700',
     },
 });

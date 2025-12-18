@@ -233,13 +233,16 @@ export default function BookingScreen() {
                     .eq('id', activePackage.id);
 
                 if (pkgError) console.error('Error updating package:', pkgError);
-            }
 
-            Alert.alert(
-                'Sucesso! 🚗',
-                'Sua aula foi agendada. Você receberá uma notificação quando o instrutor confirmar.',
-                [{ text: 'Ver Minhas Aulas', onPress: () => router.push('/(tabs)/aulas') }]
-            );
+                Alert.alert(
+                    'Sucesso! 🚗',
+                    'Sua aula foi agendada usando seu pacote. Você receberá uma notificação quando o instrutor confirmar.',
+                    [{ text: 'Ver Minhas Aulas', onPress: () => router.push('/(tabs)/aulas') }]
+                );
+            } else {
+                // Redirect to Checkout for paid bookings
+                router.push(`/connect/checkout/${data.id}?type=booking`);
+            }
         } catch (error) {
             console.error('Booking error:', error);
             Alert.alert('Erro', 'Não foi possível realizar o agendamento');

@@ -24,20 +24,24 @@ interface Message {
     content: string;
     sender_id: string;
     created_at: string;
+    room_id: string;
+    is_read?: boolean;
 }
 
 interface ChatRoom {
     id: string;
     student_id: string;
     instructor_id: string;
-    instructor: {
-        full_name: string;
-        photo_url: string | null;
-    };
+    student_name: string;
+    student_avatar: string | null;
+    instructor_name: string;
+    instructor_avatar: string | null;
+    is_student_view: boolean;
 }
 
 export default function ChatScreen() {
-    const { id: roomId } = useLocalSearchParams();
+    const { id } = useLocalSearchParams();
+    const roomId = Array.isArray(id) ? id[0] : (id as string);
     const { user } = useAuth();
     const { theme, isDark } = useTheme();
     const [messages, setMessages] = useState<Message[]>([]);
@@ -58,6 +62,7 @@ export default function ChatScreen() {
     }, [roomId]);
 
     const fetchRoomDetails = async () => {
+        if (!user) return;
         try {
             const { data, error } = await supabase
                 .from('connect_chat_rooms')
@@ -65,13 +70,33 @@ export default function ChatScreen() {
                     id,
                     student_id,
                     instructor_id,
+                    student:profiles(full_name, avatar_url),
                     instructor:instructors(full_name, photo_url)
                 `)
                 .eq('id', roomId)
                 .single();
 
             if (error) throw error;
-            setRoom(data as any);
+
+            if (data) {
+                const isStudent = data.student_id === user.id;
+                setRoom({
+                    id: data.id,
+                    student_id: data.student_id,
+                    instructor_id: data.instructor_id,
+                    is_student_view: isStudent,
+                    student_name: (data.student as any)?.full_name || 'Aluno',
+                    student_avatar: (data.student as any)?.avatar_url,
+                    instructor_name: (data.instructor as any)?.full_name || 'Instrutor',
+                    instructor_avatar: (data.instructor as any)?.photo_url
+                });
+
+                // Reset unread count for current user
+                await supabase
+                    .from('connect_chat_rooms')
+                    .update(isStudent ? { unread_count_student: 0 } : { unread_count_instructor: 0 })
+                    .eq('id', roomId);
+            }
         } catch (error) {
             console.error('Error fetching room:', error);
             Alert.alert('Erro', 'Não foi possível carregar os detalhes da conversa.');
@@ -87,7 +112,7 @@ export default function ChatScreen() {
                 .order('created_at', { ascending: true });
 
             if (error) throw error;
-            setMessages(data || []);
+            setMessages((data as any) || []);
         } catch (error) {
             console.error('Error fetching messages:', error);
         } finally {
@@ -147,10 +172,10 @@ export default function ChatScreen() {
             const { error } = await supabase
                 .from('connect_chat_messages')
                 .insert({
-                    room_id: roomId,
+                    room_id: roomId as string,
                     sender_id: user.id,
                     content: newMessage.trim(),
-                });
+                } as any);
 
             if (error) throw error;
             setNewMessage('');
@@ -203,16 +228,28 @@ export default function ChatScreen() {
                     <Ionicons name="arrow-back" size={24} color={theme.text} />
                 </TouchableOpacity>
 
-                {room?.instructor?.photo_url ? (
-                    <Image source={{ uri: room.instructor.photo_url }} style={styles.avatar} />
+                {room?.is_student_view ? (
+                    room.instructor_avatar ? (
+                        <Image source={{ uri: room.instructor_avatar }} style={styles.avatar} />
+                    ) : (
+                        <View style={[styles.avatarPlaceholder, { backgroundColor: theme.primary }]}>
+                            <Text style={styles.avatarInitial}>{room.instructor_name.charAt(0)}</Text>
+                        </View>
+                    )
                 ) : (
-                    <View style={[styles.avatarPlaceholder, { backgroundColor: theme.primary }]}>
-                        <Text style={styles.avatarInitial}>{room?.instructor?.full_name?.charAt(0)}</Text>
-                    </View>
+                    room?.student_avatar ? (
+                        <Image source={{ uri: room.student_avatar }} style={styles.avatar} />
+                    ) : (
+                        <View style={[styles.avatarPlaceholder, { backgroundColor: theme.primary }]}>
+                            <Text style={styles.avatarInitial}>{room?.student_name.charAt(0)}</Text>
+                        </View>
+                    )
                 )}
 
                 <View style={styles.headerInfo}>
-                    <Text style={[styles.instructorName, { color: theme.text }]}>{room?.instructor?.full_name}</Text>
+                    <Text style={[styles.instructorName, { color: theme.text }]}>
+                        {room?.is_student_view ? room.instructor_name : room?.student_name}
+                    </Text>
                     <Text style={[styles.statusTextHeader, { color: theme.success }]}>Online</Text>
                 </View>
             </View>

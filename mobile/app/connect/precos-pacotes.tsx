@@ -76,7 +76,10 @@ export default function PrecosEPacotesScreen() {
                 .eq('instructor_id', instructor.id)
                 .order('created_at', { ascending: false });
 
-            setPackages(packagesData || []);
+            setPackages((packagesData || []).map(pkg => ({
+                ...pkg,
+                discount_percent: pkg.discount_percent || 0
+            } as any)));
         } catch (error) {
             console.error('Error:', error);
         } finally {

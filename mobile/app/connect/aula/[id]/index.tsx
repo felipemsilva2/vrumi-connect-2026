@@ -6,6 +6,7 @@ import {
     TouchableOpacity,
     ActivityIndicator,
     Image,
+    Alert,
 } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -21,12 +22,16 @@ interface BookingDetails {
     status: string;
     scheduled_date: string;
     scheduled_time: string;
+    instructor_id: string;
+    student_id: string;
+    payment_status: string;
     instructor: {
         full_name: string | null;
         photo_url: string | null;
     } | null;
     student: {
         full_name: string | null;
+        avatar_url?: string | null;
     } | null;
 }
 
@@ -68,7 +73,7 @@ export default function CheckInScreen() {
             // Get booking first
             const { data: bookingData, error: bookingError } = await supabase
                 .from('bookings')
-                .select('id, status, scheduled_date, scheduled_time, instructor_id, student_id')
+                .select('id, status, payment_status, scheduled_date, scheduled_time, instructor_id, student_id')
                 .eq('id', id)
                 .single();
 
@@ -97,7 +102,7 @@ export default function CheckInScreen() {
             if (bookingData.student_id) {
                 const { data: student } = await supabase
                     .from('profiles')
-                    .select('full_name')
+                    .select('full_name, avatar_url')
                     .eq('id', bookingData.student_id)
                     .single();
                 studentData = student;
@@ -106,8 +111,11 @@ export default function CheckInScreen() {
             setBooking({
                 id: bookingData.id,
                 status: bookingData.status || 'pending',
+                payment_status: bookingData.payment_status || 'pending',
                 scheduled_date: bookingData.scheduled_date,
                 scheduled_time: bookingData.scheduled_time,
+                instructor_id: bookingData.instructor_id,
+                student_id: bookingData.student_id,
                 instructor: instructorData,
                 student: studentData,
             });
@@ -125,6 +133,66 @@ export default function CheckInScreen() {
     const formatDate = (date: string, time: string) => {
         const d = new Date(date + 'T00:00:00');
         return `${d.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })} às ${time.slice(0, 5)}`;
+    };
+
+    const handleOpenChat = async () => {
+        if (!user || !booking) return;
+
+        try {
+            // Find existing room
+            const { data: room } = await supabase
+                .from('connect_chat_rooms')
+                .select('id')
+                .eq('student_id', booking.student_id)
+                .eq('instructor_id', booking.instructor_id)
+                .single();
+
+            if (room) {
+                router.push(`/connect/chat/${room.id}`);
+                return;
+            }
+
+            // Create new room if not exists
+            const { data: newRoom, error: createError } = await supabase
+                .from('connect_chat_rooms')
+                .insert({
+                    student_id: booking.student_id,
+                    instructor_id: booking.instructor_id
+                })
+                .select()
+                .single();
+
+            if (createError) throw createError;
+            if (newRoom) router.push(`/connect/chat/${newRoom.id}`);
+
+        } catch (error) {
+            console.error('Error opening chat:', error);
+            Alert.alert('Erro', 'Não foi possível iniciar a conversa.');
+        }
+    };
+
+    const handleUpdateStatus = async (newStatus: 'confirmed' | 'cancelled') => {
+        if (!id) return;
+
+        try {
+            const { error } = await supabase
+                .from('bookings')
+                .update({ status: newStatus })
+                .eq('id', id);
+
+            if (error) throw error;
+
+            Alert.alert(
+                'Sucesso!',
+                newStatus === 'confirmed'
+                    ? 'Agendamento confirmado com sucesso.'
+                    : 'Agendamento recusado.',
+                [{ text: 'OK', onPress: () => fetchBookingDetails() }]
+            );
+        } catch (error) {
+            console.error('Error updating status:', error);
+            Alert.alert('Erro', 'Não foi possível atualizar o status do agendamento.');
+        }
     };
 
     const handleRoleSelect = (role: 'instructor' | 'student') => {
@@ -191,39 +259,117 @@ export default function CheckInScreen() {
             {/* Lesson Info Card */}
             <View style={[styles.lessonCard, { backgroundColor: theme.card, borderColor: theme.cardBorder, borderWidth: 1 }]}>
                 <View style={styles.lessonHeader}>
-                    <View style={styles.statusBadge}>
-                        <View style={styles.statusDot} />
-                        <Text style={styles.statusText}>Aula Agendada</Text>
+                    <View style={[
+                        styles.statusBadge,
+                        { backgroundColor: booking.status === 'pending' ? '#fef3c7' : booking.status === 'confirmed' ? '#d1fae5' : '#f3f4f6' }
+                    ]}>
+                        <View style={[
+                            styles.statusDot,
+                            { backgroundColor: booking.status === 'pending' ? '#f59e0b' : booking.status === 'confirmed' ? '#10b981' : '#6b7280' }
+                        ]} />
+                        <Text style={[
+                            styles.statusText,
+                            { color: booking.status === 'pending' ? '#d97706' : booking.status === 'confirmed' ? '#065f46' : '#4b5563' }
+                        ]}>
+                            {booking.status === 'pending' ? 'Pendente de Aprovação' :
+                                booking.status === 'confirmed' ? 'Aula Confirmada' :
+                                    booking.status === 'cancelled' ? 'Cancelada' : 'Agendada'}
+                        </Text>
                     </View>
                 </View>
                 <View style={styles.lessonInfo}>
                     <View style={styles.avatarContainer}>
-                        {booking.instructor?.photo_url ? (
-                            <Image
-                                source={{ uri: booking.instructor.photo_url }}
-                                style={styles.avatar}
-                            />
+                        {isInstructor ? (
+                            booking.student?.avatar_url ? (
+                                <Image source={{ uri: booking.student.avatar_url }} style={styles.avatar} />
+                            ) : (
+                                <View style={[styles.avatarPlaceholder, { backgroundColor: theme.primary }]}>
+                                    <Text style={styles.avatarInitial}>{booking.student?.full_name?.charAt(0)}</Text>
+                                </View>
+                            )
                         ) : (
-                            <View style={styles.avatarPlaceholder}>
-                                <Ionicons name="person" size={32} color="#fff" />
-                            </View>
+                            booking.instructor?.photo_url ? (
+                                <Image source={{ uri: booking.instructor.photo_url }} style={styles.avatar} />
+                            ) : (
+                                <View style={[styles.avatarPlaceholder, { backgroundColor: theme.primary }]}>
+                                    <Text style={styles.avatarInitial}>{booking.instructor?.full_name?.charAt(0)}</Text>
+                                </View>
+                            )
                         )}
                     </View>
                     <View style={styles.lessonDetails}>
                         <Text style={[styles.instructorName, { color: theme.text }]}>
-                            {booking.instructor?.full_name || 'Instrutor'}
+                            {isInstructor
+                                ? (booking.student?.full_name || 'Aluno')
+                                : (booking.instructor?.full_name || 'Instrutor')
+                            }
                         </Text>
                         <Text style={[styles.lessonDate, { color: theme.textSecondary }]}>
                             {formatDate(booking.scheduled_date, booking.scheduled_time)}
                         </Text>
                     </View>
+                    <TouchableOpacity
+                        style={[styles.chatIconButton, { backgroundColor: theme.primaryLight }]}
+                        onPress={handleOpenChat}
+                    >
+                        <Ionicons name="chatbubble-ellipses" size={24} color={theme.primary} />
+                    </TouchableOpacity>
                 </View>
             </View>
 
             {/* Role Specific Action */}
             <View style={styles.rolesContainer}>
+                {/* Pending Payment Warning */}
+                {booking.payment_status === 'pending' && (
+                    <View style={[styles.statusMessage, { backgroundColor: '#fff7ed' }]}>
+                        <Ionicons name="card-outline" size={20} color="#f59e0b" />
+                        <View style={{ flex: 1 }}>
+                            <Text style={[styles.statusMessageText, { color: '#b45309' }]}>PAGAMENTO PENDENTE</Text>
+                            <Text style={{ fontSize: 12, color: '#d97706' }}>
+                                {isInstructor
+                                    ? 'Aguardando o aluno realizar o pagamento para liberar a aprovação.'
+                                    : 'A aula só será confirmada após a realização do pagamento.'}
+                            </Text>
+                        </View>
+                        {!isInstructor && (
+                            <TouchableOpacity
+                                style={{ backgroundColor: '#f59e0b', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8 }}
+                                onPress={() => router.push(`/connect/checkout/${id}?type=booking`)}
+                            >
+                                <Text style={{ color: '#fff', fontSize: 12, fontWeight: '700' }}>Pagar Agora</Text>
+                            </TouchableOpacity>
+                        )}
+                    </View>
+                )}
+
+                {/* Approval Actions for Instructor - Only shown if PAID */}
+                {isInstructor && booking.status === 'pending' && booking.payment_status === 'paid' && (
+                    <View style={styles.approvalContainer}>
+                        <Text style={[styles.approvalTitle, { color: theme.text }]}>Novo Agendamento</Text>
+                        <Text style={[styles.approvalDesc, { color: theme.textSecondary }]}>
+                            Este aluno deseja realizar uma aula com você. Você aceita?
+                        </Text>
+                        <View style={styles.approvalButtons}>
+                            <TouchableOpacity
+                                style={[styles.approveBtn, { backgroundColor: theme.primary }]}
+                                onPress={() => handleUpdateStatus('confirmed')}
+                            >
+                                <Ionicons name="checkmark" size={20} color="#fff" />
+                                <Text style={styles.approveBtnText}>Aceitar Aula</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                style={[styles.rejectBtn, { borderColor: '#ef4444', borderWidth: 1 }]}
+                                onPress={() => handleUpdateStatus('cancelled')}
+                            >
+                                <Ionicons name="close" size={20} color="#ef4444" />
+                                <Text style={styles.rejectBtnText}>Recusar</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                )}
+
                 {/* Status Message if not available */}
-                {!checkInStatus.available && (
+                {booking.status === 'confirmed' && !checkInStatus.available && (
                     <View style={[styles.statusMessage, { backgroundColor: checkInStatus.reason === 'too_early' ? '#eff6ff' : '#fee2e2' }]}>
                         <Ionicons
                             name={checkInStatus.reason === 'too_early' ? 'time' : 'alert-circle'}
@@ -580,5 +726,68 @@ const styles = StyleSheet.create({
         fontSize: 13,
         fontWeight: '600',
         flex: 1,
+    },
+    avatarInitial: {
+        color: '#fff',
+        fontSize: 24,
+        fontWeight: 'bold',
+    },
+    chatIconButton: {
+        width: 48,
+        height: 48,
+        borderRadius: 24,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    // Approval Section
+    approvalContainer: {
+        backgroundColor: '#fff',
+        borderRadius: 20,
+        padding: 20,
+        marginBottom: 8,
+        borderWidth: 1,
+        borderColor: '#e5e7eb',
+    },
+    approvalTitle: {
+        fontSize: 18,
+        fontWeight: '800',
+        marginBottom: 8,
+    },
+    approvalDesc: {
+        fontSize: 14,
+        lineHeight: 20,
+        marginBottom: 20,
+    },
+    approvalButtons: {
+        flexDirection: 'row',
+        gap: 12,
+    },
+    approveBtn: {
+        flex: 2,
+        height: 50,
+        borderRadius: 14,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 8,
+    },
+    approveBtnText: {
+        color: '#fff',
+        fontSize: 15,
+        fontWeight: '700',
+    },
+    rejectBtn: {
+        flex: 1,
+        height: 50,
+        borderRadius: 14,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 4,
+    },
+    rejectBtnText: {
+        color: '#ef4444',
+        fontSize: 15,
+        fontWeight: '700',
     },
 });

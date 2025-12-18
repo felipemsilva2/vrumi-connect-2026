@@ -24,11 +24,14 @@ interface Stats {
 
 interface NextLesson {
     id: string;
+    student_id: string; // Added student ID
     student_name: string;
     scheduled_date: string;
     scheduled_time: string;
     price: number;
     isToday: boolean;
+    unread_messages?: number;
+    chat_room_id?: string;
 }
 
 export default function InstrutorTab() {
@@ -96,13 +99,26 @@ export default function InstrutorTab() {
 
             if (upcomingBookings && upcomingBookings.length > 0) {
                 const b = upcomingBookings[0];
+                const studentId = (b.student as any)?.id;
+
+                // Fetch chat room for this specific student
+                const { data: chatRoom } = await supabase
+                    .from('connect_chat_rooms')
+                    .select('id, unread_count_instructor')
+                    .eq('instructor_id', instructor.id)
+                    .eq('student_id', studentId)
+                    .maybeSingle();
+
                 setNextLesson({
                     id: b.id,
+                    student_id: studentId,
                     student_name: (b.student as any)?.full_name || 'Aluno',
                     scheduled_date: b.scheduled_date,
                     scheduled_time: b.scheduled_time,
                     price: b.price,
                     isToday: b.scheduled_date === today,
+                    unread_messages: chatRoom?.unread_count_instructor || 0,
+                    chat_room_id: chatRoom?.id
                 });
             } else {
                 setNextLesson(null);
@@ -137,6 +153,7 @@ export default function InstrutorTab() {
         { icon: 'wallet', label: 'Financeiro', color: '#4d7c0f', bg: '#ecfccb', route: '/connect/financeiro' },
         { icon: 'time', label: 'Horários', color: '#0891b2', bg: '#cffafe', route: '/connect/horarios' },
         { icon: 'pricetag', label: 'Preços', color: '#166534', bg: '#dcfce7', route: '/connect/precos-pacotes' },
+        { icon: 'chatbubble-ellipses', label: 'Mensagens', color: '#ea580c', bg: '#ffedd5', route: '/connect/chat' },
     ];
 
     if (loading) {
@@ -196,7 +213,10 @@ export default function InstrutorTab() {
                     {nextLesson ? (
                         <TouchableOpacity
                             style={[styles.lessonContent, { backgroundColor: nextLesson.isToday ? '#dcfce7' : theme.background }]}
-                            onPress={() => router.push('/connect/agenda')}
+                            onPress={() => router.push({
+                                pathname: '/connect/agenda',
+                                params: { date: nextLesson.scheduled_date }
+                            })}
                         >
                             <View style={styles.lessonTime}>
                                 <Ionicons name="time" size={20} color={nextLesson.isToday ? '#166534' : theme.primary} />
@@ -213,6 +233,20 @@ export default function InstrutorTab() {
                                 </Text>
                             </View>
                             <View style={styles.lessonArrow}>
+                                {(nextLesson.unread_messages ?? 0) > 0 && (
+                                    <TouchableOpacity
+                                        style={[styles.lessonChatBadge, { backgroundColor: theme.primary }]}
+                                        onPress={(e) => {
+                                            e.stopPropagation();
+                                            if (nextLesson.chat_room_id) {
+                                                router.push(`/connect/chat/${nextLesson.chat_room_id}`);
+                                            }
+                                        }}
+                                    >
+                                        <Ionicons name="chatbubble-ellipses" size={16} color="#fff" />
+                                        <Text style={styles.lessonChatBadgeText}>{nextLesson.unread_messages}</Text>
+                                    </TouchableOpacity>
+                                )}
                                 <Ionicons name="chevron-forward" size={20} color={theme.textMuted} />
                             </View>
                         </TouchableOpacity>
@@ -369,6 +403,22 @@ const styles = StyleSheet.create({
     },
     lessonArrow: {
         marginLeft: 8,
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 12,
+    },
+    lessonChatBadge: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: 10,
+        paddingVertical: 6,
+        borderRadius: 14,
+        gap: 6,
+    },
+    lessonChatBadgeText: {
+        color: '#fff',
+        fontSize: 12,
+        fontWeight: '700',
     },
     emptyLesson: {
         alignItems: 'center',

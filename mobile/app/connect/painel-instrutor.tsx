@@ -140,7 +140,10 @@ export default function InstructorDashboardScreen() {
                 .order('created_at', { ascending: false });
 
             if (packagesData) {
-                setPackages(packagesData);
+                setPackages(packagesData.map(pkg => ({
+                    ...pkg,
+                    discount_percent: pkg.discount_percent || 0
+                } as any)));
             }
 
         } catch (error) {
