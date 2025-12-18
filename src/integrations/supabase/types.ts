@@ -292,6 +292,99 @@ export type Database = {
           },
         ]
       }
+      connect_chat_messages: {
+        Row: {
+          content: string
+          created_at: string | null
+          id: string
+          is_read: boolean | null
+          room_id: string
+          sender_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          room_id: string
+          sender_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          room_id?: string
+          sender_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "connect_chat_messages_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "connect_chat_rooms"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "connect_chat_messages_sender_id_fkey"
+            columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      connect_chat_rooms: {
+        Row: {
+          created_at: string | null
+          id: string
+          instructor_id: string
+          last_message: string | null
+          last_message_at: string | null
+          student_id: string
+          unread_count_instructor: number | null
+          unread_count_student: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          instructor_id: string
+          last_message?: string | null
+          last_message_at?: string | null
+          student_id: string
+          unread_count_instructor?: number | null
+          unread_count_student?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          instructor_id?: string
+          last_message?: string | null
+          last_message_at?: string | null
+          student_id?: string
+          unread_count_instructor?: number | null
+          unread_count_student?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "connect_chat_rooms_instructor_id_fkey"
+            columns: ["instructor_id"]
+            isOneToOne: false
+            referencedRelation: "instructors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "connect_chat_rooms_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contracts: {
         Row: {
           booking_id: string
