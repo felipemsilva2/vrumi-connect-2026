@@ -1113,6 +1113,7 @@ export type Database = {
           instructor_id: string | null
           lessons_total: number
           lessons_used: number | null
+          metadata: Json | null
           package_id: string | null
           purchased_at: string | null
           status: string | null
@@ -1127,6 +1128,7 @@ export type Database = {
           instructor_id?: string | null
           lessons_total: number
           lessons_used?: number | null
+          metadata?: Json | null
           package_id?: string | null
           purchased_at?: string | null
           status?: string | null
@@ -1141,6 +1143,7 @@ export type Database = {
           instructor_id?: string | null
           lessons_total?: number
           lessons_used?: number | null
+          metadata?: Json | null
           package_id?: string | null
           purchased_at?: string | null
           status?: string | null
