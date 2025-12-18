@@ -91,8 +91,7 @@ serve(async (req) => {
             settings: {
                 payouts: {
                     schedule: {
-                        interval: "weekly",
-                        weekly_anchor: "monday",
+                        interval: "daily",
                     },
                 },
             },
