@@ -21,7 +21,7 @@ import { useStripe } from '@stripe/stripe-react-native';
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 // Supabase Edge Function URL
-const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL || 'https://xzpfutgktapdqfyqnqxq.supabase.co';
+const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL || 'https://owtylihsslimxdiovxia.supabase.co';
 
 interface Booking {
     id: string;
