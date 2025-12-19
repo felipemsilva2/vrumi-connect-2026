@@ -22,6 +22,7 @@ import { supabase } from '../../src/lib/supabase';
 import { isLessonExpired } from '../../utils/dateUtils';
 import { getTimeBasedGreeting } from '../../utils/greetingUtils';
 import NotificationModal from '../../components/NotificationModal';
+import { useInstructorStatus } from '../../hooks/useInstructorStatus';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -56,6 +57,7 @@ const SERVICES = [
 export default function HomeScreen() {
     const { user } = useAuth();
     const { theme, isDark } = useTheme();
+    const { instructorInfo } = useInstructorStatus();
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     const [notificationModalVisible, setNotificationModalVisible] = useState(false);
@@ -298,6 +300,38 @@ export default function HomeScreen() {
                         </TouchableOpacity>
                     ))}
                 </View>
+
+                {/* Become Instructor CTA - Show if not instructor */}
+                {!instructorInfo && (
+                    <TouchableOpacity
+                        style={styles.ctaCard}
+                        onPress={() => router.push('/connect/cadastro-instrutor')}
+                        activeOpacity={0.95}
+                    >
+                        <LinearGradient
+                            colors={['#7e22ce', '#6b21a8']}
+                            start={{ x: 0, y: 0 }}
+                            end={{ x: 1, y: 1 }}
+                            style={styles.ctaGradient}
+                        >
+                            <View style={styles.ctaContent}>
+                                <View style={styles.ctaInfo}>
+                                    <Text style={styles.ctaTitle}>Torne-se um Instrutor</Text>
+                                    <Text style={styles.ctaSubtitle}>
+                                        Faça uma renda extra ensinando novos motoristas com seu próprio veículo.
+                                    </Text>
+                                    <View style={styles.ctaButton}>
+                                        <Text style={styles.ctaButtonText}>Começar agora</Text>
+                                        <Ionicons name="arrow-forward" size={16} color="#7e22ce" />
+                                    </View>
+                                </View>
+                                <View style={styles.ctaIcon}>
+                                    <Ionicons name="school" size={48} color="rgba(255,255,255,0.9)" />
+                                </View>
+                            </View>
+                        </LinearGradient>
+                    </TouchableOpacity>
+                )}
 
                 {/* Featured Instructors */}
                 <View style={styles.sectionHeader}>
@@ -695,5 +729,63 @@ const styles = StyleSheet.create({
     pwaSubtitle: {
         fontSize: 13,
         color: '#6b7280',
+    },
+    // CTA Card
+    ctaCard: {
+        borderRadius: 20,
+        overflow: 'hidden',
+        marginBottom: 32,
+        shadowColor: '#7e22ce',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 12,
+        elevation: 6,
+    },
+    ctaGradient: {
+        padding: 24,
+    },
+    ctaContent: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+    },
+    ctaInfo: {
+        flex: 1,
+        marginRight: 16,
+    },
+    ctaTitle: {
+        fontSize: 20,
+        fontWeight: '800',
+        color: '#fff',
+        marginBottom: 8,
+    },
+    ctaSubtitle: {
+        fontSize: 14,
+        color: 'rgba(255,255,255,0.9)',
+        marginBottom: 16,
+        lineHeight: 20,
+    },
+    ctaButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#fff',
+        paddingHorizontal: 16,
+        paddingVertical: 10,
+        borderRadius: 12,
+        alignSelf: 'flex-start',
+        gap: 6,
+    },
+    ctaButtonText: {
+        color: '#7e22ce',
+        fontWeight: '700',
+        fontSize: 14,
+    },
+    ctaIcon: {
+        width: 72,
+        height: 72,
+        borderRadius: 36,
+        backgroundColor: 'rgba(255,255,255,0.2)',
+        justifyContent: 'center',
+        alignItems: 'center',
     },
 });

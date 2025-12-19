@@ -7,9 +7,9 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { PaginationControls } from "@/components/admin/PaginationControls";
 import { InstructorDetailsDialog } from "@/components/admin/InstructorDetailsDialog";
-import { 
-  Search, Eye, RefreshCw, CheckCircle, XCircle, Ban, 
-  Bell, Send, Users, Loader2, MapPin, GraduationCap 
+import {
+  Search, Eye, RefreshCw, CheckCircle, XCircle, Ban,
+  Bell, Send, Users, Loader2, MapPin, GraduationCap
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -43,6 +43,12 @@ interface Instructor {
   created_at: string;
   updated_at: string;
   email?: string;
+  // Document URLs
+  cnh_document_url?: string | null;
+  vehicle_document_url?: string | null;
+  credential_document_url?: string | null;
+  background_check_url?: string | null;
+  documents_status?: 'pending' | 'submitted' | 'verified' | 'rejected';
 }
 
 const statusConfig: Record<InstructorStatus, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
@@ -147,7 +153,7 @@ const AdminInstructors = () => {
             .select("email")
             .eq("id", instructor.user_id)
             .maybeSingle();
-          
+
           return {
             ...instructor,
             email: profile?.email || "N/A",
@@ -162,7 +168,7 @@ const AdminInstructors = () => {
         .from("instructors")
         .select("state")
         .order("state");
-      
+
       const uniqueStates = [...new Set(statesData?.map(s => s.state) || [])];
       setAvailableStates(uniqueStates);
 
@@ -349,7 +355,7 @@ const AdminInstructors = () => {
 
   const handleBulkApprove = async () => {
     if (selectedInstructors.length === 0) return;
-    
+
     const pendingInstructors = instructors.filter(
       i => selectedInstructors.includes(i.user_id) && i.status === 'pending'
     );

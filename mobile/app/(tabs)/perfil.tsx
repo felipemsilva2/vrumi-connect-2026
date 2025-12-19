@@ -287,47 +287,95 @@ export default function PerfilScreen() {
                     </TouchableOpacity>
 
 
-                    {/* Conditional Instructor Options */}
+                    {/* Instructor Section - Premium Cards */}
                     {instructorStatus === 'none' && (
                         <TouchableOpacity
-                            style={[styles.menuItem, { backgroundColor: theme.card }]}
+                            style={[styles.instructorCard, { backgroundColor: theme.card }]}
                             onPress={() => router.push('/connect/cadastro-instrutor')}
                         >
-                            <View style={[styles.menuIcon, { backgroundColor: '#fce7f3' }]}>
-                                <Ionicons name="person-add" size={20} color="#ec4899" />
+                            <View style={[styles.instructorCardContent]}>
+                                <View style={[styles.instructorIconContainer, { backgroundColor: '#fce7f3' }]}>
+                                    <Ionicons name="school" size={24} color="#db2777" />
+                                </View>
+                                <View style={styles.instructorTextContainer}>
+                                    <Text style={[styles.instructorTitle, { color: theme.text }]}>Seja um Instrutor</Text>
+                                    <Text style={[styles.instructorSubtitle, { color: theme.textSecondary }]}>
+                                        Comece a dar aulas e aumente sua renda conectando-se a novos alunos.
+                                    </Text>
+                                </View>
                             </View>
-                            <Text style={[styles.menuItemText, { color: theme.text }]}>Seja um Instrutor</Text>
-                            <Ionicons name="chevron-forward" size={18} color={theme.textMuted} />
+                            <View style={styles.instructorArrow}>
+                                <Text style={styles.instructorActionText}>Começar</Text>
+                                <Ionicons name="arrow-forward" size={16} color="#db2777" />
+                            </View>
                         </TouchableOpacity>
                     )}
 
                     {instructorStatus === 'pending' && (
-                        <View style={[styles.menuItem, { backgroundColor: theme.card }]}>
-                            <View style={[styles.menuIcon, { backgroundColor: '#fef3c7' }]}>
-                                <Ionicons name="time" size={20} color="#f59e0b" />
+                        <TouchableOpacity
+                            style={[styles.statusCard, { backgroundColor: '#fffbeb', borderColor: '#fcd34d' }]}
+                            onPress={() => router.replace('/(tabs)/instrutor')}
+                        >
+                            <View style={styles.statusHeader}>
+                                <Ionicons name="time" size={24} color="#d97706" />
+                                <Text style={[styles.statusTitle, { color: '#92400e' }]}>Cadastro em Análise</Text>
                             </View>
-                            <View style={{ flex: 1 }}>
-                                <Text style={[styles.menuItemText, { color: theme.text }]}>Cadastro em Análise</Text>
-                                <Text style={[styles.menuItemSubtext, { color: theme.textMuted }]}>
-                                    Aguardando aprovação
-                                </Text>
-                            </View>
-                        </View>
+                            <Text style={[styles.statusDescription, { color: '#b45309' }]}>
+                                Estamos verificando seus documentos. Toque para acompanhar o progresso.
+                            </Text>
+                        </TouchableOpacity>
                     )}
 
                     {instructorStatus === 'approved' && (
                         <TouchableOpacity
-                            style={[styles.menuItem, { backgroundColor: theme.card }]}
-                            onPress={() => {
-                                // If already on tabs, navigate between them; or push if it was external.
-                                // Since we are in tabs/perfil, we can just jump to tabs/instrutor
-                                router.replace('/(tabs)/instrutor');
-                            }}>
-                            <View style={[styles.menuIcon, { backgroundColor: '#dbeafe' }]}>
-                                <Ionicons name="speedometer" size={20} color="#3b82f6" />
+                            style={[styles.instructorCard, { backgroundColor: theme.card, borderColor: theme.primary, borderWidth: 1 }]}
+                            onPress={() => router.replace('/(tabs)/instrutor')}
+                        >
+                            <View style={styles.instructorCardContent}>
+                                <View style={[styles.instructorIconContainer, { backgroundColor: '#dcfce7' }]}>
+                                    <Ionicons name="speedometer" size={24} color="#16a34a" />
+                                </View>
+                                <View style={styles.instructorTextContainer}>
+                                    <Text style={[styles.instructorTitle, { color: theme.text }]}>Painel do Instrutor</Text>
+                                    <Text style={[styles.instructorSubtitle, { color: theme.textSecondary }]}>
+                                        Gerencie suas aulas, agenda e ganhos.
+                                    </Text>
+                                </View>
                             </View>
-                            <Text style={[styles.menuItemText, { color: theme.text }]}>Painel do Instrutor</Text>
-                            <Ionicons name="chevron-forward" size={18} color={theme.textMuted} />
+                            <View style={styles.instructorArrow}>
+                                <Text style={[styles.instructorActionText, { color: '#16a34a' }]}>Acessar</Text>
+                                <Ionicons name="arrow-forward" size={16} color="#16a34a" />
+                            </View>
+                        </TouchableOpacity>
+                    )}
+
+                    {instructorStatus === 'rejected' && (
+                        <TouchableOpacity
+                            style={[styles.statusCard, { backgroundColor: '#fef2f2', borderColor: '#fca5a5' }]}
+                            onPress={() => router.push('/connect/suporte')}
+                        >
+                            <View style={styles.statusHeader}>
+                                <Ionicons name="alert-circle" size={24} color="#dc2626" />
+                                <Text style={[styles.statusTitle, { color: '#991b1b' }]}>Atenção</Text>
+                            </View>
+                            <Text style={[styles.statusDescription, { color: '#b91c1c' }]}>
+                                Houve um problema com seu cadastro. Toque para entrar em contato com o suporte.
+                            </Text>
+                        </TouchableOpacity>
+                    )}
+
+                    {instructorStatus === 'suspended' && (
+                        <TouchableOpacity
+                            style={[styles.statusCard, { backgroundColor: '#fef2f2', borderColor: '#fca5a5' }]}
+                            onPress={() => router.replace('/(tabs)/instrutor')}
+                        >
+                            <View style={styles.statusHeader}>
+                                <Ionicons name="pause-circle" size={24} color="#dc2626" />
+                                <Text style={[styles.statusTitle, { color: '#991b1b' }]}>Conta Suspensa</Text>
+                            </View>
+                            <Text style={[styles.statusDescription, { color: '#b91c1c' }]}>
+                                Sua conta de instrutor está suspensa. Toque para resolver pendências.
+                            </Text>
                         </TouchableOpacity>
                     )}
                 </View>
@@ -637,5 +685,76 @@ const styles = StyleSheet.create({
     themeOptionText: {
         fontSize: 13,
         fontWeight: '600',
+    },
+    // Instructor Card Styles
+    instructorCard: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: 16,
+        borderRadius: 16,
+        marginBottom: 16,
+        justifyContent: 'space-between',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.05,
+        shadowRadius: 4,
+        elevation: 2,
+    },
+    instructorCardContent: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        flex: 1,
+        gap: 12,
+    },
+    instructorIconContainer: {
+        width: 48,
+        height: 48,
+        borderRadius: 14,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    instructorTextContainer: {
+        flex: 1,
+    },
+    instructorTitle: {
+        fontSize: 16,
+        fontWeight: 'bold',
+        marginBottom: 2,
+    },
+    instructorSubtitle: {
+        fontSize: 12,
+        lineHeight: 16,
+    },
+    instructorArrow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 4,
+        marginLeft: 8,
+    },
+    instructorActionText: {
+        fontSize: 12,
+        fontWeight: '600',
+        color: '#db2777',
+    },
+    // Status Card Styles
+    statusCard: {
+        padding: 16,
+        borderRadius: 16,
+        borderWidth: 1,
+        marginBottom: 16,
+    },
+    statusHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 8,
+        gap: 8,
+    },
+    statusTitle: {
+        fontSize: 16,
+        fontWeight: 'bold',
+    },
+    statusDescription: {
+        fontSize: 13,
+        lineHeight: 18,
     },
 });

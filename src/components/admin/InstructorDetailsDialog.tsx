@@ -3,9 +3,9 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { 
-  MapPin, Phone, Mail, CreditCard, Clock, Star, 
-  CheckCircle, XCircle, Ban, GraduationCap, FileText 
+import {
+  MapPin, Phone, Mail, CreditCard, Clock, Star,
+  CheckCircle, XCircle, Ban, GraduationCap, FileText
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -35,6 +35,12 @@ interface Instructor {
   created_at: string;
   updated_at: string;
   email?: string;
+  // Document URLs
+  cnh_document_url?: string | null;
+  vehicle_document_url?: string | null;
+  credential_document_url?: string | null;
+  background_check_url?: string | null;
+  documents_status?: 'pending' | 'submitted' | 'verified' | 'rejected';
 }
 
 interface InstructorDetailsDialogProps {
@@ -191,6 +197,77 @@ export function InstructorDetailsDialog({ open, onOpenChange, instructor, onUpda
                   <FileText className="h-4 w-4 text-muted-foreground" />
                   CPF: {formatCPF(instructor.cpf)}
                 </div>
+              </div>
+
+              {/* Document Links */}
+              <div className="grid grid-cols-2 gap-2 mt-3">
+                {instructor.cnh_document_url ? (
+                  <a
+                    href={instructor.cnh_document_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 p-2 bg-green-50 text-green-700 rounded-lg text-xs hover:bg-green-100"
+                  >
+                    <CheckCircle className="h-3 w-3" />
+                    CNH com EAR
+                  </a>
+                ) : (
+                  <div className="flex items-center gap-2 p-2 bg-red-50 text-red-500 rounded-lg text-xs">
+                    <XCircle className="h-3 w-3" />
+                    CNH Pendente
+                  </div>
+                )}
+
+                {instructor.vehicle_document_url ? (
+                  <a
+                    href={instructor.vehicle_document_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 p-2 bg-green-50 text-green-700 rounded-lg text-xs hover:bg-green-100"
+                  >
+                    <CheckCircle className="h-3 w-3" />
+                    CRLV Veículo
+                  </a>
+                ) : (
+                  <div className="flex items-center gap-2 p-2 bg-red-50 text-red-500 rounded-lg text-xs">
+                    <XCircle className="h-3 w-3" />
+                    CRLV Pendente
+                  </div>
+                )}
+
+                {instructor.credential_document_url ? (
+                  <a
+                    href={instructor.credential_document_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 p-2 bg-green-50 text-green-700 rounded-lg text-xs hover:bg-green-100"
+                  >
+                    <CheckCircle className="h-3 w-3" />
+                    Credencial CFC
+                  </a>
+                ) : (
+                  <div className="flex items-center gap-2 p-2 bg-red-50 text-red-500 rounded-lg text-xs">
+                    <XCircle className="h-3 w-3" />
+                    Credencial Pendente
+                  </div>
+                )}
+
+                {instructor.background_check_url ? (
+                  <a
+                    href={instructor.background_check_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 p-2 bg-green-50 text-green-700 rounded-lg text-xs hover:bg-green-100"
+                  >
+                    <CheckCircle className="h-3 w-3" />
+                    Antecedentes
+                  </a>
+                ) : (
+                  <div className="flex items-center gap-2 p-2 bg-red-50 text-red-500 rounded-lg text-xs">
+                    <XCircle className="h-3 w-3" />
+                    Antecedentes Pendente
+                  </div>
+                )}
               </div>
             </div>
           </div>

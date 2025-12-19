@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../src/lib/supabase';
 
-export type InstructorStatus = 'none' | 'pending' | 'approved' | 'rejected';
+export type InstructorStatus = 'none' | 'pending' | 'approved' | 'rejected' | 'suspended';
 
 interface InstructorInfo {
     id: string;
