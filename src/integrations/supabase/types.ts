@@ -674,6 +674,7 @@ export type Database = {
           cnh_document_url: string | null
           cpf: string
           created_at: string | null
+          credential_document_url: string | null
           documents_status: string | null
           full_name: string
           id: string
@@ -708,6 +709,7 @@ export type Database = {
           cnh_document_url?: string | null
           cpf: string
           created_at?: string | null
+          credential_document_url?: string | null
           documents_status?: string | null
           full_name: string
           id?: string
@@ -742,6 +744,7 @@ export type Database = {
           cnh_document_url?: string | null
           cpf?: string
           created_at?: string | null
+          credential_document_url?: string | null
           documents_status?: string | null
           full_name?: string
           id?: string
