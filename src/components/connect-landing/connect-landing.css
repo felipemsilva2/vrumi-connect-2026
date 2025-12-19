@@ -1,0 +1,122 @@
+/**
+ * Connect Landing Page - Scoped Styles
+ * These styles override the main app's Tailwind customizations to match the original blog-vrumi design
+ */
+
+/* Reset font sizes to Tailwind defaults for the landing page */
+.connect-landing-page {
+  /* Base styles */
+  background-color: #F5F5F7;
+  color: #1d1d1f;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Override font sizes to match original blog-vrumi design - using !important to override Tailwind compiled styles */
+.connect-landing-page .text-xs {
+  font-size: 0.75rem !important;
+  line-height: 1rem !important;
+}
+
+.connect-landing-page .text-sm {
+  font-size: 0.875rem !important;
+  line-height: 1.25rem !important;
+}
+
+.connect-landing-page .text-base {
+  font-size: 1rem !important;
+  line-height: 1.5rem !important;
+}
+
+.connect-landing-page .text-lg {
+  font-size: 1.125rem !important;
+  line-height: 1.75rem !important;
+}
+
+.connect-landing-page .text-xl {
+  font-size: 1.25rem !important;
+  line-height: 1.75rem !important;
+}
+
+.connect-landing-page .text-2xl {
+  font-size: 1.5rem !important;
+  line-height: 2rem !important;
+}
+
+.connect-landing-page .text-3xl {
+  font-size: 1.875rem !important;
+  line-height: 2.25rem !important;
+}
+
+.connect-landing-page .text-4xl {
+  font-size: 2.25rem !important;
+  line-height: 2.5rem !important;
+}
+
+.connect-landing-page .text-5xl {
+  font-size: 3rem !important;
+  line-height: 1 !important;
+}
+
+.connect-landing-page .text-6xl {
+  font-size: 3.75rem !important;
+  line-height: 1 !important;
+}
+
+.connect-landing-page .text-7xl {
+  font-size: 4.5rem !important;
+  line-height: 1 !important;
+}
+
+/* Special text sizes used in blog-vrumi */
+.connect-landing-page .text-\[10px\] {
+  font-size: 10px !important;
+}
+
+.connect-landing-page .text-\[8px\] {
+  font-size: 8px !important;
+}
+
+/* Ensure proper button sizing - reset min-height from main app */
+.connect-landing-page button,
+.connect-landing-page a[role="button"],
+.connect-landing-page input[type="button"],
+.connect-landing-page input[type="submit"] {
+  min-height: unset !important;
+  white-space: nowrap !important;
+  max-width: unset !important;
+}
+
+/* Tracking (letter-spacing) adjustments */
+.connect-landing-page .tracking-tighter {
+  letter-spacing: -0.05em !important;
+}
+
+.connect-landing-page .tracking-tight {
+  letter-spacing: -0.025em !important;
+}
+
+.connect-landing-page .tracking-widest {
+  letter-spacing: 0.1em !important;
+}
+
+.connect-landing-page .tracking-wider {
+  letter-spacing: 0.05em !important;
+}
+
+/* Font weights */
+.connect-landing-page .font-bold {
+  font-weight: 700 !important;
+}
+
+.connect-landing-page .font-black {
+  font-weight: 900 !important;
+}
+
+.connect-landing-page .font-medium {
+  font-weight: 500 !important;
+}
+
+.connect-landing-page .font-semibold {
+  font-weight: 600 !important;
+}
