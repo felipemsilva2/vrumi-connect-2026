@@ -137,7 +137,7 @@ export default function App() {
 
         {/* Mobile Menu Dropdown */}
         {isMenuOpen && (
-          <div className="absolute top-24 left-1/2 -translate-x-1/2 w-[90%] bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl p-6 pointer-events-auto animate-scale-in border border-gray-100">
+          <div className="absolute top-24 inset-x-0 mx-auto w-[90%] bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl p-6 pointer-events-auto animate-fade-in border border-gray-100">
             <nav className="flex flex-col gap-4 text-center">
               <button onClick={() => scrollToSection('students')} className="text-lg font-medium text-gray-500">Alunos</button>
               <button onClick={() => scrollToSection('instructors')} className="text-lg font-medium text-gray-500">Instrutores</button>
