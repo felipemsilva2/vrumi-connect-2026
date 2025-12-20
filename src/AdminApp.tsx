@@ -8,7 +8,7 @@ import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client
 import { queryClient, persister } from "@/lib/query-client";
 import { Suspense, lazy } from "react";
 import { Loader2 } from "lucide-react";
-import { useIsAdmin } from "@/hooks/useIsAdmin";
+
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -39,56 +39,73 @@ const PageLoader = () => (
 const ProtectedAdminRoute = ({ children }: { children: React.ReactNode }) => {
     const [userId, setUserId] = useState<string | null>(null);
     const [isAuthChecked, setIsAuthChecked] = useState(false);
-    const { isAdmin, isLoading } = useIsAdmin(userId || undefined);
-
-    console.log('[ADMIN AUTH] Estado atual:', {
-        userId,
-        isAuthChecked,
-        isAdmin,
-        isLoading,
-        timestamp: new Date().toISOString()
-    });
+    const [adminStatus, setAdminStatus] = useState<'loading' | 'admin' | 'not-admin' | 'no-session'>('loading');
 
     useEffect(() => {
         let isMounted = true;
         console.log('[ADMIN AUTH] useEffect iniciado');
         
-        const checkAuth = async () => {
-            console.log('[ADMIN AUTH] Verificando sessão...');
+        const checkAuthAndAdmin = async () => {
+            console.log('[ADMIN AUTH] Verificando sessão e admin status...');
             try {
                 const { data: { session }, error } = await supabase.auth.getSession();
-                console.log('[ADMIN AUTH] Sessão obtida:', {
+                console.log('[ADMIN AUTH] Sessão:', {
                     hasSession: !!session,
                     userId: session?.user?.id,
                     email: session?.user?.email,
                     error
                 });
                 
-                if (isMounted) {
-                    const newUserId = session?.user?.id || null;
-                    console.log('[ADMIN AUTH] Atualizando userId para:', newUserId);
-                    setUserId(newUserId);
+                if (!isMounted) return;
+                
+                if (!session?.user) {
+                    console.log('[ADMIN AUTH] Sem sessão, definindo status no-session');
+                    setUserId(null);
+                    setAdminStatus('no-session');
                     setIsAuthChecked(true);
+                    return;
                 }
+                
+                setUserId(session.user.id);
+                
+                // Verificar se é admin
+                console.log('[ADMIN AUTH] Verificando admin status para:', session.user.id);
+                const { data: isAdminResult, error: adminError } = await supabase.rpc('is_admin', {
+                    user_id: session.user.id
+                });
+                
+                console.log('[ADMIN AUTH] Resultado is_admin:', { isAdminResult, adminError });
+                
+                if (!isMounted) return;
+                
+                if (adminError) {
+                    console.error('[ADMIN AUTH] Erro ao verificar admin:', adminError);
+                    setAdminStatus('not-admin');
+                } else {
+                    setAdminStatus(isAdminResult === true ? 'admin' : 'not-admin');
+                }
+                
+                setIsAuthChecked(true);
             } catch (error) {
-                console.error('[ADMIN AUTH] Erro ao verificar auth:', error);
+                console.error('[ADMIN AUTH] Erro geral:', error);
                 if (isMounted) {
                     setUserId(null);
+                    setAdminStatus('no-session');
                     setIsAuthChecked(true);
                 }
             }
         };
         
-        checkAuth();
+        checkAuthAndAdmin();
         
+        // Listener apenas para mudanças significativas (logout)
         const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-            console.log('[ADMIN AUTH] onAuthStateChange:', {
-                event,
-                userId: session?.user?.id,
-                email: session?.user?.email
-            });
-            if (isMounted) {
-                setUserId(session?.user?.id || null);
+            console.log('[ADMIN AUTH] onAuthStateChange:', event);
+            if (event === 'SIGNED_OUT') {
+                if (isMounted) {
+                    setUserId(null);
+                    setAdminStatus('no-session');
+                }
             }
         });
 
@@ -99,35 +116,30 @@ const ProtectedAdminRoute = ({ children }: { children: React.ReactNode }) => {
         };
     }, []);
 
+    console.log('[ADMIN AUTH] Renderizando com estado:', { userId, isAuthChecked, adminStatus });
+
     // Wait for auth check to complete
-    if (!isAuthChecked) {
-        console.log('[ADMIN AUTH] Renderizando: aguardando auth check');
+    if (!isAuthChecked || adminStatus === 'loading') {
+        console.log('[ADMIN AUTH] Aguardando verificação...');
         return <PageLoader />;
     }
 
-    // No user, redirect to admin login
-    if (!userId) {
-        console.log('[ADMIN AUTH] Renderizando: redirecionando para /admin/login (sem userId)');
-        // Use window.location para evitar conflito com basename
-        window.location.href = '/admin/login';
-        return <PageLoader />;
-    }
-
-    // Still loading admin status
-    if (isLoading) {
-        console.log('[ADMIN AUTH] Renderizando: aguardando verificação admin');
-        return <PageLoader />;
+    // No session, redirect to admin login
+    if (adminStatus === 'no-session') {
+        console.log('[ADMIN AUTH] Sem sessão, redirecionando para login');
+        return <Navigate to="/login" replace />;
     }
 
     // User is not admin
-    if (!isAdmin) {
+    if (adminStatus === 'not-admin') {
+        console.log('[ADMIN AUTH] Usuário não é admin');
         return (
             <div className="flex flex-col items-center justify-center min-h-screen gap-4">
                 <h1 className="text-2xl font-bold text-destructive">Acesso Negado</h1>
                 <p>Você está logado, mas não tem permissão de administrador.</p>
                 <div className="p-4 bg-muted rounded-md text-xs font-mono">
                     <p>User ID: {userId}</p>
-                    <p>Is Admin: {String(isAdmin)}</p>
+                    <p>Status: {adminStatus}</p>
                 </div>
                 <Button onClick={async () => {
                     await supabase.auth.signOut();
