@@ -23,20 +23,29 @@ export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
     const [user, setUser] = useState<User | null>(null);
     const [isAdmin, setIsAdmin] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
-    const [initialized, setInitialized] = useState(false);
 
     useEffect(() => {
-        if (initialized) return;
-        setInitialized(true);
-
-        console.log('[AdminAuth] Inicializando...');
+        let mounted = true;
 
         const initAuth = async () => {
+            console.log('[AdminAuth] Inicializando...');
+            
             try {
-                const { data: { session } } = await supabase.auth.getSession();
+                const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+                
+                if (sessionError) {
+                    console.error('[AdminAuth] Erro ao obter sessão:', sessionError);
+                    if (mounted) {
+                        setUser(null);
+                        setIsAdmin(false);
+                        setIsLoading(false);
+                    }
+                    return;
+                }
+
                 console.log('[AdminAuth] Sessão inicial:', session?.user?.email);
 
-                if (session?.user) {
+                if (session?.user && mounted) {
                     setUser(session.user);
                     
                     // Verificar se é admin
@@ -45,46 +54,59 @@ export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
                     });
                     
                     console.log('[AdminAuth] is_admin result:', adminResult, error);
-                    setIsAdmin(adminResult === true);
-                } else {
+                    if (mounted) {
+                        setIsAdmin(adminResult === true);
+                    }
+                } else if (mounted) {
                     setUser(null);
                     setIsAdmin(false);
                 }
             } catch (err) {
                 console.error('[AdminAuth] Erro na inicialização:', err);
-                setUser(null);
-                setIsAdmin(false);
+                if (mounted) {
+                    setUser(null);
+                    setIsAdmin(false);
+                }
             } finally {
-                setIsLoading(false);
-                console.log('[AdminAuth] Inicialização completa');
+                if (mounted) {
+                    setIsLoading(false);
+                    console.log('[AdminAuth] Inicialização completa');
+                }
             }
         };
 
         initAuth();
 
-        // Listener para logout apenas
+        // Listener para mudanças de autenticação
         const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
             console.log('[AdminAuth] Auth event:', event);
+            
+            if (!mounted) return;
             
             if (event === 'SIGNED_OUT') {
                 setUser(null);
                 setIsAdmin(false);
-            } else if (event === 'SIGNED_IN' && session?.user && !user) {
-                // Só processa se não temos usuário ainda (primeiro login)
+            } else if (event === 'SIGNED_IN' && session?.user) {
                 setUser(session.user);
                 
                 const { data: adminResult } = await supabase.rpc('is_admin', {
                     user_id: session.user.id
                 });
-                setIsAdmin(adminResult === true);
+                if (mounted) {
+                    setIsAdmin(adminResult === true);
+                    setIsLoading(false);
+                }
+            } else if (event === 'TOKEN_REFRESHED' && session?.user) {
+                // Manter estado atual, apenas garantir que loading está false
                 setIsLoading(false);
             }
         });
 
         return () => {
+            mounted = false;
             subscription.unsubscribe();
         };
-    }, [initialized, user]);
+    }, []);
 
     const signOut = async () => {
         await supabase.auth.signOut();
