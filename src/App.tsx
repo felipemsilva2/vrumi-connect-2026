@@ -86,9 +86,10 @@ const App = () => (
           <ErrorBoundary>
             <Suspense fallback={<PageLoader />}>
               <Routes>
-                <Route path="/" element={<Index />} />
+                <Route path="/" element={<Dashboard />} />
+                <Route path="/connect" element={<Index />} />
                 <Route path="/entrar" element={<Auth />} />
-                <Route path="/painel" element={<Dashboard />} />
+                <Route path="/painel" element={<Navigate to="/" replace />} />
                 <Route path="/sala-de-estudos" element={<StudyRoom />} />
                 <Route path="/biblioteca-de-placas" element={<TrafficSignsLibrary />} />
                 <Route path="/perguntas-frequentes" element={<FAQPage />} />
