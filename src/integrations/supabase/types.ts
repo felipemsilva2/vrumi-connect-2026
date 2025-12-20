@@ -622,6 +622,7 @@ export type Database = {
           instructor_id: string
           processed_at: string | null
           status: string | null
+          stripe_payment_intent_id: string | null
           type: string
         }
         Insert: {
@@ -633,6 +634,7 @@ export type Database = {
           instructor_id: string
           processed_at?: string | null
           status?: string | null
+          stripe_payment_intent_id?: string | null
           type: string
         }
         Update: {
@@ -644,6 +646,7 @@ export type Database = {
           instructor_id?: string
           processed_at?: string | null
           status?: string | null
+          stripe_payment_intent_id?: string | null
           type?: string
         }
         Relationships: [
@@ -1622,6 +1625,7 @@ export type Database = {
           payment_status: string
           price: number
           purchased_at: string
+          stripe_session_id: string | null
           updated_at: string
           user_id: string
         }
@@ -1633,6 +1637,7 @@ export type Database = {
           payment_status?: string
           price: number
           purchased_at?: string
+          stripe_session_id?: string | null
           updated_at?: string
           user_id: string
         }
@@ -1644,6 +1649,7 @@ export type Database = {
           payment_status?: string
           price?: number
           purchased_at?: string
+          stripe_session_id?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -2010,6 +2016,14 @@ export type Database = {
         }
         Returns: Json
       }
+      cancel_booking: {
+        Args: {
+          p_booking_id: string
+          p_cancelled_by: string
+          p_reason?: string
+        }
+        Returns: Json
+      }
       generate_audit_summary: {
         Args: { p_month: number; p_year: number }
         Returns: Json
@@ -2031,6 +2045,14 @@ export type Database = {
       is_admin: { Args: { user_id?: string }; Returns: boolean }
       is_dpo: { Args: { user_id?: string }; Returns: boolean }
       is_instructor: { Args: { check_user_id?: string }; Returns: boolean }
+      is_slot_available: {
+        Args: {
+          p_instructor_id: string
+          p_scheduled_date: string
+          p_scheduled_time: string
+        }
+        Returns: boolean
+      }
       log_admin_action: {
         Args: {
           p_action_type: string
