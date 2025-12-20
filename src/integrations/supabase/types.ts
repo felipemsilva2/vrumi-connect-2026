@@ -2037,6 +2037,14 @@ export type Database = {
       is_admin: { Args: { user_id?: string }; Returns: boolean }
       is_dpo: { Args: { user_id?: string }; Returns: boolean }
       is_instructor: { Args: { check_user_id?: string }; Returns: boolean }
+      is_slot_available: {
+        Args: {
+          p_instructor_id: string
+          p_scheduled_date: string
+          p_scheduled_time: string
+        }
+        Returns: boolean
+      }
       log_admin_action: {
         Args: {
           p_action_type: string
