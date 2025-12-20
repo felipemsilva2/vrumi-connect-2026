@@ -107,11 +107,16 @@ serve(async (req) => {
             type: "express",
             country: "BR",
             email: user.email,
+            default_currency: "brl",
             capabilities: {
                 card_payments: { requested: true },
                 transfers: { requested: true },
             },
             business_type: "individual",
+            business_profile: {
+                mcc: "8299", // Educational services
+                url: "https://vrumi.com.br",
+            },
             metadata: {
                 instructor_id: instructor.id,
                 user_id: user.id,

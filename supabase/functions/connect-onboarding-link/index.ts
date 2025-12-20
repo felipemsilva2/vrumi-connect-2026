@@ -102,6 +102,7 @@ serve(async (req) => {
             refresh_url: `${origin}/connect/painel-instrutor?stripe_refresh=true`,
             return_url: `${origin}/connect/painel-instrutor?stripe_onboarded=true`,
             type: "account_onboarding",
+            collect: "eventually_due",
         });
 
         logStep("Onboarding link created", { url: accountLink.url });

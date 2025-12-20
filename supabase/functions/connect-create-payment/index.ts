@@ -104,12 +104,35 @@ serve(async (req) => {
         }
 
         if (!instructor.stripe_account_id) {
-            throw new Error("Instructor has not completed Stripe onboarding");
+            throw new Error("Instructor has not started Stripe onboarding");
         }
 
-        logStep("Instructor found", {
+        if (!instructor.stripe_onboarding_complete) {
+            throw new Error("Instructor has not completed Stripe onboarding. Please complete all verification steps.");
+        }
+
+        // Initialize Stripe
+        const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
+            apiVersion: "2025-08-27.basil",
+        });
+
+        // Verify with Stripe that account can receive transfers
+        const stripeAccount = await stripe.accounts.retrieve(instructor.stripe_account_id);
+
+        if (!stripeAccount.charges_enabled || !stripeAccount.capabilities?.transfers) {
+            // Update our database to reflect the real status
+            await supabaseAdmin
+                .from("instructors")
+                .update({ stripe_onboarding_complete: false })
+                .eq("id", instructorId);
+
+            throw new Error("Instructor's Stripe account cannot receive payments yet. Please complete all verification steps in Stripe.");
+        }
+
+        logStep("Instructor found and verified", {
             instructorId: instructor.id,
-            stripeAccountId: instructor.stripe_account_id
+            stripeAccountId: instructor.stripe_account_id,
+            chargesEnabled: stripeAccount.charges_enabled
         });
 
         // Calculate platform fee (15%)
@@ -122,9 +145,6 @@ serve(async (req) => {
         });
 
         // Create Stripe PaymentIntent with application fee
-        const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
-            apiVersion: "2025-08-27.basil",
-        });
 
         const paymentIntent = await stripe.paymentIntents.create({
             amount: amount, // Amount in cents

@@ -34,9 +34,9 @@ const Checkout = () => {
   const [errors, setErrors] = useState<Partial<Record<keyof PixForm, string>>>({})
   const [verifying, setVerifying] = useState(false)
   const [paymentConfirmed, setPaymentConfirmed] = useState(false)
-  // const [couponCode, setCouponCode] = useState("")
-  // const [appliedCoupon, setAppliedCoupon] = useState<{ code: string, discount: number } | null>(null)
-  // const [validatingCoupon, setValidatingCoupon] = useState(false)
+  const [couponCode, setCouponCode] = useState("")
+  const [appliedCoupon, setAppliedCoupon] = useState<{ code: string, discount: number } | null>(null)
+  const [validatingCoupon, setValidatingCoupon] = useState(false)
 
   const { activePass, hasActivePass } = useActivePass(user?.id)
 
@@ -198,6 +198,7 @@ const Checkout = () => {
         body: {
           passType: passType,
           secondUserEmail: passType === 'family_90_days' ? secondUserEmail : null,
+          couponCode: appliedCoupon ? appliedCoupon.code : null,
         },
       })
 
@@ -260,7 +261,7 @@ const Checkout = () => {
             taxId: formData.cpf.replace(/\D/g, ""),
             phone: formData.phone.replace(/\D/g, ""),
           },
-          // couponCode: appliedCoupon ? appliedCoupon.code : null
+          couponCode: appliedCoupon ? appliedCoupon.code : null
         },
       })
 
@@ -334,60 +335,59 @@ const Checkout = () => {
     }
   }
 
-  // const handleApplyCoupon = async () => {
-  //   if (!couponCode.trim()) return
-  //
-  //   setValidatingCoupon(true)
-  //   try {
-  //     const { data, error } = await supabase.functions.invoke('validate-coupon', {
-  //       body: {
-  //         couponCode: couponCode.trim(),
-  //         passType: passType
-  //       }
-  //     })
-  //
-  //     if (error) throw error
-  //
-  //     if (data.valid) {
-  //       setAppliedCoupon({
-  //         code: couponCode.trim(),
-  //         discount: data.discountAmount
-  //       })
-  //       toast({
-  //         title: "Cupom aplicado!",
-  //         description: `Desconto de R$ ${data.discountAmount.toFixed(2).replace('.', ',')} aplicado com sucesso.`,
-  //       })
-  //     } else {
-  //       setAppliedCoupon(null)
-  //       toast({
-  //         title: "Cupom inválido",
-  //         description: data.message || "Não foi possível aplicar este cupom.",
-  //         variant: "destructive"
-  //       })
-  //     }
-  //   } catch (error) {
-  //     console.error('Erro ao validar cupom:', error)
-  //     toast({
-  //       title: "Erro ao validar cupom",
-  //       description: "Tente novamente mais tarde.",
-  //       variant: "destructive"
-  //     })
-  //   } finally {
-  //     setValidatingCoupon(false)
-  //   }
-  // }
-  //
-  // const handleRemoveCoupon = () => {
-  //   setAppliedCoupon(null)
-  //   setCouponCode("")
-  // }
+  const handleApplyCoupon = async () => {
+    if (!couponCode.trim()) return
+
+    setValidatingCoupon(true)
+    try {
+      const { data, error } = await supabase.functions.invoke('validate-coupon', {
+        body: {
+          couponCode: couponCode.trim(),
+          passType: passType
+        }
+      })
+
+      if (error) throw error
+
+      if (data.valid) {
+        setAppliedCoupon({
+          code: couponCode.trim(),
+          discount: data.discountAmount
+        })
+        toast({
+          title: "Cupom aplicado!",
+          description: `Desconto de R$ ${data.discountAmount.toFixed(2).replace('.', ',')} aplicado com sucesso.`,
+        })
+      } else {
+        setAppliedCoupon(null)
+        toast({
+          title: "Cupom inválido",
+          description: data.message || "Não foi possível aplicar este cupom.",
+          variant: "destructive"
+        })
+      }
+    } catch (error) {
+      console.error('Erro ao validar cupom:', error)
+      toast({
+        title: "Erro ao validar cupom",
+        description: "Tente novamente mais tarde.",
+        variant: "destructive"
+      })
+    } finally {
+      setValidatingCoupon(false)
+    }
+  }
+
+  const handleRemoveCoupon = () => {
+    setAppliedCoupon(null)
+    setCouponCode("")
+  }
 
   if (!selectedPass) return null
 
-  const finalPrice = selectedPass.price
-  // appliedCoupon
-  // ? Math.max(0, selectedPass.price - appliedCoupon.discount)
-  // : selectedPass.price
+  const finalPrice = appliedCoupon
+    ? Math.max(0, selectedPass.price - appliedCoupon.discount)
+    : selectedPass.price
 
   return (
     <div className="min-h-screen bg-muted py-12 px-4">
@@ -610,7 +610,8 @@ const Checkout = () => {
                         </>
                       )}
 
-                      {/* <div className="bg-muted/30 p-4 rounded-lg border border-border/50 space-y-3">
+                      {/* Coupon Section */}
+                      <div className="bg-muted/30 p-4 rounded-lg border border-border/50 space-y-3">
                         <Label htmlFor="coupon">Possui um cupom de desconto?</Label>
                         <div className="flex gap-2">
                           <Input
@@ -647,7 +648,7 @@ const Checkout = () => {
                             Cupom {appliedCoupon.code} aplicado com sucesso!
                           </p>
                         )}
-                      </div> */}
+                      </div>
                     </div>
 
                     <Button type="submit" size="lg" className="w-full" disabled={loading}>
@@ -707,12 +708,12 @@ const Checkout = () => {
                     <span className="text-muted-foreground">Subtotal</span>
                     <span className="font-medium text-foreground">R$ {selectedPass.price.toFixed(2).replace('.', ',')}</span>
                   </div>
-                  {/* <div className="flex justify-between text-sm">
+                  <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Desconto</span>
                     <span className={`font-medium ${appliedCoupon ? 'text-green-600' : 'text-muted-foreground'}`}>
                       {appliedCoupon ? `- R$ ${appliedCoupon.discount.toFixed(2).replace('.', ',')}` : 'R$ 0,00'}
                     </span>
-                  </div> */}
+                  </div>
 
                   <div className="flex justify-between items-end pt-4 border-t border-border/60 mt-4">
                     <div className="space-y-1">
