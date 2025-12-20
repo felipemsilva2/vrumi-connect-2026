@@ -105,10 +105,12 @@ const ProtectedAdminRoute = ({ children }: { children: React.ReactNode }) => {
         return <PageLoader />;
     }
 
-    // No user, redirect to login
+    // No user, redirect to admin login
     if (!userId) {
-        console.log('[ADMIN AUTH] Renderizando: redirecionando para login (sem userId)');
-        return <Navigate to="/login" replace />;
+        console.log('[ADMIN AUTH] Renderizando: redirecionando para /admin/login (sem userId)');
+        // Use window.location para evitar conflito com basename
+        window.location.href = '/admin/login';
+        return <PageLoader />;
     }
 
     // Still loading admin status
