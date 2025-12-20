@@ -2016,6 +2016,14 @@ export type Database = {
         }
         Returns: Json
       }
+      cancel_booking: {
+        Args: {
+          p_booking_id: string
+          p_cancelled_by: string
+          p_reason?: string
+        }
+        Returns: Json
+      }
       generate_audit_summary: {
         Args: { p_month: number; p_year: number }
         Returns: Json
