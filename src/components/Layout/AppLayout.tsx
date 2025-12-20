@@ -13,7 +13,8 @@ import {
   TrafficCone,
   Car,
   Sparkles,
-  Briefcase
+  Briefcase,
+  Shield
 } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { supabase } from "@/integrations/supabase/client";
@@ -288,6 +289,39 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
                   );
                 })}
               </div>
+
+              {/* Admin Section */}
+              {isAdmin && (
+                <div className="pt-4 border-t border-border/40">
+                  <div className={cn(
+                    "px-3 py-2 text-xs font-medium text-muted-foreground uppercase tracking-wide",
+                    !sidebarOpen && "text-center"
+                  )}>
+                    {sidebarOpen ? "Administração" : "•"}
+                  </div>
+                  <button
+                    onClick={() => window.location.href = '/admin/painel'}
+                    className={cn(
+                      "group relative flex w-full items-center rounded-xl transition-all duration-200 outline-none hover:bg-primary/10 text-muted-foreground hover:text-primary",
+                      sidebarOpen ? "px-3 py-3" : "justify-center py-3 px-0"
+                    )}
+                    title={!sidebarOpen ? "Painel Admin" : undefined}
+                  >
+                    <div className={cn(
+                      "flex shrink-0 items-center justify-center rounded-lg transition-colors duration-200 bg-primary/5 group-hover:bg-primary/10",
+                      sidebarOpen ? "mr-3 h-8 w-8" : "h-10 w-10"
+                    )}>
+                      <Shield className="h-4 w-4" />
+                    </div>
+                    <div className={cn(
+                      "flex flex-col items-start overflow-hidden transition-all duration-300",
+                      sidebarOpen ? "opacity-100 w-auto" : "opacity-0 w-0 hidden"
+                    )}>
+                      <span className="text-sm font-medium">Painel Admin</span>
+                    </div>
+                  </button>
+                </div>
+              )}
 
               <button
                 onClick={() => navigate("/painel?tab=perfil")}
