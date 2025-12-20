@@ -77,8 +77,8 @@ export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
 
         initAuth();
 
-        // Listener para mudanças de autenticação
-        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+        // Listener para mudanças de autenticação - SEM async para evitar deadlock
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
             console.log('[AdminAuth] Auth event:', event);
             
             if (!mounted) return;
@@ -88,16 +88,18 @@ export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
                 setIsAdmin(false);
             } else if (event === 'SIGNED_IN' && session?.user) {
                 setUser(session.user);
-                
-                const { data: adminResult } = await supabase.rpc('is_admin', {
-                    user_id: session.user.id
-                });
-                if (mounted) {
-                    setIsAdmin(adminResult === true);
-                    setIsLoading(false);
-                }
-            } else if (event === 'TOKEN_REFRESHED' && session?.user) {
-                // Manter estado atual, apenas garantir que loading está false
+                // Defer Supabase call com setTimeout para evitar deadlock
+                setTimeout(async () => {
+                    if (!mounted) return;
+                    const { data: adminResult } = await supabase.rpc('is_admin', {
+                        user_id: session.user.id
+                    });
+                    if (mounted) {
+                        setIsAdmin(adminResult === true);
+                        setIsLoading(false);
+                    }
+                }, 0);
+            } else if (event === 'TOKEN_REFRESHED') {
                 setIsLoading(false);
             }
         });
