@@ -231,77 +231,122 @@ export default function AulasScreen() {
             'Outro motivo',
         ];
 
-        Alert.alert(
-            'Cancelar Aula',
-            paymentStatus === 'completed'
-                ? 'Esta aula já foi paga. O cancelamento será registrado, mas o reembolso deverá ser solicitado via suporte.'
-                : 'Tem certeza que deseja cancelar esta aula?',
-            [
-                { text: 'Voltar', style: 'cancel' },
-                {
-                    text: 'Sim, cancelar',
-                    style: 'destructive',
-                    onPress: () => {
-                        // Show reason selection
+        // Helper function to process cancellation
+        const processCancellation = async (reason: string, withRefund: boolean) => {
+            try {
+                if (withRefund && paymentStatus === 'completed') {
+                    // Process automatic refund via Edge Function
+                    const session = await supabase.auth.getSession();
+                    const response = await fetch(
+                        `${process.env.EXPO_PUBLIC_SUPABASE_URL}/functions/v1/connect-refund`,
+                        {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${session.data.session?.access_token}`,
+                            },
+                            body: JSON.stringify({ bookingId, reason }),
+                        }
+                    );
+
+                    const result = await response.json();
+
+                    if (response.ok && result.success) {
                         Alert.alert(
-                            'Motivo do Cancelamento',
-                            'Selecione o motivo:',
-                            reasons.map(reason => ({
-                                text: reason,
-                                onPress: async () => {
-                                    try {
-                                        // Use RPC function for proper cancellation
-                                        // @ts-ignore - cancel_booking function added via migration
-                                        const { data, error } = await supabase.rpc('cancel_booking', {
-                                            p_booking_id: bookingId,
-                                            p_cancelled_by: user?.id,
-                                            p_reason: reason,
-                                        });
-
-                                        if (error) throw error;
-
-                                        const result = data as any;
-                                        if (result?.success) {
-                                            if (result.requires_refund) {
-                                                Alert.alert(
-                                                    'Aula Cancelada',
-                                                    'Sua aula foi cancelada. Como o pagamento já foi efetuado, entre em contato com o suporte para solicitar reembolso.',
-                                                    [{ text: 'Entendi' }]
-                                                );
-                                            } else {
-                                                Alert.alert('Sucesso', 'Aula cancelada com sucesso.');
-                                            }
-                                            fetchBookings();
-                                        } else {
-                                            Alert.alert('Erro', result?.error || 'Não foi possível cancelar.');
-                                        }
-                                    } catch (error: any) {
-                                        console.error('Cancel error:', error);
-                                        // Fallback to direct update if RPC not available
-                                        const { error: updateError } = await supabase
-                                            .from('bookings')
-                                            .update({
-                                                status: 'cancelled',
-                                                cancellation_reason: reason,
-                                                cancelled_by: user?.id,
-                                                cancelled_at: new Date().toISOString(),
-                                            })
-                                            .eq('id', bookingId);
-
-                                        if (updateError) {
-                                            Alert.alert('Erro', 'Não foi possível cancelar a aula.');
-                                        } else {
-                                            Alert.alert('Sucesso', 'Aula cancelada.');
-                                            fetchBookings();
-                                        }
-                                    }
-                                },
-                            }))
+                            'Reembolso Processado! ✅',
+                            `Sua aula foi cancelada e o reembolso de R$ ${result.amount_refunded?.toFixed(2)} foi processado. O valor será creditado em até 10 dias úteis.`,
+                            [{ text: 'Entendi' }]
                         );
+                        fetchBookings();
+                    } else {
+                        throw new Error(result.error || 'Erro ao processar reembolso');
+                    }
+                } else {
+                    // Cancel without refund (RPC function)
+                    // @ts-ignore - cancel_booking function added via migration
+                    const { data, error } = await supabase.rpc('cancel_booking', {
+                        p_booking_id: bookingId,
+                        p_cancelled_by: user?.id,
+                        p_reason: reason,
+                    });
+
+                    if (error) throw error;
+
+                    const result = data as any;
+                    if (result?.success) {
+                        Alert.alert('Sucesso', 'Aula cancelada com sucesso.');
+                        fetchBookings();
+                    } else {
+                        throw new Error(result?.error || 'Erro ao cancelar');
+                    }
+                }
+            } catch (error: any) {
+                console.error('Cancel/Refund error:', error);
+                Alert.alert('Erro', error.message || 'Não foi possível processar a solicitação.');
+            }
+        };
+
+        // Different flow for paid vs unpaid bookings
+        if (paymentStatus === 'completed') {
+            // Paid booking - offer refund option
+            Alert.alert(
+                'Cancelar Aula Paga',
+                'Esta aula já foi paga. Deseja solicitar o reembolso automático?',
+                [
+                    { text: 'Voltar', style: 'cancel' },
+                    {
+                        text: 'Cancelar sem reembolso',
+                        onPress: () => {
+                            Alert.alert(
+                                'Motivo do Cancelamento',
+                                'Selecione o motivo:',
+                                reasons.map(reason => ({
+                                    text: reason,
+                                    onPress: () => processCancellation(reason, false),
+                                }))
+                            );
+                        },
                     },
-                },
-            ]
-        );
+                    {
+                        text: 'Cancelar com reembolso',
+                        style: 'destructive',
+                        onPress: () => {
+                            Alert.alert(
+                                'Confirmar Reembolso',
+                                'O valor será estornado para o método de pagamento original em até 10 dias úteis. Selecione o motivo:',
+                                reasons.map(reason => ({
+                                    text: reason,
+                                    onPress: () => processCancellation(reason, true),
+                                }))
+                            );
+                        },
+                    },
+                ]
+            );
+        } else {
+            // Unpaid booking - simple cancellation
+            Alert.alert(
+                'Cancelar Aula',
+                'Tem certeza que deseja cancelar esta aula?',
+                [
+                    { text: 'Voltar', style: 'cancel' },
+                    {
+                        text: 'Sim, cancelar',
+                        style: 'destructive',
+                        onPress: () => {
+                            Alert.alert(
+                                'Motivo do Cancelamento',
+                                'Selecione o motivo:',
+                                reasons.map(reason => ({
+                                    text: reason,
+                                    onPress: () => processCancellation(reason, false),
+                                }))
+                            );
+                        },
+                    },
+                ]
+            );
+        }
     };
 
     const renderBookingCard = (booking: Booking & { isInstructorRole?: boolean, student?: any }) => {
