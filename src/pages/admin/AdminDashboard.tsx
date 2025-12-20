@@ -114,7 +114,7 @@ const AdminDashboard = () => {
 
       // Revenue - Transactions
       const { data: earningsData } = await supabase
-        .from("transactions")
+        .from("instructor_transactions")
         .select("amount")
         .eq("type", "earning")
         .eq("status", "completed");
@@ -127,7 +127,7 @@ const AdminDashboard = () => {
 
       // Refunds
       const { data: refundsData } = await supabase
-        .from("transactions")
+        .from("instructor_transactions")
         .select("amount")
         .eq("type", "refund");
 
