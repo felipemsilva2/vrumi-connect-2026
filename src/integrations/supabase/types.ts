@@ -668,6 +668,7 @@ export type Database = {
       }
       instructors: {
         Row: {
+          admin_notes: string | null
           availability: Json | null
           average_rating: number | null
           background_check_url: string | null
@@ -703,6 +704,7 @@ export type Database = {
           vehicle_transmission: string | null
         }
         Insert: {
+          admin_notes?: string | null
           availability?: Json | null
           average_rating?: number | null
           background_check_url?: string | null
@@ -738,6 +740,7 @@ export type Database = {
           vehicle_transmission?: string | null
         }
         Update: {
+          admin_notes?: string | null
           availability?: Json | null
           average_rating?: number | null
           background_check_url?: string | null
