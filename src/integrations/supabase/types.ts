@@ -1872,6 +1872,7 @@ export type Database = {
       }
       user_roles: {
         Row: {
+          admin_level: string | null
           created_at: string | null
           created_by: string | null
           id: string
@@ -1879,6 +1880,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          admin_level?: string | null
           created_at?: string | null
           created_by?: string | null
           id?: string
@@ -1886,6 +1888,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          admin_level?: string | null
           created_at?: string | null
           created_by?: string | null
           id?: string
