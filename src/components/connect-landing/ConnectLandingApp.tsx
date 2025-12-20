@@ -1,17 +1,19 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { HubPage } from './HubPage';
 import { VrumiAssistant } from './VrumiAssistant';
 import { WaitlistModal } from './WaitlistModal';
 import { ArticlePage } from './ArticlePage';
 import { ContactPage } from './ContactPage';
 import { LegalPage } from './LegalPage';
-import { Menu, X, ArrowRight } from 'lucide-react';
+import { Menu, X, ArrowRight, LogIn } from 'lucide-react';
 import { ViewState, Article } from './types';
 import { ARTICLES_CONTENT } from './constants';
 import './connect-landing.css';
 
 
 export default function App() {
+  const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [isWaitlistOpen, setIsWaitlistOpen] = useState(false);
@@ -119,6 +121,12 @@ export default function App() {
           {/* Action / Menu */}
           <div className="flex items-center gap-3">
             <button
+              onClick={() => navigate('/entrar')}
+              className="hidden md:flex text-gray-600 hover:text-black px-4 py-2 text-xs font-medium transition-colors items-center gap-1"
+            >
+              <LogIn size={14} /> Entrar
+            </button>
+            <button
               onClick={() => setIsWaitlistOpen(true)}
               className="hidden md:flex bg-black text-white px-5 py-2 rounded-full text-xs font-bold hover:bg-gray-800 transition-all shadow-sm hover:shadow-md items-center gap-1"
             >
@@ -143,6 +151,12 @@ export default function App() {
               <button onClick={() => scrollToSection('instructors')} className="text-lg font-medium text-gray-500">Instrutores</button>
               <button onClick={() => scrollToSection('safety')} className="text-lg font-medium text-gray-500">Segurança</button>
               <hr className="border-gray-200" />
+              <button
+                onClick={() => { navigate('/entrar'); setIsMenuOpen(false); }}
+                className="text-lg font-medium text-vrumi flex items-center justify-center gap-2"
+              >
+                <LogIn size={18} /> Entrar
+              </button>
               <button
                 onClick={() => { setIsWaitlistOpen(true); setIsMenuOpen(false); }}
                 className="bg-black text-white py-3 rounded-xl font-bold w-full flex items-center justify-center gap-2"
