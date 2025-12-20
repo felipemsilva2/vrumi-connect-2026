@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert, ScrollView, Linking, RefreshControl, Image, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, ScrollView, Linking, RefreshControl, Image, ActivityIndicator, Switch } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../contexts/AuthContext';
@@ -8,6 +8,8 @@ import { router } from 'expo-router';
 import { supabase } from '../../src/lib/supabase';
 import * as ImagePicker from 'expo-image-picker';
 import { useInstructorStatus } from '../../hooks/useInstructorStatus';
+// Biometric auth disabled temporarily - requires native dev build
+// import { useBiometricAuth } from '../../hooks/useBiometricAuth';
 
 interface ProfileStats {
     studyStreak: number;
@@ -31,6 +33,33 @@ export default function PerfilScreen() {
     const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
     const [uploading, setUploading] = useState(false);
     const { isInstructor, instructorStatus, instructorInfo, loading: instructorLoading } = useInstructorStatus();
+    // Biometric auth disabled temporarily
+    // const {
+    //     isBiometricSupported,
+    //     isBiometricEnrolled,
+    //     isBiometricEnabled,
+    //     biometricType,
+    //     enableBiometric,
+    //     disableBiometric
+    // } = useBiometricAuth();
+    // const [biometricLoading, setBiometricLoading] = useState(false);
+
+    // const handleBiometricToggle = async (value: boolean) => {
+    //     setBiometricLoading(true);
+    //     try {
+    //         if (value) {
+    //             await enableBiometric();
+    //             Alert.alert('Sucesso', 'Bloqueio biométrico ativado!');
+    //         } else {
+    //             await disableBiometric();
+    //             Alert.alert('Sucesso', 'Bloqueio biométrico desativado.');
+    //         }
+    //     } catch (error: any) {
+    //         Alert.alert('Erro', error.message || 'Não foi possível alterar a configuração.');
+    //     } finally {
+    //         setBiometricLoading(false);
+    //     }
+    // };
 
     const fetchStats = useCallback(async () => {
         if (!user?.id) return;
@@ -449,6 +478,41 @@ export default function PerfilScreen() {
                     </View>
                 </View>
 
+                {/* Security Section - Biometric - Disabled temporarily
+                {isBiometricSupported && isBiometricEnrolled && (
+                    <View style={styles.menuSection}>
+                        <Text style={[styles.menuTitle, { color: theme.textSecondary }]}>Segurança</Text>
+
+                        <View style={[styles.securityCard, { backgroundColor: theme.card }]}>
+                            <View style={styles.securityHeader}>
+                                <View style={[styles.menuIcon, { backgroundColor: '#dcfce7' }]}>
+                                    <Ionicons
+                                        name={biometricType === 'face' ? 'scan-outline' : 'finger-print-outline'}
+                                        size={20}
+                                        color="#16a34a"
+                                    />
+                                </View>
+                                <View style={{ flex: 1 }}>
+                                    <Text style={[styles.menuItemText, { color: theme.text }]}>
+                                        {biometricType === 'face' ? 'Face ID' : 'Touch ID'}
+                                    </Text>
+                                    <Text style={[styles.securitySubtext, { color: theme.textSecondary }]}>
+                                        Desbloqueie o app com biometria
+                                    </Text>
+                                </View>
+                                <Switch
+                                    value={isBiometricEnabled}
+                                    onValueChange={handleBiometricToggle}
+                                    disabled={biometricLoading}
+                                    trackColor={{ false: '#e5e7eb', true: '#86efac' }}
+                                    thumbColor={isBiometricEnabled ? '#16a34a' : '#f4f3f4'}
+                                />
+                            </View>
+                        </View>
+                    </View>
+                )}
+                */}
+
                 <View style={styles.menuSection}>
                     <Text style={[styles.menuTitle, { color: theme.textSecondary }]}>Suporte</Text>
 
@@ -756,5 +820,19 @@ const styles = StyleSheet.create({
     statusDescription: {
         fontSize: 13,
         lineHeight: 18,
+    },
+    // Security Card Styles
+    securityCard: {
+        padding: 16,
+        borderRadius: 16,
+    },
+    securityHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 14,
+    },
+    securitySubtext: {
+        fontSize: 12,
+        marginTop: 2,
     },
 });

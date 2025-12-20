@@ -11,6 +11,7 @@ import {
     Image,
     Linking,
     StatusBar,
+    Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -53,6 +54,81 @@ const SERVICES = [
     { id: 'simulado', icon: 'timer', label: 'Simulado', color: '#f59e0b' },
     { id: 'agendados', icon: 'calendar', label: 'Agendados', color: '#8b5cf6' },
 ];
+
+const DETRAN_SERVICES = [
+    {
+        id: 'cnh-digital',
+        icon: 'card',
+        label: 'CNH Digital',
+        color: '#0ea5e9',
+        url: 'https://www.gov.br/pt-br/apps/cnh-do-brasil'
+    },
+    {
+        id: 'consulta-pontos',
+        icon: 'analytics',
+        label: 'Consultar Pontos',
+        color: '#ef4444',
+        url: 'https://portalservicos.senatran.serpro.gov.br'
+    },
+    {
+        id: 'consulta-multas',
+        icon: 'warning',
+        label: 'Consultar Multas',
+        color: '#f97316',
+        url: 'https://portalservicos.senatran.serpro.gov.br'
+    },
+    {
+        id: 'agendamento-detran',
+        icon: 'calendar-number',
+        label: 'Agendar DETRAN',
+        color: '#6366f1',
+        url: null // Will open state selector
+    },
+    {
+        id: 'cnh-social',
+        icon: 'people',
+        label: 'CNH Social',
+        color: '#22c55e',
+        url: null // Will open state selector
+    },
+    {
+        id: 'clinicas-medicas',
+        icon: 'medkit',
+        label: 'Clínicas Médicas',
+        color: '#ec4899',
+        url: 'https://www.google.com/maps/search/clinica+exame+medico+detran'
+    },
+];
+
+const DETRAN_URLS: Record<string, { agendamento: string; cnhSocial: string }> = {
+    'AC': { agendamento: 'https://detran.ac.gov.br', cnhSocial: 'https://detran.ac.gov.br/cnh-social' },
+    'AL': { agendamento: 'https://www.detran.al.gov.br', cnhSocial: 'https://www.detran.al.gov.br/cnh-social' },
+    'AM': { agendamento: 'https://www.detran.am.gov.br', cnhSocial: 'https://www.detran.am.gov.br' },
+    'AP': { agendamento: 'https://www.detran.ap.gov.br', cnhSocial: 'https://www.detran.ap.gov.br' },
+    'BA': { agendamento: 'https://www.detran.ba.gov.br', cnhSocial: 'https://www.detran.ba.gov.br/cnh-popular' },
+    'CE': { agendamento: 'https://www.detran.ce.gov.br', cnhSocial: 'https://www.detran.ce.gov.br' },
+    'DF': { agendamento: 'https://www.detran.df.gov.br', cnhSocial: 'https://www.detran.df.gov.br' },
+    'ES': { agendamento: 'https://www.detran.es.gov.br', cnhSocial: 'https://www.detran.es.gov.br' },
+    'GO': { agendamento: 'https://www.detran.go.gov.br', cnhSocial: 'https://www.detran.go.gov.br/cnh-social' },
+    'MA': { agendamento: 'https://www.detran.ma.gov.br', cnhSocial: 'https://www.detran.ma.gov.br/cnh-social' },
+    'MG': { agendamento: 'https://www.detran.mg.gov.br', cnhSocial: 'https://www.detran.mg.gov.br' },
+    'MS': { agendamento: 'https://www.detran.ms.gov.br', cnhSocial: 'https://www.detran.ms.gov.br' },
+    'MT': { agendamento: 'https://www.detran.mt.gov.br', cnhSocial: 'https://www.detran.mt.gov.br' },
+    'PA': { agendamento: 'https://www.detran.pa.gov.br', cnhSocial: 'https://www.detran.pa.gov.br/cnh-pai-degua' },
+    'PB': { agendamento: 'https://www.detran.pb.gov.br', cnhSocial: 'https://www.detran.pb.gov.br' },
+    'PE': { agendamento: 'https://www.detran.pe.gov.br', cnhSocial: 'https://www.detran.pe.gov.br' },
+    'PI': { agendamento: 'https://www.detran.pi.gov.br', cnhSocial: 'https://www.detran.pi.gov.br' },
+    'PR': { agendamento: 'https://www.detran.pr.gov.br', cnhSocial: 'https://www.detran.pr.gov.br' },
+    'RJ': { agendamento: 'https://www.detran.rj.gov.br', cnhSocial: 'https://www.detran.rj.gov.br' },
+    'RN': { agendamento: 'https://www.detran.rn.gov.br', cnhSocial: 'https://www.detran.rn.gov.br' },
+    'RO': { agendamento: 'https://www.detran.ro.gov.br', cnhSocial: 'https://www.detran.ro.gov.br' },
+    'RR': { agendamento: 'https://www.detran.rr.gov.br', cnhSocial: 'https://www.detran.rr.gov.br/cnh-cidada' },
+    'RS': { agendamento: 'https://www.detran.rs.gov.br', cnhSocial: 'https://www.detran.rs.gov.br/cnh-social' },
+    'SC': { agendamento: 'https://www.detran.sc.gov.br', cnhSocial: 'https://www.detran.sc.gov.br' },
+    'SE': { agendamento: 'https://www.detran.se.gov.br', cnhSocial: 'https://www.detran.se.gov.br' },
+    'SP': { agendamento: 'https://www.detran.sp.gov.br', cnhSocial: 'https://www.detran.sp.gov.br' },
+    'TO': { agendamento: 'https://www.detran.to.gov.br', cnhSocial: 'https://www.detran.to.gov.br/cnh-cidada' },
+};
 
 export default function HomeScreen() {
     const { user } = useAuth();
@@ -185,6 +261,31 @@ export default function HomeScreen() {
         }
     };
 
+    const [stateSelectorVisible, setStateSelectorVisible] = useState(false);
+    const [selectedDetranService, setSelectedDetranService] = useState<string | null>(null);
+
+    const handleDetranServicePress = (service: typeof DETRAN_SERVICES[0]) => {
+        if (service.url) {
+            Linking.openURL(service.url);
+        } else {
+            // Open state selector for agendamento-detran or cnh-social
+            setSelectedDetranService(service.id);
+            setStateSelectorVisible(true);
+        }
+    };
+
+    const handleStateSelect = (stateCode: string) => {
+        setStateSelectorVisible(false);
+        const urls = DETRAN_URLS[stateCode];
+        if (urls) {
+            if (selectedDetranService === 'agendamento-detran') {
+                Linking.openURL(urls.agendamento);
+            } else if (selectedDetranService === 'cnh-social') {
+                Linking.openURL(urls.cnhSocial);
+            }
+        }
+    };
+
     if (loading) {
         return (
             <View style={[styles.container, { backgroundColor: theme.background }]}>
@@ -284,7 +385,7 @@ export default function HomeScreen() {
                     </TouchableOpacity>
                 )}
 
-                {/* Services Grid */}
+                {/* Services Grid - All services in one section */}
                 <Text style={[styles.sectionTitle, { color: theme.text }]}>Serviços</Text>
                 <View style={styles.servicesGrid}>
                     {SERVICES.map((service) => (
@@ -292,6 +393,18 @@ export default function HomeScreen() {
                             key={service.id}
                             style={styles.serviceCard}
                             onPress={() => handleServicePress(service.id)}
+                        >
+                            <View style={[styles.serviceIcon, { backgroundColor: `${service.color}15` }]}>
+                                <Ionicons name={service.icon as any} size={24} color={service.color} />
+                            </View>
+                            <Text style={[styles.serviceLabel, { color: theme.textSecondary }]}>{service.label}</Text>
+                        </TouchableOpacity>
+                    ))}
+                    {DETRAN_SERVICES.map((service) => (
+                        <TouchableOpacity
+                            key={service.id}
+                            style={styles.serviceCard}
+                            onPress={() => handleDetranServicePress(service)}
                         >
                             <View style={[styles.serviceIcon, { backgroundColor: `${service.color}15` }]}>
                                 <Ionicons name={service.icon as any} size={24} color={service.color} />
@@ -420,6 +533,41 @@ export default function HomeScreen() {
                 visible={notificationModalVisible}
                 onClose={() => setNotificationModalVisible(false)}
             />
+
+            {/* State Selector Modal */}
+            <Modal
+                visible={stateSelectorVisible}
+                animationType="slide"
+                transparent={true}
+                onRequestClose={() => setStateSelectorVisible(false)}
+            >
+                <View style={styles.modalOverlay}>
+                    <View style={[styles.modalContent, { backgroundColor: theme.card }]}>
+                        <View style={styles.modalHeader}>
+                            <Text style={[styles.modalTitle, { color: theme.text }]}>
+                                Selecione seu Estado
+                            </Text>
+                            <TouchableOpacity onPress={() => setStateSelectorVisible(false)}>
+                                <Ionicons name="close" size={24} color={theme.text} />
+                            </TouchableOpacity>
+                        </View>
+                        <ScrollView style={styles.stateList}>
+                            {Object.keys(DETRAN_URLS).map((stateCode) => (
+                                <TouchableOpacity
+                                    key={stateCode}
+                                    style={[styles.stateItem, { borderBottomColor: theme.cardBorder }]}
+                                    onPress={() => handleStateSelect(stateCode)}
+                                >
+                                    <Text style={[styles.stateText, { color: theme.text }]}>
+                                        {stateCode}
+                                    </Text>
+                                    <Ionicons name="chevron-forward" size={20} color={theme.textMuted} />
+                                </TouchableOpacity>
+                            ))}
+                        </ScrollView>
+                    </View>
+                </View>
+            </Modal>
         </View>
     );
 }
@@ -787,5 +935,79 @@ const styles = StyleSheet.create({
         backgroundColor: 'rgba(255,255,255,0.2)',
         justifyContent: 'center',
         alignItems: 'center',
+    },
+    // DETRAN Services Styles
+    detranServicesGrid: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        justifyContent: 'space-between',
+        paddingHorizontal: 16,
+        marginBottom: 16,
+    },
+    detranServiceCard: {
+        width: (SCREEN_WIDTH - 48) / 3,
+        backgroundColor: '#fff',
+        borderRadius: 12,
+        padding: 12,
+        marginBottom: 8,
+        alignItems: 'center',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.05,
+        shadowRadius: 2,
+        elevation: 1,
+    },
+    detranServiceIcon: {
+        width: 40,
+        height: 40,
+        borderRadius: 10,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: 6,
+    },
+    detranServiceLabel: {
+        fontSize: 11,
+        fontWeight: '600',
+        textAlign: 'center',
+        lineHeight: 14,
+    },
+    // Modal Styles
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0,0,0,0.5)',
+        justifyContent: 'flex-end',
+    },
+    modalContent: {
+        borderTopLeftRadius: 24,
+        borderTopRightRadius: 24,
+        paddingTop: 16,
+        maxHeight: '70%',
+    },
+    modalHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingHorizontal: 20,
+        paddingBottom: 16,
+        borderBottomWidth: 1,
+        borderBottomColor: '#e5e7eb',
+    },
+    modalTitle: {
+        fontSize: 18,
+        fontWeight: '700',
+    },
+    stateList: {
+        paddingHorizontal: 20,
+    },
+    stateItem: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingVertical: 16,
+        borderBottomWidth: 1,
+    },
+    stateText: {
+        fontSize: 16,
+        fontWeight: '500',
     },
 });

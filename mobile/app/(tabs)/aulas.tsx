@@ -222,27 +222,82 @@ export default function AulasScreen() {
         return statusConfig[status] || statusConfig.pending;
     };
 
-    const handleCancelBooking = async (bookingId: string) => {
+    const handleCancelBooking = async (bookingId: string, paymentStatus: string) => {
+        const reasons = [
+            'Mudança de horário',
+            'Imprevisto pessoal',
+            'Problema com transporte',
+            'Condições climáticas',
+            'Outro motivo',
+        ];
+
         Alert.alert(
             'Cancelar Aula',
-            'Tem certeza que deseja cancelar esta aula?',
+            paymentStatus === 'completed'
+                ? 'Esta aula já foi paga. O cancelamento será registrado, mas o reembolso deverá ser solicitado via suporte.'
+                : 'Tem certeza que deseja cancelar esta aula?',
             [
-                { text: 'Não', style: 'cancel' },
+                { text: 'Voltar', style: 'cancel' },
                 {
                     text: 'Sim, cancelar',
                     style: 'destructive',
-                    onPress: async () => {
-                        try {
-                            const { error } = await supabase
-                                .from('bookings')
-                                .update({ status: 'cancelled' })
-                                .eq('id', bookingId);
+                    onPress: () => {
+                        // Show reason selection
+                        Alert.alert(
+                            'Motivo do Cancelamento',
+                            'Selecione o motivo:',
+                            reasons.map(reason => ({
+                                text: reason,
+                                onPress: async () => {
+                                    try {
+                                        // Use RPC function for proper cancellation
+                                        // @ts-ignore - cancel_booking function added via migration
+                                        const { data, error } = await supabase.rpc('cancel_booking', {
+                                            p_booking_id: bookingId,
+                                            p_cancelled_by: user?.id,
+                                            p_reason: reason,
+                                        });
 
-                            if (error) throw error;
-                            fetchBookings();
-                        } catch (error) {
-                            Alert.alert('Erro', 'Não foi possível cancelar a aula.');
-                        }
+                                        if (error) throw error;
+
+                                        const result = data as any;
+                                        if (result?.success) {
+                                            if (result.requires_refund) {
+                                                Alert.alert(
+                                                    'Aula Cancelada',
+                                                    'Sua aula foi cancelada. Como o pagamento já foi efetuado, entre em contato com o suporte para solicitar reembolso.',
+                                                    [{ text: 'Entendi' }]
+                                                );
+                                            } else {
+                                                Alert.alert('Sucesso', 'Aula cancelada com sucesso.');
+                                            }
+                                            fetchBookings();
+                                        } else {
+                                            Alert.alert('Erro', result?.error || 'Não foi possível cancelar.');
+                                        }
+                                    } catch (error: any) {
+                                        console.error('Cancel error:', error);
+                                        // Fallback to direct update if RPC not available
+                                        const { error: updateError } = await supabase
+                                            .from('bookings')
+                                            .update({
+                                                status: 'cancelled',
+                                                cancellation_reason: reason,
+                                                cancelled_by: user?.id,
+                                                cancelled_at: new Date().toISOString(),
+                                            })
+                                            .eq('id', bookingId);
+
+                                        if (updateError) {
+                                            Alert.alert('Erro', 'Não foi possível cancelar a aula.');
+                                        } else {
+                                            Alert.alert('Sucesso', 'Aula cancelada.');
+                                            fetchBookings();
+                                        }
+                                    }
+                                },
+                            }))
+                        );
                     },
                 },
             ]
@@ -372,7 +427,7 @@ export default function AulasScreen() {
                 {canCancel && (
                     <TouchableOpacity
                         style={styles.cancelButton}
-                        onPress={() => handleCancelBooking(booking.id)}
+                        onPress={() => handleCancelBooking(booking.id, booking.payment_status)}
                     >
                         <Ionicons name="close-circle-outline" size={18} color="#dc2626" />
                         <Text style={styles.cancelButtonText}>Cancelar Aula</Text>

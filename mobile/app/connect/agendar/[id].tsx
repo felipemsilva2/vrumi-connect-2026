@@ -243,9 +243,19 @@ export default function BookingScreen() {
                 // Redirect to Checkout for paid bookings
                 router.push(`/connect/checkout/${data.id}?type=booking`);
             }
-        } catch (error) {
+        } catch (error: any) {
             console.error('Booking error:', error);
-            Alert.alert('Erro', 'Não foi possível realizar o agendamento');
+
+            // Handle unique constraint violation (slot already taken)
+            if (error?.code === '23505' || error?.message?.includes('unique') || error?.message?.includes('duplicate')) {
+                Alert.alert(
+                    'Horário Indisponível',
+                    'Este horário acabou de ser reservado por outro aluno. Por favor, escolha outro horário.',
+                    [{ text: 'Escolher outro horário', onPress: () => fetchBookedSlots(selectedDate!) }]
+                );
+            } else {
+                Alert.alert('Erro', 'Não foi possível realizar o agendamento. Tente novamente.');
+            }
         } finally {
             setSubmitting(false);
         }

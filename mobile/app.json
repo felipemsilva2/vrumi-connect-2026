@@ -45,7 +45,8 @@
           "merchantIdentifier": "merchant.com.vrumi.connect",
           "enableGooglePay": true
         }
-      ]
+      ],
+      "expo-secure-store"
     ],
     "extra": {
       "router": {},

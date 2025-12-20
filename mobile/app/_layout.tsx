@@ -7,6 +7,11 @@ import { GamificationProvider } from '../contexts/GamificationContext';
 import { CacheProvider } from '../contexts/CacheContext';
 import { StripeProvider } from '../contexts/StripeContext';
 import { usePushNotifications } from '../hooks/usePushNotifications';
+// Biometric auth disabled temporarily - requires native dev build
+// import { useBiometricAuth } from '../hooks/useBiometricAuth';
+// import { BiometricLockScreen } from '../components/BiometricLockScreen';
+// import { useState, useEffect, useRef } from 'react';
+// import { AppState, AppStateStatus } from 'react-native';
 
 function AppContent() {
     const { isDark, theme } = useTheme();
