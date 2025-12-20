@@ -41,18 +41,37 @@ const ProtectedAdminRoute = ({ children }: { children: React.ReactNode }) => {
     const [isAuthChecked, setIsAuthChecked] = useState(false);
     const { isAdmin, isLoading } = useIsAdmin(userId || undefined);
 
+    console.log('[ADMIN AUTH] Estado atual:', {
+        userId,
+        isAuthChecked,
+        isAdmin,
+        isLoading,
+        timestamp: new Date().toISOString()
+    });
+
     useEffect(() => {
         let isMounted = true;
+        console.log('[ADMIN AUTH] useEffect iniciado');
         
         const checkAuth = async () => {
+            console.log('[ADMIN AUTH] Verificando sessão...');
             try {
-                const { data: { session } } = await supabase.auth.getSession();
+                const { data: { session }, error } = await supabase.auth.getSession();
+                console.log('[ADMIN AUTH] Sessão obtida:', {
+                    hasSession: !!session,
+                    userId: session?.user?.id,
+                    email: session?.user?.email,
+                    error
+                });
+                
                 if (isMounted) {
-                    setUserId(session?.user?.id || null);
+                    const newUserId = session?.user?.id || null;
+                    console.log('[ADMIN AUTH] Atualizando userId para:', newUserId);
+                    setUserId(newUserId);
                     setIsAuthChecked(true);
                 }
             } catch (error) {
-                console.error('Error checking auth:', error);
+                console.error('[ADMIN AUTH] Erro ao verificar auth:', error);
                 if (isMounted) {
                     setUserId(null);
                     setIsAuthChecked(true);
@@ -63,12 +82,18 @@ const ProtectedAdminRoute = ({ children }: { children: React.ReactNode }) => {
         checkAuth();
         
         const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+            console.log('[ADMIN AUTH] onAuthStateChange:', {
+                event,
+                userId: session?.user?.id,
+                email: session?.user?.email
+            });
             if (isMounted) {
                 setUserId(session?.user?.id || null);
             }
         });
 
         return () => {
+            console.log('[ADMIN AUTH] Cleanup executado');
             isMounted = false;
             subscription.unsubscribe();
         };
@@ -76,16 +101,19 @@ const ProtectedAdminRoute = ({ children }: { children: React.ReactNode }) => {
 
     // Wait for auth check to complete
     if (!isAuthChecked) {
+        console.log('[ADMIN AUTH] Renderizando: aguardando auth check');
         return <PageLoader />;
     }
 
     // No user, redirect to login
     if (!userId) {
+        console.log('[ADMIN AUTH] Renderizando: redirecionando para login (sem userId)');
         return <Navigate to="/login" replace />;
     }
 
     // Still loading admin status
     if (isLoading) {
+        console.log('[ADMIN AUTH] Renderizando: aguardando verificação admin');
         return <PageLoader />;
     }
 
