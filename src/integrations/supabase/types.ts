@@ -622,6 +622,7 @@ export type Database = {
           instructor_id: string
           processed_at: string | null
           status: string | null
+          stripe_payment_intent_id: string | null
           type: string
         }
         Insert: {
@@ -633,6 +634,7 @@ export type Database = {
           instructor_id: string
           processed_at?: string | null
           status?: string | null
+          stripe_payment_intent_id?: string | null
           type: string
         }
         Update: {
@@ -644,6 +646,7 @@ export type Database = {
           instructor_id?: string
           processed_at?: string | null
           status?: string | null
+          stripe_payment_intent_id?: string | null
           type?: string
         }
         Relationships: [
@@ -1622,6 +1625,7 @@ export type Database = {
           payment_status: string
           price: number
           purchased_at: string
+          stripe_session_id: string | null
           updated_at: string
           user_id: string
         }
@@ -1633,6 +1637,7 @@ export type Database = {
           payment_status?: string
           price: number
           purchased_at?: string
+          stripe_session_id?: string | null
           updated_at?: string
           user_id: string
         }
@@ -1644,6 +1649,7 @@ export type Database = {
           payment_status?: string
           price?: number
           purchased_at?: string
+          stripe_session_id?: string | null
           updated_at?: string
           user_id?: string
         }
