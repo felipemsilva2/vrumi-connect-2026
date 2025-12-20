@@ -342,31 +342,44 @@ const Sidebar = ({ user, selected, setSelected }: SidebarProps) => {
         />
       </div>
 
-      {isAdmin && open && (
-        <div className="border-t border-border pt-4 space-y-1 mb-4">
-          <div className="px-3 py-2 text-xs font-medium text-muted-foreground uppercase tracking-wide">
-            Administração
-          </div>
-          <Option
-            Icon={User}
-            title="Meu Perfil"
-            selected={selected}
-            setSelected={setSelected}
-            open={open}
-          />
-          <Button
-            onClick={handleSignOut}
-            variant="ghost"
-            size="lg"
-            className="w-full justify-start text-muted-foreground hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-400"
-          >
-            <div className="grid h-full w-12 place-content-center">
-              <LogOut className="h-4 w-4" />
+      <div className="border-t border-border pt-4 space-y-1 mb-4">
+        <Option
+          Icon={User}
+          title="Meu Perfil"
+          selected={selected}
+          setSelected={setSelected}
+          open={open}
+        />
+        {isAdmin && (
+          <>
+            <div className="px-3 py-2 text-xs font-medium text-muted-foreground uppercase tracking-wide">
+              Administração
             </div>
-            <span className="text-sm font-medium">Sair</span>
-          </Button>
-        </div>
-      )}
+            <Button
+              onClick={handleAdminAccess}
+              variant="ghost"
+              size="lg"
+              className="w-full justify-start text-muted-foreground hover:bg-primary/10 hover:text-primary"
+            >
+              <div className="grid h-full w-12 place-content-center">
+                <Shield className="h-4 w-4" />
+              </div>
+              {open && <span className="text-sm font-medium">Painel Admin</span>}
+            </Button>
+          </>
+        )}
+        <Button
+          onClick={handleSignOut}
+          variant="ghost"
+          size="lg"
+          className="w-full justify-start text-muted-foreground hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-400"
+        >
+          <div className="grid h-full w-12 place-content-center">
+            <LogOut className="h-4 w-4" />
+          </div>
+          {open && <span className="text-sm font-medium">Sair</span>}
+        </Button>
+      </div>
 
       <ToggleClose open={open} setOpen={setOpen} />
     </nav>
