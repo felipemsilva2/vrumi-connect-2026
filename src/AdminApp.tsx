@@ -37,26 +37,59 @@ const PageLoader = () => (
 );
 
 const ProtectedAdminRoute = ({ children }: { children: React.ReactNode }) => {
-    const [userId, setUserId] = useState<string>();
+    const [userId, setUserId] = useState<string | null>(null);
     const [isAuthChecked, setIsAuthChecked] = useState(false);
-    const { isAdmin, isLoading } = useIsAdmin(userId);
+    const { isAdmin, isLoading } = useIsAdmin(userId || undefined);
 
     useEffect(() => {
+        let isMounted = true;
+        
         const checkAuth = async () => {
-            const { data: { session } } = await supabase.auth.getSession();
-            if (session?.user) {
-                setUserId(session.user.id);
+            try {
+                const { data: { session } } = await supabase.auth.getSession();
+                if (isMounted) {
+                    setUserId(session?.user?.id || null);
+                    setIsAuthChecked(true);
+                }
+            } catch (error) {
+                console.error('Error checking auth:', error);
+                if (isMounted) {
+                    setUserId(null);
+                    setIsAuthChecked(true);
+                }
             }
-            setIsAuthChecked(true);
         };
+        
         checkAuth();
+        
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+            if (isMounted) {
+                setUserId(session?.user?.id || null);
+            }
+        });
+
+        return () => {
+            isMounted = false;
+            subscription.unsubscribe();
+        };
     }, []);
 
-    if (!isAuthChecked) return <PageLoader />;
+    // Wait for auth check to complete
+    if (!isAuthChecked) {
+        return <PageLoader />;
+    }
 
-    if (!userId) return <Navigate to="/login" replace />;
+    // No user, redirect to login
+    if (!userId) {
+        return <Navigate to="/login" replace />;
+    }
 
-    if (isLoading) return <PageLoader />;
+    // Still loading admin status
+    if (isLoading) {
+        return <PageLoader />;
+    }
+
+    // User is not admin
     if (!isAdmin) {
         return (
             <div className="flex flex-col items-center justify-center min-h-screen gap-4">
@@ -75,6 +108,7 @@ const ProtectedAdminRoute = ({ children }: { children: React.ReactNode }) => {
             </div>
         );
     }
+    
     return <>{children}</>;
 };
 
