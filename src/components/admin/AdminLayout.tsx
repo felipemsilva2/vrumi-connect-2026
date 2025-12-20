@@ -1,6 +1,6 @@
 import { ReactNode } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Car, Users, CreditCard, Shield, FileText, MessageSquare, LogOut, FileSearch, TrafficCone, LifeBuoy, Sparkles, GraduationCap } from "lucide-react";
+import { Car, Users, CreditCard, Shield, FileText, MessageSquare, LogOut, FileSearch, TrafficCone, LifeBuoy, Sparkles, GraduationCap, Calendar, DollarSign, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { supabase } from "@/integrations/supabase/client";
@@ -12,17 +12,26 @@ interface AdminLayoutProps {
 }
 
 const menuItems = [
+  // Core Admin
   { path: "/painel", label: "Dashboard", icon: Car },
   { path: "/usuarios", label: "Usuários", icon: Users },
+
+  // Vrumi Connect
   { path: "/instrutores", label: "Instrutores", icon: GraduationCap },
-  { path: "/assinaturas", label: "Assinaturas", icon: CreditCard },
+  { path: "/agendamentos", label: "Agendamentos", icon: Calendar },
+  { path: "/transacoes", label: "Transações", icon: DollarSign },
+
+  // System
   { path: "/funcoes", label: "Permissões", icon: Shield },
   { path: "/logs-auditoria", label: "Logs de Auditoria", icon: FileSearch },
-  { path: "/flashcards", label: "Flashcards", icon: FileText },
-  { path: "/questoes", label: "Questões", icon: MessageSquare },
-  { path: "/gerar-questoes", label: "Gerar Questões IA", icon: Sparkles },
-  { path: "/placas", label: "Placas de Trânsito", icon: TrafficCone },
   { path: "/suporte", label: "Suporte", icon: LifeBuoy },
+
+  // Education (DESCONTINUADO - comentado)
+  // { path: "/assinaturas", label: "Assinaturas", icon: CreditCard },
+  // { path: "/flashcards", label: "Flashcards", icon: FileText },
+  // { path: "/questoes", label: "Questões", icon: MessageSquare },
+  // { path: "/gerar-questoes", label: "Gerar Questões IA", icon: Sparkles },
+  // { path: "/placas", label: "Placas de Trânsito", icon: TrafficCone },
 ];
 
 export const AdminLayout = ({ children }: AdminLayoutProps) => {

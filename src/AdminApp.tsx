@@ -27,6 +27,8 @@ const AdminTrafficSignsImport = lazy(() => import("@/pages/admin/AdminTrafficSig
 const AdminLogin = lazy(() => import("@/pages/admin/AdminLogin"));
 const AdminSupport = lazy(() => import("@/pages/admin/AdminSupport"));
 const AdminGenerateQuestions = lazy(() => import("@/pages/admin/AdminGenerateQuestions"));
+const AdminBookings = lazy(() => import("@/pages/admin/AdminBookings"));
+const AdminTransactions = lazy(() => import("@/pages/admin/AdminTransactions"));
 
 const PageLoader = () => (
     <div className="flex items-center justify-center min-h-screen">
@@ -108,6 +110,17 @@ const AdminApp = () => (
                                         <AdminInstructors />
                                     </ProtectedAdminRoute>
                                 } />
+                                <Route path="/agendamentos" element={
+                                    <ProtectedAdminRoute>
+                                        <AdminBookings />
+                                    </ProtectedAdminRoute>
+                                } />
+                                <Route path="/transacoes" element={
+                                    <ProtectedAdminRoute>
+                                        <AdminTransactions />
+                                    </ProtectedAdminRoute>
+                                } />
+                                {/* Education routes - DESCONTINUADO */}
                                 <Route path="/assinaturas" element={
                                     <ProtectedAdminRoute>
                                         <AdminSubscriptions />
