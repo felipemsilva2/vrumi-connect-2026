@@ -24,8 +24,8 @@ interface Transaction {
     instructor_id: string;
     booking_id: string | null;
     amount: number;
-    type: 'earning' | 'refund' | 'payout';
-    status: 'pending' | 'completed' | 'failed';
+    type: string;
+    status: string;
     description: string | null;
     created_at: string;
     instructor?: { full_name: string };
@@ -62,10 +62,10 @@ const AdminTransactions = () => {
             setIsLoading(true);
 
             const { data, error } = await supabase
-                .from("transactions")
+                .from("instructor_transactions")
                 .select(`
           *,
-          instructor:instructors!transactions_instructor_id_fkey(full_name)
+          instructor:instructors!instructor_transactions_instructor_id_fkey(full_name)
         `)
                 .order("created_at", { ascending: false })
                 .limit(200);

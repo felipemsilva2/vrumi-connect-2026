@@ -32,8 +32,8 @@ interface Booking {
     scheduled_date: string;
     scheduled_time: string;
     duration_minutes: number;
-    status: 'pending' | 'confirmed' | 'cancelled' | 'completed';
-    payment_status: 'pending' | 'completed' | 'failed' | 'refunded';
+    status: string;
+    payment_status: string | null;
     price: number;
     cancellation_reason?: string;
     cancelled_at?: string;
@@ -42,11 +42,12 @@ interface Booking {
     instructor?: { full_name: string; user_id: string };
 }
 
-const statusConfig = {
-    pending: { label: "Pendente", variant: "secondary" as const },
-    confirmed: { label: "Confirmado", variant: "default" as const },
-    cancelled: { label: "Cancelado", variant: "destructive" as const },
-    completed: { label: "Concluído", variant: "outline" as const },
+const statusConfig: Record<string, { label: string; variant: "secondary" | "default" | "destructive" | "outline" }> = {
+    pending: { label: "Pendente", variant: "secondary" },
+    confirmed: { label: "Confirmado", variant: "default" },
+    cancelled: { label: "Cancelado", variant: "destructive" },
+    completed: { label: "Concluído", variant: "outline" },
+    disputed: { label: "Disputado", variant: "destructive" },
 };
 
 const paymentStatusConfig = {
@@ -79,7 +80,7 @@ const AdminBookings = () => {
                 .from("bookings")
                 .select(`
           *,
-          student:profiles!bookings_student_id_fkey(full_name, email),
+          student:profiles!bookings_student_id_fkey_profiles(full_name, email),
           instructor:instructors!bookings_instructor_id_fkey(full_name, user_id)
         `)
                 .order("created_at", { ascending: false })
