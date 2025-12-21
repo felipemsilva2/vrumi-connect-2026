@@ -421,6 +421,73 @@ export type Database = {
           },
         ]
       }
+      connect_chat_violations: {
+        Row: {
+          action_taken: string | null
+          created_at: string | null
+          id: string
+          keywords_matched: string[] | null
+          message_content: string
+          reviewed: boolean | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          room_id: string | null
+          sender_id: string
+          severity: string
+          violation_type: string
+        }
+        Insert: {
+          action_taken?: string | null
+          created_at?: string | null
+          id?: string
+          keywords_matched?: string[] | null
+          message_content: string
+          reviewed?: boolean | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          room_id?: string | null
+          sender_id: string
+          severity?: string
+          violation_type: string
+        }
+        Update: {
+          action_taken?: string | null
+          created_at?: string | null
+          id?: string
+          keywords_matched?: string[] | null
+          message_content?: string
+          reviewed?: boolean | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          room_id?: string | null
+          sender_id?: string
+          severity?: string
+          violation_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "connect_chat_violations_reviewed_by_fkey"
+            columns: ["reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "connect_chat_violations_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "connect_chat_rooms"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "connect_chat_violations_sender_id_fkey"
+            columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contracts: {
         Row: {
           booking_id: string
