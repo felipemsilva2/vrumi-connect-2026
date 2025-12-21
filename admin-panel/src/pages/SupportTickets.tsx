@@ -109,7 +109,7 @@ export function SupportTickets() {
 
         setIsSending(true);
         try {
-            const { data: { user } } = await supabase.auth.getUser();
+            const { data: { user: _user } } = await supabase.auth.getUser();
 
             // For now, we'll just update the ticket status
             // In a full implementation, you'd have a ticket_responses table

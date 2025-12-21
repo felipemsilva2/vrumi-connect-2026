@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
-import { Search, RefreshCw, DollarSign, ArrowDownRight, CheckCircle, XCircle, Clock, Eye, ExternalLink, AlertTriangle } from 'lucide-react';
+import { Search, RefreshCw, DollarSign, ArrowDownRight, CheckCircle, XCircle, Clock, Eye, AlertTriangle } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 

@@ -62,7 +62,7 @@ export function Notifications() {
             }
 
             // Call edge function to send notifications
-            const { data, error } = await supabase.functions.invoke('send-push-notification', {
+            const { error } = await supabase.functions.invoke('send-push-notification', {
                 body: {
                     tokens: tokens.map(t => t.token),
                     title,

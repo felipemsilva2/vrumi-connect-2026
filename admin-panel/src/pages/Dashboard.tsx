@@ -17,7 +17,7 @@ import {
     AlertCircle,
     ChevronRight
 } from 'lucide-react';
-import { format, subDays, formatDistanceToNow } from 'date-fns';
+import { subDays, formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 interface Stats {

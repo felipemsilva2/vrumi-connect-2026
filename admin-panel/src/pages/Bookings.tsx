@@ -131,7 +131,7 @@ export function Bookings() {
 
             // Log admin activity
             await logAdminActivity({
-                action: 'cancel_booking',
+                action: 'cancel',
                 entityType: 'booking',
                 entityId: selectedBooking.id,
                 entityName: `${selectedBooking.student?.full_name} - ${selectedBooking.instructor?.full_name}`,
