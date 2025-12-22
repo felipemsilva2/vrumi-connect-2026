@@ -557,6 +557,7 @@ export function Instructors() {
                                 </button>
                             </th>
                             <th>Instrutor</th>
+                            <th>Email</th>
                             <th>Localização</th>
                             <th>Categorias</th>
                             <th>Preço/Aula</th>
@@ -568,14 +569,14 @@ export function Instructors() {
                     <tbody>
                         {isLoading ? (
                             <tr>
-                                <td colSpan={8} style={{ textAlign: 'center', padding: '48px' }}>
+                                <td colSpan={9} style={{ textAlign: 'center', padding: '48px' }}>
                                     <div className="spinner" style={{ margin: '0 auto 16px' }}></div>
                                     <p style={{ color: 'var(--text-muted)' }}>Carregando...</p>
                                 </td>
                             </tr>
                         ) : filtered.length === 0 ? (
                             <tr>
-                                <td colSpan={8}>
+                                <td colSpan={9}>
                                     <div className="empty-state">
                                         <Search size={48} />
                                         <h3>Nenhum instrutor encontrado</h3>
@@ -611,6 +612,11 @@ export function Instructors() {
                                                 </div>
                                             </div>
                                         </div>
+                                    </td>
+                                    <td>
+                                        <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
+                                            {instructor.email || '-'}
+                                        </span>
                                     </td>
                                     <td>
                                         <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: 'var(--text-secondary)' }}>
