@@ -62,16 +62,16 @@ serve(async (req) => {
         return new Response(JSON.stringify({ success: true, idempotent: true }), { status: 200 });
       }
       if (session.payment_status !== 'paid') return new Response(JSON.stringify({ success: true }), { status: 200 });
-      
+
       const passType = session.metadata?.pass_type;
       const userId = session.metadata?.user_id;
       if (!passType || !userId) return new Response(JSON.stringify({ error: 'Missing metadata' }), { status: 400 });
-      
+
       const durationMap = { 'individual_30_days': 30, 'individual_90_days': 90, 'family_90_days': 90 };
       const priceMap = { 'individual_30_days': 29.90, 'individual_90_days': 79.90, 'family_90_days': 84.90 };
       const expiresAt = new Date();
       expiresAt.setDate(expiresAt.getDate() + (durationMap[passType] || 30));
-      
+
       await supabase.from('user_passes').insert({
         user_id: userId, pass_type: passType, price: priceMap[passType] || 0,
         expires_at: expiresAt.toISOString(), payment_status: 'completed', stripe_session_id: session.id
@@ -95,9 +95,9 @@ serve(async (req) => {
       if (bookingId) {
         const { data: existingTx } = await supabase.from('instructor_transactions').select('id').eq('stripe_payment_intent_id', paymentIntent.id).single();
         if (existingTx) return new Response(JSON.stringify({ success: true, idempotent: true }), { status: 200 });
-        
+
         await supabase.from('bookings').update({ payment_status: 'completed', status: 'confirmed' }).eq('id', bookingId);
-        
+
         const instructorId = paymentIntent.metadata?.instructor_id;
         const platformFee = parseInt(paymentIntent.metadata?.platform_fee || '0');
         if (instructorId) {
@@ -126,6 +126,19 @@ serve(async (req) => {
       const charge = event.data.object;
       const paymentIntentId = charge.payment_intent;
       if (paymentIntentId) {
+        // Idempotency check: verify this refund hasn't been processed
+        const refundTxId = `${paymentIntentId}_refund`;
+        const { data: existingRefund } = await supabase
+          .from('instructor_transactions')
+          .select('id')
+          .eq('stripe_payment_intent_id', refundTxId)
+          .single();
+
+        if (existingRefund) {
+          logWebhook('INFO', 'Refund already processed', { paymentIntentId });
+          return new Response(JSON.stringify({ success: true, idempotent: true }), { status: 200 });
+        }
+
         const { data: booking } = await supabase.from('bookings').select('id, instructor_id').eq('stripe_payment_intent_id', paymentIntentId).single();
         if (booking && charge.amount_refunded === charge.amount) {
           await supabase.from('bookings').update({
@@ -136,7 +149,7 @@ serve(async (req) => {
             await supabase.from('instructor_transactions').insert({
               instructor_id: booking.instructor_id, booking_id: booking.id,
               amount: -(charge.amount_refunded / 100), type: 'refund', status: 'completed',
-              description: 'Reembolso de aula', stripe_payment_intent_id: `${paymentIntentId}_refund`
+              description: 'Reembolso de aula', stripe_payment_intent_id: refundTxId
             });
           }
           logWebhook('INFO', 'Full refund processed', { bookingId: booking.id });
