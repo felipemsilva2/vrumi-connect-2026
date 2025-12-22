@@ -297,8 +297,8 @@ export default function InstructorDashboardScreen() {
                     </View>
                 </View>
 
-                {/* Stripe Activation Banner - ALWAYS SHOWING FOR DEBUG */}
-                {true && (
+                {/* Stripe Activation Banner - Show if not onboarded */}
+                {!stripeOnboarded && (
                     <TouchableOpacity
                         style={[styles.stripeBanner, { backgroundColor: stripeAccountId ? '#fef3c7' : '#fee2e2' }]}
                         onPress={handleActivateStripe}

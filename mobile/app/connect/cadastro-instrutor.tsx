@@ -107,6 +107,7 @@ export default function InstructorRegistrationScreen() {
             const { error } = await supabase.from('instructors').insert({
                 user_id: user.id,
                 full_name: formData.full_name,
+                email: user.email, // Get email from authenticated user
                 phone: formData.phone,
                 cpf: formData.cpf,
                 city: formData.city,
