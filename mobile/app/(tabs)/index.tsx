@@ -165,6 +165,7 @@ export default function HomeScreen() {
                 .from('instructors')
                 .select('id, full_name, photo_url, city, state, price_per_lesson, average_rating, is_verified')
                 .eq('status', 'approved')
+                .eq('stripe_onboarding_complete', true) // Only show instructors who can receive payments
                 .order('average_rating', { ascending: false })
                 .limit(4);
 

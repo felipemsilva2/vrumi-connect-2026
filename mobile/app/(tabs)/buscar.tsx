@@ -62,6 +62,7 @@ export default function BuscarScreen() {
                 .from('instructors')
                 .select('id, full_name, photo_url, city, state, categories, price_per_lesson, average_rating, total_reviews, is_verified, vehicle_model, vehicle_transmission')
                 .eq('status', 'approved')
+                .eq('stripe_onboarding_complete', true) // Only show instructors who can receive payments
                 .order(sortBy === 'price' ? 'price_per_lesson' : 'average_rating', { ascending: sortBy === 'price' });
 
             if (searchCity) {

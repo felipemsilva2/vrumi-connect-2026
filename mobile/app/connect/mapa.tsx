@@ -46,6 +46,7 @@ export default function InstructorMapScreen() {
                 .from('instructors')
                 .select('id, full_name, photo_url, latitude, longitude, price_per_lesson, average_rating')
                 .eq('status', 'approved')
+                .eq('stripe_onboarding_complete', true) // Only show instructors who can receive payments
                 .not('latitude', 'is', null)
                 .not('longitude', 'is', null);
 
