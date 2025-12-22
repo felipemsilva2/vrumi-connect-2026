@@ -933,10 +933,31 @@ export function Instructors() {
                             )}
                             {selectedInstructor.status === 'pending' && (
                                 <>
+                                    {!selectedInstructor.stripe_onboarding_complete && (
+                                        <div style={{
+                                            background: '#fef3c7',
+                                            color: '#92400e',
+                                            padding: '8px 12px',
+                                            borderRadius: '6px',
+                                            fontSize: '13px',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '8px'
+                                        }}>
+                                            <AlertTriangle size={16} />
+                                            Aguardando configuração do Stripe
+                                        </div>
+                                    )}
                                     <button className="btn btn-danger" onClick={() => handleReject(selectedInstructor.id)}>
                                         <XCircle size={16} /> Rejeitar
                                     </button>
-                                    <button className="btn btn-primary" onClick={() => handleApprove(selectedInstructor.id)}>
+                                    <button
+                                        className="btn btn-primary"
+                                        onClick={() => handleApprove(selectedInstructor.id)}
+                                        disabled={!selectedInstructor.stripe_onboarding_complete}
+                                        title={!selectedInstructor.stripe_onboarding_complete ? 'Instrutor precisa configurar o Stripe primeiro' : ''}
+                                        style={!selectedInstructor.stripe_onboarding_complete ? { opacity: 0.5, cursor: 'not-allowed' } : {}}
+                                    >
                                         <CheckCircle size={16} /> Aprovar
                                     </button>
                                 </>
