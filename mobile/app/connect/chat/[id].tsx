@@ -139,31 +139,169 @@ export default function ChatScreen() {
             .subscribe();
     };
 
-    const validateMessage = (text: string) => {
-        // Regex to detect:
-        // 1. Phone numbers (e.g., (11) 99999-9999, 11999999999, etc.)
+    // Violation types and detection patterns
+    type ViolationType = 'contact_attempt' | 'harassment' | 'threat' | 'offensive' | null;
+    type ViolationSeverity = 'low' | 'medium' | 'high';
+
+    interface ViolationResult {
+        isViolation: boolean;
+        type: ViolationType;
+        severity: ViolationSeverity;
+        matchedKeywords: string[];
+    }
+
+    const validateMessage = (text: string): ViolationResult => {
+        const lowerText = text.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+        const matchedKeywords: string[] = [];
+
+        // 1. Phone number detection
         const phoneRegex = /(\(?\d{2}\)?\s?\d{4,5}-?\d{4})/g;
-        // 2. Keywords related to external contact
-        const keywords = ['whatsapp', 'insta', 'instagram', 'zap', 'contato', 'fone', 'celular', 'me passa seu'];
-
-        if (phoneRegex.test(text)) return false;
-
-        const lowerText = text.toLowerCase();
-        for (const word of keywords) {
-            if (lowerText.includes(word)) return false;
+        if (phoneRegex.test(text)) {
+            return { isViolation: true, type: 'contact_attempt', severity: 'medium', matchedKeywords: ['telefone'] };
         }
 
-        return true;
+        // 2. Contact attempt keywords
+        const contactKeywords = [
+            'whatsapp', 'insta', 'instagram', 'zap', 'contato', 'fone', 'celular',
+            'me passa seu', 'meu numero', 'meu telefone', 'liga pra mim', 'me liga',
+            'telegram', 'facebook', 'meu face', '@gmail', '@hotmail', 'meu email'
+        ];
+        for (const word of contactKeywords) {
+            if (lowerText.includes(word)) {
+                matchedKeywords.push(word);
+            }
+        }
+        if (matchedKeywords.length > 0) {
+            return { isViolation: true, type: 'contact_attempt', severity: 'medium', matchedKeywords };
+        }
+
+        // 3. Harassment detection
+        const harassmentKeywords = [
+            'gostosa', 'gostoso', 'delicia', 'gatinha', 'gatinho', 'gracinha',
+            'vem ca', 'vamos sair', 'me manda foto', 'manda nudes', 'so nos dois',
+            'te pegar', 'te quero', 'fica comigo', 'gata demais', 'tesao',
+            'sua linda', 'seu lindo', 'que corpo', 'corpao', 'bundao', 'bundinha',
+            'peitao', 'gostosao', 'gostosona', 'sarada', 'sarado', 'bonitao',
+            'ta solteira', 'ta solteiro', 'tem namorado', 'tem namorada',
+            'namora comigo', 'quer sair', 'sair comigo', 'encontro', 'a sos',
+            'em particular', 'no sigilo', 'sem ninguem saber', 'entre nos'
+        ];
+        for (const word of harassmentKeywords) {
+            if (lowerText.includes(word)) {
+                matchedKeywords.push(word);
+            }
+        }
+        if (matchedKeywords.length > 0) {
+            const severity: ViolationSeverity = matchedKeywords.some(k =>
+                ['manda nudes', 'te pegar', 'tesao', 'bundao', 'peitao'].includes(k)
+            ) ? 'high' : 'medium';
+            return { isViolation: true, type: 'harassment', severity, matchedKeywords };
+        }
+
+        // 4. Threat detection
+        const threatKeywords = [
+            'vou te encontrar', 'sei onde voce mora', 'vou te pegar', 'cuidado',
+            'voce vai ver', 'vai se arrepender', 'te mato', 'vou acabar com voce',
+            'minha vinganca', 'uma hora te pego', 'nao vai escapar', 'vou denunciar'
+        ];
+        for (const word of threatKeywords) {
+            if (lowerText.includes(word)) {
+                matchedKeywords.push(word);
+            }
+        }
+        if (matchedKeywords.length > 0) {
+            return { isViolation: true, type: 'threat', severity: 'high', matchedKeywords };
+        }
+
+        // 5. Offensive language detection
+        const offensiveKeywords = [
+            'idiota', 'imbecil', 'estupido', 'burro', 'otario', 'babaca', 'fdp',
+            'puta', 'vagabunda', 'vagabundo', 'merda', 'bosta', 'cuzao', 'arrombado',
+            'desgraca', 'maldito', 'inferno', 'vtnc', 'vsf', 'pqp', 'caralho',
+            'filho da puta', 'va se foder', 'vai tomar', 'lixo', 'nojento', 'nojenta'
+        ];
+        for (const word of offensiveKeywords) {
+            if (lowerText.includes(word)) {
+                matchedKeywords.push(word);
+            }
+        }
+        if (matchedKeywords.length > 0) {
+            const severity: ViolationSeverity = matchedKeywords.length > 2 ? 'high' : 'medium';
+            return { isViolation: true, type: 'offensive', severity, matchedKeywords };
+        }
+
+        return { isViolation: false, type: null, severity: 'low', matchedKeywords: [] };
+    };
+
+    const logViolation = async (
+        content: string,
+        violationType: ViolationType,
+        severity: ViolationSeverity,
+        keywords: string[]
+    ) => {
+        if (!user || !roomId || !violationType) return;
+
+        try {
+            await supabase.from('connect_chat_violations').insert({
+                room_id: roomId,
+                sender_id: user.id,
+                message_content: content,
+                violation_type: violationType,
+                severity: severity,
+                keywords_matched: keywords
+            });
+        } catch (error) {
+            console.error('Error logging violation:', error);
+        }
+    };
+
+    const getViolationAlert = (type: ViolationType): { title: string; message: string } => {
+        switch (type) {
+            case 'contact_attempt':
+                return {
+                    title: 'Aviso de Segurança 🛡️',
+                    message: 'Para sua segurança e conformidade com os termos de uso, não é permitido compartilhar dados de contato direto (WhatsApp, telefone, etc). Todas as comunicações devem ser feitas pelo nosso chat oficial.'
+                };
+            case 'harassment':
+                return {
+                    title: 'Comportamento Inadequado ⚠️',
+                    message: 'Esta mensagem foi bloqueada pois viola nossos termos de uso. Mantenha uma comunicação respeitosa e profissional. Reincidências podem resultar em suspensão da conta.'
+                };
+            case 'threat':
+                return {
+                    title: 'Mensagem Bloqueada 🚫',
+                    message: 'Ameaças ou intimidações não são toleradas em nossa plataforma. Esta ocorrência foi registrada e pode resultar em banimento permanente.'
+                };
+            case 'offensive':
+                return {
+                    title: 'Linguagem Inapropriada ⚠️',
+                    message: 'Linguagem ofensiva não é permitida. Por favor, mantenha o respeito na comunicação. Violações repetidas resultarão em suspensão.'
+                };
+            default:
+                return {
+                    title: 'Mensagem Bloqueada',
+                    message: 'Esta mensagem viola nossos termos de uso.'
+                };
+        }
     };
 
     const handleSendMessage = async () => {
         if (!newMessage.trim() || !user || !roomId || sending) return;
 
-        if (!validateMessage(newMessage)) {
-            Alert.alert(
-                'Aviso de Segurança 🛡️',
-                'Para sua segurança e conformidade com os termos de uso, não é permitido compartilhar dados de contato direto (WhatsApp, telefone, etc). Todas as comunicações devem ser feitas pelo nosso chat oficial.'
+        const validation = validateMessage(newMessage);
+
+        if (validation.isViolation) {
+            const alert = getViolationAlert(validation.type);
+            Alert.alert(alert.title, alert.message);
+
+            // Log the violation to database
+            await logViolation(
+                newMessage.trim(),
+                validation.type,
+                validation.severity,
+                validation.matchedKeywords
             );
+
             return;
         }
 

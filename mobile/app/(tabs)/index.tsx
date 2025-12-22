@@ -418,7 +418,7 @@ export default function HomeScreen() {
                 {!instructorInfo && (
                     <TouchableOpacity
                         style={styles.ctaCard}
-                        onPress={() => router.push('/connect/cadastro-instrutor')}
+                        onPress={() => router.push('/connect/intro-instrutor')}
                         activeOpacity={0.95}
                     >
                         <LinearGradient
