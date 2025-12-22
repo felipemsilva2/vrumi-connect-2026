@@ -51,7 +51,7 @@ export default function StudyRoomScreen() {
     const scrollViewRef = useRef<ScrollView>(null);
 
     // PDF URL
-    const pdfUrl = 'https://owtylihsslimxdiovxia.supabase.co/storage/v1/object/public/materiais/MANUAL-OBTENCAO_2025.pdf';
+    const pdfUrl = 'https://kyuaxjkokntdmcxjurhm.supabase.co/storage/v1/object/public/materiais/MANUAL-OBTENCAO_2025.pdf';
 
     const handleGoBack = () => {
         // Navigate to dashboard tab instead of router.back()

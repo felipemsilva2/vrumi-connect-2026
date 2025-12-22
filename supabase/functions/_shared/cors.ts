@@ -8,7 +8,7 @@ const DEFAULT_PRODUCTION_ORIGINS = [
     'https://www.vrumi.com.br',
     'https://app.vrumi.com.br',
     // Supabase project URL
-    'https://owtylihsslimxdiovxia.supabase.co',
+    'https://kyuaxjkokntdmcxjurhm.supabase.co',
 ];
 
 // Development origins - only used when ENVIRONMENT !== 'production'

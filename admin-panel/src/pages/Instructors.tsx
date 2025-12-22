@@ -286,6 +286,24 @@ export function Instructors() {
         setIsSavingNotes(false);
     };
 
+    const handleDeleteDocument = async (field: string, label: string) => {
+        if (!selectedInstructor) return;
+        if (!confirm(`Excluir documento "${label}"? O instrutor precisará enviar novamente.`)) return;
+
+        const { error } = await supabase
+            .from('instructors')
+            .update({
+                [field]: null,
+                documents_status: 'pending' // Reset status so instructor can resubmit
+            })
+            .eq('id', selectedInstructor.id);
+
+        if (!error) {
+            setSelectedInstructor({ ...selectedInstructor, [field]: null, documents_status: 'pending' as const });
+            fetchInstructors();
+        }
+    };
+
     const handleViewDetails = async (instructor: Instructor) => {
         setSelectedInstructor(instructor);
         setAdminNotes(instructor.admin_notes || '');
@@ -820,10 +838,10 @@ export function Instructors() {
                             {activeTab === 'documents' && (
                                 <div className="documents-grid">
                                     {[
-                                        { label: 'CNH (Habilitação)', url: selectedInstructor.cnh_document_url, icon: FileText },
-                                        { label: 'CRLV (Veículo)', url: selectedInstructor.vehicle_document_url, icon: Car },
-                                        { label: 'Credencial DETRAN', url: selectedInstructor.credential_document_url, icon: Shield },
-                                        { label: 'Antecedentes Criminais', url: selectedInstructor.background_check_url, icon: FileText },
+                                        { label: 'CNH (Habilitação)', field: 'cnh_document_url', url: selectedInstructor.cnh_document_url, icon: FileText },
+                                        { label: 'CRLV (Veículo)', field: 'vehicle_document_url', url: selectedInstructor.vehicle_document_url, icon: Car },
+                                        { label: 'Credencial DETRAN', field: 'credential_document_url', url: selectedInstructor.credential_document_url, icon: Shield },
+                                        { label: 'Antecedentes Criminais', field: 'background_check_url', url: selectedInstructor.background_check_url, icon: FileText },
                                     ].map((doc, idx) => (
                                         <div key={idx} className="document-card">
                                             <div className="document-header">
@@ -844,16 +862,27 @@ export function Instructors() {
                                                     <span>Não enviado</span>
                                                 </div>
                                             )}
-                                            <a
-                                                href={doc.url}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className={`btn btn-secondary btn-sm ${!doc.url ? 'disabled' : ''}`}
-                                                style={{ marginTop: '8px', width: '100%' }}
-                                            >
-                                                <ExternalLink size={14} />
-                                                Abrir em nova aba
-                                            </a>
+                                            <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
+                                                <a
+                                                    href={doc.url || '#'}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className={`btn btn-secondary btn-sm ${!doc.url ? 'disabled' : ''}`}
+                                                    style={{ flex: 1 }}
+                                                >
+                                                    <ExternalLink size={14} />
+                                                    Abrir
+                                                </a>
+                                                {doc.url && (
+                                                    <button
+                                                        className="btn btn-danger btn-sm"
+                                                        onClick={() => handleDeleteDocument(doc.field, doc.label)}
+                                                        title="Excluir documento"
+                                                    >
+                                                        <XCircle size={14} />
+                                                    </button>
+                                                )}
+                                            </div>
                                         </div>
                                     ))}
                                 </div>

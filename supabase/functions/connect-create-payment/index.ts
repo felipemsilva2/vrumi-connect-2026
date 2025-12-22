@@ -14,7 +14,7 @@ const getCors = (req: Request) => {
         'https://vrumi.com.br',
         'https://www.vrumi.com.br',
         'https://app.vrumi.com.br',
-        'https://owtylihsslimxdiovxia.supabase.co',
+        'https://kyuaxjkokntdmcxjurhm.supabase.co',
     ];
 
     const configuredOrigins = (Deno.env.get('ALLOWED_ORIGINS') || '')

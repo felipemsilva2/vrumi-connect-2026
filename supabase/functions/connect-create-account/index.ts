@@ -3,41 +3,15 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 
-// Secure CORS with environment-aware defaults
+// Simplified CORS - allow all origins for now
 const getCors = (req: Request) => {
-    const origin = req.headers.get('origin') || '';
-    const environment = Deno.env.get('ENVIRONMENT') || 'development';
-    const isProduction = environment === 'production';
-
-    const defaultProdOrigins = [
-        'https://vrumi.com.br',
-        'https://www.vrumi.com.br',
-        'https://app.vrumi.com.br',
-        'https://owtylihsslimxdiovxia.supabase.co',
-    ];
-
-    const configuredOrigins = (Deno.env.get('ALLOWED_ORIGINS') || '')
-        .split(',').map(s => s.trim()).filter(Boolean);
-
-    let allowed = false;
-
-    if (isProduction) {
-        const allowedList = configuredOrigins.length > 0 ? configuredOrigins : defaultProdOrigins;
-        allowed = allowedList.includes(origin);
-    } else {
-        allowed = configuredOrigins.length === 0
-            || configuredOrigins.includes(origin)
-            || origin.includes('localhost')
-            || origin.includes('127.0.0.1')
-            || origin.includes('192.168.')
-            || origin === '';
-    }
-
+    const origin = req.headers.get('origin') || '*';
     const headers = {
-        'Access-Control-Allow-Origin': allowed ? origin : '',
+        'Access-Control-Allow-Origin': origin,
         'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+        'Access-Control-Allow-Methods': 'POST, OPTIONS',
     };
-    return { headers, allowed };
+    return { headers, allowed: true };
 };
 
 const logStep = (step: string, details?: any) => {

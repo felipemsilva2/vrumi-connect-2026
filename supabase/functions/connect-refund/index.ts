@@ -7,7 +7,7 @@ const getCors = (req) => {
     const origin = req.headers.get('origin') || '';
     const environment = Deno.env.get('ENVIRONMENT') || 'development';
     const isProduction = environment === 'production';
-    const defaultProdOrigins = ['https://vrumi.com.br', 'https://www.vrumi.com.br', 'https://app.vrumi.com.br', 'https://owtylihsslimxdiovxia.supabase.co'];
+    const defaultProdOrigins = ['https://vrumi.com.br', 'https://www.vrumi.com.br', 'https://app.vrumi.com.br', 'https://kyuaxjkokntdmcxjurhm.supabase.co'];
     const configuredOrigins = (Deno.env.get('ALLOWED_ORIGINS') || '').split(',').map(s => s.trim()).filter(Boolean);
     let allowed = isProduction ? (configuredOrigins.length > 0 ? configuredOrigins : defaultProdOrigins).includes(origin) : true;
     return { headers: { 'Access-Control-Allow-Origin': allowed ? origin : '', 'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type' }, allowed };

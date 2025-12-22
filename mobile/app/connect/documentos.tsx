@@ -89,15 +89,15 @@ export default function DocumentUploadScreen() {
             const fileExt = uri.split('.').pop()?.toLowerCase() || 'jpg';
             const fileName = `${user.id}/${type}_${Date.now()}.${fileExt}`;
 
-            // Convert to blob
+            // Read file as base64 and convert to ArrayBuffer for React Native
             const response = await fetch(uri);
-            const blob = await response.blob();
+            const arrayBuffer = await response.arrayBuffer();
 
             // Upload to Supabase Storage
             const { error: uploadError } = await supabase.storage
                 .from('instructor-documents')
-                .upload(fileName, blob, {
-                    contentType: `image/${fileExt}`,
+                .upload(fileName, arrayBuffer, {
+                    contentType: `image/${fileExt === 'jpg' ? 'jpeg' : fileExt}`,
                     upsert: true,
                 });
 
