@@ -931,37 +931,46 @@ export function Instructors() {
                                     <CheckCircle size={16} /> Reativar
                                 </button>
                             )}
-                            {selectedInstructor.status === 'pending' && (
-                                <>
-                                    {!selectedInstructor.stripe_onboarding_complete && (
-                                        <div style={{
-                                            background: '#fef3c7',
-                                            color: '#92400e',
-                                            padding: '8px 12px',
-                                            borderRadius: '6px',
-                                            fontSize: '13px',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            gap: '8px'
-                                        }}>
-                                            <AlertTriangle size={16} />
-                                            Aguardando configuração do Stripe
-                                        </div>
-                                    )}
-                                    <button className="btn btn-danger" onClick={() => handleReject(selectedInstructor.id)}>
-                                        <XCircle size={16} /> Rejeitar
-                                    </button>
-                                    <button
-                                        className="btn btn-primary"
-                                        onClick={() => handleApprove(selectedInstructor.id)}
-                                        disabled={!selectedInstructor.stripe_onboarding_complete}
-                                        title={!selectedInstructor.stripe_onboarding_complete ? 'Instrutor precisa configurar o Stripe primeiro' : ''}
-                                        style={!selectedInstructor.stripe_onboarding_complete ? { opacity: 0.5, cursor: 'not-allowed' } : {}}
-                                    >
-                                        <CheckCircle size={16} /> Aprovar
-                                    </button>
-                                </>
-                            )}
+                            {selectedInstructor.status === 'pending' && (() => {
+                                const hasStripe = selectedInstructor.stripe_onboarding_complete;
+                                const hasDocuments = selectedInstructor.documents_status === 'submitted' || selectedInstructor.documents_status === 'verified';
+                                const canApprove = hasStripe && hasDocuments;
+                                const missingItems = [];
+                                if (!hasStripe) missingItems.push('Stripe');
+                                if (!hasDocuments) missingItems.push('Documentos');
+
+                                return (
+                                    <>
+                                        {!canApprove && (
+                                            <div style={{
+                                                background: '#fef3c7',
+                                                color: '#92400e',
+                                                padding: '8px 12px',
+                                                borderRadius: '6px',
+                                                fontSize: '13px',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '8px'
+                                            }}>
+                                                <AlertTriangle size={16} />
+                                                Aguardando: {missingItems.join(' e ')}
+                                            </div>
+                                        )}
+                                        <button className="btn btn-danger" onClick={() => handleReject(selectedInstructor.id)}>
+                                            <XCircle size={16} /> Rejeitar
+                                        </button>
+                                        <button
+                                            className="btn btn-primary"
+                                            onClick={() => handleApprove(selectedInstructor.id)}
+                                            disabled={!canApprove}
+                                            title={!canApprove ? `Instrutor precisa: ${missingItems.join(', ')}` : ''}
+                                            style={!canApprove ? { opacity: 0.5, cursor: 'not-allowed' } : {}}
+                                        >
+                                            <CheckCircle size={16} /> Aprovar
+                                        </button>
+                                    </>
+                                );
+                            })()}
                         </div>
                     </div>
                 </div>
