@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../src/lib/supabase';
@@ -172,6 +172,74 @@ export default function InstructorDashboardScreen() {
     useEffect(() => {
         fetchDashboardData();
     }, [fetchDashboardData]);
+
+    // Verify Stripe status directly from Stripe API and sync with database
+    const verifyStripeStatus = useCallback(async () => {
+        if (!session?.access_token) return;
+
+        try {
+            console.log('🔄 Verifying Stripe status...');
+            const response = await fetch(`${SUPABASE_URL}/functions/v1/connect-verify-status`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${session.access_token}`,
+                },
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                console.error('Error verifying Stripe status:', errorData);
+                return;
+            }
+
+            const data = await response.json();
+            console.log('✅ Stripe status verified:', data);
+
+            // Update local state with the verified status
+            if (data.onboarding_complete !== undefined) {
+                setStripeOnboarded(data.onboarding_complete);
+            }
+            if (data.stripe_account_id) {
+                setStripeAccountId(data.stripe_account_id);
+            }
+        } catch (error) {
+            console.error('Error calling verify-status:', error);
+        }
+    }, [session?.access_token]);
+
+    // Handle deep link return from Stripe onboarding
+    const searchParams = useLocalSearchParams<{ stripe_onboarded?: string; stripe_refresh?: string }>();
+
+    useEffect(() => {
+        if (searchParams.stripe_onboarded === 'true') {
+            // User returned from Stripe onboarding - verify and sync the status
+            verifyStripeStatus().then(() => {
+                Alert.alert(
+                    '🎉 Verificando Status',
+                    'Verificando sua conta Stripe. Por favor, aguarde...',
+                    [{ text: 'OK', onPress: () => fetchDashboardData() }]
+                );
+            });
+            // Clear the param to avoid showing again on refresh
+            router.setParams({ stripe_onboarded: undefined });
+        } else if (searchParams.stripe_refresh === 'true') {
+            // User needs to refresh/retry onboarding
+            Alert.alert(
+                'Atenção',
+                'O processo de onboarding expirou ou foi cancelado. Por favor, tente novamente.',
+                [{ text: 'OK' }]
+            );
+            router.setParams({ stripe_refresh: undefined });
+        }
+    }, [searchParams.stripe_onboarded, searchParams.stripe_refresh, verifyStripeStatus]);
+
+    // Verify Stripe status on initial load if not already verified
+    useEffect(() => {
+        if (stripeAccountId && !stripeOnboarded) {
+            // Has Stripe account but not marked as onboarded - verify status
+            verifyStripeStatus();
+        }
+    }, [stripeAccountId, stripeOnboarded, verifyStripeStatus]);
 
     const onRefresh = () => {
         setRefreshing(true);
