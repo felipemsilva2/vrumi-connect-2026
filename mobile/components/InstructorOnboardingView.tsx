@@ -74,15 +74,60 @@ export default function InstructorOnboardingView() {
         }
     }, [user?.id]);
 
+    // Verify Stripe status directly from Stripe API and sync with database
+    const verifyStripeStatus = useCallback(async () => {
+        if (!session?.access_token) return;
+
+        try {
+            console.log('🔄 [OnboardingView] Verifying Stripe status...');
+            const response = await fetch(`${SUPABASE_URL}/functions/v1/connect-verify-status`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${session.access_token}`,
+                },
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                console.error('Error verifying Stripe status:', errorData);
+                return;
+            }
+
+            const data = await response.json();
+            console.log('✅ [OnboardingView] Stripe status verified:', data);
+
+            // Update local state with verified status
+            if (data.onboarding_complete !== undefined) {
+                setStatus(prev => ({
+                    ...prev,
+                    stripe_complete: data.onboarding_complete,
+                    stripe_account_id: data.stripe_account_id || prev.stripe_account_id
+                }));
+            }
+        } catch (error) {
+            console.error('Error calling verify-status:', error);
+        }
+    }, [session?.access_token]);
+
     useFocusEffect(
         useCallback(() => {
-            fetchStatus();
-        }, [fetchStatus])
+            fetchStatus().then(() => {
+                // After fetching status, verify Stripe status if has account but not complete
+                if (status.stripe_account_id && !status.stripe_complete) {
+                    verifyStripeStatus();
+                }
+            });
+        }, [fetchStatus, status.stripe_account_id, status.stripe_complete, verifyStripeStatus])
     );
 
     const onRefresh = () => {
         setRefreshing(true);
-        fetchStatus();
+        fetchStatus().then(() => {
+            // Also verify Stripe on manual refresh
+            if (status.stripe_account_id) {
+                verifyStripeStatus();
+            }
+        });
     };
 
     const handleActivateStripe = async () => {

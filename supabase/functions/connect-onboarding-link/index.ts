@@ -90,22 +90,23 @@ serve(async (req) => {
             throw new Error("Stripe account not created. Call connect-create-account first.");
         }
 
-        // Create onboarding link
         const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
             apiVersion: "2025-08-27.basil",
         });
 
-        const origin = req.headers.get("origin") || "https://vrumi.com.br";
+        // Stripe requires valid HTTPS URLs, cannot use custom URL schemes like vrumi://
+        // Always use the production web app URL - it will handle the redirect appropriately
+        const baseReturnUrl = 'https://vrumi.com.br/connect/painel-instrutor';
 
         const accountLink = await stripe.accountLinks.create({
             account: instructor.stripe_account_id,
-            refresh_url: `${origin}/connect/painel-instrutor?stripe_refresh=true`,
-            return_url: `${origin}/connect/painel-instrutor?stripe_onboarded=true`,
+            refresh_url: `${baseReturnUrl}?stripe_refresh=true`,
+            return_url: `${baseReturnUrl}?stripe_onboarded=true`,
             type: "account_onboarding",
             collect: "eventually_due",
         });
 
-        logStep("Onboarding link created", { url: accountLink.url });
+        logStep("Onboarding link created", { url: accountLink.url, returnUrl: baseReturnUrl });
 
         return new Response(JSON.stringify({
             url: accountLink.url,

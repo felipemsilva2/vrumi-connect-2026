@@ -161,13 +161,19 @@ export default function SearchModal({ visible, onClose }: SearchModalProps) {
             animationType="slide"
             transparent={true}
             onRequestClose={onClose}
+            accessibilityViewIsModal={true}
         >
             <View style={[styles.overlay, { backgroundColor: 'rgba(0,0,0,0.5)' }]}>
                 <View style={[styles.container, { backgroundColor: theme.background }]}>
                     {/* Header */}
                     <View style={styles.header}>
                         <Text style={[styles.title, { color: theme.text }]}>Buscar</Text>
-                        <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+                        <TouchableOpacity
+                            onPress={onClose}
+                            style={styles.closeButton}
+                            accessibilityLabel="Fechar busca"
+                            accessibilityRole="button"
+                        >
                             <Ionicons name="close" size={24} color={theme.text} />
                         </TouchableOpacity>
                     </View>
@@ -229,6 +235,9 @@ export default function SearchModal({ visible, onClose }: SearchModalProps) {
                                     key={`${result.type}-${result.id}`}
                                     style={[styles.resultItem, { backgroundColor: theme.card }]}
                                     onPress={() => handleResultPress(result)}
+                                    accessibilityLabel={`${getTypeLabel(result.type)}: ${result.title}`}
+                                    accessibilityRole="button"
+                                    accessibilityHint="Toque para ver detalhes"
                                 >
                                     <View style={[styles.resultIcon, { backgroundColor: theme.primaryLight }]}>
                                         <Ionicons name={getIcon(result.type) as any} size={20} color={theme.primary} />

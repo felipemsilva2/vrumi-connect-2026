@@ -78,7 +78,11 @@ serve(async (req) => {
             detailsSubmitted: account.details_submitted,
         });
 
-        const isComplete = account.charges_enabled && account.payouts_enabled;
+        // Use details_submitted as primary indicator for onboarding completion
+        // charges_enabled and payouts_enabled only become true after Stripe's verification
+        // which can take days. details_submitted becomes true when user finishes the form.
+        const isComplete = account.details_submitted === true;
+        const canReceivePayments = account.charges_enabled && account.payouts_enabled;
 
         // Update database if status changed
         if (isComplete !== instructor.stripe_onboarding_complete) {
@@ -95,14 +99,18 @@ serve(async (req) => {
 
         return new Response(JSON.stringify({
             onboarding_complete: isComplete,
+            can_receive_payments: canReceivePayments,
             has_account: true,
             charges_enabled: account.charges_enabled,
             payouts_enabled: account.payouts_enabled,
             details_submitted: account.details_submitted,
+            stripe_account_id: instructor.stripe_account_id,
             requirements: account.requirements?.currently_due || [],
-            message: isComplete
+            message: canReceivePayments
                 ? "Account is fully verified and can receive payments"
-                : "Account requires additional verification"
+                : isComplete
+                    ? "Onboarding complete. Stripe is verifying your account."
+                    : "Account requires additional information"
         }), {
             headers: { ...corsHeaders, "Content-Type": "application/json" },
             status: 200,

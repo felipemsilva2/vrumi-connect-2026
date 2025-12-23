@@ -145,6 +145,9 @@ function SwipeableNotificationItem({
                     style={styles.notificationTouchable}
                     onPress={() => onPress(notification.id)}
                     activeOpacity={0.7}
+                    accessibilityLabel={`${notification.title}. ${notification.message}. ${formatTimeAgo(notification.created_at)}${!notification.read ? ', não lida' : ''}`}
+                    accessibilityRole="button"
+                    accessibilityHint={notification.read ? 'Notificação já lida' : 'Toque para marcar como lida'}
                 >
                     <View style={[
                         styles.notificationIcon,
@@ -297,6 +300,7 @@ export default function NotificationModal({ visible, onClose, userId }: Notifica
             transparent={true}
             onRequestClose={onClose}
             statusBarTranslucent={true}
+            accessibilityViewIsModal={true}
         >
             <TouchableOpacity
                 style={styles.overlay}
@@ -313,11 +317,21 @@ export default function NotificationModal({ visible, onClose, userId }: Notifica
                         <Text style={[styles.headerTitle, { color: theme.text }]}>Notificações</Text>
                         <View style={styles.headerActions}>
                             {unreadCount > 0 && (
-                                <TouchableOpacity onPress={markAllAsRead} style={styles.markAllButton}>
+                                <TouchableOpacity
+                                    onPress={markAllAsRead}
+                                    style={styles.markAllButton}
+                                    accessibilityLabel="Marcar todas como lidas"
+                                    accessibilityRole="button"
+                                >
                                     <Text style={[styles.markAllText, { color: theme.primary }]}>Marcar todas</Text>
                                 </TouchableOpacity>
                             )}
-                            <TouchableOpacity onPress={onClose} style={[styles.closeButton, { backgroundColor: theme.card }]}>
+                            <TouchableOpacity
+                                onPress={onClose}
+                                style={[styles.closeButton, { backgroundColor: theme.card }]}
+                                accessibilityLabel="Fechar notificações"
+                                accessibilityRole="button"
+                            >
                                 <Ionicons name="close" size={22} color={theme.text} />
                             </TouchableOpacity>
                         </View>
@@ -408,9 +422,9 @@ const styles = StyleSheet.create({
         fontWeight: '600',
     },
     closeButton: {
-        width: 36,
-        height: 36,
-        borderRadius: 18,
+        width: 44,
+        height: 44,
+        borderRadius: 22,
         justifyContent: 'center',
         alignItems: 'center',
     },

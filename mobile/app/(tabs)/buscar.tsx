@@ -160,6 +160,8 @@ export default function BuscarScreen() {
                                 placeholderTextColor={theme.textMuted}
                                 value={searchCity}
                                 onChangeText={setSearchCity}
+                                accessibilityLabel="Buscar por cidade"
+                                accessibilityHint="Digite o nome da cidade para filtrar instrutores"
                             />
                         </View>
                         <View style={[styles.searchDivider, { backgroundColor: theme.cardBorder }]} />
@@ -172,6 +174,9 @@ export default function BuscarScreen() {
                         <TouchableOpacity
                             style={styles.findButton}
                             onPress={fetchInstructors}
+                            accessibilityLabel="Buscar instrutores"
+                            accessibilityRole="button"
+                            accessibilityHint="Buscar instrutores com os filtros selecionados"
                         >
                             <Ionicons name="search" size={18} color="#fff" />
                             <Text style={styles.findButtonText}>Buscar</Text>
@@ -182,7 +187,11 @@ export default function BuscarScreen() {
                 {/* Content Card */}
                 <View style={[styles.contentCard, { backgroundColor: theme.background }]}>
                     {/* Promo Banner */}
-                    <TouchableOpacity style={[styles.promoBanner, { backgroundColor: isDark ? theme.primaryLight : '#ecfdf5' }]}>
+                    <TouchableOpacity
+                        style={[styles.promoBanner, { backgroundColor: isDark ? theme.primaryLight : '#ecfdf5' }]}
+                        accessibilityLabel="Promoção: Primeira aula com 10% de desconto"
+                        accessibilityRole="button"
+                    >
                         <View style={styles.promoIcon}>
                             <Ionicons name="gift" size={18} color="#10b981" />
                         </View>
@@ -211,6 +220,10 @@ export default function BuscarScreen() {
                                 onPress={() => setSelectedCategory(
                                     selectedCategory === cat.id ? '' : cat.id
                                 )}
+                                accessibilityLabel={`Categoria ${cat.id}: ${cat.label}`}
+                                accessibilityRole="button"
+                                accessibilityState={{ selected: selectedCategory === cat.id }}
+                                accessibilityHint={selectedCategory === cat.id ? 'Desmarcar categoria' : 'Filtrar por esta categoria'}
                             >
                                 <View style={[
                                     styles.categoryIcon,
@@ -252,6 +265,9 @@ export default function BuscarScreen() {
                             <TouchableOpacity
                                 style={[styles.filterChip, sortBy === 'rating' && styles.filterChipActive]}
                                 onPress={() => setSortBy('rating')}
+                                accessibilityLabel="Ordenar por melhor avaliação"
+                                accessibilityRole="button"
+                                accessibilityState={{ selected: sortBy === 'rating' }}
                             >
                                 <Ionicons name="star" size={12} color={sortBy === 'rating' ? '#fff' : theme.textSecondary} />
                                 <Text style={[styles.filterChipText, sortBy === 'rating' && styles.filterChipTextActive]}>Melhor avaliação</Text>
@@ -259,6 +275,9 @@ export default function BuscarScreen() {
                             <TouchableOpacity
                                 style={[styles.filterChip, sortBy === 'price' ? styles.filterChipActive : { backgroundColor: theme.card, borderColor: theme.cardBorder }]}
                                 onPress={() => setSortBy('price')}
+                                accessibilityLabel="Ordenar por menor preço"
+                                accessibilityRole="button"
+                                accessibilityState={{ selected: sortBy === 'price' }}
                             >
                                 <Ionicons name="cash-outline" size={12} color={sortBy === 'price' ? '#fff' : theme.textSecondary} />
                                 <Text style={[styles.filterChipText, sortBy === 'price' ? styles.filterChipTextActive : { color: theme.textSecondary }]}>Menor preço</Text>
@@ -266,6 +285,9 @@ export default function BuscarScreen() {
                             <TouchableOpacity
                                 style={[styles.filterChip, sortBy === 'distance' ? styles.filterChipActive : { backgroundColor: theme.card, borderColor: theme.cardBorder }]}
                                 onPress={() => setSortBy('distance')}
+                                accessibilityLabel="Ordenar por mais próximo"
+                                accessibilityRole="button"
+                                accessibilityState={{ selected: sortBy === 'distance' }}
                             >
                                 <Ionicons name="location-outline" size={12} color={sortBy === 'distance' ? '#fff' : theme.textSecondary} />
                                 <Text style={[styles.filterChipText, sortBy === 'distance' ? styles.filterChipTextActive : { color: theme.textSecondary }]}>Mais próximo</Text>
@@ -290,6 +312,9 @@ export default function BuscarScreen() {
                                     style={[styles.instructorCard, { backgroundColor: theme.card, borderColor: theme.cardBorder, borderWidth: 1 }]}
                                     onPress={() => router.push(`/connect/instrutor/${instructor.id}`)}
                                     activeOpacity={0.95}
+                                    accessibilityLabel={`${instructor.full_name}${index === 0 ? ', destaque' : ''}${instructor.is_verified ? ', verificado' : ''}, ${(instructor.average_rating || 0).toFixed(1)} estrelas, ${instructor.total_reviews || 0} avaliações, ${instructor.city}, ${formatPrice(instructor.price_per_lesson)} por aula`}
+                                    accessibilityRole="button"
+                                    accessibilityHint="Ver perfil do instrutor"
                                 >
                                     {/* Availability Badge */}
                                     <View style={[styles.availabilityBadge, { backgroundColor: isDark ? theme.primaryLight : '#ecfdf5' }]}>
@@ -304,6 +329,7 @@ export default function BuscarScreen() {
                                                 <Image
                                                     source={{ uri: instructor.photo_url }}
                                                     style={styles.instructorPhoto}
+                                                    accessibilityLabel={`Foto de ${instructor.full_name}`}
                                                 />
                                             ) : (
                                                 <View style={styles.instructorPhotoPlaceholder}>
@@ -393,6 +419,8 @@ export default function BuscarScreen() {
                                         <TouchableOpacity
                                             style={styles.bookButton}
                                             onPress={() => router.push(`/connect/instrutor/${instructor.id}`)}
+                                            accessibilityLabel={`Ver perfil de ${instructor.full_name}`}
+                                            accessibilityRole="button"
                                         >
                                             <Text style={styles.bookButtonText}>Ver perfil</Text>
                                             <Ionicons name="arrow-forward" size={16} color="#fff" />

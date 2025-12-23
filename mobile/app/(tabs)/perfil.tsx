@@ -230,6 +230,58 @@ export default function PerfilScreen() {
         router.push('/connect/suporte');
     };
 
+    const handlePrivacyPolicy = () => {
+        Linking.openURL('https://vrumi.com.br/politica-de-privacidade');
+    };
+
+    const handleTermsOfUse = () => {
+        Linking.openURL('https://vrumi.com.br/termos-de-uso');
+    };
+
+    const handleDeleteAccount = () => {
+        Alert.alert(
+            'Excluir Conta',
+            'Tem certeza que deseja excluir sua conta? Esta ação é irreversível e todos os seus dados serão permanentemente removidos.',
+            [
+                { text: 'Cancelar', style: 'cancel' },
+                {
+                    text: 'Excluir Conta',
+                    style: 'destructive',
+                    onPress: async () => {
+                        try {
+                            // Call edge function to delete user data
+                            const session = await supabase.auth.getSession();
+                            const response = await fetch(
+                                `${process.env.EXPO_PUBLIC_SUPABASE_URL}/functions/v1/delete-account`,
+                                {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'Authorization': `Bearer ${session.data.session?.access_token}`,
+                                    },
+                                }
+                            );
+
+                            if (response.ok) {
+                                await signOut();
+                                Alert.alert(
+                                    'Conta Excluída',
+                                    'Sua conta foi excluída com sucesso. Sentiremos sua falta!',
+                                    [{ text: 'OK', onPress: () => router.replace('/(auth)/login') }]
+                                );
+                            } else {
+                                const error = await response.json();
+                                throw new Error(error.message || 'Erro ao excluir conta');
+                            }
+                        } catch (error: any) {
+                            Alert.alert('Erro', error.message || 'Não foi possível excluir sua conta. Entre em contato com o suporte.');
+                        }
+                    },
+                },
+            ]
+        );
+    };
+
     const userName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Usuário';
     const userEmail = user?.email || '';
 
@@ -257,11 +309,14 @@ export default function PerfilScreen() {
                         style={styles.avatarContainer}
                         onPress={pickAndUploadImage}
                         disabled={uploading}
+                        accessibilityLabel={uploading ? 'Enviando foto' : 'Alterar foto de perfil'}
+                        accessibilityRole="button"
+                        accessibilityHint="Toque para escolher uma nova foto"
                     >
                         {uploading ? (
                             <ActivityIndicator color="#fff" size="small" />
                         ) : avatarUrl ? (
-                            <Image source={{ uri: avatarUrl }} style={styles.avatarImage} />
+                            <Image source={{ uri: avatarUrl }} style={styles.avatarImage} accessibilityLabel="Sua foto de perfil" />
                         ) : (
                             <Text style={styles.avatarText}>
                                 {userName.charAt(0).toUpperCase()}
@@ -283,6 +338,8 @@ export default function PerfilScreen() {
                     <TouchableOpacity
                         style={[styles.menuItem, { backgroundColor: theme.card }]}
                         onPress={() => router.push('/(tabs)/buscar')}
+                        accessibilityLabel="Encontrar Instrutor"
+                        accessibilityRole="button"
                     >
                         <View style={[styles.menuIcon, { backgroundColor: '#e0f2fe' }]}>
                             <Ionicons name="car-sport" size={20} color="#0ea5e9" />
@@ -295,6 +352,8 @@ export default function PerfilScreen() {
                     <TouchableOpacity
                         style={[styles.menuItem, { backgroundColor: theme.card }]}
                         onPress={() => router.push('/(tabs)/aulas')}
+                        accessibilityLabel="Minhas Aulas"
+                        accessibilityRole="button"
                     >
                         <View style={[styles.menuIcon, { backgroundColor: '#d1fae5' }]}>
                             <Ionicons name="calendar" size={20} color="#10b981" />
@@ -307,6 +366,8 @@ export default function PerfilScreen() {
                     <TouchableOpacity
                         style={[styles.menuItem, { backgroundColor: theme.card }]}
                         onPress={() => router.push('/connect/chat')}
+                        accessibilityLabel="Minhas Mensagens"
+                        accessibilityRole="button"
                     >
                         <View style={[styles.menuIcon, { backgroundColor: '#ffedd5' }]}>
                             <Ionicons name="chatbubble-ellipses" size={20} color="#ea580c" />
@@ -516,7 +577,12 @@ export default function PerfilScreen() {
                 <View style={styles.menuSection}>
                     <Text style={[styles.menuTitle, { color: theme.textSecondary }]}>Suporte</Text>
 
-                    <TouchableOpacity style={[styles.menuItem, { backgroundColor: theme.card }]} onPress={handleHelp}>
+                    <TouchableOpacity
+                        style={[styles.menuItem, { backgroundColor: theme.card }]}
+                        onPress={handleHelp}
+                        accessibilityLabel="Ajuda e Suporte"
+                        accessibilityRole="button"
+                    >
                         <View style={[styles.menuIcon, { backgroundColor: '#eff6ff' }]}>
                             <Ionicons name="help-circle" size={20} color="#3b82f6" />
                         </View>
@@ -525,9 +591,63 @@ export default function PerfilScreen() {
                     </TouchableOpacity>
                 </View>
 
+                {/* Legal Section */}
+                <View style={styles.menuSection}>
+                    <Text style={[styles.menuTitle, { color: theme.textSecondary }]}>Legal</Text>
+
+                    <TouchableOpacity
+                        style={[styles.menuItem, { backgroundColor: theme.card }]}
+                        onPress={handlePrivacyPolicy}
+                        accessibilityLabel="Política de Privacidade"
+                        accessibilityRole="link"
+                    >
+                        <View style={[styles.menuIcon, { backgroundColor: '#f3e8ff' }]}>
+                            <Ionicons name="shield-checkmark" size={20} color="#9333ea" />
+                        </View>
+                        <Text style={[styles.menuItemText, { color: theme.text }]}>Política de Privacidade</Text>
+                        <Ionicons name="open-outline" size={18} color={theme.textMuted} />
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                        style={[styles.menuItem, { backgroundColor: theme.card }]}
+                        onPress={handleTermsOfUse}
+                        accessibilityLabel="Termos de Uso"
+                        accessibilityRole="link"
+                    >
+                        <View style={[styles.menuIcon, { backgroundColor: '#fef3c7' }]}>
+                            <Ionicons name="document-text" size={20} color="#d97706" />
+                        </View>
+                        <Text style={[styles.menuItemText, { color: theme.text }]}>Termos de Uso</Text>
+                        <Ionicons name="open-outline" size={18} color={theme.textMuted} />
+                    </TouchableOpacity>
+                </View>
+
+                {/* Danger Zone */}
+                <View style={styles.menuSection}>
+                    <Text style={[styles.menuTitle, { color: theme.textSecondary }]}>Conta</Text>
+
+                    <TouchableOpacity
+                        style={[styles.menuItem, { backgroundColor: theme.card }]}
+                        onPress={handleDeleteAccount}
+                        accessibilityLabel="Excluir minha conta permanentemente"
+                        accessibilityRole="button"
+                    >
+                        <View style={[styles.menuIcon, { backgroundColor: '#fee2e2' }]}>
+                            <Ionicons name="trash" size={20} color="#dc2626" />
+                        </View>
+                        <Text style={[styles.menuItemText, { color: '#dc2626' }]}>Excluir Conta</Text>
+                        <Ionicons name="chevron-forward" size={18} color={theme.textMuted} />
+                    </TouchableOpacity>
+                </View>
+
                 {/* Logout Button */}
                 <View style={styles.logoutSection}>
-                    <TouchableOpacity style={[styles.logoutButton, { backgroundColor: theme.card }]} onPress={handleLogout}>
+                    <TouchableOpacity
+                        style={[styles.logoutButton, { backgroundColor: theme.card }]}
+                        onPress={handleLogout}
+                        accessibilityLabel="Sair da conta"
+                        accessibilityRole="button"
+                    >
                         <Ionicons name="log-out-outline" size={20} color="#ef4444" />
                         <Text style={styles.logoutText}>Sair da conta</Text>
                     </TouchableOpacity>

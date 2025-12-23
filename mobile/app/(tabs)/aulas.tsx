@@ -371,13 +371,20 @@ export default function AulasScreen() {
             : booking.instructor?.photo_url;
 
         return (
-            <View key={booking.id} style={[styles.bookingCard, { backgroundColor: theme.card, borderColor: theme.cardBorder, borderWidth: 1 }]}>
+            <View
+                key={booking.id}
+                style={[styles.bookingCard, { backgroundColor: theme.card, borderColor: theme.cardBorder, borderWidth: 1 }]}
+                accessible={true}
+                accessibilityLabel={`Aula com ${otherPartyName}. ${status.label}. ${bookingDate.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })} às ${formatTime(booking.scheduled_time)}. ${formatPrice(booking.price)}`}
+                accessibilityRole="summary"
+            >
                 {/* Header Row */}
                 <View style={styles.bookingHeader}>
                     {otherPartyPhoto ? (
                         <Image
                             source={{ uri: otherPartyPhoto }}
                             style={styles.instructorPhoto}
+                            accessibilityLabel={`Foto de ${otherPartyName}`}
                         />
                     ) : (
                         <View style={[styles.instructorPhotoPlaceholder, { backgroundColor: theme.primary }]}>
@@ -438,6 +445,8 @@ export default function AulasScreen() {
                         <TouchableOpacity
                             style={styles.primaryButton}
                             onPress={() => router.push(`/connect/aula/${booking.id}`)}
+                            accessibilityLabel="Confirmar presença na aula"
+                            accessibilityRole="button"
                         >
                             <Ionicons name="scan-outline" size={20} color="#fff" />
                             <Text style={styles.primaryButtonText}>Confirmar Presença</Text>
@@ -447,6 +456,8 @@ export default function AulasScreen() {
                     <TouchableOpacity
                         style={[styles.chatButton, { borderColor: theme.primary, borderWidth: 1 }]}
                         onPress={() => handleOpenChat(booking.student_id, booking.instructor_id)}
+                        accessibilityLabel={`Conversar com ${otherPartyName}${(booking.unread_messages ?? 0) > 0 ? `, ${booking.unread_messages} mensagens não lidas` : ''}`}
+                        accessibilityRole="button"
                     >
                         <Ionicons name="chatbubble-ellipses-outline" size={20} color={theme.primary} />
                         <Text style={[styles.chatButtonText, { color: theme.primary }]}>Conversar pelo Vrumi</Text>
@@ -461,6 +472,8 @@ export default function AulasScreen() {
                         <TouchableOpacity
                             style={styles.rebookButton}
                             onPress={() => router.push(`/connect/instrutor/${booking.instructor.id}`)}
+                            accessibilityLabel="Reagendar aula"
+                            accessibilityRole="button"
                         >
                             <Ionicons name="calendar" size={20} color="#fff" />
                             <Text style={styles.rebookButtonText}>Reagendar Aula</Text>
@@ -473,6 +486,8 @@ export default function AulasScreen() {
                     <TouchableOpacity
                         style={styles.cancelButton}
                         onPress={() => handleCancelBooking(booking.id, booking.payment_status)}
+                        accessibilityLabel="Cancelar esta aula"
+                        accessibilityRole="button"
                     >
                         <Ionicons name="close-circle-outline" size={18} color="#dc2626" />
                         <Text style={styles.cancelButtonText}>Cancelar Aula</Text>
@@ -525,6 +540,9 @@ export default function AulasScreen() {
                         activeTab === 'upcoming' && styles.tabActive,
                     ]}
                     onPress={() => setActiveTab('upcoming')}
+                    accessibilityLabel="Próximas aulas"
+                    accessibilityRole="tab"
+                    accessibilityState={{ selected: activeTab === 'upcoming' }}
                 >
                     <Ionicons
                         name="calendar"
@@ -545,6 +563,9 @@ export default function AulasScreen() {
                         activeTab === 'history' && styles.tabActive,
                     ]}
                     onPress={() => setActiveTab('history')}
+                    accessibilityLabel="Histórico de aulas"
+                    accessibilityRole="tab"
+                    accessibilityState={{ selected: activeTab === 'history' }}
                 >
                     <Ionicons
                         name="time"

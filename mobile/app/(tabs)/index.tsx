@@ -13,6 +13,7 @@ import {
     StatusBar,
     Modal,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
@@ -50,8 +51,8 @@ interface UpcomingLesson {
 
 const SERVICES = [
     { id: 'aulas', icon: 'car', label: 'Aulas', color: '#10b981' },
-    { id: 'teoria', icon: 'book', label: 'Teoria', color: '#3b82f6' },
-    { id: 'simulado', icon: 'timer', label: 'Simulado', color: '#f59e0b' },
+    { id: 'teoria', icon: 'book', label: 'Estudar', color: '#3b82f6', url: 'https://www.gov.br/pt-br/apps/cnh-do-brasil' },
+    { id: 'chat', icon: 'chatbubbles', label: 'Mensagens', color: '#f59e0b' },
     { id: 'agendados', icon: 'calendar', label: 'Agendados', color: '#8b5cf6' },
 ];
 
@@ -251,10 +252,10 @@ export default function HomeScreen() {
                 router.push('/(tabs)/buscar');
                 break;
             case 'teoria':
-                Linking.openURL('https://www.vrumi.com.br');
+                Linking.openURL('https://www.gov.br/pt-br/apps/cnh-do-brasil');
                 break;
-            case 'simulado':
-                Linking.openURL('https://www.vrumi.com.br');
+            case 'chat':
+                router.push('/connect/chat');
                 break;
             case 'agendados':
                 router.push('/(tabs)/aulas');
@@ -264,6 +265,31 @@ export default function HomeScreen() {
 
     const [stateSelectorVisible, setStateSelectorVisible] = useState(false);
     const [selectedDetranService, setSelectedDetranService] = useState<string | null>(null);
+    const [instructorBannerDismissed, setInstructorBannerDismissed] = useState(false);
+
+    // Check if instructor banner was dismissed
+    useEffect(() => {
+        const checkBannerDismissed = async () => {
+            try {
+                const dismissed = await AsyncStorage.getItem('instructor_banner_dismissed');
+                if (dismissed === 'true') {
+                    setInstructorBannerDismissed(true);
+                }
+            } catch (error) {
+                console.error('Error checking banner status:', error);
+            }
+        };
+        checkBannerDismissed();
+    }, []);
+
+    const dismissInstructorBanner = async () => {
+        try {
+            await AsyncStorage.setItem('instructor_banner_dismissed', 'true');
+            setInstructorBannerDismissed(true);
+        } catch (error) {
+            console.error('Error dismissing banner:', error);
+        }
+    };
 
     const handleDetranServicePress = (service: typeof DETRAN_SERVICES[0]) => {
         if (service.url) {
@@ -309,9 +335,12 @@ export default function HomeScreen() {
                         <TouchableOpacity
                             style={styles.profileButton}
                             onPress={() => router.push('/(tabs)/perfil')}
+                            accessibilityLabel="Ir para meu perfil"
+                            accessibilityRole="button"
+                            accessibilityHint="Abre sua página de perfil"
                         >
                             {avatarUrl ? (
-                                <Image source={{ uri: avatarUrl }} style={styles.profileAvatar} />
+                                <Image source={{ uri: avatarUrl }} style={styles.profileAvatar} accessibilityLabel={`Foto de ${firstName}`} />
                             ) : (
                                 <View style={styles.profileAvatarPlaceholder}>
                                     <Text style={styles.profileInitial}>{firstName.charAt(0)}</Text>
@@ -325,6 +354,9 @@ export default function HomeScreen() {
                         <TouchableOpacity
                             style={styles.notificationBtn}
                             onPress={() => setNotificationModalVisible(true)}
+                            accessibilityLabel="Notificações"
+                            accessibilityRole="button"
+                            accessibilityHint="Abre suas notificações"
                         >
                             <Ionicons name="notifications" size={22} color="#fff" />
                         </TouchableOpacity>
@@ -334,6 +366,9 @@ export default function HomeScreen() {
                     <TouchableOpacity
                         style={[styles.searchBar, { backgroundColor: theme.card }]}
                         onPress={() => router.push('/(tabs)/buscar')}
+                        accessibilityLabel="Buscar instrutor"
+                        accessibilityRole="search"
+                        accessibilityHint="Abre a tela de busca de instrutores"
                     >
                         <Ionicons name="search" size={20} color={theme.textMuted} />
                         <Text style={[styles.searchPlaceholder, { color: theme.textMuted }]}>Buscar instrutor...</Text>
@@ -361,6 +396,9 @@ export default function HomeScreen() {
                         style={styles.upcomingCard}
                         onPress={() => router.push('/(tabs)/aulas')}
                         activeOpacity={0.95}
+                        accessibilityLabel={`Próxima aula com ${upcomingLesson.instructor?.full_name || 'Instrutor'}, ${formatLessonDate(upcomingLesson.scheduled_date, upcomingLesson.scheduled_time)}`}
+                        accessibilityRole="button"
+                        accessibilityHint="Toque para ver detalhes da aula"
                     >
                         <LinearGradient
                             colors={['#10b981', '#059669']}
@@ -386,14 +424,22 @@ export default function HomeScreen() {
                     </TouchableOpacity>
                 )}
 
-                {/* Services Grid - All services in one section */}
-                <Text style={[styles.sectionTitle, { color: theme.text }]}>Serviços</Text>
-                <View style={styles.servicesGrid}>
+                {/* Vrumi Services */}
+                <Text style={[styles.sectionTitle, { color: theme.text }]}>Serviços Vrumi</Text>
+                <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    style={styles.servicesScroll}
+                    contentContainerStyle={styles.servicesContent}
+                >
                     {SERVICES.map((service) => (
                         <TouchableOpacity
                             key={service.id}
                             style={styles.serviceCard}
                             onPress={() => handleServicePress(service.id)}
+                            accessibilityLabel={service.label}
+                            accessibilityRole="button"
+                            accessibilityHint={`Acessar ${service.label}`}
                         >
                             <View style={[styles.serviceIcon, { backgroundColor: `${service.color}15` }]}>
                                 <Ionicons name={service.icon as any} size={24} color={service.color} />
@@ -401,11 +447,24 @@ export default function HomeScreen() {
                             <Text style={[styles.serviceLabel, { color: theme.textSecondary }]}>{service.label}</Text>
                         </TouchableOpacity>
                     ))}
+                </ScrollView>
+
+                {/* DETRAN Services */}
+                <Text style={[styles.sectionTitle, { color: theme.text }]}>Serviços DETRAN</Text>
+                <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    style={styles.servicesScroll}
+                    contentContainerStyle={styles.servicesContent}
+                >
                     {DETRAN_SERVICES.map((service) => (
                         <TouchableOpacity
                             key={service.id}
                             style={styles.serviceCard}
                             onPress={() => handleDetranServicePress(service)}
+                            accessibilityLabel={service.label}
+                            accessibilityRole="button"
+                            accessibilityHint={`Acessar ${service.label} do DETRAN`}
                         >
                             <View style={[styles.serviceIcon, { backgroundColor: `${service.color}15` }]}>
                                 <Ionicons name={service.icon as any} size={24} color={service.color} />
@@ -413,44 +472,61 @@ export default function HomeScreen() {
                             <Text style={[styles.serviceLabel, { color: theme.textSecondary }]}>{service.label}</Text>
                         </TouchableOpacity>
                     ))}
-                </View>
+                </ScrollView>
 
-                {/* Become Instructor CTA - Show if not instructor */}
-                {!instructorInfo && (
-                    <TouchableOpacity
-                        style={styles.ctaCard}
-                        onPress={() => router.push('/connect/intro-instrutor')}
-                        activeOpacity={0.95}
-                    >
-                        <LinearGradient
-                            colors={['#7e22ce', '#6b21a8']}
-                            start={{ x: 0, y: 0 }}
-                            end={{ x: 1, y: 1 }}
-                            style={styles.ctaGradient}
+                {/* Become Instructor CTA - Show if not instructor and not dismissed */}
+                {!instructorInfo && !instructorBannerDismissed && (
+                    <View style={styles.ctaCard}>
+                        <TouchableOpacity
+                            style={styles.ctaDismissButton}
+                            onPress={dismissInstructorBanner}
+                            accessibilityLabel="Fechar banner"
+                            accessibilityRole="button"
+                            accessibilityHint="Fecha permanentemente este banner"
                         >
-                            <View style={styles.ctaContent}>
-                                <View style={styles.ctaInfo}>
-                                    <Text style={styles.ctaTitle}>Torne-se um Instrutor</Text>
-                                    <Text style={styles.ctaSubtitle}>
-                                        Faça uma renda extra ensinando novos motoristas com seu próprio veículo.
-                                    </Text>
-                                    <View style={styles.ctaButton}>
-                                        <Text style={styles.ctaButtonText}>Começar agora</Text>
-                                        <Ionicons name="arrow-forward" size={16} color="#7e22ce" />
+                            <Ionicons name="close" size={20} color="rgba(255,255,255,0.8)" />
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                            onPress={() => router.push('/connect/intro-instrutor')}
+                            activeOpacity={0.95}
+                            accessibilityLabel="Torne-se um instrutor. Faça uma renda extra ensinando novos motoristas."
+                            accessibilityRole="button"
+                            accessibilityHint="Abre o cadastro para instrutores"
+                        >
+                            <LinearGradient
+                                colors={['#7e22ce', '#6b21a8']}
+                                start={{ x: 0, y: 0 }}
+                                end={{ x: 1, y: 1 }}
+                                style={styles.ctaGradient}
+                            >
+                                <View style={styles.ctaContent}>
+                                    <View style={styles.ctaInfo}>
+                                        <Text style={styles.ctaTitle}>Torne-se um Instrutor</Text>
+                                        <Text style={styles.ctaSubtitle}>
+                                            Faça uma renda extra ensinando novos motoristas com seu próprio veículo.
+                                        </Text>
+                                        <View style={styles.ctaButton}>
+                                            <Text style={styles.ctaButtonText}>Começar agora</Text>
+                                            <Ionicons name="arrow-forward" size={16} color="#7e22ce" />
+                                        </View>
+                                    </View>
+                                    <View style={styles.ctaIcon}>
+                                        <Ionicons name="school" size={48} color="rgba(255,255,255,0.9)" />
                                     </View>
                                 </View>
-                                <View style={styles.ctaIcon}>
-                                    <Ionicons name="school" size={48} color="rgba(255,255,255,0.9)" />
-                                </View>
-                            </View>
-                        </LinearGradient>
-                    </TouchableOpacity>
+                            </LinearGradient>
+                        </TouchableOpacity>
+                    </View>
                 )}
 
                 {/* Featured Instructors */}
                 <View style={styles.sectionHeader}>
                     <Text style={[styles.sectionTitle, { color: theme.text }]}>Instrutores em Destaque</Text>
-                    <TouchableOpacity onPress={() => router.push('/(tabs)/buscar')}>
+                    <TouchableOpacity
+                        onPress={() => router.push('/(tabs)/buscar')}
+                        accessibilityLabel="Ver todos os instrutores"
+                        accessibilityRole="button"
+                    >
                         <Text style={styles.seeAllText}>Ver todos</Text>
                     </TouchableOpacity>
                 </View>
@@ -468,10 +544,17 @@ export default function HomeScreen() {
                                 style={[styles.instructorCard, { backgroundColor: theme.card, borderColor: theme.cardBorder, borderWidth: 1 }]}
                                 onPress={() => router.push(`/connect/instrutor/${instructor.id}`)}
                                 activeOpacity={0.9}
+                                accessibilityLabel={`${instructor.full_name}, ${Number(instructor.average_rating || 0).toFixed(1)} estrelas, ${formatPrice(instructor.price_per_lesson)} por aula${instructor.is_verified ? ', verificado' : ''}`}
+                                accessibilityRole="button"
+                                accessibilityHint="Ver perfil do instrutor"
                             >
                                 <View style={styles.photoContainer}>
                                     {instructor.photo_url ? (
-                                        <Image source={{ uri: instructor.photo_url }} style={styles.photo} />
+                                        <Image
+                                            source={{ uri: instructor.photo_url }}
+                                            style={styles.photo}
+                                            accessibilityLabel={`Foto de ${instructor.full_name}`}
+                                        />
                                     ) : (
                                         <View style={styles.photoPlaceholder}>
                                             <Text style={styles.photoInitial}>
@@ -511,20 +594,7 @@ export default function HomeScreen() {
                     </View>
                 )}
 
-                {/* PWA Banner */}
-                <TouchableOpacity
-                    style={[styles.pwaBanner, { backgroundColor: theme.card, borderColor: theme.cardBorder, borderWidth: 1 }]}
-                    onPress={() => Linking.openURL('https://vrumi.com.br/dashboard')}
-                >
-                    <View style={[styles.pwaIcon, { backgroundColor: isDark ? theme.primaryLight : '#ecfdf5' }]}>
-                        <Ionicons name="book" size={24} color="#10b981" />
-                    </View>
-                    <View style={styles.pwaContent}>
-                        <Text style={[styles.pwaTitle, { color: theme.text }]}>Estudar para prova teórica?</Text>
-                        <Text style={[styles.pwaSubtitle, { color: theme.textMuted }]}>Acesse o Vrumi Education pelo site</Text>
-                    </View>
-                    <Ionicons name="chevron-forward" size={20} color={theme.textMuted} />
-                </TouchableOpacity>
+
 
                 <View style={{ height: 120 }} />
             </ScrollView>
@@ -541,14 +611,19 @@ export default function HomeScreen() {
                 animationType="slide"
                 transparent={true}
                 onRequestClose={() => setStateSelectorVisible(false)}
+                accessibilityViewIsModal={true}
             >
                 <View style={styles.modalOverlay}>
                     <View style={[styles.modalContent, { backgroundColor: theme.card }]}>
                         <View style={styles.modalHeader}>
-                            <Text style={[styles.modalTitle, { color: theme.text }]}>
+                            <Text style={[styles.modalTitle, { color: theme.text }]} accessibilityRole="header">
                                 Selecione seu Estado
                             </Text>
-                            <TouchableOpacity onPress={() => setStateSelectorVisible(false)}>
+                            <TouchableOpacity
+                                onPress={() => setStateSelectorVisible(false)}
+                                accessibilityLabel="Fechar"
+                                accessibilityRole="button"
+                            >
                                 <Ionicons name="close" size={24} color={theme.text} />
                             </TouchableOpacity>
                         </View>
@@ -558,6 +633,9 @@ export default function HomeScreen() {
                                     key={stateCode}
                                     style={[styles.stateItem, { borderBottomColor: theme.cardBorder }]}
                                     onPress={() => handleStateSelect(stateCode)}
+                                    accessibilityLabel={`Estado ${stateCode}`}
+                                    accessibilityRole="button"
+                                    accessibilityHint="Selecionar este estado"
                                 >
                                     <Text style={[styles.stateText, { color: theme.text }]}>
                                         {stateCode}
@@ -719,14 +797,17 @@ const styles = StyleSheet.create({
         color: '#1f2937',
         marginBottom: 16,
     },
-    servicesGrid: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        marginBottom: 24,
+    servicesScroll: {
+        marginHorizontal: -20,
+        marginBottom: 20,
+    },
+    servicesContent: {
+        paddingHorizontal: 20,
+        gap: 16,
     },
     serviceCard: {
         alignItems: 'center',
-        width: (SCREEN_WIDTH - 60) / 4,
+        width: 72,
     },
     serviceIcon: {
         width: 56,
@@ -889,6 +970,19 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.3,
         shadowRadius: 12,
         elevation: 6,
+        position: 'relative',
+    },
+    ctaDismissButton: {
+        position: 'absolute',
+        top: 8,
+        right: 8,
+        zIndex: 10,
+        width: 28,
+        height: 28,
+        borderRadius: 14,
+        backgroundColor: 'rgba(0,0,0,0.3)',
+        justifyContent: 'center',
+        alignItems: 'center',
     },
     ctaGradient: {
         padding: 24,

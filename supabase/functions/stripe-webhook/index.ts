@@ -82,9 +82,11 @@ serve(async (req) => {
     // account.updated
     if (event.type === 'account.updated') {
       const account = event.data.object;
-      if (account.charges_enabled && account.payouts_enabled) {
+      // Use details_submitted as the primary indicator for onboarding completion
+      // This triggers immediately when user finishes Stripe form, not waiting for verification
+      if (account.details_submitted) {
         await supabase.from('instructors').update({ stripe_onboarding_complete: true }).eq('stripe_account_id', account.id);
-        logWebhook('INFO', 'Account onboarding complete', { accountId: account.id });
+        logWebhook('INFO', 'Account onboarding complete (details_submitted)', { accountId: account.id, chargesEnabled: account.charges_enabled });
       }
     }
 

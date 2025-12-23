@@ -73,6 +73,7 @@ export function BiometricLockScreen({ onUnlock }: BiometricLockScreenProps) {
                     source={require('../assets/icon.png')}
                     style={styles.logo}
                     resizeMode="contain"
+                    accessibilityLabel="Logo do Vrumi"
                 />
                 <Text style={[styles.appName, { color: theme.text }]}>Vrumi</Text>
             </View>
@@ -84,6 +85,10 @@ export function BiometricLockScreen({ onUnlock }: BiometricLockScreenProps) {
                     onPress={handleAuthenticate}
                     disabled={isAuthenticating}
                     activeOpacity={0.8}
+                    accessibilityLabel={`Autenticar com ${getLabel()}`}
+                    accessibilityRole="button"
+                    accessibilityHint="Toque para desbloquear o aplicativo"
+                    accessibilityState={{ disabled: isAuthenticating }}
                 >
                     <Ionicons
                         name={getIconName() as any}
@@ -109,6 +114,8 @@ export function BiometricLockScreen({ onUnlock }: BiometricLockScreenProps) {
                 <TouchableOpacity
                     style={[styles.retryButton, { borderColor: theme.primary }]}
                     onPress={handleAuthenticate}
+                    accessibilityLabel="Tentar novamente"
+                    accessibilityRole="button"
                 >
                     <Text style={[styles.retryText, { color: theme.primary }]}>
                         Tentar Novamente

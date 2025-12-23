@@ -8,7 +8,8 @@ import {
     RefreshControl,
     Alert,
     Linking,
-    Image
+    Image,
+    ActivityIndicator
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -16,6 +17,7 @@ import { router } from 'expo-router';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../src/lib/supabase';
+import * as ImagePicker from 'expo-image-picker';
 
 const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL || 'https://kyuaxjkokntdmcxjurhm.supabase.co';
 
@@ -50,6 +52,8 @@ export default function InstructorDashboardView() {
     const [stripeLoading, setStripeLoading] = useState(false);
     const [stats, setStats] = useState<Stats>({ totalEarnings: 0, todayLessons: 0, totalLessons: 0, rating: 0 });
     const [nextLesson, setNextLesson] = useState<NextLesson | null>(null);
+    const [photoUrl, setPhotoUrl] = useState<string | null>(null);
+    const [uploading, setUploading] = useState(false);
 
     const fetchData = useCallback(async () => {
         if (!user?.id) return;
@@ -57,7 +61,7 @@ export default function InstructorDashboardView() {
         try {
             const { data: instructor, error } = await supabase
                 .from('instructors')
-                .select('id, total_lessons, average_rating, stripe_account_id, stripe_onboarding_complete')
+                .select('id, total_lessons, average_rating, stripe_account_id, stripe_onboarding_complete, photo_url')
                 .eq('user_id', user.id)
                 .single();
 
@@ -66,6 +70,7 @@ export default function InstructorDashboardView() {
             setInstructorId(instructor.id);
             setStripeAccountId(instructor.stripe_account_id);
             setStripeOnboarded(instructor.stripe_onboarding_complete || false);
+            setPhotoUrl(instructor.photo_url);
 
             const today = new Date().toISOString().split('T')[0];
 
@@ -148,6 +153,62 @@ export default function InstructorDashboardView() {
         return d.toLocaleDateString('pt-BR', { weekday: 'short', day: 'numeric', month: 'short' }) + ` às ${time.substring(0, 5)}`;
     };
 
+    const pickAndUploadPhoto = async () => {
+        try {
+            const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+            if (status !== 'granted') {
+                Alert.alert('Permissão necessária', 'Precisamos de acesso à galeria para alterar sua foto.');
+                return;
+            }
+
+            const result = await ImagePicker.launchImageLibraryAsync({
+                mediaTypes: ImagePicker.MediaTypeOptions.Images,
+                allowsEditing: true,
+                aspect: [1, 1],
+                quality: 0.8,
+            });
+
+            if (result.canceled || !result.assets[0]) return;
+
+            setUploading(true);
+            const image = result.assets[0];
+            const fileExt = image.uri.split('.').pop() || 'jpg';
+            const fileName = `instructors/${instructorId}/${Date.now()}.${fileExt}`;
+
+            const response = await fetch(image.uri);
+            const blob = await response.blob();
+            const arrayBuffer = await new Response(blob).arrayBuffer();
+
+            const { error: uploadError } = await supabase.storage
+                .from('avatars')
+                .upload(fileName, arrayBuffer, {
+                    contentType: `image/${fileExt}`,
+                    upsert: true
+                });
+
+            if (uploadError) throw uploadError;
+
+            const { data: urlData } = supabase.storage
+                .from('avatars')
+                .getPublicUrl(fileName);
+
+            const publicUrl = urlData.publicUrl;
+
+            await supabase
+                .from('instructors')
+                .update({ photo_url: publicUrl })
+                .eq('id', instructorId!);
+
+            setPhotoUrl(publicUrl);
+            Alert.alert('Sucesso!', 'Sua foto de instrutor foi atualizada.');
+        } catch (error: any) {
+            console.error('Upload error:', error);
+            Alert.alert('Erro', error.message || 'Não foi possível atualizar a foto.');
+        } finally {
+            setUploading(false);
+        }
+    };
+
     // Primary Actions (Clean Grid)
     const primaryActions = [
         { icon: 'calendar', label: 'Agenda', color: '#0891b2', bg: '#cffafe', route: '/connect/agenda' },
@@ -175,11 +236,21 @@ export default function InstructorDashboardView() {
                         <Text style={[styles.greeting, { color: theme.textSecondary }]}>Olá, Prof.</Text>
                         <Text style={[styles.name, { color: theme.text }]}>{user?.user_metadata?.full_name?.split(' ')[0]}</Text>
                     </View>
-                    <TouchableOpacity onPress={() => router.push(`/connect/instrutor/${instructorId}`)}>
-                        <Image
-                            source={{ uri: user?.user_metadata?.avatar_url || 'https://via.placeholder.com/150' }}
-                            style={styles.avatar}
-                        />
+                    <TouchableOpacity onPress={pickAndUploadPhoto} disabled={uploading}>
+                        {uploading ? (
+                            <View style={[styles.avatar, { backgroundColor: theme.card, justifyContent: 'center', alignItems: 'center' }]}>
+                                <ActivityIndicator size="small" color={theme.primary} />
+                            </View>
+                        ) : photoUrl ? (
+                            <Image source={{ uri: photoUrl }} style={styles.avatar} />
+                        ) : (
+                            <View style={[styles.avatar, { backgroundColor: theme.primary, justifyContent: 'center', alignItems: 'center' }]}>
+                                <Ionicons name="camera" size={24} color="#fff" />
+                            </View>
+                        )}
+                        <View style={styles.editBadge}>
+                            <Ionicons name="pencil" size={12} color="#fff" />
+                        </View>
                     </TouchableOpacity>
                 </View>
 
@@ -291,6 +362,17 @@ const styles = StyleSheet.create({
     greeting: { fontSize: 16 },
     name: { fontSize: 24, fontWeight: 'bold' },
     avatar: { width: 50, height: 50, borderRadius: 25 },
+    editBadge: {
+        position: 'absolute',
+        bottom: 0,
+        right: 0,
+        backgroundColor: '#10b981',
+        borderRadius: 10,
+        width: 20,
+        height: 20,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
 
     // Highlight Card
     highlightCard: {

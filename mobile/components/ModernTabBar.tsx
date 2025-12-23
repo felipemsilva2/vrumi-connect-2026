@@ -182,6 +182,10 @@ export default function ModernTabBar({ state, descriptors, navigation }: BottomT
                         style={[styles.tab, { width: TAB_WIDTH }]}
                         onPress={() => handlePress(tab.name, index)}
                         activeOpacity={0.7}
+                        accessibilityLabel={tab.label}
+                        accessibilityRole="tab"
+                        accessibilityState={{ selected: isActive }}
+                        accessibilityHint={`Navegar para ${tab.label}`}
                     >
                         <Animated.View
                             style={[
