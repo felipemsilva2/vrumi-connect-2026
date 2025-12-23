@@ -233,17 +233,23 @@ export default function InstructorDashboardScreen() {
         }
     }, [searchParams.stripe_onboarded, searchParams.stripe_refresh, verifyStripeStatus]);
 
-    // Verify Stripe status on initial load if not already verified
+    // Verify Stripe status after data is loaded (if has account)
     useEffect(() => {
-        if (stripeAccountId && !stripeOnboarded) {
-            // Has Stripe account but not marked as onboarded - verify status
+        // Only verify if we have a stripe account to check
+        if (stripeAccountId && !loading) {
+            console.log('🔍 Stripe account found, verifying status...');
             verifyStripeStatus();
         }
-    }, [stripeAccountId, stripeOnboarded, verifyStripeStatus]);
+    }, [stripeAccountId, loading, verifyStripeStatus]);
 
-    const onRefresh = () => {
+    const onRefresh = async () => {
         setRefreshing(true);
-        fetchDashboardData();
+        await fetchDashboardData();
+        // Also verify Stripe status on refresh
+        if (stripeAccountId) {
+            await verifyStripeStatus();
+        }
+        setRefreshing(false);
     };
 
     const handleActivateStripe = async () => {
