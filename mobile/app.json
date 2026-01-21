@@ -15,7 +15,11 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.vrumi.connect"
+      "bundleIdentifier": "com.vrumi.connect",
+      "buildNumber": "2",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -31,7 +35,9 @@
         "CAMERA",
         "POST_NOTIFICATIONS",
         "READ_EXTERNAL_STORAGE",
-        "READ_MEDIA_IMAGES"
+        "READ_MEDIA_IMAGES",
+        "android.permission.USE_BIOMETRIC",
+        "android.permission.USE_FINGERPRINT"
       ]
     },
     "web": {
@@ -56,13 +62,15 @@
           "enableGooglePay": true
         }
       ],
-      "expo-secure-store"
+      "expo-secure-store",
+      "expo-local-authentication"
     ],
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "5486859d-9a64-495f-9fc1-022ce90adc25"
+        "projectId": "5321a90a-d42c-4d90-9f61-6aeaa3ec2957"
       }
-    }
+    },
+    "owner": "felipemgl"
   }
 }
