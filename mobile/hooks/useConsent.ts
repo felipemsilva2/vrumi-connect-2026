@@ -115,27 +115,26 @@ export function useConsent(): UseConsentReturn {
         }
 
         try {
-            const session = await supabase.auth.getSession();
-            const response = await fetch(
-                `${SUPABASE_URL}/functions/v1/record-consent`,
-                {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${session.data.session?.access_token}`,
-                        'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt5dWF4amtva250ZG1jeGp1cmhtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjYzNTA5OTgsImV4cCI6MjA4MTkyNjk5OH0.MF7qrOQsvRvDzl1DKm7w9tnUYUN16sudyLVMdh1qzwM',
+            // Insert consent directly into database (no Edge Function needed)
+            const { data, error: insertError } = await supabase
+                .from('user_consents')
+                .insert({
+                    user_id: user.id,
+                    consent_type: type,
+                    version: CONSENT_VERSIONS[type],
+                    metadata: {
+                        ...metadata,
+                        recorded_via: 'mobile_app',
+                        timestamp: new Date().toISOString(),
                     },
-                    body: JSON.stringify({
-                        consentType: type,
-                        version: CONSENT_VERSIONS[type],
-                        metadata,
-                    }),
-                }
-            );
+                })
+                .select()
+                .single();
 
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || 'Failed to record consent');
+            if (insertError) {
+                console.error('Error recording consent:', insertError);
+                setError(insertError.message);
+                return false;
             }
 
             // Refresh consents
