@@ -123,6 +123,7 @@ export function useConsent(): UseConsentReturn {
                     headers: {
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${session.data.session?.access_token}`,
+                        'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt5dWF4amtva250ZG1jeGp1cmhtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjYzNTA5OTgsImV4cCI6MjA4MTkyNjk5OH0.MF7qrOQsvRvDzl1DKm7w9tnUYUN16sudyLVMdh1qzwM',
                     },
                     body: JSON.stringify({
                         consentType: type,
