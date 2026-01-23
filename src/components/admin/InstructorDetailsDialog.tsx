@@ -5,12 +5,22 @@ import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   MapPin, Phone, Mail, CreditCard, Clock, Star,
-  CheckCircle, XCircle, Ban, GraduationCap, FileText
+  CheckCircle, XCircle, Ban, GraduationCap, FileText, Trash2
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useState } from "react";
 import { useAuditLog } from "@/hooks/useAuditLog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 type InstructorStatus = 'pending' | 'approved' | 'rejected' | 'suspended';
 
@@ -59,19 +69,31 @@ const statusConfig: Record<InstructorStatus, { label: string; variant: "default"
 
 export function InstructorDetailsDialog({ open, onOpenChange, instructor, onUpdate }: InstructorDetailsDialogProps) {
   const [isProcessing, setIsProcessing] = useState(false);
+  const [showDeleteAlert, setShowDeleteAlert] = useState(false);
   const { logAction } = useAuditLog();
 
   if (!instructor) return null;
 
   const handleStatusChange = async (newStatus: InstructorStatus) => {
     setIsProcessing(true);
+    console.log(`[InstructorDetails] Attempting to change status to: ${newStatus}`);
+
     try {
+      if (newStatus === 'suspended') {
+        console.log('[InstructorDetails] Verifying suspension prerequisites for ID:', instructor.id);
+      }
+
       const { error } = await supabase
         .from("instructors")
         .update({ status: newStatus, updated_at: new Date().toISOString() })
         .eq("id", instructor.id);
 
-      if (error) throw error;
+      if (error) {
+        console.error('[InstructorDetails] Supabase Update Error:', error);
+        throw error;
+      }
+
+      console.log('[InstructorDetails] Status updated successfully in DB');
 
       const notificationMessages: Record<InstructorStatus, { title: string; message: string; type: string }> = {
         approved: {
@@ -113,10 +135,40 @@ export function InstructorDetailsDialog({ open, onOpenChange, instructor, onUpda
       onUpdate();
       onOpenChange(false);
     } catch (error: any) {
-      console.error("Error updating instructor status:", error);
+      console.error("Error updating instructor status (CATCH):", error);
       toast.error(error.message || "Erro ao atualizar status");
     } finally {
       setIsProcessing(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    setIsProcessing(true);
+    try {
+      const { error } = await supabase
+        .from("instructors")
+        .delete()
+        .eq("id", instructor.id);
+
+      if (error) throw error;
+
+      await logAction({
+        actionType: "DELETE_INSTRUCTOR",
+        entityType: "instructor",
+        entityId: instructor.id,
+        oldValues: { name: instructor.full_name },
+        newValues: null,
+      });
+
+      toast.success("Instrutor removido com sucesso");
+      onUpdate();
+      onOpenChange(false);
+    } catch (error: any) {
+      console.error("Error deleting instructor:", error);
+      toast.error(error.message || "Erro ao remover instrutor");
+    } finally {
+      setIsProcessing(false);
+      setShowDeleteAlert(false);
     }
   };
 
@@ -326,51 +378,82 @@ export function InstructorDetailsDialog({ open, onOpenChange, instructor, onUpda
 
           {/* Action Buttons */}
           <Separator />
-          <div className="flex flex-wrap gap-2">
-            {instructor.status === 'pending' && (
-              <>
+          <div className="flex flex-wrap gap-2 justify-between">
+            <div className="flex gap-2">
+              {instructor.status === 'pending' && (
+                <>
+                  <Button
+                    onClick={() => handleStatusChange('approved')}
+                    disabled={isProcessing}
+                    className="gap-2"
+                  >
+                    <CheckCircle className="h-4 w-4" />
+                    Aprovar
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    onClick={() => handleStatusChange('rejected')}
+                    disabled={isProcessing}
+                    className="gap-2"
+                  >
+                    <XCircle className="h-4 w-4" />
+                    Rejeitar
+                  </Button>
+                </>
+              )}
+              {instructor.status === 'approved' && (
+                <Button
+                  variant="outline"
+                  onClick={() => handleStatusChange('suspended')}
+                  disabled={isProcessing}
+                  className="gap-2 text-orange-600 border-orange-600 hover:bg-orange-50"
+                >
+                  <Ban className="h-4 w-4" />
+                  Suspender
+                </Button>
+              )}
+              {(instructor.status === 'rejected' || instructor.status === 'suspended') && (
                 <Button
                   onClick={() => handleStatusChange('approved')}
                   disabled={isProcessing}
                   className="gap-2"
                 >
                   <CheckCircle className="h-4 w-4" />
-                  Aprovar
+                  Reativar
                 </Button>
-                <Button
-                  variant="destructive"
-                  onClick={() => handleStatusChange('rejected')}
-                  disabled={isProcessing}
-                  className="gap-2"
-                >
-                  <XCircle className="h-4 w-4" />
-                  Rejeitar
-                </Button>
-              </>
-            )}
-            {instructor.status === 'approved' && (
-              <Button
-                variant="outline"
-                onClick={() => handleStatusChange('suspended')}
-                disabled={isProcessing}
-                className="gap-2 text-orange-600 border-orange-600 hover:bg-orange-50"
-              >
-                <Ban className="h-4 w-4" />
-                Suspender
-              </Button>
-            )}
-            {(instructor.status === 'rejected' || instructor.status === 'suspended') && (
-              <Button
-                onClick={() => handleStatusChange('approved')}
-                disabled={isProcessing}
-                className="gap-2"
-              >
-                <CheckCircle className="h-4 w-4" />
-                Reativar
-              </Button>
-            )}
+              )}
+            </div>
+
+            <Button
+              variant="destructive"
+              onClick={() => setShowDeleteAlert(true)}
+              disabled={isProcessing}
+              className="gap-2 bg-red-600 hover:bg-red-700"
+            >
+              <Trash2 className="h-4 w-4" />
+              Remover
+            </Button>
           </div>
         </div>
+
+        <AlertDialog open={showDeleteAlert} onOpenChange={setShowDeleteAlert}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Tem certeza absoluta?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Esta ação não pode ser desfeita. Isso excluirá permanentemente o registro do instrutor
+                <strong> {instructor.full_name}</strong> e removerá seus dados de nossos servidores.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction onClick={handleDelete} className="bg-red-600 focus:ring-red-600">
+                {isProcessing ? "Removendo..." : "Sim, remover instrutor"}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
       </DialogContent>
     </Dialog>
   );
