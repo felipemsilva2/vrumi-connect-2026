@@ -6,7 +6,7 @@
     "scheme": "vrumi",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "dark",
+    "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "splash": {
       "image": "./assets/splash-icon.png",
@@ -16,9 +16,11 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.vrumi.connect",
-      "buildNumber": "4",
+      "buildNumber": "7",
+      "usesAppleSignIn": true,
       "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSFaceIDUsageDescription": "O Vrumi utiliza o FaceID para oferecer um acesso rápido e seguro à sua conta."
       }
     },
     "android": {
@@ -26,9 +28,10 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#0f172a"
       },
+      "allowBackup": false,
       "edgeToEdgeEnabled": true,
       "package": "com.vrumi.connect",
-      "versionCode": 1,
+      "versionCode": 7,
       "permissions": [
         "ACCESS_FINE_LOCATION",
         "ACCESS_COARSE_LOCATION",
@@ -63,7 +66,8 @@
         }
       ],
       "expo-secure-store",
-      "expo-local-authentication"
+      "expo-local-authentication",
+      "expo-apple-authentication"
     ],
     "extra": {
       "router": {},

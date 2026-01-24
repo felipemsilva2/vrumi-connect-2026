@@ -1,6 +1,6 @@
-import '@testing-library/react-native/extend-expect';
 
-// Mock de módulos nativos que podem causar problemas nos testes
+import '@testing-library/jest-native/extend-expect';
+
 jest.mock('expo-router', () => ({
     useRouter: () => ({
         push: jest.fn(),
@@ -17,5 +17,10 @@ jest.mock('expo-secure-store', () => ({
     deleteItemAsync: jest.fn(),
 }));
 
-// Mock global
 global.fetch = jest.fn();
+
+
+
+jest.mock('@react-native-async-storage/async-storage', () =>
+    require('@react-native-async-storage/async-storage/jest/async-storage-mock')
+);

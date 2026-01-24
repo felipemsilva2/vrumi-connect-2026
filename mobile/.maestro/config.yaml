@@ -1,0 +1,21 @@
+# Configuração global do Maestro para Vrumi Connect
+appId: com.vrumi.connect
+
+# Variáveis de ambiente para testes
+env:
+  # Credenciais de teste - substitua com valores reais
+  TEST_USER_EMAIL: "teste@vrumi.com"
+  TEST_USER_PASSWORD: "Teste123!"
+  TEST_INSTRUCTOR_EMAIL: "instrutor@vrumi.com"
+  TEST_INSTRUCTOR_PASSWORD: "Instrutor123!"
+
+# Configurações de espera
+initFlow:
+  - launchApp:
+      stopApp: false
+
+# Tempo padrão de espera para elementos
+timeout: 30000
+
+# Diretório para screenshots
+screenshotDir: "./screenshots"

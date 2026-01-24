@@ -7,12 +7,12 @@
   "loginPassword": "H05twglg",
   "executionArgs": {
     "projectName": "roadwiz-guide-64894",
-    "projectPath": "c:\\Users\\felipe\\vrumi\\roadwiz-guide-64894",
+    "projectPath": "c:\\Users\\felipe\\Vrumi-dev\\roadwiz-guide-64894",
     "testIds": [],
-    "additionalInstruction": "",
+    "additionalInstruction": "Focus on UI testing without authentication. Test landing page, navigation, responsiveness, and visual elements. Skip tests that require login or backend dependencies.",
     "envs": {
-      "API_KEY": "sk-user-6OstyE_TSOok8bUEdg71BE0ENDZB6tlPT0n61z4gm4KGLV64G5NGHkCX7tn085NC_tDz8yB9rKdY2aSCJrYOYskW4MStvNMhniMGQAfz4vQ_R3iN_k-aTBf2nh78MV6eXHo"
+      "API_KEY": "sk-user-TNwK9fu5WqnzWaoFSDFhdd26KQxRrlIF3SxPEpiKA5EjSAM66ZMHLGC3eXs9c9Vh49p2lQZa1kUgSqtPNa3Fz-OC1KZBDMRHuVY6Wel6OkengN17tIpYX62mIvzqEeEDoMo"
     }
   },
-  "proxy": "http://cd564cf0-47e2-411d-891e-81d79577147e:LvNAcmLWpmxYzSVA6cneHGduh2tQloBT@tun.testsprite.com:8080"
+  "proxy": "http://7703bbec-1628-40ec-97c5-6fe8ad6b3386:XuXsBHNAyt0FYMypCEHqM7jTaJabc3Tj@tun.testsprite.com:8080"
 }

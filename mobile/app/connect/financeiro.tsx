@@ -6,7 +6,6 @@ import {
     TouchableOpacity,
     ScrollView,
     ActivityIndicator,
-    Alert,
     RefreshControl
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -16,88 +15,78 @@ import { useTheme } from '../../contexts/ThemeContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../src/lib/supabase';
 
+const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL || 'https://kyuaxjkokntdmcxjurhm.supabase.co';
+
 interface Transaction {
     id: string;
     amount: number;
-    type: 'earning' | 'withdrawal' | 'refund';
-    status: 'pending' | 'completed' | 'failed';
+    type: string;
+    status: string;
     description: string;
-    created_at: string;
-    booking_id: string | null;
+    created: string;
+}
+
+interface Payout {
+    id: string;
+    amount: number;
+    arrival_date: string;
+    status: string;
+}
+
+interface FinanceData {
+    balance: {
+        available: number;
+        pending: number;
+    };
+    totalThisMonth: number;
+    transactions: Transaction[];
+    payouts: Payout[];
+    nextPayoutDate: string | null;
 }
 
 export default function InstructorFinanceScreen() {
     const { theme, isDark } = useTheme();
-    const { user } = useAuth();
+    const { session } = useAuth();
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
-    const [transactions, setTransactions] = useState<Transaction[]>([]);
-    const [stats, setStats] = useState({
-        totalEarnings: 0,
-        availableBalance: 0,
-        pendingBalance: 0
+    const [data, setData] = useState<FinanceData>({
+        balance: { available: 0, pending: 0 },
+        totalThisMonth: 0,
+        transactions: [],
+        payouts: [],
+        nextPayoutDate: null,
     });
+    const [error, setError] = useState<string | null>(null);
 
     const fetchData = useCallback(async () => {
-        if (!user?.id) return;
+        if (!session?.access_token) return;
 
         try {
-            // Get instructor ID
-            const { data: instructor } = await supabase
-                .from('instructors')
-                .select('id')
-                .eq('user_id', user.id)
-                .single();
+            setError(null);
 
-            if (!instructor) {
-                Alert.alert('Erro', 'Perfil não encontrado.');
-                router.back();
-                return;
-            }
-
-            // Fetch transactions
-            const { data: transData, error } = await supabase
-                .from('instructor_transactions')
-                .select('*')
-                .eq('instructor_id', instructor.id)
-                .order('created_at', { ascending: false });
-
-            if (error) throw error;
-
-            const txs = (transData || []) as Transaction[];
-            setTransactions(txs);
-
-            // Calculate stats
-            // In a real app, this should probably come from a balances table or simplified view
-            // Here we verify local calculation
-            const total = txs
-                .filter(t => t.type === 'earning' && t.status === 'completed')
-                .reduce((sum, t) => sum + t.amount, 0);
-
-            const pending = txs
-                .filter(t => t.type === 'earning' && t.status === 'pending')
-                .reduce((sum, t) => sum + t.amount, 0);
-
-            // Assuming withdrawals reduce balance. 
-            // available = completed earnings - completed withdrawals
-            const withdrawals = txs
-                .filter(t => t.type === 'withdrawal' && ['completed', 'pending'].includes(t.status))
-                .reduce((sum, t) => sum + t.amount, 0);
-
-            setStats({
-                totalEarnings: total,
-                availableBalance: total - withdrawals,
-                pendingBalance: pending
+            const response = await fetch(`${SUPABASE_URL}/functions/v1/connect-get-balance`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${session.access_token}`,
+                    'Content-Type': 'application/json',
+                },
             });
 
-        } catch (error) {
-            console.error('Error fetching finance data:', error);
-            // Alert.alert('Erro', 'Não foi possível carregar dados financeiros.');
+            const result = await response.json();
+
+            if (!response.ok) {
+                throw new Error(result.error || 'Failed to fetch data');
+            }
+
+            setData(result);
+        } catch (err: any) {
+            console.error('Error fetching finance data:', err);
+            setError(err.message || 'Erro ao carregar dados');
         } finally {
             setLoading(false);
             setRefreshing(false);
         }
-    }, [user?.id]);
+    }, [session?.access_token]);
 
     useEffect(() => {
         fetchData();
@@ -120,53 +109,29 @@ export default function InstructorFinanceScreen() {
         return date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit' });
     };
 
-    const getStatusColor = (status: string) => {
-        switch (status) {
-            case 'completed': return '#10b981';
-            case 'pending': return '#f59e0b';
-            case 'failed': return '#ef4444';
-            default: return theme.textSecondary;
-        }
+    const formatFullDate = (dateStr: string) => {
+        const date = new Date(dateStr);
+        return date.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' });
     };
 
-    const getStatusLabel = (status: string) => {
+    const getPayoutStatusLabel = (status: string) => {
         switch (status) {
-            case 'completed': return 'Concluído';
+            case 'paid': return 'Depositado';
             case 'pending': return 'Pendente';
+            case 'in_transit': return 'A caminho';
+            case 'canceled': return 'Cancelado';
             case 'failed': return 'Falhou';
             default: return status;
         }
     };
 
-    const getTypeIcon = (type: string) => {
-        switch (type) {
-            case 'earning': return 'arrow-down-circle';
-            case 'withdrawal': return 'arrow-up-circle';
-            case 'refund': return 'refresh-circle';
-            default: return 'ellipse';
+    const getPayoutStatusColor = (status: string) => {
+        switch (status) {
+            case 'paid': return '#10b981';
+            case 'pending': case 'in_transit': return '#f59e0b';
+            case 'canceled': case 'failed': return '#ef4444';
+            default: return theme.textSecondary;
         }
-    };
-
-    const getTypeColor = (type: string) => {
-        switch (type) {
-            case 'earning': return '#10b981';
-            case 'withdrawal': return '#3b82f6'; // Blue for cash out
-            case 'refund': return '#ef4444';
-            default: return theme.text;
-        }
-    };
-
-    const getTypeLabel = (type: string) => {
-        switch (type) {
-            case 'earning': return 'Recebimento';
-            case 'withdrawal': return 'Saque';
-            case 'refund': return 'Reembolso';
-            default: return type;
-        }
-    };
-
-    const handleWithdraw = () => {
-        Alert.alert('Saque', 'Funcionalidade de saque automático pelo Pagar.me em desenvolvimento. Seus pagamentos caem automaticamente na conta cadastrada toda semana.');
     };
 
     if (loading) {
@@ -174,6 +139,7 @@ export default function InstructorFinanceScreen() {
             <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
                 <View style={styles.loadingContainer}>
                     <ActivityIndicator size="large" color={theme.primary} />
+                    <Text style={[styles.loadingText, { color: theme.textSecondary }]}>Carregando dados do Stripe...</Text>
                 </View>
             </SafeAreaView>
         );
@@ -196,61 +162,103 @@ export default function InstructorFinanceScreen() {
                 contentContainerStyle={styles.content}
                 refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.primary} />}
             >
+                {error && (
+                    <View style={[styles.errorBanner, { backgroundColor: '#fef2f2' }]}>
+                        <Ionicons name="warning-outline" size={20} color="#dc2626" />
+                        <Text style={styles.errorText}>{error}</Text>
+                    </View>
+                )}
+
                 {/* Balance Cards */}
                 <View style={styles.balanceContainer}>
                     <View style={[styles.mainBalanceCard, { backgroundColor: theme.primary }]}>
                         <Text style={styles.balanceLabel}>Saldo Disponível</Text>
-                        <Text style={styles.balanceValue}>{formatCurrency(stats.availableBalance)}</Text>
-                        <TouchableOpacity style={styles.withdrawButton} onPress={handleWithdraw}>
-                            <Text style={styles.withdrawText}>Solicitar Saque</Text>
-                        </TouchableOpacity>
+                        <Text style={styles.balanceValue}>{formatCurrency(data.balance.available)}</Text>
+                        <View style={styles.payoutInfo}>
+                            <Ionicons name="checkmark-circle" size={16} color="rgba(255,255,255,0.8)" />
+                            <Text style={styles.payoutText}>
+                                Repasse automático para sua conta
+                            </Text>
+                        </View>
                     </View>
 
                     <View style={styles.secondaryBalances}>
                         <View style={[styles.secondaryCard, { backgroundColor: theme.card }]}>
                             <Text style={[styles.secondaryLabel, { color: theme.textSecondary }]}>Pendente</Text>
-                            <Text style={[styles.secondaryValue, { color: '#f59e0b' }]}>{formatCurrency(stats.pendingBalance)}</Text>
+                            <Text style={[styles.secondaryValue, { color: '#f59e0b' }]}>{formatCurrency(data.balance.pending)}</Text>
                         </View>
                         <View style={[styles.secondaryCard, { backgroundColor: theme.card }]}>
-                            <Text style={[styles.secondaryLabel, { color: theme.textSecondary }]}>Total Ganho</Text>
-                            <Text style={[styles.secondaryValue, { color: '#10b981' }]}>{formatCurrency(stats.totalEarnings)}</Text>
+                            <Text style={[styles.secondaryLabel, { color: theme.textSecondary }]}>Este Mês</Text>
+                            <Text style={[styles.secondaryValue, { color: '#10b981' }]}>{formatCurrency(data.totalThisMonth)}</Text>
                         </View>
                     </View>
                 </View>
 
-                {/* Transactions */}
-                <Text style={[styles.sectionTitle, { color: theme.text }]}>Histórico</Text>
+                {/* Next Payout */}
+                {data.nextPayoutDate && (
+                    <View style={[styles.nextPayoutCard, { backgroundColor: theme.card }]}>
+                        <View style={[styles.nextPayoutIcon, { backgroundColor: '#dcfce7' }]}>
+                            <Ionicons name="calendar-outline" size={24} color="#15803d" />
+                        </View>
+                        <View style={styles.nextPayoutInfo}>
+                            <Text style={[styles.nextPayoutLabel, { color: theme.textSecondary }]}>Próximo depósito</Text>
+                            <Text style={[styles.nextPayoutDate, { color: theme.text }]}>{formatFullDate(data.nextPayoutDate)}</Text>
+                        </View>
+                    </View>
+                )}
 
-                {transactions.length === 0 ? (
+                {/* Recent Payouts */}
+                {data.payouts.length > 0 && (
+                    <>
+                        <Text style={[styles.sectionTitle, { color: theme.text }]}>Depósitos Recentes</Text>
+                        <View style={styles.payoutsList}>
+                            {data.payouts.slice(0, 5).map((payout) => (
+                                <View key={payout.id} style={[styles.payoutCard, { backgroundColor: theme.card }]}>
+                                    <View style={[styles.payoutIconContainer, { backgroundColor: isDark ? '#1f2937' : '#f0fdf4' }]}>
+                                        <Ionicons name="wallet-outline" size={20} color="#10b981" />
+                                    </View>
+                                    <View style={styles.payoutDetails}>
+                                        <Text style={[styles.payoutAmount, { color: theme.text }]}>{formatCurrency(payout.amount)}</Text>
+                                        <Text style={[styles.payoutArrival, { color: theme.textSecondary }]}>{formatDate(payout.arrival_date)}</Text>
+                                    </View>
+                                    <View style={[styles.payoutStatusBadge, { backgroundColor: getPayoutStatusColor(payout.status) + '20' }]}>
+                                        <Text style={[styles.payoutStatusText, { color: getPayoutStatusColor(payout.status) }]}>
+                                            {getPayoutStatusLabel(payout.status)}
+                                        </Text>
+                                    </View>
+                                </View>
+                            ))}
+                        </View>
+                    </>
+                )}
+
+                {/* Recent Transactions */}
+                <Text style={[styles.sectionTitle, { color: theme.text }]}>Ganhos Recentes</Text>
+
+                {data.transactions.length === 0 ? (
                     <View style={styles.emptyState}>
                         <Ionicons name="receipt-outline" size={48} color={theme.textMuted} />
                         <Text style={[styles.emptyText, { color: theme.textMuted }]}>
-                            Nenhuma transação encontrada.
+                            Nenhum pagamento recebido ainda.
+                        </Text>
+                        <Text style={[styles.emptySubtext, { color: theme.textMuted }]}>
+                            Seus ganhos aparecerão aqui quando você realizar aulas.
                         </Text>
                     </View>
                 ) : (
                     <View style={styles.transactionsList}>
-                        {transactions.map((t) => (
+                        {data.transactions.map((t) => (
                             <View key={t.id} style={[styles.transactionCard, { backgroundColor: theme.card }]}>
-                                <View style={[styles.iconContainer, { backgroundColor: isDark ? '#1f2937' : '#f3f4f6' }]}>
-                                    <Ionicons name={getTypeIcon(t.type) as any} size={24} color={getTypeColor(t.type)} />
+                                <View style={[styles.iconContainer, { backgroundColor: isDark ? '#1f2937' : '#dcfce7' }]}>
+                                    <Ionicons name="arrow-down-circle" size={24} color="#10b981" />
                                 </View>
                                 <View style={styles.transactionInfo}>
-                                    <Text style={[styles.transactionType, { color: theme.text }]}>{getTypeLabel(t.type)}</Text>
-                                    <Text style={[styles.transactionDate, { color: theme.textSecondary }]}>{formatDate(t.created_at)}</Text>
-                                    {t.description && (
-                                        <Text style={[styles.transactionDescription, { color: theme.textMuted }]}>{t.description}</Text>
-                                    )}
+                                    <Text style={[styles.transactionType, { color: theme.text }]}>{t.description}</Text>
+                                    <Text style={[styles.transactionDate, { color: theme.textSecondary }]}>{formatDate(t.created)}</Text>
                                 </View>
-                                <View style={styles.transactionRight}>
-                                    <Text style={[styles.transactionAmount, { color: getTypeColor(t.type) }]}>
-                                        {t.type === 'withdrawal' || t.type === 'refund' ? '- ' : '+ '}
-                                        {formatCurrency(t.amount)}
-                                    </Text>
-                                    <Text style={[styles.transactionStatus, { color: getStatusColor(t.status) }]}>
-                                        {getStatusLabel(t.status)}
-                                    </Text>
-                                </View>
+                                <Text style={[styles.transactionAmount, { color: '#10b981' }]}>
+                                    + {formatCurrency(t.amount)}
+                                </Text>
                             </View>
                         ))}
                     </View>
@@ -263,14 +271,9 @@ export default function InstructorFinanceScreen() {
 }
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-    },
-    loadingContainer: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
+    container: { flex: 1 },
+    loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', gap: 12 },
+    loadingText: { fontSize: 14 },
     header: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -285,17 +288,18 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
     },
-    headerTitle: {
-        fontSize: 18,
-        fontWeight: '700',
+    headerTitle: { fontSize: 18, fontWeight: '700' },
+    content: { paddingHorizontal: 20, paddingTop: 10 },
+    errorBanner: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: 12,
+        borderRadius: 12,
+        marginBottom: 16,
+        gap: 8,
     },
-    content: {
-        paddingHorizontal: 20,
-        paddingTop: 10,
-    },
-    balanceContainer: {
-        marginBottom: 30,
-    },
+    errorText: { color: '#dc2626', fontSize: 13, flex: 1 },
+    balanceContainer: { marginBottom: 24 },
     mainBalanceCard: {
         borderRadius: 20,
         padding: 24,
@@ -315,20 +319,18 @@ const styles = StyleSheet.create({
     },
     balanceValue: {
         color: '#ffffff',
-        fontSize: 32,
+        fontSize: 36,
         fontWeight: '800',
-        marginBottom: 20,
+        marginBottom: 16,
     },
-    withdrawButton: {
-        backgroundColor: 'rgba(255,255,255,0.2)',
-        paddingVertical: 10,
-        paddingHorizontal: 20,
-        borderRadius: 10,
+    payoutInfo: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
     },
-    withdrawText: {
-        color: '#fff',
-        fontWeight: '700',
-        fontSize: 14,
+    payoutText: {
+        color: 'rgba(255,255,255,0.8)',
+        fontSize: 13,
     },
     secondaryBalances: {
         flexDirection: 'row',
@@ -339,82 +341,72 @@ const styles = StyleSheet.create({
         padding: 16,
         borderRadius: 16,
         alignItems: 'center',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.05,
-        shadowRadius: 4,
-        elevation: 1,
     },
-    secondaryLabel: {
-        fontSize: 12,
-        fontWeight: '600',
-        marginBottom: 4,
-    },
-    secondaryValue: {
-        fontSize: 16,
-        fontWeight: '700',
-    },
-    sectionTitle: {
-        fontSize: 18,
-        fontWeight: '700',
-        marginBottom: 16,
-    },
-    emptyState: {
-        alignItems: 'center',
-        padding: 40,
-        gap: 12,
-    },
-    emptyText: {
-        fontSize: 14,
-    },
-    transactionsList: {
-        gap: 12,
-    },
-    transactionCard: {
+    secondaryLabel: { fontSize: 12, fontWeight: '600', marginBottom: 4 },
+    secondaryValue: { fontSize: 18, fontWeight: '700' },
+    nextPayoutCard: {
         flexDirection: 'row',
+        alignItems: 'center',
         padding: 16,
         borderRadius: 16,
-        alignItems: 'center',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.03,
-        shadowRadius: 4,
-        elevation: 1,
+        marginBottom: 24,
+        gap: 12,
     },
-    iconContainer: {
+    nextPayoutIcon: {
         width: 48,
         height: 48,
         borderRadius: 24,
         justifyContent: 'center',
         alignItems: 'center',
+    },
+    nextPayoutInfo: { flex: 1 },
+    nextPayoutLabel: { fontSize: 12, fontWeight: '500' },
+    nextPayoutDate: { fontSize: 16, fontWeight: '700' },
+    sectionTitle: { fontSize: 18, fontWeight: '700', marginBottom: 16 },
+    payoutsList: { gap: 10, marginBottom: 24 },
+    payoutCard: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: 14,
+        borderRadius: 14,
+    },
+    payoutIconContainer: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        justifyContent: 'center',
+        alignItems: 'center',
         marginRight: 12,
     },
-    transactionInfo: {
-        flex: 1,
+    payoutDetails: { flex: 1 },
+    payoutAmount: { fontSize: 15, fontWeight: '600' },
+    payoutArrival: { fontSize: 12 },
+    payoutStatusBadge: {
+        paddingHorizontal: 10,
+        paddingVertical: 4,
+        borderRadius: 8,
     },
-    transactionType: {
-        fontSize: 15,
-        fontWeight: '600',
-        marginBottom: 2,
+    payoutStatusText: { fontSize: 11, fontWeight: '600' },
+    emptyState: { alignItems: 'center', padding: 40, gap: 12 },
+    emptyText: { fontSize: 14, fontWeight: '600' },
+    emptySubtext: { fontSize: 13, textAlign: 'center' },
+    transactionsList: { gap: 10 },
+    transactionCard: {
+        flexDirection: 'row',
+        padding: 14,
+        borderRadius: 14,
+        alignItems: 'center',
     },
-    transactionDate: {
-        fontSize: 12,
-        marginBottom: 2,
+    iconContainer: {
+        width: 44,
+        height: 44,
+        borderRadius: 22,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginRight: 12,
     },
-    transactionDescription: {
-        fontSize: 11,
-        fontStyle: 'italic',
-    },
-    transactionRight: {
-        alignItems: 'flex-end',
-    },
-    transactionAmount: {
-        fontSize: 15,
-        fontWeight: '700',
-        marginBottom: 2,
-    },
-    transactionStatus: {
-        fontSize: 11,
-        fontWeight: '600',
-    },
+    transactionInfo: { flex: 1 },
+    transactionType: { fontSize: 14, fontWeight: '600', marginBottom: 2 },
+    transactionDate: { fontSize: 12 },
+    transactionAmount: { fontSize: 16, fontWeight: '700' },
 });

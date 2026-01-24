@@ -3,6 +3,25 @@ import { useColorScheme } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export const lightTheme = {
+    // Layout & Spacing
+    spacing: {
+        xs: 4,
+        sm: 8,
+        md: 16,
+        lg: 24,
+        xl: 32,
+        xxl: 48,
+    },
+    radius: {
+        xs: 4,
+        sm: 8,
+        md: 12,
+        lg: 20,
+        xl: 28,
+        round: 32,
+        full: 999,
+    },
+
     // Backgrounds
     background: '#f8fafc',
     card: '#ffffff',
@@ -10,12 +29,14 @@ export const lightTheme = {
     cardHover: '#f8fafc',
 
     // Text
-    text: '#111827',
-    textSecondary: '#6b7280',
-    textMuted: '#9ca3af',
+    text: '#0f172a',    // Ligeiramente mais escuro para melhor contraste
+    textSecondary: '#475569', // Mais suave que o cinza anterior
+    textMuted: '#94a3b8',
 
-    // Primary
+    // Primary (Emerald/Mint Mix for "Confident Path")
     primary: '#10b981',
+    primarySoft: '#dcfce7', // Para fundos de botões/ícones suaves
+    primaryExtralight: '#f0fdf4',
     primaryLight: '#ecfdf5',
     primaryDark: '#059669',
 
@@ -25,12 +46,12 @@ export const lightTheme = {
 
     // Inputs
     inputBg: '#ffffff',
-    inputBorder: '#e5e7eb',
+    inputBorder: '#e2e8f0',
     inputFocusBorder: '#10b981',
 
     // Status colors
     success: '#10b981',
-    successLight: '#ecfdf5',
+    successLight: '#dcfce7',
     warning: '#f59e0b',
     warningLight: '#fef3c7',
     error: '#ef4444',
@@ -42,34 +63,67 @@ export const lightTheme = {
     overlay: 'rgba(0,0,0,0.5)',
 
     // Skeleton/Loading
-    skeleton: '#e5e7eb',
-    skeletonHighlight: '#f3f4f6',
+    skeleton: '#e2e8f0',
+    skeletonHighlight: '#f1f5f9',
+
+    // Typography (Ref: mobile-typography.md)
+    typography: {
+        sizes: {
+            display: 34,
+            h1: 28,
+            h2: 22,
+            h3: 20,
+            bodyLarge: 17,
+            body: 16,
+            bodySmall: 14,
+            caption: 12,
+            label: 11,
+        },
+        lineHeights: {
+            tight: 1.2,
+            normal: 1.5,
+            loose: 1.6,
+        },
+        weights: {
+            regular: '400' as const,
+            medium: '500' as const,
+            semibold: '600' as const,
+            bold: '700' as const,
+            extraBold: '800' as const,
+        }
+    }
 };
 
 export const darkTheme = {
-    // Backgrounds
-    background: '#0f172a',
-    card: '#1e293b',
-    cardBorder: '#334155',
-    cardHover: '#273449',
+    // Layout & Spacing
+    spacing: lightTheme.spacing,
+    radius: lightTheme.radius,
 
-    // Text
-    text: '#f8fafc',
-    textSecondary: '#94a3b8',
-    textMuted: '#64748b',
+    // Backgrounds (OLED Optimized)
+    background: '#000000',     // True Black for 0% battery consumption on OLED
+    card: '#121212',           // Near Black Surface (Material Standard)
+    cardBorder: '#1e293b',     // Slightly visible border for depth
+    cardHover: '#161e2b',
 
-    // Primary
+    // Text (High Contrast & Reduced Eye Strain)
+    text: '#ececec',           // Off-white to prevent "smear" and fatigue
+    textSecondary: '#b0b0b0',  // 4.5:1+ contrast on card surface
+    textMuted: '#71717a',
+
+    // Primary (Optimized for Dark Surface)
     primary: '#10b981',
-    primaryLight: '#064e3b',
+    primarySoft: '#064e3b',
+    primaryExtralight: '#064e4b',
+    primaryLight: '#052c22',
     primaryDark: '#34d399',
 
     // Navigation
-    tabBar: '#1e293b',
-    tabBarBorder: '#334155',
+    tabBar: '#000000',         // Merged with background for seamless look
+    tabBarBorder: '#121212',
 
     // Inputs
-    inputBg: '#1e293b',
-    inputBorder: '#334155',
+    inputBg: '#09090b',
+    inputBorder: '#27272a',
     inputFocusBorder: '#10b981',
 
     // Status colors
@@ -79,15 +133,18 @@ export const darkTheme = {
     warningLight: '#451a03',
     error: '#ef4444',
     errorLight: '#450a0a',
-    info: '#3b82f6',
-    infoLight: '#1e3a5f',
+    info: '#0ea5e9',
+    infoLight: '#082f49',
 
     // Overlay
-    overlay: 'rgba(0,0,0,0.7)',
+    overlay: 'rgba(0,0,0,0.85)',
 
     // Skeleton/Loading
-    skeleton: '#334155',
-    skeletonHighlight: '#475569',
+    skeleton: '#18181b',
+    skeletonHighlight: '#27272a',
+
+    // Typography (Inherit scale, adjust for optical halation if needed)
+    typography: lightTheme.typography,
 };
 
 export type Theme = typeof lightTheme;

@@ -14,6 +14,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useTheme } from '../../../contexts/ThemeContext';
 import { useAuth } from '../../../contexts/AuthContext';
 import { supabase } from '../../../src/lib/supabase';
+import ConfirmationModal from '../../../components/ConfirmationModal';
 
 interface PackageDetails {
     id: string;
@@ -37,6 +38,35 @@ export default function ComprarPacoteScreen() {
     const [purchasing, setPurchasing] = useState(false);
     const [packageData, setPackageData] = useState<PackageDetails | null>(null);
     const [hasActivePackage, setHasActivePackage] = useState(false);
+
+    // Unified Modal State
+    const [modalConfig, setModalConfig] = useState<{
+        visible: boolean;
+        title: string;
+        message: string;
+        type: 'warning' | 'danger' | 'success' | 'info';
+        onConfirm?: () => void;
+        confirmText?: string;
+        cancelText?: string;
+        showCancel?: boolean;
+    }>({
+        visible: false,
+        title: '',
+        message: '',
+        type: 'warning',
+    });
+
+    const showModal = (
+        title: string,
+        message: string,
+        type: 'warning' | 'danger' | 'success' | 'info' = 'warning',
+        onConfirm?: () => void,
+        confirmText: string = 'Entendido',
+        showCancel: boolean = false,
+        cancelText: string = 'Cancelar'
+    ) => {
+        setModalConfig({ visible: true, title, message, type, onConfirm, confirmText, showCancel, cancelText });
+    };
 
     useEffect(() => {
         if (id) {
@@ -65,8 +95,7 @@ export default function ComprarPacoteScreen() {
             setPackageData(data as any);
         } catch (error) {
             console.error('Error fetching package:', error);
-            Alert.alert('Erro', 'Pacote não encontrado');
-            router.back();
+            showModal('Erro', 'Pacote não encontrado', 'danger', () => router.back());
         } finally {
             setLoading(false);
         }
@@ -89,21 +118,21 @@ export default function ComprarPacoteScreen() {
         if (!user || !packageData) return;
 
         if (hasActivePackage) {
-            Alert.alert(
+            showModal(
                 'Pacote Ativo',
                 'Você já possui um pacote ativo. Finalize ou cancele o pacote atual antes de comprar outro.',
-                [{ text: 'OK' }]
+                'warning'
             );
             return;
         }
 
-        Alert.alert(
+        showModal(
             'Confirmar Compra',
             `Deseja comprar o pacote "${packageData.name}" por ${formatPrice(packageData.total_price)}?`,
-            [
-                { text: 'Cancelar', style: 'cancel' },
-                { text: 'Confirmar', onPress: confirmPurchase }
-            ]
+            'info',
+            confirmPurchase,
+            'Confirmar',
+            true
         );
     };
 
@@ -125,10 +154,12 @@ export default function ComprarPacoteScreen() {
 
             if (error) throw error;
 
-            Alert.alert(
+            showModal(
                 'Compra Realizada! 🎉',
                 `Você adquiriu ${packageData.total_lessons} aulas com ${packageData.instructor.full_name}. Agora você pode agendar suas aulas!`,
-                [{ text: 'Ver Minhas Aulas', onPress: () => router.replace('/(tabs)/aulas') }]
+                'success',
+                () => router.replace('/(tabs)/aulas'),
+                'Ver Minhas Aulas'
             );
         } catch (error: any) {
             console.error('Purchase error:', error);
@@ -280,6 +311,21 @@ export default function ComprarPacoteScreen() {
                     )}
                 </TouchableOpacity>
             </View>
+
+            <ConfirmationModal
+                visible={modalConfig.visible}
+                onClose={() => setModalConfig(prev => ({ ...prev, visible: false }))}
+                title={modalConfig.title}
+                message={modalConfig.message}
+                type={modalConfig.type}
+                confirmText={modalConfig.confirmText}
+                cancelText={modalConfig.cancelText}
+                onConfirm={() => {
+                    modalConfig.onConfirm?.();
+                    setModalConfig(prev => ({ ...prev, visible: false }));
+                }}
+                onCancel={modalConfig.showCancel ? () => setModalConfig(prev => ({ ...prev, visible: false })) : undefined}
+            />
         </SafeAreaView>
     );
 }

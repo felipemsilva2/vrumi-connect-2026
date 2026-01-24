@@ -1,8 +1,8 @@
 {
-    "name": "Vrumi - Preparação para CNH",
+    "name": "Vrumi Connect - Aulas de Direção",
     "short_name": "Vrumi",
-    "description": "Plataforma completa para preparação de exames de habilitação. Flashcards inteligentes e materiais teóricos completos para sua aprovação.",
-    "start_url": "/",
+    "description": "Marketplace de instrutores independentes de direção. Encontre, agende e pague aulas práticas com segurança.",
+    "start_url": "/connect",
     "scope": "/",
     "display": "standalone",
     "orientation": "portrait-primary",
@@ -35,7 +35,7 @@
         }
     ],
     "categories": [
-        "education",
+        "lifestyle",
         "productivity"
     ],
     "screenshots": [
@@ -48,10 +48,10 @@
     ],
     "shortcuts": [
         {
-            "name": "Flashcards",
-            "short_name": "Flashcards",
-            "description": "Estudar com flashcards",
-            "url": "/flashcards",
+            "name": "Encontrar Instrutor",
+            "short_name": "Buscar",
+            "description": "Buscar instrutores de direção",
+            "url": "/connect",
             "icons": [
                 {
                     "src": "/pwa-icon.png",
@@ -61,10 +61,10 @@
             ]
         },
         {
-            "name": "Simulados",
-            "short_name": "Simulados",
-            "description": "Fazer simulados",
-            "url": "/simulados",
+            "name": "Minhas Aulas",
+            "short_name": "Aulas",
+            "description": "Ver minhas aulas agendadas",
+            "url": "/connect/minhas-aulas",
             "icons": [
                 {
                     "src": "/pwa-icon.png",

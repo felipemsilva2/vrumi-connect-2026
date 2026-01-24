@@ -13,7 +13,13 @@
         "preview": {
             "distribution": "internal"
         },
-        "production": {}
+        "production": {
+            "env": {
+                "EXPO_PUBLIC_SUPABASE_URL": "https://kyuaxjkokntdmcxjurhm.supabase.co",
+                "EXPO_PUBLIC_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt5dWF4amtva250ZG1jeGp1cmhtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjYzNTA5OTgsImV4cCI6MjA4MTkyNjk5OH0.MF7qrOQsvRvDzl1DKm7w9tnUYUN16sudyLVMdh1qzwM",
+                "EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY": "pk_live_51R1EmwBn4R59TxYixPJgLpUa5fvifCupEwwcADYLnsSfe1cZWZ8iCGFT3jHOwbZNs9bg4VpYxQIFfs0UPxDmowim00w3KNVrh7"
+            }
+        }
     },
     "submit": {
         "production": {}

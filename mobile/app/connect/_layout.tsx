@@ -14,10 +14,30 @@ export default function ConnectLayout() {
         >
             <Stack.Screen name="index" />
             <Stack.Screen name="instrutor/[id]" />
-            <Stack.Screen name="agendar/[id]" />
+            <Stack.Screen
+                name="agendar/[id]"
+                options={{
+                    presentation: 'modal',
+                    animation: 'slide_from_bottom',
+                    headerShown: false
+                }}
+            />
             <Stack.Screen name="minhas-aulas" />
-            <Stack.Screen name="cadastro-instrutor" />
+            <Stack.Screen
+                name="cadastro-instrutor"
+                options={{
+                    presentation: 'modal',
+                    animation: 'slide_from_bottom'
+                }}
+            />
             <Stack.Screen name="painel-instrutor" />
+            <Stack.Screen
+                name="checkout/[id]"
+                options={{
+                    presentation: 'modal',
+                    animation: 'slide_from_bottom'
+                }}
+            />
         </Stack>
     );
 }

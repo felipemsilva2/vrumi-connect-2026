@@ -1,9 +1,12 @@
 import { Button } from "@/components/ui/button";
-import { Car, BookOpen, Award, ChevronRight } from "lucide-react";
+import { Car, Users, Award, ChevronRight } from "lucide-react";
 import { motion } from "framer-motion";
 import heroBg from "@/assets/hero-bg.jpg";
+import { useNavigate } from "react-router-dom";
 
 const Hero = () => {
+  const navigate = useNavigate();
+
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-20 pb-10">
       {/* Background Image with Gradient Overlay */}
@@ -39,7 +42,7 @@ const Hero = () => {
           >
             <div className="inline-flex items-center gap-2 bg-secondary/50 backdrop-blur-md border border-white/10 rounded-full px-4 py-1.5 text-foreground shadow-sm">
               <Award className="w-4 h-4 text-primary" />
-              <span className="text-sm font-medium">Plataforma #1 de Preparação</span>
+              <span className="text-sm font-medium">Nova Lei CNH 2025 - Instrutores Independentes</span>
             </div>
           </motion.div>
 
@@ -50,9 +53,9 @@ const Hero = () => {
             transition={{ duration: 0.8, delay: 0.4, ease: "easeOut" }}
             className="text-4xl sm:text-5xl md:text-8xl font-bold tracking-tight text-foreground leading-[1.1]"
           >
-            Sua CNH, <br className="hidden md:block" />
+            Aulas de Direção <br className="hidden md:block" />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-primary/60">
-              Sem Estresse.
+              Sem Complicação.
             </span>
           </motion.h1>
 
@@ -63,7 +66,7 @@ const Hero = () => {
             transition={{ duration: 0.8, delay: 0.6, ease: "easeOut" }}
             className="text-lg md:text-2xl text-muted-foreground max-w-2xl mx-auto leading-relaxed font-light"
           >
-            Domine a teoria e a prática com a metodologia mais moderna do mercado. Flashcards, simulados e suporte em um só lugar.
+            Encontre instrutores independentes credenciados pelo DETRAN. Com a nova lei, economize até 80% e tire sua CNH com total flexibilidade.
           </motion.p>
 
           {/* CTA Buttons */}
@@ -73,13 +76,22 @@ const Hero = () => {
             transition={{ duration: 0.8, delay: 0.8, ease: "easeOut" }}
             className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-8"
           >
-            <Button size="lg" className="w-full sm:w-auto text-lg h-14 px-8 rounded-full shadow-lg hover:shadow-xl hover:brightness-110 transition-all duration-300 bg-primary text-white border-0">
-              Começar Agora
+            <Button
+              size="lg"
+              onClick={() => navigate("/connect")}
+              className="w-full sm:w-auto text-lg h-14 px-8 rounded-full shadow-lg hover:shadow-xl hover:brightness-110 transition-all duration-300 bg-primary text-white border-0"
+            >
+              Encontrar Instrutor
               <ChevronRight className="w-5 h-5 ml-2" />
             </Button>
-            <Button variant="outline" size="lg" className="w-full sm:w-auto text-lg h-14 px-8 rounded-full backdrop-blur-sm border-2 hover:bg-secondary/50 transition-all duration-300">
-              <BookOpen className="w-5 h-5 mr-2" />
-              Ver Conteúdo
+            <Button
+              variant="outline"
+              size="lg"
+              onClick={() => navigate("/connect/cadastro-instrutor")}
+              className="w-full sm:w-auto text-lg h-14 px-8 rounded-full backdrop-blur-sm border-2 hover:bg-secondary/50 transition-all duration-300"
+            >
+              <Car className="w-5 h-5 mr-2" />
+              Sou Instrutor
             </Button>
           </motion.div>
 
@@ -91,9 +103,9 @@ const Hero = () => {
             className="grid grid-cols-1 sm:grid-cols-3 gap-8 pt-16 max-w-3xl mx-auto border-t border-border/50 mt-16"
           >
             {[
-              { value: "10K+", label: "Alunos Aprovados" },
-              { value: "95%", label: "Taxa de Aprovação" },
-              { value: "500+", label: "Questões" },
+              { value: "50+", label: "Instrutores Credenciados" },
+              { value: "100%", label: "Pagamento Seguro" },
+              { value: "4.9★", label: "Avaliação Média" },
             ].map((stat, index) => (
               <div key={index} className="text-center">
                 <div className="text-3xl md:text-4xl font-bold text-foreground mb-1 tracking-tight">

@@ -16,10 +16,11 @@ export default function Index() {
             try {
                 // Onboarding complete check
                 const value = await AsyncStorage.getItem('@vrumi_onboarding_complete');
-                console.log('Onboarding value:', value);
+
                 setHasSeenOnboarding(value === 'true');
             } catch (error) {
-                console.error('Error checking onboarding:', error);
+                // Error checking onboarding, default to true for safety
+
                 setHasSeenOnboarding(true);
             } finally {
                 setCheckingOnboarding(false);
@@ -37,21 +38,21 @@ export default function Index() {
         );
     }
 
-    console.log('REDIRECT DECISION:', { user: !!user, hasSeenOnboarding, loading, checkingOnboarding });
+
 
     // FIRST: Show onboarding if user hasn't seen it (even if logged in)
     if (!hasSeenOnboarding) {
-        console.log('>>> Redirecting to ONBOARDING');
+
         return <Redirect href="/(auth)/onboarding" />;
     }
 
     // If user is logged in, go to main app
     if (user) {
-        console.log('>>> Redirecting to TABS (user logged in)');
+
         return <Redirect href="/(tabs)" />;
     }
 
     // Otherwise, go to login
-    console.log('>>> Redirecting to LOGIN');
+
     return <Redirect href="/(auth)/login" />;
 }

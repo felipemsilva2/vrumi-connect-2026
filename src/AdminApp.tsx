@@ -11,20 +11,14 @@ import { Loader2 } from "lucide-react";
 import { AdminAuthProvider, useAdminAuth } from "@/contexts/AdminAuthContext";
 import { Button } from "@/components/ui/button";
 
-// Lazy load admin pages
+// Lazy load admin pages (Connect only)
 const AdminDashboard = lazy(() => import("@/pages/admin/AdminDashboard"));
 const AdminUsers = lazy(() => import("@/pages/admin/AdminUsers"));
 const AdminInstructors = lazy(() => import("@/pages/admin/AdminInstructors"));
 const AdminRoles = lazy(() => import("@/pages/admin/AdminRoles"));
-const AdminSubscriptions = lazy(() => import("@/pages/admin/AdminSubscriptions"));
 const AdminAuditLogs = lazy(() => import("@/pages/admin/AdminAuditLogs"));
-const AdminQuestions = lazy(() => import("@/pages/AdminQuestions"));
-const AdminFlashcards = lazy(() => import("@/pages/AdminFlashcards"));
-const AdminPopulate = lazy(() => import("@/pages/AdminPopulate"));
-const AdminTrafficSignsImport = lazy(() => import("@/pages/admin/AdminTrafficSignsImport"));
 const AdminLogin = lazy(() => import("@/pages/admin/AdminLogin"));
 const AdminSupport = lazy(() => import("@/pages/admin/AdminSupport"));
-const AdminGenerateQuestions = lazy(() => import("@/pages/admin/AdminGenerateQuestions"));
 const AdminBookings = lazy(() => import("@/pages/admin/AdminBookings"));
 const AdminTransactions = lazy(() => import("@/pages/admin/AdminTransactions"));
 
@@ -75,15 +69,9 @@ const AdminRoutes = () => (
         <Route path="/instrutores" element={<ProtectedAdminRoute><AdminInstructors /></ProtectedAdminRoute>} />
         <Route path="/agendamentos" element={<ProtectedAdminRoute><AdminBookings /></ProtectedAdminRoute>} />
         <Route path="/transacoes" element={<ProtectedAdminRoute><AdminTransactions /></ProtectedAdminRoute>} />
-        <Route path="/assinaturas" element={<ProtectedAdminRoute><AdminSubscriptions /></ProtectedAdminRoute>} />
         <Route path="/funcoes" element={<ProtectedAdminRoute><AdminRoles /></ProtectedAdminRoute>} />
         <Route path="/logs-auditoria" element={<ProtectedAdminRoute><AdminAuditLogs /></ProtectedAdminRoute>} />
-        <Route path="/popular" element={<ProtectedAdminRoute><AdminPopulate /></ProtectedAdminRoute>} />
-        <Route path="/flashcards" element={<ProtectedAdminRoute><AdminFlashcards /></ProtectedAdminRoute>} />
-        <Route path="/questoes" element={<ProtectedAdminRoute><AdminQuestions /></ProtectedAdminRoute>} />
-        <Route path="/placas" element={<ProtectedAdminRoute><AdminTrafficSignsImport /></ProtectedAdminRoute>} />
         <Route path="/suporte" element={<ProtectedAdminRoute><AdminSupport /></ProtectedAdminRoute>} />
-        <Route path="/gerar-questoes" element={<ProtectedAdminRoute><AdminGenerateQuestions /></ProtectedAdminRoute>} />
         <Route path="*" element={<div className="flex items-center justify-center h-screen">Página não encontrada</div>} />
     </Routes>
 );
@@ -94,7 +82,7 @@ const AdminApp = () => (
             <TooltipProvider>
                 <Toaster />
                 <Sonner />
-                <BrowserRouter basename="/admin">
+                <BrowserRouter basename={window.location.hostname.includes('admin') ? '/' : '/admin'}>
                     <ErrorBoundary>
                         <AdminAuthProvider>
                             <Suspense fallback={<PageLoader />}>

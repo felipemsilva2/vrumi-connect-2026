@@ -18,6 +18,7 @@ import { useTheme } from '../../contexts/ThemeContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../src/lib/supabase';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import ConfirmationModal from '../../components/ConfirmationModal';
 
 const DAYS_OF_WEEK = [
     { id: 0, label: 'Domingo' },
@@ -56,6 +57,24 @@ export default function InstructorAvailabilityScreen() {
     const [tempTime, setTempTime] = useState(new Date());
     const [newSlotStart, setNewSlotStart] = useState<Date | null>(null);
 
+    // Unified Modal State
+    const [modalConfig, setModalConfig] = useState<{
+        visible: boolean;
+        title: string;
+        message: string;
+        type: 'warning' | 'danger' | 'success' | 'info';
+        onConfirm?: () => void;
+    }>({
+        visible: false,
+        title: '',
+        message: '',
+        type: 'warning',
+    });
+
+    const showModal = (title: string, message: string, type: 'warning' | 'danger' | 'success' | 'info' = 'warning', onConfirm?: () => void) => {
+        setModalConfig({ visible: true, title, message, type, onConfirm });
+    };
+
     const [instructorId, setInstructorId] = useState<string | null>(null);
 
     const fetchAvailability = useCallback(async () => {
@@ -70,8 +89,7 @@ export default function InstructorAvailabilityScreen() {
                 .single();
 
             if (!instructor) {
-                Alert.alert('Erro', 'Perfil de instrutor não encontrado.');
-                router.back();
+                showModal('Erro', 'Perfil de instrutor não encontrado.', 'danger', () => router.back());
                 return;
             }
 
@@ -105,7 +123,7 @@ export default function InstructorAvailabilityScreen() {
             setAvailability(grouped);
         } catch (error) {
             console.error('Error fetching availability:', error);
-            Alert.alert('Erro', 'Não foi possível carregar seus horários.');
+            showModal('Erro', 'Não foi possível carregar seus horários.', 'danger');
         } finally {
             setLoading(false);
         }
@@ -159,7 +177,7 @@ export default function InstructorAvailabilityScreen() {
                 const endStr = selectedDate.toTimeString().split(' ')[0];
 
                 if (startStr >= endStr) {
-                    Alert.alert('Inválido', 'O horário de término deve ser após o início.');
+                    showModal('Inválido', 'O horário de término deve ser após o início.', 'warning');
                 } else {
                     addSlotToState(selectedDay, startStr, endStr);
                 }
@@ -208,7 +226,7 @@ export default function InstructorAvailabilityScreen() {
             });
         } catch (error) {
             console.error('Error adding slot:', error);
-            Alert.alert('Erro', 'Falha ao salvar horário.');
+            showModal('Erro', 'Falha ao salvar horário.', 'danger');
         }
     };
 
@@ -232,7 +250,7 @@ export default function InstructorAvailabilityScreen() {
             });
         } catch (error) {
             console.error('Error deleting slot:', error);
-            Alert.alert('Erro', 'Falha ao remover horário.');
+            showModal('Erro', 'Falha ao remover horário.', 'danger');
         }
     };
 
@@ -340,6 +358,19 @@ export default function InstructorAvailabilityScreen() {
                 </View>
                 <View style={{ height: 40 }} />
             </ScrollView>
+
+            <ConfirmationModal
+                visible={modalConfig.visible}
+                onClose={() => setModalConfig(prev => ({ ...prev, visible: false }))}
+                title={modalConfig.title}
+                message={modalConfig.message}
+                type={modalConfig.type}
+                confirmText="Entendido"
+                onConfirm={() => {
+                    modalConfig.onConfirm?.();
+                    setModalConfig(prev => ({ ...prev, visible: false }));
+                }}
+            />
 
             {/* Time Picker Modal for iOS / Logic for Android handled by state */}
             {showTimePicker && (

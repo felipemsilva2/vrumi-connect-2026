@@ -83,11 +83,11 @@ export default function QRCodeScreen() {
                     status,
                     student:profiles!bookings_student_id_fkey(full_name)
                 `)
-                .eq('id', id)
+                .eq('id', typeof id === 'string' ? id : (Array.isArray(id) ? id[0] : ''))
                 .single();
 
             if (data) {
-                setStatus(data.status);
+                setStatus(data.status || 'pending');
                 const student = Array.isArray(data.student) ? data.student[0] : data.student;
                 setStudentName(student?.full_name || 'Aluno');
 

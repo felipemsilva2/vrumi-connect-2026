@@ -17,6 +17,7 @@ import { useTheme } from '../../../contexts/ThemeContext';
 import { useAuth } from '../../../contexts/AuthContext';
 import { supabase } from '../../../src/lib/supabase';
 import { useStripe } from '@stripe/stripe-react-native';
+import ConfirmationModal from '../../../components/ConfirmationModal';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -65,6 +66,35 @@ export default function CheckoutScreen() {
     const [submitting, setSubmitting] = useState(false);
     const [data, setData] = useState<any>(null);
     const [paymentReady, setPaymentReady] = useState(false);
+
+    // Unified Modal State
+    const [modalConfig, setModalConfig] = useState<{
+        visible: boolean;
+        title: string;
+        message: string;
+        type: 'warning' | 'danger' | 'success' | 'info';
+        onConfirm?: () => void;
+        confirmText?: string;
+        cancelText?: string;
+        showCancel?: boolean;
+    }>({
+        visible: false,
+        title: '',
+        message: '',
+        type: 'warning',
+    });
+
+    const showModal = (
+        title: string,
+        message: string,
+        type: 'warning' | 'danger' | 'success' | 'info' = 'warning',
+        onConfirm?: () => void,
+        confirmText: string = 'Entendido',
+        showCancel: boolean = false,
+        cancelText: string = 'Cancelar'
+    ) => {
+        setModalConfig({ visible: true, title, message, type, onConfirm, confirmText, showCancel, cancelText });
+    };
 
     useEffect(() => {
         if (id) {
@@ -118,7 +148,7 @@ export default function CheckoutScreen() {
             }
         } catch (error) {
             console.error('Error fetching checkout data:', error);
-            Alert.alert('Erro', 'Não foi possível carregar os dados do pedido.');
+            showModal('Erro', 'Não foi possível carregar os dados do pedido.', 'danger');
         } finally {
             setLoading(false);
         }
@@ -197,25 +227,22 @@ export default function CheckoutScreen() {
                 await updateDatabaseAfterPayment();
             } else {
                 // Fallback: Mock payment (instructor doesn't have Stripe account yet)
-                Alert.alert(
+                showModal(
                     'Instrutor não configurado',
                     'Este instrutor ainda não configurou o recebimento de pagamentos. Deseja prosseguir com pagamento simulado para teste?',
-                    [
-                        { text: 'Cancelar', style: 'cancel', onPress: () => setSubmitting(false) },
-                        {
-                            text: 'Simular',
-                            onPress: async () => {
-                                await new Promise(resolve => setTimeout(resolve, 1500));
-                                await updateDatabaseAfterPayment();
-                            }
-                        }
-                    ]
+                    'warning',
+                    async () => {
+                        await new Promise(resolve => setTimeout(resolve, 1500));
+                        await updateDatabaseAfterPayment();
+                    },
+                    'Simular',
+                    true
                 );
                 return;
             }
         } catch (error: any) {
             console.error('Payment error:', error);
-            Alert.alert('Erro no Pagamento', error.message || 'Tente novamente em alguns instantes.');
+            showModal('Erro no Pagamento', error.message || 'Tente novamente em alguns instantes.', 'danger');
         } finally {
             setSubmitting(false);
         }
@@ -280,12 +307,13 @@ export default function CheckoutScreen() {
             }
         }
 
-        Alert.alert(
+        showModal(
             'Pagamento Confirmado! 🎉',
             type === 'booking'
                 ? 'Seu instrutor foi notificado e logo confirmará a aula.'
                 : 'Seu pacote já está disponível para uso.',
-            [{ text: 'OK', onPress: () => router.push(type === 'booking' ? '/(tabs)/aulas' : `/connect/instrutor/${data.instructor_id}`) }]
+            'success',
+            () => router.push(type === 'booking' ? '/(tabs)/aulas' : `/connect/instrutor/${data.instructor_id}`)
         );
     };
 
@@ -435,6 +463,21 @@ export default function CheckoutScreen() {
                     )}
                 </TouchableOpacity>
             </View>
+
+            <ConfirmationModal
+                visible={modalConfig.visible}
+                onClose={() => setModalConfig(prev => ({ ...prev, visible: false }))}
+                title={modalConfig.title}
+                message={modalConfig.message}
+                type={modalConfig.type}
+                confirmText={modalConfig.confirmText}
+                cancelText={modalConfig.cancelText}
+                onConfirm={() => {
+                    modalConfig.onConfirm?.();
+                    setModalConfig(prev => ({ ...prev, visible: false }));
+                }}
+                onCancel={modalConfig.showCancel ? () => setModalConfig(prev => ({ ...prev, visible: false })) : undefined}
+            />
         </SafeAreaView>
     );
 }

@@ -3,7 +3,10 @@ import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '../src/lib/supabase';
 import * as WebBrowser from 'expo-web-browser';
 import * as Linking from 'expo-linking';
+import * as SecureStore from 'expo-secure-store';
 import { makeRedirectUri } from 'expo-auth-session';
+import * as AppleAuthentication from 'expo-apple-authentication';
+import * as Crypto from 'expo-crypto';
 
 // Ensure web browser is ready for auth
 WebBrowser.maybeCompleteAuthSession();
@@ -15,6 +18,8 @@ interface AuthContextType {
     signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
     signUp: (email: string, password: string, name: string) => Promise<{ error: Error | null }>;
     signInWithGoogle: () => Promise<{ error: Error | null }>;
+    signInWithApple: () => Promise<{ error: Error | null }>;
+    signInWithBiometric: (refreshToken: string) => Promise<{ error: Error | null }>;
     signOut: () => Promise<void>;
 }
 
@@ -27,14 +32,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     useEffect(() => {
         // Get initial session
-        supabase.auth.getSession().then(({ data: { session } }) => {
-            setSession(session);
-            setUser(session?.user ?? null);
-            setLoading(false);
-        });
+        const getInitialSession = async () => {
+            try {
+                const { data: { session }, error } = await supabase.auth.getSession();
+                if (error) {
+                    console.error('Error fetching initial session:', error);
+                } else if (session) {
+                    console.log('Session restored successfully for user:', session.user.id);
+                    setSession(session);
+                    setUser(session.user);
+                } else {
+                    console.log('No persisted session found');
+                }
+            } catch (err) {
+                console.error('Unexpected error during session restoration:', err);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        getInitialSession();
 
         // Listen for auth changes
-        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+            console.log('Auth state changed event:', event);
             setSession(session);
             setUser(session?.user ?? null);
             setLoading(false);
@@ -47,7 +68,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     useEffect(() => {
         const handleDeepLink = async (event: { url: string }) => {
             const url = event.url;
-            console.log('Deep link received:', url);
 
             // Check if this is an auth callback
             if (url.includes('access_token') || url.includes('code=')) {
@@ -90,18 +110,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }, []);
 
     const signIn = async (email: string, password: string) => {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+        if (!error && data?.session) {
+            setSession(data.session);
+            setUser(data.session.user);
+        }
         return { error: error as Error | null };
     };
 
     const signUp = async (email: string, password: string, name: string) => {
-        const { error } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
             email,
             password,
             options: {
                 data: { full_name: name },
             },
         });
+        if (!error && data?.session) {
+            setSession(data.session);
+            setUser(data.session.user);
+        }
         return { error: error as Error | null };
     };
 
@@ -116,8 +144,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 // Use Expo Go URL in development
                 preferLocalhost: false,
             });
-
-            console.log('Redirect URI:', redirectUri);
 
             // Start OAuth flow with Supabase
             const { data, error } = await supabase.auth.signInWithOAuth({
@@ -141,8 +167,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                     }
                 );
 
-                console.log('WebBrowser result:', result);
-
                 if (result.type === 'success' && result.url) {
                     // Extract tokens from the callback URL
                     const url = result.url;
@@ -152,8 +176,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
                     const accessToken = params.get('access_token');
                     const refreshToken = params.get('refresh_token');
-
-                    console.log('Access token found:', !!accessToken);
 
                     if (accessToken) {
                         // Set the session with the tokens
@@ -179,12 +201,95 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
     };
 
+    const signInWithApple = async (): Promise<{ error: Error | null }> => {
+        try {
+            const rawNonce = await Crypto.getRandomBytesAsync(32);
+            const nonce = Array.from(rawNonce)
+                .map((b) => b.toString(16).padStart(2, '0'))
+                .join('');
+
+            const hashedNonce = await Crypto.digestStringAsync(
+                Crypto.CryptoDigestAlgorithm.SHA256,
+                nonce
+            );
+
+            const appleCredential = await AppleAuthentication.signInAsync({
+                requestedScopes: [
+                    AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
+                    AppleAuthentication.AppleAuthenticationScope.EMAIL,
+                ],
+                nonce: hashedNonce,
+            });
+
+            const { data, error } = await supabase.auth.signInWithIdToken({
+                provider: 'apple',
+                token: appleCredential.identityToken!,
+                nonce: nonce,
+            });
+
+            if (error) throw error;
+
+            if (data?.session) {
+                setSession(data.session);
+                setUser(data.session.user);
+            }
+
+            return { error: null };
+        } catch (error: any) {
+            if (error.code === 'ERR_CANCELED') {
+                return { error: new Error('Login cancelado') };
+            }
+            console.error('Apple sign in error:', error);
+            return { error: error as Error };
+        }
+    };
+
+    const signInWithBiometric = async (refreshToken: string): Promise<{ error: Error | null }> => {
+        try {
+            // Use the refresh token to restore the session
+            const { data, error } = await supabase.auth.setSession({
+                access_token: '', // Will be refreshed automatically
+                refresh_token: refreshToken,
+            });
+
+            if (error) throw error;
+
+            // Refresh the session to get a new access token
+            const { error: refreshError } = await supabase.auth.refreshSession();
+            if (refreshError) throw refreshError;
+
+            return { error: null };
+        } catch (error) {
+            console.error('Biometric sign in error:', error);
+            return { error: error as Error };
+        }
+    };
+
     const signOut = async () => {
+        // Clear biometric credentials for security
+        try {
+            await SecureStore.deleteItemAsync('biometric_user_id');
+            await SecureStore.deleteItemAsync('biometric_refresh_token');
+            await SecureStore.deleteItemAsync('biometric_enabled');
+        } catch (error) {
+            console.error('Error clearing biometric credentials:', error);
+        }
+
         await supabase.auth.signOut();
     };
 
     return (
-        <AuthContext.Provider value={{ user, session, loading, signIn, signUp, signInWithGoogle, signOut }}>
+        <AuthContext.Provider value={{
+            user,
+            session,
+            loading,
+            signIn,
+            signUp,
+            signInWithGoogle,
+            signInWithApple,
+            signInWithBiometric,
+            signOut
+        }}>
             {children}
         </AuthContext.Provider>
     );

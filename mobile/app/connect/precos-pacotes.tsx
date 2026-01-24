@@ -16,6 +16,7 @@ import { router } from 'expo-router';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../src/lib/supabase';
+import ConfirmationModal from '../../components/ConfirmationModal';
 
 interface LessonPackage {
     id: string;
@@ -49,6 +50,10 @@ export default function PrecosEPacotesScreen() {
     const [packageVehicle, setPackageVehicle] = useState<'instructor' | 'student'>('instructor');
     const [packageDiscount, setPackageDiscount] = useState('10');
     const [savingPackage, setSavingPackage] = useState(false);
+
+    // Delete confirmation modal
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [packageToDelete, setPackageToDelete] = useState<LessonPackage | null>(null);
 
     const fetchData = useCallback(async () => {
         if (!user?.id) return;
@@ -192,17 +197,16 @@ export default function PrecosEPacotesScreen() {
     };
 
     const handleDeletePackage = (pkg: LessonPackage) => {
-        Alert.alert('Excluir Pacote', `Tem certeza que deseja excluir "${pkg.name}"?`, [
-            { text: 'Cancelar', style: 'cancel' },
-            {
-                text: 'Excluir',
-                style: 'destructive',
-                onPress: async () => {
-                    await supabase.from('lesson_packages').delete().eq('id', pkg.id);
-                    fetchData();
-                },
-            },
-        ]);
+        setPackageToDelete(pkg);
+        setShowDeleteModal(true);
+    };
+
+    const confirmDeletePackage = async () => {
+        if (!packageToDelete) return;
+        setShowDeleteModal(false);
+        await supabase.from('lesson_packages').delete().eq('id', packageToDelete.id);
+        setPackageToDelete(null);
+        fetchData();
     };
 
     const formatCurrency = (value: number) => {
@@ -442,6 +446,20 @@ export default function PrecosEPacotesScreen() {
                     </View>
                 </View>
             </Modal>
+
+            {/* Delete Package Confirmation Modal */}
+            <ConfirmationModal
+                visible={showDeleteModal}
+                onClose={() => setShowDeleteModal(false)}
+                title="Excluir Pacote"
+                message={`Tem certeza que deseja excluir "${packageToDelete?.name}"? Esta ação não pode ser desfeita.`}
+                icon="trash-outline"
+                type="danger"
+                confirmText="Excluir"
+                cancelText="Cancelar"
+                onConfirm={confirmDeletePackage}
+                onCancel={() => setShowDeleteModal(false)}
+            />
         </SafeAreaView>
     );
 }

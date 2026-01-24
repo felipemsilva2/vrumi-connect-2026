@@ -10,22 +10,19 @@ interface BreadcrumbItem {
 const routeLabels: Record<string, string> = {
   "/": "Início",
   "/entrar": "Entrar",
-  "/painel": "Painel",
-  "/sala-de-estudos": "Sala de Estudo",
-  "/biblioteca-de-placas": "Biblioteca de Placas",
-  "/pagamento": "Pagamento",
-  "/pagamento/sucesso": "Sucesso",
-  "/pagamento/cancelado": "Cancelado",
+  "/connect": "Vrumi Connect",
+  "/connect/cadastro-instrutor": "Cadastro de Instrutor",
+  "/connect/painel-instrutor": "Painel do Instrutor",
+  "/connect/minhas-aulas": "Minhas Aulas",
   "/admin": "Admin",
   "/admin/painel": "Painel",
   "/admin/usuarios": "Usuários",
-  "/admin/assinaturas": "Assinaturas",
+  "/admin/instrutores": "Instrutores",
+  "/admin/agendamentos": "Agendamentos",
+  "/admin/transacoes": "Transações",
   "/admin/funcoes": "Funções",
   "/admin/logs-auditoria": "Logs de Auditoria",
-  "/admin/popular": "Popular Dados",
-  "/admin/flashcards": "Flashcards",
-  "/admin/questoes": "Questões",
-  "/admin/placas": "Placas",
+  "/admin/suporte": "Suporte",
   "/termos-de-uso": "Termos de Uso",
   "/politica-de-privacidade": "Política de Privacidade",
   "/perguntas-frequentes": "Perguntas Frequentes",
@@ -67,28 +64,14 @@ export function useBreadcrumbs(): BreadcrumbItem[] {
           isCurrent: isLast
         });
       } else {
-        // Handle admin routes
-        if (currentPath.startsWith('/admin')) {
-          const adminRoute = currentPath as keyof typeof routeLabels;
-          const label = routeLabels[adminRoute] || capitalizeWords(name);
-          if (label && label !== 'undefined') {
-            breadcrumbs.push({
-              label: label,
-              href: isLast ? undefined : currentPath,
-              isCurrent: isLast
-            });
-          }
-        } else {
-          // Handle regular routes
-          const route = currentPath as keyof typeof routeLabels;
-          const label = routeLabels[route] || capitalizeWords(name);
-          if (label && label !== 'undefined') {
-            breadcrumbs.push({
-              label: label,
-              href: isLast ? undefined : currentPath,
-              isCurrent: isLast
-            });
-          }
+        const route = currentPath as keyof typeof routeLabels;
+        const label = routeLabels[route] || capitalizeWords(name);
+        if (label && label !== 'undefined') {
+          breadcrumbs.push({
+            label: label,
+            href: isLast ? undefined : currentPath,
+            isCurrent: isLast
+          });
         }
       }
     });

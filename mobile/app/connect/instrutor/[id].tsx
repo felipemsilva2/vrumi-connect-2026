@@ -22,6 +22,8 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useTheme } from '../../../contexts/ThemeContext';
 import { useAuth } from '../../../contexts/AuthContext';
 import { supabase } from '../../../src/lib/supabase';
+import ConfirmationModal from '../../../components/ConfirmationModal';
+import { getVehicleModel, getVehicleModelByName } from '../../../data/vehicleModels';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -42,8 +44,14 @@ interface Instructor {
     total_reviews: number;
     total_lessons: number;
     status: string;
+    approved?: boolean;
+    stripe_onboarding_complete?: boolean;
     vehicle_model?: string;
     vehicle_transmission?: 'manual' | 'automatic';
+    vehicle_color?: string;
+    vehicle_has_ac?: boolean;
+    vehicle_steering_type?: 'hydraulic' | 'electric' | 'mechanical';
+    vehicle_is_adapted?: boolean;
 }
 
 interface Review {
@@ -89,6 +97,10 @@ export default function InstructorProfileScreen() {
     const [selectedPackage, setSelectedPackage] = useState<LessonPackage | null>(null);
     const [purchasingPackage, setPurchasingPackage] = useState(false);
     const [hasAccess, setHasAccess] = useState(false);
+
+    // Unavailable booking modal
+    const [showUnavailableModal, setShowUnavailableModal] = useState(false);
+    const [unavailableMessage, setUnavailableMessage] = useState('');
 
     useEffect(() => {
         if (id) {
@@ -240,17 +252,36 @@ export default function InstructorProfileScreen() {
 
         setSubmittingReview(true);
         try {
+            // Get the current date/time
+            const now = new Date();
+            const today = now.toISOString().split('T')[0];
+            const currentTime = now.toTimeString().split(' ')[0];
+
+            // Check for a completed lesson (confirmed status and date/time in the past)
             const { data: bookingData, error: bookingError } = await supabase
                 .from('bookings')
-                .select('id')
+                .select('id, scheduled_date, scheduled_time, status')
                 .eq('student_id', user.id)
                 .eq('instructor_id', id)
-                .order('created_at', { ascending: false })
-                .limit(1)
-                .single();
+                .in('status', ['confirmed', 'completed'])
+                .order('scheduled_date', { ascending: false })
+                .limit(10);
 
-            if (bookingError || !bookingData) {
+            if (bookingError || !bookingData || bookingData.length === 0) {
                 Alert.alert('Aviso', 'Você precisa ter agendado uma aula com este instrutor para avaliar.');
+                setSubmittingReview(false);
+                return;
+            }
+
+            // Find a lesson that has already occurred
+            const completedLesson = bookingData.find(booking => {
+                if (booking.scheduled_date < today) return true;
+                if (booking.scheduled_date === today && booking.scheduled_time < currentTime) return true;
+                return false;
+            });
+
+            if (!completedLesson) {
+                Alert.alert('Aguarde a aula', 'Você só pode avaliar após a aula ter sido realizada.');
                 setSubmittingReview(false);
                 return;
             }
@@ -258,7 +289,7 @@ export default function InstructorProfileScreen() {
             const { error } = await supabase.from('reviews').insert({
                 instructor_id: id,
                 student_id: user.id,
-                booking_id: bookingData.id,
+                booking_id: completedLesson.id,
                 rating: newRating,
                 comment: newComment,
                 created_at: new Date().toISOString(),
@@ -279,9 +310,27 @@ export default function InstructorProfileScreen() {
         }
     };
 
+    // Compute if booking is allowed
+    const canBook = instructor?.approved && instructor?.stripe_onboarding_complete;
+
+    const showDisabledAlert = () => {
+        let message = '';
+        if (!instructor?.approved) {
+            message = 'Este instrutor ainda está em processo de verificação. Tente novamente em breve!';
+        } else if (!instructor?.stripe_onboarding_complete) {
+            message = 'Este instrutor ainda está configurando sua conta para receber pagamentos. Tente novamente em breve!';
+        }
+        setUnavailableMessage(message);
+        setShowUnavailableModal(true);
+    };
+
     const handleBooking = () => {
         if (!user) {
             router.push('/(auth)/login');
+            return;
+        }
+        if (!canBook) {
+            showDisabledAlert();
             return;
         }
         router.push(`/connect/agendar/${id}`);
@@ -429,8 +478,25 @@ export default function InstructorProfileScreen() {
                             <Ionicons name="location" size={14} color="rgba(255,255,255,0.8)" />
                             <Text style={styles.locationTextWhite}>{instructor.city}, {instructor.state}</Text>
                         </View>
+                        {/* Pending Verification Badge */}
+                        {!instructor.approved && (
+                            <View style={styles.pendingBadge}>
+                                <Ionicons name="time" size={14} color="#d97706" />
+                                <Text style={styles.pendingBadgeText}>Em verificação</Text>
+                            </View>
+                        )}
                     </View>
                 </View>
+
+                {/* Warning Banner - Payment not setup */}
+                {!canBook && instructor.approved && !instructor.stripe_onboarding_complete && (
+                    <View style={styles.warningBanner}>
+                        <Ionicons name="alert-circle" size={20} color="#d97706" />
+                        <Text style={styles.warningBannerText}>
+                            Este instrutor está configurando pagamentos. Agendamento em breve.
+                        </Text>
+                    </View>
+                )}
 
                 {/* Trust Bar */}
                 <View style={[styles.trustBar, { backgroundColor: theme.card, borderBottomColor: theme.cardBorder }]}>
@@ -462,23 +528,56 @@ export default function InstructorProfileScreen() {
                     )}
 
                     {/* Vehicle Card */}
-                    {(instructor.vehicle_model || instructor.vehicle_transmission) && (
-                        <View style={[styles.vehiclePremiumCard, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
-                            <View style={[styles.vehicleIconCircle, { backgroundColor: theme.primaryLight }]}>
-                                <Ionicons name="car-sport" size={24} color={theme.primary} />
-                            </View>
-                            <View style={styles.vehicleInfoPrimary}>
-                                <Text style={[styles.vehicleTitle, { color: theme.text }]}>Carro de Treino</Text>
-                                <Text style={[styles.vehicleModelText, { color: theme.textSecondary }]}>
-                                    {instructor.vehicle_model || 'Não informado'} • {instructor.vehicle_transmission === 'automatic' ? 'Automático' : 'Manual'}
-                                </Text>
-                                <View style={styles.vehicleTags}>
-                                    <View style={[styles.vTag, { backgroundColor: theme.background }]}><Text style={[styles.vTagText, { color: theme.textMuted }]}>Ar condicionado</Text></View>
-                                    <View style={[styles.vTag, { backgroundColor: theme.background }]}><Text style={[styles.vTagText, { color: theme.textMuted }]}>Direção hidráulica</Text></View>
+                    {(instructor.vehicle_model || instructor.vehicle_transmission) && (() => {
+                        // Priority: 1) Uploaded photo, 2) Model image from data, 3) Icon
+                        const uploadedPhotoUrl = (instructor as any).vehicle_photo_url;
+                        const vehicleData = (instructor as any).vehicle_model_id
+                            ? getVehicleModel((instructor as any).vehicle_model_id)
+                            : getVehicleModelByName(instructor.vehicle_model || '');
+                        const vehicleImageUrl = uploadedPhotoUrl || vehicleData?.imageUrl;
+
+                        return (
+                            <View style={[styles.vehiclePremiumCard, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
+                                {vehicleImageUrl ? (
+                                    <Image
+                                        source={{ uri: vehicleImageUrl }}
+                                        style={styles.vehicleImage}
+                                        resizeMode="cover"
+                                    />
+                                ) : (
+                                    <View style={[styles.vehicleIconCircle, { backgroundColor: theme.primaryLight }]}>
+                                        <Ionicons name="car-sport" size={24} color={theme.primary} />
+                                    </View>
+                                )}
+                                <View style={styles.vehicleInfoPrimary}>
+                                    <Text style={[styles.vehicleTitle, { color: theme.text }]}>Carro de Treino</Text>
+                                    <Text style={[styles.vehicleModelText, { color: theme.textSecondary }]}>
+                                        {instructor.vehicle_model || 'Não informado'} • {instructor.vehicle_transmission === 'automatic' ? 'Automático' : 'Manual'}
+                                        {instructor.vehicle_color ? ` • ${instructor.vehicle_color}` : ''}
+                                    </Text>
+                                    <View style={styles.vehicleTags}>
+                                        {instructor.vehicle_has_ac && (
+                                            <View style={[styles.vTag, { backgroundColor: theme.background }]}>
+                                                <Text style={[styles.vTagText, { color: theme.textMuted }]}>Ar condicionado</Text>
+                                            </View>
+                                        )}
+                                        {instructor.vehicle_steering_type && (
+                                            <View style={[styles.vTag, { backgroundColor: theme.background }]}>
+                                                <Text style={[styles.vTagText, { color: theme.textMuted }]}>
+                                                    Direção {instructor.vehicle_steering_type === 'hydraulic' ? 'hidráulica' : instructor.vehicle_steering_type === 'electric' ? 'elétrica' : 'mecânica'}
+                                                </Text>
+                                            </View>
+                                        )}
+                                        {instructor.vehicle_is_adapted && (
+                                            <View style={[styles.vTag, { backgroundColor: '#dbeafe' }]}>
+                                                <Text style={[styles.vTagText, { color: '#1e40af' }]}>Comandos Duplos</Text>
+                                            </View>
+                                        )}
+                                    </View>
                                 </View>
                             </View>
-                        </View>
-                    )}
+                        );
+                    })()}
 
                     {/* Packages Horizontal Carousel */}
                     {packages.length > 0 && (
@@ -582,11 +681,16 @@ export default function InstructorProfileScreen() {
                     )}
 
                     <TouchableOpacity
-                        style={[styles.primaryActionButton, { backgroundColor: theme.primary }]}
+                        style={[
+                            styles.primaryActionButton,
+                            { backgroundColor: canBook ? theme.primary : '#9ca3af' }
+                        ]}
                         onPress={handleBooking}
-                        activeOpacity={0.9}
+                        activeOpacity={canBook ? 0.9 : 0.6}
                     >
-                        <Text style={styles.primaryActionButtonText}>Agendar Aula</Text>
+                        <Text style={styles.primaryActionButtonText}>
+                            {canBook ? 'Agendar Aula' : 'Indisponível'}
+                        </Text>
                     </TouchableOpacity>
                 </View>
             </View>
@@ -661,6 +765,18 @@ export default function InstructorProfileScreen() {
                     </View>
                 </View>
             </Modal>
+
+            {/* Unavailable Booking Modal */}
+            <ConfirmationModal
+                visible={showUnavailableModal}
+                onClose={() => setShowUnavailableModal(false)}
+                title="Agendamento Indisponível"
+                message={unavailableMessage}
+                icon="time-outline"
+                type="warning"
+                confirmText="Entendi"
+                onConfirm={() => setShowUnavailableModal(false)}
+            />
         </View>
     );
 }
@@ -704,6 +820,7 @@ const styles = StyleSheet.create({
     // Vehicle Card
     vehiclePremiumCard: { padding: 20, borderRadius: 16, marginTop: 24, flexDirection: 'row', gap: 16, borderWidth: 1 },
     vehicleIconCircle: { width: 52, height: 52, borderRadius: 26, justifyContent: 'center', alignItems: 'center' },
+    vehicleImage: { width: 80, height: 60, borderRadius: 8 },
     vehicleInfoPrimary: { flex: 1 },
     vehicleTitle: { fontSize: 16, fontWeight: '700', marginBottom: 4 },
     vehicleModelText: { fontSize: 14, fontWeight: '500', marginBottom: 10 },
@@ -803,4 +920,40 @@ const styles = StyleSheet.create({
     totalPriceP: { fontSize: 24, fontWeight: '800' },
     confirmPurchaseBtn: { height: 56, borderRadius: 16, justifyContent: 'center', alignItems: 'center', marginTop: 24 },
     confirmPurchaseBtnText: { color: '#fff', fontSize: 18, fontWeight: '800' },
+
+    // Verification Badge & Warning Banner
+    pendingBadge: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+        backgroundColor: 'rgba(217, 119, 6, 0.2)',
+        paddingHorizontal: 10,
+        paddingVertical: 6,
+        borderRadius: 20,
+        marginTop: 10,
+        alignSelf: 'flex-start',
+    },
+    pendingBadgeText: {
+        fontSize: 12,
+        fontWeight: '700',
+        color: '#fef3c7',
+    },
+    warningBanner: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 10,
+        backgroundColor: '#fef3c7',
+        paddingHorizontal: 16,
+        paddingVertical: 12,
+        marginHorizontal: 16,
+        marginTop: 12,
+        borderRadius: 12,
+    },
+    warningBannerText: {
+        flex: 1,
+        fontSize: 13,
+        fontWeight: '600',
+        color: '#92400e',
+        lineHeight: 18,
+    },
 });

@@ -14,7 +14,10 @@ import {
 import { router } from 'expo-router';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
+import { useBiometricAuth } from '../../hooks/useBiometricAuth';
+import BiometricSetupModal from '../../components/BiometricSetupModal';
 import { Ionicons } from '@expo/vector-icons';
+import ConfirmationModal from '../../components/ConfirmationModal';
 
 export default function RegisterScreen() {
     const { theme } = useTheme();
@@ -24,21 +27,47 @@ export default function RegisterScreen() {
     const [confirmPassword, setConfirmPassword] = useState('');
     const [loading, setLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
-    const { signUp } = useAuth();
+    const [showSetupModal, setShowSetupModal] = useState(false);
+    const { signUp, signInWithGoogle, signInWithApple } = useAuth();
+    const {
+        isBiometricSupported,
+        isBiometricEnrolled,
+        biometricType,
+        hasCredentials,
+        saveCredentials,
+    } = useBiometricAuth();
+
+    // Unified Modal State
+    const [modalConfig, setModalConfig] = useState<{
+        visible: boolean;
+        title: string;
+        message: string;
+        type: 'warning' | 'danger' | 'success' | 'info';
+        onConfirm?: () => void;
+    }>({
+        visible: false,
+        title: '',
+        message: '',
+        type: 'warning',
+    });
+
+    const showModal = (title: string, message: string, type: 'warning' | 'danger' | 'success' | 'info' = 'warning', onConfirm?: () => void) => {
+        setModalConfig({ visible: true, title, message, type, onConfirm });
+    };
 
     const handleRegister = async () => {
         if (!fullName || !email || !password || !confirmPassword) {
-            Alert.alert('Erro', 'Preencha todos os campos');
+            showModal('Erro', 'Preencha todos os campos', 'warning');
             return;
         }
 
         if (password !== confirmPassword) {
-            Alert.alert('Erro', 'As senhas não coincidem');
+            showModal('Erro', 'As senhas não coincidem', 'warning');
             return;
         }
 
         if (password.length < 6) {
-            Alert.alert('Erro', 'A senha deve ter pelo menos 6 caracteres');
+            showModal('Erro', 'A senha deve ter pelo menos 6 caracteres', 'warning');
             return;
         }
 
@@ -47,13 +76,69 @@ export default function RegisterScreen() {
         setLoading(false);
 
         if (error) {
-            Alert.alert('Erro', error.message);
+            showModal('Erro', error.message, 'danger');
         } else {
-            Alert.alert(
+            showModal(
                 'Sucesso!',
                 'Conta criada com sucesso. Verifique seu email.',
-                [{ text: 'OK', onPress: () => router.replace('/(auth)/login') }]
+                'success',
+                () => router.replace('/(auth)/login')
             );
+        }
+    };
+
+    const handleGoogleLogin = async () => {
+        setLoading(true);
+        const { error } = await signInWithGoogle();
+        setLoading(false);
+
+        if (error) {
+            if (error.message !== 'Login cancelado') {
+                showModal('Erro', error.message, 'danger');
+            }
+        } else {
+            if (isBiometricSupported && isBiometricEnrolled) {
+                const hasCreds = await hasCredentials();
+                if (!hasCreds) {
+                    setShowSetupModal(true);
+                } else {
+                    router.replace('/(tabs)');
+                }
+            } else {
+                router.replace('/(tabs)');
+            }
+        }
+    };
+
+    const handleAppleLogin = async () => {
+        setLoading(true);
+        const { error } = await signInWithApple();
+        setLoading(false);
+
+        if (error) {
+            if (error.message !== 'Login cancelado') {
+                showModal('Erro', error.message, 'danger');
+            }
+        } else {
+            if (isBiometricSupported && isBiometricEnrolled) {
+                const hasCreds = await hasCredentials();
+                if (!hasCreds) {
+                    setShowSetupModal(true);
+                } else {
+                    router.replace('/(tabs)');
+                }
+            } else {
+                router.replace('/(tabs)');
+            }
+        }
+    };
+
+    const handleEnableBiometric = async () => {
+        try {
+            setShowSetupModal(false);
+            router.replace('/(tabs)');
+        } catch (error) {
+            console.error('Error enabling biometric:', error);
         }
     };
 
@@ -166,6 +251,54 @@ export default function RegisterScreen() {
                                 <Text style={styles.registerButtonText}>Criar Conta</Text>
                             )}
                         </TouchableOpacity>
+
+                        {/* Divider */}
+                        <View style={styles.dividerContainer}>
+                            <View style={[styles.dividerLine, { backgroundColor: theme.inputBorder }]} />
+                            <Text style={[styles.dividerText, { color: theme.textMuted }]}>
+                                ou cadastre-se com
+                            </Text>
+                            <View style={[styles.dividerLine, { backgroundColor: theme.inputBorder }]} />
+                        </View>
+
+                        {/* Social Buttons */}
+                        <View style={styles.socialButtons}>
+                            <TouchableOpacity
+                                style={[
+                                    styles.socialButton,
+                                    {
+                                        backgroundColor: theme.card,
+                                        borderColor: theme.inputBorder
+                                    }
+                                ]}
+                                onPress={handleGoogleLogin}
+                                disabled={loading}
+                                activeOpacity={0.7}
+                            >
+                                <Ionicons name="logo-google" size={24} color="#ea4335" />
+                                <Text style={[styles.socialButtonText, { color: theme.text }]}>
+                                    Google
+                                </Text>
+                            </TouchableOpacity>
+
+                            <TouchableOpacity
+                                style={[
+                                    styles.socialButton,
+                                    {
+                                        backgroundColor: theme.card,
+                                        borderColor: theme.inputBorder
+                                    }
+                                ]}
+                                onPress={handleAppleLogin}
+                                disabled={loading}
+                                activeOpacity={0.7}
+                            >
+                                <Ionicons name="logo-apple" size={24} color={theme.text} />
+                                <Text style={[styles.socialButtonText, { color: theme.text }]}>
+                                    Apple
+                                </Text>
+                            </TouchableOpacity>
+                        </View>
                     </View>
 
                     {/* Login Link */}
@@ -176,6 +309,29 @@ export default function RegisterScreen() {
                         </TouchableOpacity>
                     </View>
                 </View>
+
+                <BiometricSetupModal
+                    visible={showSetupModal}
+                    biometricType={biometricType}
+                    onEnable={handleEnableBiometric}
+                    onDismiss={() => {
+                        setShowSetupModal(false);
+                        router.replace('/(tabs)');
+                    }}
+                />
+
+                <ConfirmationModal
+                    visible={modalConfig.visible}
+                    title={modalConfig.title}
+                    message={modalConfig.message}
+                    type={modalConfig.type}
+                    confirmText="Entendido"
+                    onConfirm={() => {
+                        modalConfig.onConfirm?.();
+                        setModalConfig(prev => ({ ...prev, visible: false }));
+                    }}
+                    onClose={() => setModalConfig(prev => ({ ...prev, visible: false }))}
+                />
             </ScrollView>
         </KeyboardAvoidingView>
     );
@@ -269,16 +425,49 @@ const styles = StyleSheet.create({
         fontWeight: '600',
         color: '#fff',
     },
+    dividerContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginVertical: 24,
+    },
+    dividerLine: {
+        flex: 1,
+        height: 1,
+    },
+    dividerText: {
+        marginHorizontal: 16,
+        fontSize: 14,
+        fontWeight: '500',
+    },
+    socialButtons: {
+        flexDirection: 'row',
+        gap: 12,
+    },
+    socialButton: {
+        flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        height: 56,
+        borderRadius: 14,
+        borderWidth: 1.5,
+        gap: 10,
+    },
+    socialButtonText: {
+        fontSize: 15,
+        fontWeight: '600',
+    },
     loginSection: {
         flexDirection: 'row',
         justifyContent: 'center',
         alignItems: 'center',
+        marginTop: 32,
     },
     loginText: {
-        fontSize: 14,
+        fontSize: 16,
     },
     loginLink: {
-        fontSize: 14,
-        fontWeight: '600',
+        fontSize: 16,
+        fontWeight: 'bold',
     },
 });

@@ -66,11 +66,10 @@ const InstitutionalFooter = () => {
             <h3 className="font-semibold text-background mb-6">Soluções</h3>
             <ul className="space-y-3">
               {[
-                { label: "Vrumi Education", to: "/entrar" },
                 { label: "Vrumi Connect", to: "/connect" },
-                { label: "Biblioteca de Placas", to: "/biblioteca-de-placas" },
-                { label: "Simulados", to: "/entrar" },
+                { label: "Para Instrutores", to: "/connect/cadastro-instrutor" },
               ].map((link, i) => (
+
                 <li key={i}>
                   <Link
                     to={link.to}

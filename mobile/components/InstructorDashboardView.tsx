@@ -219,6 +219,7 @@ export default function InstructorDashboardView() {
 
     // Secondary Actions (Management List)
     const managementActions = [
+        { icon: 'create-outline', label: 'Editar Perfil', route: '/connect/editar-perfil' },
         { icon: 'time-outline', label: 'Meus Horários', route: '/connect/horarios' },
         { icon: 'pricetag-outline', label: 'Preços e Pacotes', route: '/connect/precos-pacotes' },
         { icon: 'document-text-outline', label: 'Documentos', route: '/connect/documentos' },
@@ -344,7 +345,7 @@ export default function InstructorDashboardView() {
                     ))}
                 </View>
 
-                <View style={{ height: 40 }} />
+                <View style={{ height: 100 }} />
             </ScrollView>
         </SafeAreaView>
     );

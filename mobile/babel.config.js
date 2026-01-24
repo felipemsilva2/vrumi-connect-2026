@@ -3,17 +3,21 @@ module.exports = function (api) {
     return {
         presets: ['babel-preset-expo'],
         plugins: [
+            'module:react-native-dotenv',
             [
                 'module-resolver',
                 {
-                    root: ['./'],
                     alias: {
-                        '@': '../src',
-                        'lodash': './node_modules/lodash',
-                    },
-                    extensions: ['.ios.ts', '.android.ts', '.ts', '.ios.tsx', '.android.tsx', '.tsx', '.jsx', '.js', '.json'],
-                },
+                        '@/integrations': '../src/integrations',
+                        '@': './src',
+                        '@components': './components',
+                        '@contexts': './contexts',
+                        '@hooks': './hooks',
+                        'lodash': './node_modules/lodash'
+                    }
+                }
             ],
-        ],
+            'react-native-reanimated/plugin'
+        ]
     };
 };

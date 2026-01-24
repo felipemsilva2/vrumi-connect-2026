@@ -8,14 +8,15 @@ import {
     RefreshControl,
     Image,
     Alert,
-    Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
+import * as WebBrowser from 'expo-web-browser';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../src/lib/supabase';
+import ConfirmationModal from '../../components/ConfirmationModal';
 
 const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL || 'https://kyuaxjkokntdmcxjurhm.supabase.co';
 
@@ -64,6 +65,24 @@ export default function InstructorDashboardScreen() {
     const [todayLessons, setTodayLessons] = useState<UpcomingLesson[]>([]);
     const [packages, setPackages] = useState<LessonPackage[]>([]);
 
+    // Unified Modal State
+    const [modalConfig, setModalConfig] = useState<{
+        visible: boolean;
+        title: string;
+        message: string;
+        type: 'warning' | 'danger' | 'success' | 'info';
+        onConfirm?: () => void;
+    }>({
+        visible: false,
+        title: '',
+        message: '',
+        type: 'warning',
+    });
+
+    const showModal = (title: string, message: string, type: 'warning' | 'danger' | 'success' | 'info' = 'warning', onConfirm?: () => void) => {
+        setModalConfig({ visible: true, title, message, type, onConfirm });
+    };
+
     const fetchDashboardData = useCallback(async () => {
         if (!user?.id) return;
 
@@ -81,11 +100,7 @@ export default function InstructorDashboardScreen() {
             setStripeOnboarded(instructor.stripe_onboarding_complete || false);
 
             // DEBUG - remove after testing
-            console.log('🔶 STRIPE DEBUG:', {
-                stripe_account_id: instructor.stripe_account_id,
-                stripe_onboarding_complete: instructor.stripe_onboarding_complete,
-                showBanner: !(instructor.stripe_onboarding_complete || false)
-            });
+
 
             // 2. Calculate Earnings (completed lessons * price * 0.85)
             // Note: In a real app, this should be a separate table or aggregate query
@@ -178,7 +193,7 @@ export default function InstructorDashboardScreen() {
         if (!session?.access_token) return;
 
         try {
-            console.log('🔄 Verifying Stripe status...');
+
             const response = await fetch(`${SUPABASE_URL}/functions/v1/connect-verify-status`, {
                 method: 'GET',
                 headers: {
@@ -203,7 +218,7 @@ export default function InstructorDashboardScreen() {
                 setStripeAccountId(data.stripe_account_id);
             }
         } catch (error) {
-            console.error('Error calling verify-status:', error);
+
         }
     }, [session?.access_token]);
 
@@ -214,20 +229,21 @@ export default function InstructorDashboardScreen() {
         if (searchParams.stripe_onboarded === 'true') {
             // User returned from Stripe onboarding - verify and sync the status
             verifyStripeStatus().then(() => {
-                Alert.alert(
+                showModal(
                     '🎉 Verificando Status',
                     'Verificando sua conta Stripe. Por favor, aguarde...',
-                    [{ text: 'OK', onPress: () => fetchDashboardData() }]
+                    'info',
+                    () => fetchDashboardData()
                 );
             });
             // Clear the param to avoid showing again on refresh
             router.setParams({ stripe_onboarded: undefined });
         } else if (searchParams.stripe_refresh === 'true') {
             // User needs to refresh/retry onboarding
-            Alert.alert(
+            showModal(
                 'Atenção',
                 'O processo de onboarding expirou ou foi cancelado. Por favor, tente novamente.',
-                [{ text: 'OK' }]
+                'warning'
             );
             router.setParams({ stripe_refresh: undefined });
         }
@@ -237,7 +253,7 @@ export default function InstructorDashboardScreen() {
     useEffect(() => {
         // Only verify if we have a stripe account to check
         if (stripeAccountId && !loading) {
-            console.log('🔍 Stripe account found, verifying status...');
+
             verifyStripeStatus();
         }
     }, [stripeAccountId, loading, verifyStripeStatus]);
@@ -254,50 +270,57 @@ export default function InstructorDashboardScreen() {
 
     const handleActivateStripe = async () => {
         if (!session?.access_token) {
-            Alert.alert('Erro', 'Por favor, faça login novamente.');
+            showModal('Erro', 'Por favor, faça login novamente.', 'danger');
             return;
         }
 
         setStripeLoading(true);
         try {
-            // Step 1: Create Stripe account if doesn't exist
-            if (!stripeAccountId) {
-                const createResponse = await fetch(`${SUPABASE_URL}/functions/v1/connect-create-account`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${session.access_token}`,
-                    },
-                });
 
-                const createResult = await createResponse.json();
-                if (!createResponse.ok) {
-                    throw new Error(createResult.error || 'Falha ao criar conta Stripe');
-                }
 
-                setStripeAccountId(createResult.accountId);
-            }
-
-            // Step 2: Get onboarding link
-            const linkResponse = await fetch(`${SUPABASE_URL}/functions/v1/connect-onboarding-link`, {
+            // Single API call - creates account if needed AND generates onboarding link
+            const response = await fetch(`${SUPABASE_URL}/functions/v1/connect-create-account`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${session.access_token}`,
                 },
+                body: JSON.stringify({ generateLink: true }),
             });
 
-            const linkResult = await linkResponse.json();
-            if (!linkResponse.ok) {
-                throw new Error(linkResult.error || 'Falha ao gerar link de onboarding');
+            const result = await response.json();
+            if (!response.ok) {
+                throw new Error(result.error || 'Falha ao configurar Stripe');
             }
 
-            // Step 3: Open onboarding URL in browser
-            await Linking.openURL(linkResult.url);
+            console.log('✅ [Stripe] Got onboarding URL, opening browser...');
+
+            if (!result.onboardingUrl) {
+                throw new Error('URL de onboarding não disponível');
+            }
+
+            // Update local state with new account ID if created
+            if (result.accountId && !stripeAccountId) {
+                setStripeAccountId(result.accountId);
+            }
+
+            // Open Stripe onboarding in in-app browser
+            const browserResult = await WebBrowser.openBrowserAsync(result.onboardingUrl, {
+                presentationStyle: WebBrowser.WebBrowserPresentationStyle.FULL_SCREEN,
+                showTitle: true,
+                enableBarCollapsing: true,
+            });
+
+            console.log('✅ [Stripe] Browser closed:', browserResult.type);
+
+            // After browser closes, verify Stripe status
+            if (browserResult.type === 'cancel' || browserResult.type === 'dismiss') {
+                await verifyStripeStatus();
+            }
 
         } catch (error: any) {
-            console.error('Stripe activation error:', error);
-            Alert.alert('Erro', error.message || 'Não foi possível ativar recebimentos.');
+            console.error('❌ [Stripe] Error:', error.message);
+            showModal('Erro', error.message || 'Não foi possível ativar recebimentos.', 'danger');
         } finally {
             setStripeLoading(false);
         }
@@ -489,6 +512,16 @@ export default function InstructorDashboardScreen() {
                         </View>
                         <Text style={[styles.actionLabel, { color: theme.text }]}>Documentos</Text>
                     </TouchableOpacity>
+
+                    <TouchableOpacity
+                        style={[styles.actionCard, { backgroundColor: theme.card }]}
+                        onPress={() => router.push('/connect/editar-perfil')}
+                    >
+                        <View style={[styles.actionIcon, { backgroundColor: '#e0e7ff' }]}>
+                            <Ionicons name="create-outline" size={24} color="#4f46e5" />
+                        </View>
+                        <Text style={[styles.actionLabel, { color: theme.text }]}>Editar Perfil</Text>
+                    </TouchableOpacity>
                 </View>
 
                 {/* My Packages */}
@@ -600,7 +633,7 @@ export default function InstructorDashboardScreen() {
                                         if (lesson.status === 'confirmed') {
                                             router.push(`/connect/aula/${lesson.id}`);
                                         } else {
-                                            Alert.alert('Detalhes', `Aula com ${lesson.student_name} às ${lesson.scheduled_time}`);
+                                            showModal('Detalhes', `Aula com ${lesson.student_name} às ${lesson.scheduled_time}`, 'info');
                                         }
                                     }}
                                 >

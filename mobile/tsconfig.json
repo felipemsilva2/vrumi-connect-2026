@@ -4,16 +4,26 @@
     "strict": true,
     "baseUrl": ".",
     "paths": {
+      "@/integrations/*": [
+        "../src/integrations/*"
+      ],
       "@/*": [
-        "../src/*"
+        "./src/*"
+      ],
+      "@components/*": [
+        "./components/*"
+      ],
+      "@contexts/*": [
+        "./contexts/*"
+      ],
+      "@hooks/*": [
+        "./hooks/*"
       ]
     }
   },
   "include": [
     "**/*.ts",
-    "**/*.tsx",
-    "../src/**/*.ts",
-    "../src/**/*.tsx"
+    "**/*.tsx"
   ],
   "exclude": [
     "node_modules"

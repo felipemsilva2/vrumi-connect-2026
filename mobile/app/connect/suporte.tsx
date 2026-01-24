@@ -123,6 +123,7 @@ export default function SuporteScreen() {
                 <View style={styles.section}>
                     <Text style={[styles.sectionTitle, { color: theme.text }]}>Fale Conosco</Text>
 
+                    {/* Live Chat disabled temporarily
                     <TouchableOpacity
                         style={[styles.actionCard, { backgroundColor: '#10b981' }]}
                         onPress={() => setShowChat(true)}
@@ -136,6 +137,7 @@ export default function SuporteScreen() {
                         </View>
                         <Ionicons name="chevron-forward" size={24} color="rgba(255,255,255,0.7)" />
                     </TouchableOpacity>
+                    */}
 
                     <View style={styles.actionRow}>
                         <TouchableOpacity

@@ -1,6 +1,6 @@
 import { ReactNode } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Car, Users, CreditCard, Shield, FileText, MessageSquare, LogOut, FileSearch, TrafficCone, LifeBuoy, Sparkles, GraduationCap, Calendar, DollarSign, RefreshCw } from "lucide-react";
+import { Car, Users, Shield, LogOut, FileSearch, LifeBuoy, GraduationCap, Calendar, DollarSign, Command, Disc } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,25 +13,18 @@ interface AdminLayoutProps {
 
 const menuItems = [
   // Core Admin
-  { path: "/painel", label: "Dashboard", icon: Car },
-  { path: "/usuarios", label: "Usuários", icon: Users },
+  { path: "/painel", label: "DASHBOARD", icon: Command }, // Changed icon to Command
+  { path: "/usuarios", label: "USUÁRIO_DB", icon: Users },
 
   // Vrumi Connect
-  { path: "/instrutores", label: "Instrutores", icon: GraduationCap },
-  { path: "/agendamentos", label: "Agendamentos", icon: Calendar },
-  { path: "/transacoes", label: "Transações", icon: DollarSign },
+  { path: "/instrutores", label: "INSTRUTOR_OPS", icon: GraduationCap },
+  { path: "/agendamentos", label: "AGENDAMENTOS", icon: Calendar },
+  { path: "/transacoes", label: "FINANÇAS", icon: DollarSign },
 
   // System
-  { path: "/funcoes", label: "Permissões", icon: Shield },
-  { path: "/logs-auditoria", label: "Logs de Auditoria", icon: FileSearch },
-  { path: "/suporte", label: "Suporte", icon: LifeBuoy },
-
-  // Education (DESCONTINUADO - comentado)
-  // { path: "/assinaturas", label: "Assinaturas", icon: CreditCard },
-  // { path: "/flashcards", label: "Flashcards", icon: FileText },
-  // { path: "/questoes", label: "Questões", icon: MessageSquare },
-  // { path: "/gerar-questoes", label: "Gerar Questões IA", icon: Sparkles },
-  // { path: "/placas", label: "Placas de Trânsito", icon: TrafficCone },
+  { path: "/funcoes", label: "PERMISSÕES", icon: Shield },
+  { path: "/logs-auditoria", label: "LOG_SISTEMA", icon: Disc }, // Changed icon to Disc
+  { path: "/suporte", label: "SUPORTE_TEC", icon: LifeBuoy },
 ];
 
 export const AdminLayout = ({ children }: AdminLayoutProps) => {
@@ -41,73 +34,96 @@ export const AdminLayout = ({ children }: AdminLayoutProps) => {
   const handleLogout = async () => {
     try {
       await supabase.auth.signOut({ scope: 'local' });
-      toast.success("Logout realizado com sucesso");
-      // Use window.location to force full reload and go to main app login
+      toast.success("SESSÃO ENCERRADA");
       window.location.href = "/entrar";
     } catch (error) {
-      toast.error("Erro ao fazer logout");
+      toast.error("FALHA NO LOGOUT");
     }
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b bg-card">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Car className="h-8 w-8 text-primary" />
-            <div>
-              <h1 className="text-2xl font-bold">Painel Administrativo</h1>
-              <p className="text-sm text-muted-foreground">Gerenciamento do Sistema</p>
-            </div>
+    <div className="min-h-screen bg-background text-foreground font-mono">
+      {/* Top Bar - Raw Border */}
+      <header className="border-b-[2px] border-primary h-16 flex items-center justify-between px-6 bg-card sticky top-0 z-50">
+        <div className="flex items-center gap-4">
+          <div className="w-8 h-8 bg-primary text-black flex items-center justify-center font-bold text-xl">
+            V
           </div>
-          <div className="flex items-center gap-4">
-            <Button variant="outline" asChild>
-              <a href="/painel">
-                Voltar ao Dashboard
-              </a>
-            </Button>
-            <Button variant="ghost" onClick={handleLogout}>
-              <LogOut className="h-4 w-4 mr-2" />
-              Sair
-            </Button>
+          <h1 className="text-xl font-bold tracking-tighter uppercase">
+            Admin<span className="text-primary">_CONSOLE</span>
+          </h1>
+        </div>
+
+        <div className="flex items-center gap-4">
+          <div className="hidden md:flex items-center gap-2 text-xs text-muted-foreground mr-4">
+            <span className="w-2 h-2 bg-accent rounded-none inline-block animate-pulse"></span>
+            SYSTEM_ONLINE
           </div>
+
+          <Button
+            variant="outline"
+            className="border-[1px] border-foreground/20 hover:border-primary hover:bg-primary hover:text-black transition-all rounded-none h-8 text-xs uppercase tracking-wide"
+            onClick={() => window.location.href = "/"}
+          >
+            [ Retornar ]
+          </Button>
+
+          <Button
+            variant="ghost"
+            className="hover:bg-destructive hover:text-white rounded-none h-8 text-xs uppercase tracking-wide"
+            onClick={handleLogout}
+          >
+            Encerrar
+          </Button>
         </div>
       </header>
 
-      <div className="container mx-auto px-6 sm:px-8 py-6">
-        <div className="flex gap-6">
-          {/* Sidebar */}
-          <aside className="w-64 space-y-2">
-            <nav className="space-y-1">
-              {menuItems.map((item) => {
-                const Icon = item.icon;
-                const isActive = location.pathname === item.path;
+      <div className="flex min-h-[calc(100vh-4rem)]">
+        {/* Sidebar - Brutalist Vertical */}
+        <aside className="w-64 border-r-[2px] border-border bg-card hidden md:block relative">
+          {/* Semantic decorative line */}
+          <div className="absolute left-[1.5rem] top-0 bottom-0 w-[1px] bg-border/20 z-0 content-['']"></div>
 
-                return (
-                  <Link
-                    key={item.path}
-                    to={item.path}
-                    className={`flex items-center gap-3 px-4 py-2.5 rounded-lg transition-colors ${isActive
-                      ? "bg-primary text-primary-foreground"
-                      : "hover:bg-muted text-muted-foreground hover:text-foreground"
-                      }`}
-                  >
-                    <Icon className="h-5 w-5" />
-                    <span className="font-medium">{item.label}</span>
-                  </Link>
-                );
-              })}
-            </nav>
-          </aside>
+          <nav className="p-4 space-y-2 relative z-10">
+            {menuItems.map((item) => {
+              const Icon = item.icon;
+              const isActive = location.pathname === item.path;
 
-          <Separator orientation="vertical" className="h-auto" />
+              return (
+                <Link
+                  key={item.path}
+                  to={item.path}
+                  className={`
+                      group flex items-center gap-3 px-3 py-3 text-sm transition-all border-l-[3px] 
+                      ${isActive
+                      ? "border-primary bg-primary/10 text-primary font-bold"
+                      : "border-transparent text-muted-foreground hover:text-foreground hover:bg-secondary hover:border-foreground/50"
+                    }
+                    `}
+                >
+                  <Icon className={`h-4 w-4 ${isActive ? "text-primary" : "text-muted-foreground group-hover:text-foreground"}`} />
+                  <span className="tracking-wide">{item.label}</span>
+                </Link>
+              );
+            })}
+          </nav>
 
-          {/* Main Content */}
-          <main className="flex-1">
+          <div className="absolute bottom-4 left-4 right-4 text-[10px] text-muted-foreground uppercase opacity-50">
+            v3.0.0_CONSTRUCT
+          </div>
+        </aside>
+
+        {/* Main Content Area */}
+        <main className="flex-1 bg-background relative overflow-hidden">
+          {/* Grid Pattern Background */}
+          <div className="absolute inset-0 z-0 opacity-[0.03] pointer-events-none"
+            style={{ backgroundImage: 'linear-gradient(#000 1px, transparent 1px), linear-gradient(90deg, #000 1px, transparent 1px)', backgroundSize: '40px 40px' }}>
+          </div>
+
+          <div className="relative z-10 p-6 sm:p-8 animate-in fade-in duration-500 slide-in-from-bottom-4">
             {children}
-          </main>
-        </div>
+          </div>
+        </main>
       </div>
     </div>
   );

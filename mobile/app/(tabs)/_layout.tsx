@@ -17,8 +17,9 @@ export default function TabsLayout() {
             <Tabs.Screen name="index" />
             <Tabs.Screen name="buscar" />
             <Tabs.Screen name="aulas" />
+            <Tabs.Screen name="mensagens" />
             <Tabs.Screen name="instrutor" />
-            <Tabs.Screen name="perfil" />
+            <Tabs.Screen name="perfil" options={{ href: null }} />
         </Tabs>
     );
 }

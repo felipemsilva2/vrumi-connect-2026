@@ -5,49 +5,49 @@ const Testimonials = () => {
   const testimonials = [
     {
       name: "Maria Silva",
-      role: "Aprovada em 2024",
+      role: "Aluna em São Paulo",
       content:
-        "Passei de primeira graças aos flashcards! O método de repetição espaçada me ajudou a memorizar todas as placas e sinais.",
+        "Encontrei um instrutor excelente pelo Vrumi! As aulas foram muito melhores do que na autoescola. Recomendo demais!",
       rating: 5,
       avatar: "MS",
     },
     {
       name: "João Santos",
-      role: "Aprovado em 2024",
+      role: "Aluno no Rio de Janeiro",
       content:
-        "Plataforma excelente! Os materiais são muito completos e organizados. Estudei apenas 3 semanas e consegui passar.",
+        "Plataforma muito fácil de usar. Agendei minhas aulas em minutos e o pagamento foi super seguro. Aprovado de primeira!",
       rating: 5,
       avatar: "JS",
     },
     {
       name: "Ana Oliveira",
-      role: "Aprovada em 2024",
+      role: "Aluna em Belo Horizonte",
       content:
-        "Melhor investimento que fiz! A taxa de 95% de aprovação não é mentira, realmente funciona. Super recomendo!",
+        "Meu instrutor foi incrível! Muito paciente e profissional. O sistema de avaliações ajudou muito na escolha.",
       rating: 5,
       avatar: "AO",
     },
     {
       name: "Carlos Mendes",
-      role: "Aprovado em 2024",
+      role: "Instrutor Parceiro",
       content:
-        "Tentei outras plataformas antes, mas essa foi a única que realmente me preparou. O suporte também é ótimo!",
+        "Como instrutor, o Vrumi me ajudou a ter mais alunos e organizar minha agenda. A plataforma é muito completa!",
       rating: 5,
       avatar: "CM",
     },
     {
       name: "Juliana Costa",
-      role: "Aprovada em 2024",
+      role: "Aluna em Curitiba",
       content:
-        "Estudar pelo celular facilitou muito minha rotina. Conseguia revisar nos intervalos do trabalho. Aprovada!",
+        "Adorei poder escolher o horário que queria e ver as avaliações de outros alunos. Faz toda diferença!",
       rating: 5,
       avatar: "JC",
     },
     {
       name: "Pedro Alves",
-      role: "Aprovado em 2024",
+      role: "Aluno em Brasília",
       content:
-        "Os simulados são idênticos à prova real. Fui tranquilo fazer o exame porque já sabia o que esperar. Top!",
+        "O instrutor que encontrei foi muito didático. Consegui passar na prova prática de primeira. Valeu muito a pena!",
       rating: 5,
       avatar: "PA",
     },
@@ -64,10 +64,10 @@ const Testimonials = () => {
           className="text-center mb-16"
         >
           <h2 className="text-4xl md:text-5xl font-bold text-foreground mb-4">
-            O que nossos alunos dizem
+            O que nossos usuários dizem
           </h2>
           <p className="text-lg text-muted-foreground">
-            Alguns dos feedbacks dos nosso alunos que já estudam com a gente
+            Alunos e instrutores que já usam o Vrumi Connect
           </p>
         </motion.div>
 

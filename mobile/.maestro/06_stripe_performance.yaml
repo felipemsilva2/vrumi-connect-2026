@@ -1,0 +1,114 @@
+# Teste E2E: Fluxo Stripe Onboarding (Otimizado)
+# Testa especificamente o fluxo de onboarding do Stripe
+
+appId: com.vrumi.connect
+
+---
+
+# Inicia o app
+- launchApp
+
+# Login como instrutor
+- extendedWaitUntil:
+    visible:
+      text: "Entrar"
+    timeout: 10000
+
+- tapOn:
+    text: "E-mail"
+
+- inputText: ${TEST_INSTRUCTOR_EMAIL}
+
+- tapOn:
+    text: "Senha"
+
+- inputText: ${TEST_INSTRUCTOR_PASSWORD}
+
+- tapOn:
+    text: "Entrar"
+
+# Aguarda home carregar
+- extendedWaitUntil:
+    visible:
+      text: "Início"
+    timeout: 15000
+
+# Vai para aba Instrutor
+- tapOn:
+    text: "Instrutor"
+
+# Aguarda dashboard carregar
+- extendedWaitUntil:
+    visible:
+      text: "Painel do Instrutor"
+    timeout: 10000
+
+# Marca o tempo antes de clicar
+- evalScript: |
+    const startTime = Date.now();
+    output.startTime = startTime;
+    console.log('⏱️ Iniciando medição de tempo: ' + startTime);
+
+- takeScreenshot: "01_antes_stripe"
+
+# Clica no banner/botão do Stripe
+- runFlow:
+    when:
+      visible:
+        text: "Ative os recebimentos"
+    commands:
+      - tapOn:
+          text: "Ative os recebimentos"
+
+- runFlow:
+    when:
+      visible:
+        text: "Dados Bancários"
+    commands:
+      - tapOn:
+          text: "Dados Bancários"
+
+# Aguarda o navegador in-app abrir (ou carregamento)
+- extendedWaitUntil:
+    visible:
+      text: "stripe.com"
+    timeout: 15000
+    optional: true
+
+# Ou aguarda indicador de loading desaparecer
+- extendedWaitUntil:
+    notVisible:
+      id: "ActivityIndicator"
+    timeout: 20000
+    optional: true
+
+- takeScreenshot: "02_stripe_aberto"
+
+# Mede tempo de abertura
+- evalScript: |
+    const endTime = Date.now();
+    const duration = (endTime - output.startTime) / 1000;
+    console.log('⏱️ Tempo para abrir Stripe: ' + duration + ' segundos');
+    if (duration > 5) {
+      console.log('⚠️ ATENÇÃO: Tempo maior que 5 segundos!');
+    } else {
+      console.log('✅ Performance OK: menos de 5 segundos');
+    }
+
+# Fecha o navegador (se in-app browser)
+- back
+
+# Aguarda voltar para o app
+- extendedWaitUntil:
+    visible:
+      text: "Instrutor"
+    timeout: 10000
+
+- takeScreenshot: "03_voltou_app"
+
+# Verifica se status foi verificado automaticamente
+- assertVisible:
+    text: "Painel"
+    optional: true
+
+- takeScreenshot: "04_teste_finalizado"

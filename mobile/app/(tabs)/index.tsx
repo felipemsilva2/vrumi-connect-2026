@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo, memo, useRef } from 'react';
 import {
     View,
     Text,
@@ -11,12 +11,19 @@ import {
     Image,
     Linking,
     StatusBar,
+    FlatList,
     Modal,
+    Platform,
+    Animated,
+    Share,
+    Alert,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
+import * as Haptics from 'expo-haptics';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
@@ -25,9 +32,18 @@ import { isLessonExpired } from '../../utils/dateUtils';
 import { getTimeBasedGreeting } from '../../utils/greetingUtils';
 import NotificationModal from '../../components/NotificationModal';
 import { useInstructorStatus } from '../../hooks/useInstructorStatus';
+import { getCache, setCache } from '../../utils/cacheUtils';
+import { logError, parseError } from '../../utils/errorUtils';
 
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
+// Custom Components
+import ServiceItem from '../../components/vrumi/ServiceItem';
+import InstructorCard from '../../components/vrumi/InstructorCard';
+import InstructorContextMenu from '../../components/vrumi/InstructorContextMenu';
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+
+// --- Types ---
 interface Instructor {
     id: string;
     full_name: string;
@@ -49,56 +65,21 @@ interface UpcomingLesson {
     };
 }
 
+// --- Data ---
 const SERVICES = [
-    { id: 'aulas', icon: 'car', label: 'Aulas', color: '#10b981' },
-    { id: 'teoria', icon: 'book', label: 'Estudar', color: '#3b82f6', url: 'https://www.gov.br/pt-br/apps/cnh-do-brasil' },
-    { id: 'chat', icon: 'chatbubbles', label: 'Mensagens', color: '#f59e0b' },
-    { id: 'agendados', icon: 'calendar', label: 'Agendados', color: '#8b5cf6' },
+    { id: 'aulas', icon: 'car', label: 'Praticar', color: '#10b981' },
+    { id: 'teoria', icon: 'book', label: 'Estudar', color: '#3b82f6' },
+    { id: 'chat', icon: 'chatbubbles', label: 'Chat', color: '#8b5cf6' },
+    { id: 'agendados', icon: 'calendar', label: 'Histórico', color: '#f59e0b' },
 ];
 
 const DETRAN_SERVICES = [
-    {
-        id: 'cnh-digital',
-        icon: 'card',
-        label: 'CNH Digital',
-        color: '#0ea5e9',
-        url: 'https://www.gov.br/pt-br/apps/cnh-do-brasil'
-    },
-    {
-        id: 'consulta-pontos',
-        icon: 'analytics',
-        label: 'Consultar Pontos',
-        color: '#ef4444',
-        url: 'https://portalservicos.senatran.serpro.gov.br'
-    },
-    {
-        id: 'consulta-multas',
-        icon: 'warning',
-        label: 'Consultar Multas',
-        color: '#f97316',
-        url: 'https://portalservicos.senatran.serpro.gov.br'
-    },
-    {
-        id: 'agendamento-detran',
-        icon: 'calendar-number',
-        label: 'Agendar DETRAN',
-        color: '#6366f1',
-        url: null // Will open state selector
-    },
-    {
-        id: 'cnh-social',
-        icon: 'people',
-        label: 'CNH Social',
-        color: '#22c55e',
-        url: null // Will open state selector
-    },
-    {
-        id: 'clinicas-medicas',
-        icon: 'medkit',
-        label: 'Clínicas Médicas',
-        color: '#ec4899',
-        url: 'https://www.google.com/maps/search/clinica+exame+medico+detran'
-    },
+    { id: 'cnh-digital', icon: 'card-outline', label: 'CNH Digital', color: '#0ea5e9', url: 'https://www.gov.br/pt-br/apps/cnh-do-brasil' },
+    { id: 'consulta-pontos', icon: 'analytics-outline', label: 'Pontos', color: '#ef4444', url: 'https://portalservicos.senatran.serpro.gov.br' },
+    { id: 'consulta-multas', icon: 'warning-outline', label: 'Multas', color: '#f97316', url: 'https://portalservicos.senatran.serpro.gov.br' },
+    { id: 'agendamento-detran', icon: 'calendar-number-outline', label: 'Agendar', color: '#6366f1' },
+    { id: 'cnh-social', icon: 'people-outline', label: 'CNH Social', color: '#22c55e' },
+    { id: 'clinicas-medicas', icon: 'medkit-outline', label: 'Clínicas', color: '#ec4899', url: 'https://www.google.com/maps/search/clinica+exame+medico+detran' },
 ];
 
 const DETRAN_URLS: Record<string, { agendamento: string; cnhSocial: string }> = {
@@ -131,92 +112,94 @@ const DETRAN_URLS: Record<string, { agendamento: string; cnhSocial: string }> = 
     'TO': { agendamento: 'https://www.detran.to.gov.br', cnhSocial: 'https://www.detran.to.gov.br/cnh-cidada' },
 };
 
+// --- Sub-components ---
+
+const SectionHeader = memo(({ title, actionLabel, onAction, theme }: any) => (
+    <View style={styles.sectionHeader}>
+        <Text style={[styles.sectionTitle, { color: theme.text, fontSize: theme.typography.sizes.bodyLarge, fontWeight: theme.typography.weights.extraBold }]}>{title}</Text>
+        {actionLabel && (
+            <TouchableOpacity onPress={onAction} style={styles.sectionAction}>
+                <Text style={[styles.sectionActionText, { color: theme.primary, fontSize: theme.typography.sizes.bodySmall, fontWeight: theme.typography.weights.semibold }]}>{actionLabel}</Text>
+                <Ionicons name="chevron-forward" size={16} color={theme.primary} />
+            </TouchableOpacity>
+        )}
+    </View>
+));
+
 export default function HomeScreen() {
     const { user } = useAuth();
     const { theme, isDark } = useTheme();
-    const { instructorInfo } = useInstructorStatus();
+    const { isInstructor } = useInstructorStatus();
+    const insets = useSafeAreaInsets();
+    const scrollY = useRef(new Animated.Value(0)).current;
+
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
-    const [notificationModalVisible, setNotificationModalVisible] = useState(false);
     const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
     const [featuredInstructors, setFeaturedInstructors] = useState<Instructor[]>([]);
     const [upcomingLesson, setUpcomingLesson] = useState<UpcomingLesson | null>(null);
+    const [instructorBannerDismissed, setInstructorBannerDismissed] = useState(false);
+    const [stateSelectorVisible, setStateSelectorVisible] = useState(false);
+    const [selectedDetranService, setSelectedDetranService] = useState<string | null>(null);
+    const [contextMenuVisible, setContextMenuVisible] = useState(false);
+    const [selectedInstructor, setSelectedInstructor] = useState<Instructor | null>(null);
 
-    const firstName = user?.user_metadata?.full_name?.split(' ')[0] ||
-        user?.email?.split('@')[0] ||
-        'Motorista';
+    const firstName = useMemo(() =>
+        user?.user_metadata?.full_name?.split(' ')[0] || user?.email?.split('@')[0] || 'Motorista',
+        [user]
+    );
 
     const greeting = getTimeBasedGreeting();
 
-    const fetchData = useCallback(async () => {
+    const fetchData = useCallback(async (isSilent = false) => {
         if (!user?.id) return;
+        if (!isSilent) setLoading(true);
 
         try {
-            const { data: profile } = await supabase
-                .from('profiles')
-                .select('avatar_url')
-                .eq('id', user.id)
-                .single();
+            const [profileRes, instructorsRes, lessonsRes] = await Promise.all([
+                supabase.from('profiles').select('avatar_url').eq('id', user.id).single(),
+                supabase.from('instructors').select('id, full_name, photo_url, city, state, price_per_lesson, average_rating, is_verified').eq('status', 'approved').order('average_rating', { ascending: false }).limit(4),
+                supabase.from('bookings').select('id, scheduled_date, scheduled_time, instructor:instructors(full_name, photo_url)').eq('student_id', user.id).gte('scheduled_date', new Date().toISOString().split('T')[0]).in('status', ['confirmed']).order('scheduled_date', { ascending: true }).limit(5)
+            ]);
 
-            if (profile?.avatar_url) {
-                setAvatarUrl(profile.avatar_url);
-            }
+            if (profileRes.error) throw profileRes.error;
+            if (instructorsRes.error) throw instructorsRes.error;
+            if (lessonsRes.error) throw lessonsRes.error;
 
-            const { data: instructors } = await supabase
-                .from('instructors')
-                .select('id, full_name, photo_url, city, state, price_per_lesson, average_rating, is_verified')
-                .eq('status', 'approved')
-                .eq('stripe_onboarding_complete', true) // Only show instructors who can receive payments
-                .order('average_rating', { ascending: false })
-                .limit(4);
+            const profileAvatar = profileRes.data?.avatar_url;
+            const instructors = instructorsRes.data || [];
+            let upcomingData: UpcomingLesson | null = null;
 
-            setFeaturedInstructors(instructors || []);
+            if (profileAvatar) setAvatarUrl(profileAvatar);
+            setFeaturedInstructors(instructors);
 
-            const now = new Date().toISOString().split('T')[0];
-            // Fetch slightly more to filter locally if needed
-            const { data: lessons } = await supabase
-                .from('bookings')
-                .select(`
-                    id,
-                    scheduled_date,
-                    scheduled_time,
-                    instructor:instructors(full_name, photo_url)
-                `)
-                .eq('student_id', user.id)
-                .gte('scheduled_date', now)
-                .in('status', ['confirmed'])
-                .order('scheduled_date', { ascending: true })
-                .order('scheduled_time', { ascending: true }) // Order by time too
-                .limit(5); // Fetch a few to find the first non-expired one
-
-            if (lessons && lessons.length > 0) {
-                // Find first non-expired lesson
-                const validLesson = lessons.find(l => !isLessonExpired(l.scheduled_date, l.scheduled_time));
-
+            if (lessonsRes.data && lessonsRes.data.length > 0) {
+                const validLesson = lessonsRes.data.find(l => !isLessonExpired(l.scheduled_date, l.scheduled_time));
                 if (validLesson) {
-                    // Supabase join returns an array if one-to-many, or object?
-                    // Usually it returns an array unless .single() is used on the join or if it's declared strictly.
-                    // However, TS inference might see it as an array if not typed.
-                    // Given the error: "Property '0' does not exist on type '{ full_name: string; photo_url: string | null; }'"
-                    // It means TS thinks 'instructor' IS the object, not an array.
-                    // So we should access it directly.
                     const instructorData = validLesson.instructor as any;
-                    const instructor = Array.isArray(instructorData) ? instructorData[0] : instructorData;
-
-                    setUpcomingLesson({
+                    upcomingData = {
                         id: validLesson.id,
                         scheduled_date: validLesson.scheduled_date,
                         scheduled_time: validLesson.scheduled_time,
-                        instructor: instructor || { full_name: 'Instrutor', photo_url: null },
-                    });
-                } else {
-                    setUpcomingLesson(null);
-                }
-            } else {
-                setUpcomingLesson(null);
-            }
+                        instructor: Array.isArray(instructorData) ? instructorData[0] : instructorData || { full_name: 'Instrutor', photo_url: null },
+                    };
+                    setUpcomingLesson(upcomingData);
+                } else setUpcomingLesson(null);
+            } else setUpcomingLesson(null);
+
+            // Save to cache for offline/instant load
+            await setCache(`home_data_${user.id}`, {
+                avatarUrl: profileAvatar,
+                featuredInstructors: instructors,
+                upcomingLesson: upcomingData
+            });
+
         } catch (error) {
-            console.error('Error fetching data:', error);
+            logError(error, 'HomeScreen.fetchData');
+            const appError = parseError(error);
+            if (!isSilent) {
+                Alert.alert(appError.message, appError.description);
+            }
         } finally {
             setLoading(false);
             setRefreshing(false);
@@ -224,422 +207,353 @@ export default function HomeScreen() {
     }, [user?.id]);
 
     useEffect(() => {
-        fetchData();
-    }, [fetchData]);
+        const loadCacheAndFetch = async () => {
+            if (!user?.id) return;
+
+            // 1. Try to load from cache for instant UI
+            const cachedData = await getCache<any>(`home_data_${user.id}`);
+            if (cachedData) {
+                if (cachedData.avatarUrl) setAvatarUrl(cachedData.avatarUrl);
+                setFeaturedInstructors(cachedData.featuredInstructors || []);
+                setUpcomingLesson(cachedData.upcomingLesson);
+                setLoading(false); // Can stop loading if cache exists
+            }
+
+            // 2. Fetch fresh data in background
+            fetchData(!!cachedData);
+        };
+
+        loadCacheAndFetch();
+
+        const checkBanner = async () => {
+            const dismissed = await AsyncStorage.getItem('instructor_banner_dismissed');
+            if (dismissed === 'true') setInstructorBannerDismissed(true);
+        };
+        checkBanner();
+    }, [user?.id, fetchData]);
 
     const onRefresh = useCallback(() => {
         setRefreshing(true);
         fetchData();
     }, [fetchData]);
 
-    const formatPrice = (price: number) => {
-        return new Intl.NumberFormat('pt-BR', {
-            style: 'currency',
-            currency: 'BRL',
-        }).format(price);
-    };
-
-    const formatLessonDate = (dateStr: string, timeStr: string) => {
-        const date = new Date(dateStr + 'T00:00:00');
-        const formattedDate = date.toLocaleDateString('pt-BR', { weekday: 'short', day: 'numeric', month: 'short' });
-        const formattedTime = timeStr.substring(0, 5);
-        return `${formattedDate} às ${formattedTime}`;
-    };
-
-    const handleServicePress = (serviceId: string) => {
-        switch (serviceId) {
-            case 'aulas':
-                router.push('/(tabs)/buscar');
-                break;
-            case 'teoria':
-                Linking.openURL('https://www.gov.br/pt-br/apps/cnh-do-brasil');
-                break;
-            case 'chat':
-                router.push('/connect/chat');
-                break;
-            case 'agendados':
-                router.push('/(tabs)/aulas');
-                break;
+    const handleServicePress = (id: string) => {
+        Haptics.selectionAsync();
+        switch (id) {
+            case 'aulas': router.push('/(tabs)/buscar'); break;
+            case 'teoria': Linking.openURL('https://www.gov.br/pt-br/apps/cnh-do-brasil'); break;
+            case 'chat': router.push('/(tabs)/mensagens'); break;
+            case 'agendados': router.push('/(tabs)/aulas'); break;
         }
     };
 
-    const [stateSelectorVisible, setStateSelectorVisible] = useState(false);
-    const [selectedDetranService, setSelectedDetranService] = useState<string | null>(null);
-    const [instructorBannerDismissed, setInstructorBannerDismissed] = useState(false);
-
-    // Check if instructor banner was dismissed
-    useEffect(() => {
-        const checkBannerDismissed = async () => {
-            try {
-                const dismissed = await AsyncStorage.getItem('instructor_banner_dismissed');
-                if (dismissed === 'true') {
-                    setInstructorBannerDismissed(true);
-                }
-            } catch (error) {
-                console.error('Error checking banner status:', error);
-            }
-        };
-        checkBannerDismissed();
-    }, []);
-
-    const dismissInstructorBanner = async () => {
-        try {
-            await AsyncStorage.setItem('instructor_banner_dismissed', 'true');
-            setInstructorBannerDismissed(true);
-        } catch (error) {
-            console.error('Error dismissing banner:', error);
-        }
+    const handleInstructorPress = (id: string) => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        router.push(`/connect/instrutor/${id}`);
     };
 
-    const handleDetranServicePress = (service: typeof DETRAN_SERVICES[0]) => {
+    const handleDetranServicePress = (service: any) => {
+        Haptics.selectionAsync();
         if (service.url) {
             Linking.openURL(service.url);
         } else {
-            // Open state selector for agendamento-detran or cnh-social
             setSelectedDetranService(service.id);
             setStateSelectorVisible(true);
         }
     };
 
     const handleStateSelect = (stateCode: string) => {
-        setStateSelectorVisible(false);
+        if (!selectedDetranService) return;
         const urls = DETRAN_URLS[stateCode];
         if (urls) {
-            if (selectedDetranService === 'agendamento-detran') {
-                Linking.openURL(urls.agendamento);
-            } else if (selectedDetranService === 'cnh-social') {
-                Linking.openURL(urls.cnhSocial);
-            }
+            const finalUrl = selectedDetranService === 'agendamento-detran' ? urls.agendamento : urls.cnhSocial;
+            Linking.openURL(finalUrl);
+        }
+        setStateSelectorVisible(false);
+        setSelectedDetranService(null);
+    };
+
+    const renderHeader = () => (
+        <View style={styles.header}>
+            <View>
+                <View style={[styles.confidenceBadge, { backgroundColor: theme.primary + '15' }]}>
+                    <Ionicons name="shield-checkmark" size={12} color={theme.primary} />
+                    <Text style={[styles.confidenceText, { color: theme.primary, fontSize: theme.typography.sizes.label, fontWeight: theme.typography.weights.bold }]}>Caminho Seguro Hoje</Text>
+                </View>
+                <Text style={[styles.greeting, { color: theme.textSecondary, fontSize: theme.typography.sizes.body, fontWeight: theme.typography.weights.medium, lineHeight: theme.typography.sizes.body * theme.typography.lineHeights.normal }]}>{greeting},</Text>
+                <Text style={[styles.userName, { color: theme.text, fontSize: theme.typography.sizes.h2, fontWeight: theme.typography.weights.extraBold }]}>{firstName} 👋</Text>
+            </View>
+            <TouchableOpacity
+                onPress={() => router.push('/(tabs)/perfil')}
+                activeOpacity={0.7}
+                style={styles.avatarWrapper}
+            >
+                {avatarUrl ? (
+                    <Image source={{ uri: avatarUrl }} style={styles.avatar} />
+                ) : (
+                    <View style={[styles.avatarPlaceholder, { backgroundColor: theme.primarySoft }]}>
+                        <Ionicons name="person" size={24} color={theme.primary} />
+                    </View>
+                )}
+            </TouchableOpacity>
+        </View>
+    );
+
+    const renderUpcomingLesson = () => {
+        if (!upcomingLesson) return null;
+
+        const date = new Date(upcomingLesson.scheduled_date + 'T00:00:00');
+        const day = date.getDate();
+        const month = date.toLocaleDateString('pt-BR', { month: 'short' }).toUpperCase();
+        const time = upcomingLesson.scheduled_time.substring(0, 5);
+
+        return (
+            <View style={styles.section}>
+                <SectionHeader title="Sua próxima aula" theme={theme} />
+                <TouchableOpacity
+                    style={[styles.nextLessonCard, { backgroundColor: theme.primary }]}
+                    onPress={() => router.push('/(tabs)/aulas')}
+                    activeOpacity={0.9}
+                >
+                    <View style={styles.lessonDateBadge}>
+                        <Text style={[styles.lessonDay, { fontSize: theme.typography.sizes.h2, fontWeight: theme.typography.weights.extraBold }]}>{day}</Text>
+                        <Text style={[styles.lessonMonth, { fontSize: theme.typography.sizes.label, fontWeight: theme.typography.weights.bold }]}>{month}</Text>
+                    </View>
+                    <View style={styles.lessonInfo}>
+                        <Text style={styles.lessonInstructor}>{upcomingLesson.instructor.full_name}</Text>
+                        <View style={styles.lessonTimeRow}>
+                            <Ionicons name="time-outline" size={16} color="rgba(255,255,255,0.8)" />
+                            <Text style={styles.lessonTime}>{time}h</Text>
+                            <View style={styles.lessonDot} />
+                            <Text style={styles.lessonAction}>Toque para ver detalhes</Text>
+                        </View>
+                    </View>
+                    <Ionicons name="chevron-forward" size={24} color="#fff" />
+                </TouchableOpacity>
+            </View>
+        );
+    };
+
+    const renderServiceGrid = () => (
+        <View style={styles.section}>
+            <FlatList
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                data={SERVICES}
+                keyExtractor={(item) => item.id}
+                contentContainerStyle={styles.horizontalScroll}
+                renderItem={({ item }) => (
+                    <ServiceItem
+                        {...item}
+                        theme={theme}
+                        onPress={handleServicePress}
+                    />
+                )}
+            />
+        </View>
+    );
+
+    const renderFeaturedSection = () => (
+        <View style={styles.section}>
+            <SectionHeader
+                title="Instrutores em destaque"
+                actionLabel="Ver todos"
+                onAction={() => router.push('/(tabs)/buscar')}
+                theme={theme}
+            />
+            {loading ? (
+                <ActivityIndicator color={theme.primary} style={{ margin: 20 }} />
+            ) : (
+                <FlatList
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    data={featuredInstructors}
+                    keyExtractor={(item) => item.id}
+                    contentContainerStyle={styles.horizontalScroll}
+                    renderItem={({ item }) => (
+                        <InstructorCard
+                            instructor={item}
+                            theme={theme}
+                            onPress={handleInstructorPress}
+                            onLongPress={handleInstructorLongPress}
+                        />
+                    )}
+                />
+            )}
+        </View>
+    );
+
+    const renderDetranGrid = () => (
+        <View style={styles.section}>
+            <SectionHeader title="Serviços Úteis" theme={theme} />
+            <View style={styles.detranGrid}>
+                {DETRAN_SERVICES.map((service) => (
+                    <TouchableOpacity
+                        key={service.id}
+                        style={[styles.detranItem, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}
+                        onPress={() => handleDetranServicePress(service)}
+                        activeOpacity={0.7}
+                    >
+                        <View style={[styles.detranIcon, { backgroundColor: `${service.color}10` }]}>
+                            <Ionicons name={service.icon as any} size={22} color={service.color} />
+                        </View>
+                        <Text style={[styles.detranLabel, { color: theme.textSecondary }]} numberOfLines={1}>
+                            {service.label}
+                        </Text>
+                    </TouchableOpacity>
+                ))}
+            </View>
+        </View>
+    );
+
+    const renderInstructorBanner = () => {
+        if (instructorBannerDismissed || isInstructor) return null;
+
+        return (
+            <View style={styles.bannerContainer}>
+                <LinearGradient
+                    colors={['#10b981', '#059669']}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                    style={styles.instructorBanner}
+                >
+                    <View style={styles.bannerContent}>
+                        <Text style={styles.bannerTitle}>Ganhe dinheiro ensinando</Text>
+                        <Text style={styles.bannerDesc}>Torne-se um instrutor parceiro Vrumi hoje mesmo.</Text>
+                        <TouchableOpacity
+                            style={styles.bannerCta}
+                            onPress={() => router.push('/connect/intro-instrutor')}
+                        >
+                            <Text style={styles.bannerCtaText}>Saber mais</Text>
+                        </TouchableOpacity>
+                    </View>
+                    <Image
+                        source={{ uri: 'https://images.unsplash.com/photo-1449965408869-eaa3f722e40d?w=400&q=80' }}
+                        style={styles.bannerImage}
+                    />
+                    <TouchableOpacity
+                        style={styles.bannerClose}
+                        onPress={async () => {
+                            await AsyncStorage.setItem('instructor_banner_dismissed', 'true');
+                            setInstructorBannerDismissed(true);
+                        }}
+                    >
+                        <Ionicons name="close" size={20} color="#fff" />
+                    </TouchableOpacity>
+                </LinearGradient>
+            </View>
+        );
+    };
+
+    const handleInstructorLongPress = (id: string) => {
+        const instructor = featuredInstructors.find(i => i.id === id);
+        if (instructor) {
+            setSelectedInstructor(instructor);
+            setContextMenuVisible(true);
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
         }
     };
 
-    if (loading) {
-        return (
-            <View style={[styles.container, { backgroundColor: theme.background }]}>
-                <View style={styles.loadingContainer}>
-                    <ActivityIndicator size="large" color="#10b981" />
-                </View>
-            </View>
+    const handleInstructorShare = async (id: string) => {
+        const instructor = featuredInstructors.find(i => i.id === id);
+        if (!instructor) return;
+
+        try {
+            await Share.share({
+                message: `Confira o perfil de ${instructor.full_name} no Vrumi! O melhor instrutor de direção de ${instructor.city}.`,
+                url: 'https://vrumi.com.br',
+                title: 'Vrumi - Compartilhar Instrutor'
+            });
+        } catch (error) {
+            logError(error, 'handleInstructorShare');
+        }
+    };
+
+    const handleInstructorFavorite = (id: string) => {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        // Mocking favorite action
+        Alert.alert(
+            "Favoritado",
+            "Este instrutor foi adicionado aos seus favoritos!"
         );
-    }
+    };
+
+    const headerOpacity = scrollY.interpolate({
+        inputRange: [0, 50],
+        outputRange: [0, 1],
+        extrapolate: 'clamp',
+    });
 
     return (
         <View style={[styles.container, { backgroundColor: theme.background }]}>
-            <StatusBar barStyle="light-content" backgroundColor="#064e3b" translucent />
+            <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} />
 
-            {/* Header with Gradient */}
-            <View style={styles.headerSection}>
-                <SafeAreaView edges={['top']} style={styles.safeHeader}>
-                    {/* Top Bar */}
-                    <View style={styles.topBar}>
-                        <TouchableOpacity
-                            style={styles.profileButton}
-                            onPress={() => router.push('/(tabs)/perfil')}
-                            accessibilityLabel="Ir para meu perfil"
-                            accessibilityRole="button"
-                            accessibilityHint="Abre sua página de perfil"
-                        >
-                            {avatarUrl ? (
-                                <Image source={{ uri: avatarUrl }} style={styles.profileAvatar} accessibilityLabel={`Foto de ${firstName}`} />
-                            ) : (
-                                <View style={styles.profileAvatarPlaceholder}>
-                                    <Text style={styles.profileInitial}>{firstName.charAt(0)}</Text>
-                                </View>
-                            )}
-                        </TouchableOpacity>
-                        <View style={styles.userInfo}>
-                            <Text style={styles.greeting}>{greeting},</Text>
-                            <Text style={styles.userName}>{firstName}!</Text>
-                        </View>
-                        <TouchableOpacity
-                            style={styles.notificationBtn}
-                            onPress={() => setNotificationModalVisible(true)}
-                            accessibilityLabel="Notificações"
-                            accessibilityRole="button"
-                            accessibilityHint="Abre suas notificações"
-                        >
-                            <Ionicons name="notifications" size={22} color="#fff" />
-                        </TouchableOpacity>
-                    </View>
-
-                    {/* Search Bar */}
-                    <TouchableOpacity
-                        style={[styles.searchBar, { backgroundColor: theme.card }]}
-                        onPress={() => router.push('/(tabs)/buscar')}
-                        accessibilityLabel="Buscar instrutor"
-                        accessibilityRole="search"
-                        accessibilityHint="Abre a tela de busca de instrutores"
-                    >
-                        <Ionicons name="search" size={20} color={theme.textMuted} />
-                        <Text style={[styles.searchPlaceholder, { color: theme.textMuted }]}>Buscar instrutor...</Text>
-                    </TouchableOpacity>
-                </SafeAreaView>
-            </View>
-
-            {/* Content */}
-            <ScrollView
-                style={styles.scrollView}
-                showsVerticalScrollIndicator={false}
-                contentContainerStyle={styles.scrollContent}
-                refreshControl={
-                    <RefreshControl
-                        refreshing={refreshing}
-                        onRefresh={onRefresh}
-                        tintColor="#10b981"
-                        colors={['#10b981']}
-                    />
+            {/* Sticky Floating Header (iOS Glassmorphism) */}
+            <Animated.View style={[
+                styles.stickyHeader,
+                {
+                    paddingTop: insets.top,
+                    opacity: headerOpacity,
+                    zIndex: 10,
                 }
-            >
-                {/* Upcoming Lesson Card */}
-                {upcomingLesson && (
-                    <TouchableOpacity
-                        style={styles.upcomingCard}
-                        onPress={() => router.push('/(tabs)/aulas')}
-                        activeOpacity={0.95}
-                        accessibilityLabel={`Próxima aula com ${upcomingLesson.instructor?.full_name || 'Instrutor'}, ${formatLessonDate(upcomingLesson.scheduled_date, upcomingLesson.scheduled_time)}`}
-                        accessibilityRole="button"
-                        accessibilityHint="Toque para ver detalhes da aula"
-                    >
-                        <LinearGradient
-                            colors={['#10b981', '#059669']}
-                            start={{ x: 0, y: 0 }}
-                            end={{ x: 1, y: 1 }}
-                            style={styles.upcomingGradient}
-                        >
-                            <View style={styles.upcomingContent}>
-                                <View style={styles.upcomingInfo}>
-                                    <Text style={styles.upcomingLabel}>Próxima Aula</Text>
-                                    <Text style={styles.upcomingInstructor}>
-                                        {upcomingLesson.instructor?.full_name || 'Instrutor'}
-                                    </Text>
-                                    <Text style={styles.upcomingDate}>
-                                        {formatLessonDate(upcomingLesson.scheduled_date, upcomingLesson.scheduled_time)}
-                                    </Text>
-                                </View>
-                                <View style={styles.upcomingIcon}>
-                                    <Ionicons name="car-sport" size={40} color="rgba(255,255,255,0.9)" />
-                                </View>
-                            </View>
-                        </LinearGradient>
-                    </TouchableOpacity>
-                )}
-
-                {/* Vrumi Services */}
-                <Text style={[styles.sectionTitle, { color: theme.text }]}>Serviços Vrumi</Text>
-                <ScrollView
-                    horizontal
-                    showsHorizontalScrollIndicator={false}
-                    style={styles.servicesScroll}
-                    contentContainerStyle={styles.servicesContent}
-                >
-                    {SERVICES.map((service) => (
-                        <TouchableOpacity
-                            key={service.id}
-                            style={styles.serviceCard}
-                            onPress={() => handleServicePress(service.id)}
-                            accessibilityLabel={service.label}
-                            accessibilityRole="button"
-                            accessibilityHint={`Acessar ${service.label}`}
-                        >
-                            <View style={[styles.serviceIcon, { backgroundColor: `${service.color}15` }]}>
-                                <Ionicons name={service.icon as any} size={24} color={service.color} />
-                            </View>
-                            <Text style={[styles.serviceLabel, { color: theme.textSecondary }]}>{service.label}</Text>
-                        </TouchableOpacity>
-                    ))}
-                </ScrollView>
-
-                {/* DETRAN Services */}
-                <Text style={[styles.sectionTitle, { color: theme.text }]}>Serviços DETRAN</Text>
-                <ScrollView
-                    horizontal
-                    showsHorizontalScrollIndicator={false}
-                    style={styles.servicesScroll}
-                    contentContainerStyle={styles.servicesContent}
-                >
-                    {DETRAN_SERVICES.map((service) => (
-                        <TouchableOpacity
-                            key={service.id}
-                            style={styles.serviceCard}
-                            onPress={() => handleDetranServicePress(service)}
-                            accessibilityLabel={service.label}
-                            accessibilityRole="button"
-                            accessibilityHint={`Acessar ${service.label} do DETRAN`}
-                        >
-                            <View style={[styles.serviceIcon, { backgroundColor: `${service.color}15` }]}>
-                                <Ionicons name={service.icon as any} size={24} color={service.color} />
-                            </View>
-                            <Text style={[styles.serviceLabel, { color: theme.textSecondary }]}>{service.label}</Text>
-                        </TouchableOpacity>
-                    ))}
-                </ScrollView>
-
-                {/* Become Instructor CTA - Show if not instructor and not dismissed */}
-                {!instructorInfo && !instructorBannerDismissed && (
-                    <View style={styles.ctaCard}>
-                        <TouchableOpacity
-                            style={styles.ctaDismissButton}
-                            onPress={dismissInstructorBanner}
-                            accessibilityLabel="Fechar banner"
-                            accessibilityRole="button"
-                            accessibilityHint="Fecha permanentemente este banner"
-                        >
-                            <Ionicons name="close" size={20} color="rgba(255,255,255,0.8)" />
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                            onPress={() => router.push('/connect/intro-instrutor')}
-                            activeOpacity={0.95}
-                            accessibilityLabel="Torne-se um instrutor. Faça uma renda extra ensinando novos motoristas."
-                            accessibilityRole="button"
-                            accessibilityHint="Abre o cadastro para instrutores"
-                        >
-                            <LinearGradient
-                                colors={['#7e22ce', '#6b21a8']}
-                                start={{ x: 0, y: 0 }}
-                                end={{ x: 1, y: 1 }}
-                                style={styles.ctaGradient}
-                            >
-                                <View style={styles.ctaContent}>
-                                    <View style={styles.ctaInfo}>
-                                        <Text style={styles.ctaTitle}>Torne-se um Instrutor</Text>
-                                        <Text style={styles.ctaSubtitle}>
-                                            Faça uma renda extra ensinando novos motoristas com seu próprio veículo.
-                                        </Text>
-                                        <View style={styles.ctaButton}>
-                                            <Text style={styles.ctaButtonText}>Começar agora</Text>
-                                            <Ionicons name="arrow-forward" size={16} color="#7e22ce" />
-                                        </View>
-                                    </View>
-                                    <View style={styles.ctaIcon}>
-                                        <Ionicons name="school" size={48} color="rgba(255,255,255,0.9)" />
-                                    </View>
-                                </View>
-                            </LinearGradient>
-                        </TouchableOpacity>
-                    </View>
-                )}
-
-                {/* Featured Instructors */}
-                <View style={styles.sectionHeader}>
-                    <Text style={[styles.sectionTitle, { color: theme.text }]}>Instrutores em Destaque</Text>
-                    <TouchableOpacity
-                        onPress={() => router.push('/(tabs)/buscar')}
-                        accessibilityLabel="Ver todos os instrutores"
-                        accessibilityRole="button"
-                    >
-                        <Text style={styles.seeAllText}>Ver todos</Text>
+            ]}>
+                <BlurView
+                    intensity={Platform.OS === 'ios' ? 90 : 0}
+                    tint={isDark ? 'dark' : 'light'}
+                    style={[StyleSheet.absoluteFill, { backgroundColor: isDark ? 'rgba(0,0,0,0.5)' : 'rgba(255,255,255,0.7)' }]}
+                />
+                <View style={[styles.header, { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: theme.cardBorder }]}>
+                    <Text style={[styles.userName, { color: theme.text, fontSize: theme.typography.sizes.bodyLarge, fontWeight: theme.typography.weights.extraBold }]}>Vrumi</Text>
+                    <TouchableOpacity onPress={() => router.push('/(tabs)/perfil')}>
+                        <Ionicons name="person-circle" size={32} color={theme.primary} />
                     </TouchableOpacity>
                 </View>
+            </Animated.View>
 
-                {featuredInstructors.length > 0 ? (
-                    <ScrollView
-                        horizontal
-                        showsHorizontalScrollIndicator={false}
-                        style={styles.instructorsScroll}
-                        contentContainerStyle={styles.instructorsContent}
-                    >
-                        {featuredInstructors.map((instructor) => (
-                            <TouchableOpacity
-                                key={instructor.id}
-                                style={[styles.instructorCard, { backgroundColor: theme.card, borderColor: theme.cardBorder, borderWidth: 1 }]}
-                                onPress={() => router.push(`/connect/instrutor/${instructor.id}`)}
-                                activeOpacity={0.9}
-                                accessibilityLabel={`${instructor.full_name}, ${Number(instructor.average_rating || 0).toFixed(1)} estrelas, ${formatPrice(instructor.price_per_lesson)} por aula${instructor.is_verified ? ', verificado' : ''}`}
-                                accessibilityRole="button"
-                                accessibilityHint="Ver perfil do instrutor"
-                            >
-                                <View style={styles.photoContainer}>
-                                    {instructor.photo_url ? (
-                                        <Image
-                                            source={{ uri: instructor.photo_url }}
-                                            style={styles.photo}
-                                            accessibilityLabel={`Foto de ${instructor.full_name}`}
-                                        />
-                                    ) : (
-                                        <View style={styles.photoPlaceholder}>
-                                            <Text style={styles.photoInitial}>
-                                                {instructor.full_name.charAt(0)}
-                                            </Text>
-                                        </View>
-                                    )}
-                                    {instructor.is_verified && (
-                                        <View style={[styles.verifiedBadge, { backgroundColor: theme.card }]}>
-                                            <Ionicons name="checkmark-circle" size={16} color="#10b981" />
-                                        </View>
-                                    )}
-                                </View>
-                                <View style={styles.cardInfo}>
-                                    <Text style={[styles.instructorName, { color: theme.text }]} numberOfLines={1}>
-                                        {instructor.full_name}
-                                    </Text>
-                                    <View style={styles.ratingRow}>
-                                        <Ionicons name="star" size={12} color="#f59e0b" />
-                                        <Text style={[styles.ratingText, { color: theme.textSecondary }]}>
-                                            {Number(instructor.average_rating || 0).toFixed(1)}
-                                        </Text>
-                                    </View>
-                                    <Text style={styles.priceText}>
-                                        {formatPrice(instructor.price_per_lesson)}
-                                    </Text>
-                                </View>
-                            </TouchableOpacity>
-                        ))}
-                    </ScrollView>
-                ) : (
-                    <View style={[styles.emptyCard, { backgroundColor: theme.card }]}>
-                        <Ionicons name="people-outline" size={40} color={theme.textMuted} />
-                        <Text style={[styles.emptyText, { color: theme.textMuted }]}>
-                            Nenhum instrutor disponível ainda
-                        </Text>
-                    </View>
+            <Animated.ScrollView
+                showsVerticalScrollIndicator={false}
+                onScroll={Animated.event(
+                    [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+                    { useNativeDriver: true }
                 )}
+                scrollEventThrottle={16}
+                refreshControl={
+                    <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.primary} />
+                }
+                contentContainerStyle={{ paddingTop: insets.top + (upcomingLesson ? 0 : 20) }}
+            >
+                {renderHeader()}
+                {renderUpcomingLesson()}
+                {renderServiceGrid()}
+                {renderInstructorBanner()}
+                {renderFeaturedSection()}
+                {renderDetranGrid()}
+                <View style={{ height: 100 }} />
+            </Animated.ScrollView>
 
-
-
-                <View style={{ height: 120 }} />
-            </ScrollView>
-
-            {/* Notification Modal */}
-            <NotificationModal
-                visible={notificationModalVisible}
-                onClose={() => setNotificationModalVisible(false)}
-            />
-
-            {/* State Selector Modal */}
+            {/* Modal de Seleção de Estado */}
             <Modal
                 visible={stateSelectorVisible}
-                animationType="slide"
                 transparent={true}
+                animationType="slide"
                 onRequestClose={() => setStateSelectorVisible(false)}
-                accessibilityViewIsModal={true}
             >
                 <View style={styles.modalOverlay}>
                     <View style={[styles.modalContent, { backgroundColor: theme.card }]}>
                         <View style={styles.modalHeader}>
-                            <Text style={[styles.modalTitle, { color: theme.text }]} accessibilityRole="header">
-                                Selecione seu Estado
-                            </Text>
-                            <TouchableOpacity
-                                onPress={() => setStateSelectorVisible(false)}
-                                accessibilityLabel="Fechar"
-                                accessibilityRole="button"
-                            >
+                            <Text style={[styles.modalTitle, { color: theme.text, fontSize: theme.typography.sizes.h3, fontWeight: theme.typography.weights.extraBold }]}>Selecione seu Estado</Text>
+                            <TouchableOpacity onPress={() => setStateSelectorVisible(false)}>
                                 <Ionicons name="close" size={24} color={theme.text} />
                             </TouchableOpacity>
                         </View>
-                        <ScrollView style={styles.stateList}>
+                        <ScrollView style={styles.statesList}>
                             {Object.keys(DETRAN_URLS).map((stateCode) => (
                                 <TouchableOpacity
                                     key={stateCode}
                                     style={[styles.stateItem, { borderBottomColor: theme.cardBorder }]}
                                     onPress={() => handleStateSelect(stateCode)}
-                                    accessibilityLabel={`Estado ${stateCode}`}
-                                    accessibilityRole="button"
-                                    accessibilityHint="Selecionar este estado"
                                 >
-                                    <Text style={[styles.stateText, { color: theme.text }]}>
-                                        {stateCode}
-                                    </Text>
+                                    <Text style={[styles.stateText, { color: theme.text, fontSize: theme.typography.sizes.body, fontWeight: theme.typography.weights.semibold }]}>{stateCode}</Text>
                                     <Ionicons name="chevron-forward" size={20} color={theme.textMuted} />
                                 </TouchableOpacity>
                             ))}
@@ -647,6 +561,19 @@ export default function HomeScreen() {
                     </View>
                 </View>
             </Modal>
+
+            <InstructorContextMenu
+                visible={contextMenuVisible}
+                instructor={selectedInstructor}
+                theme={theme}
+                onClose={() => {
+                    setContextMenuVisible(false);
+                    setSelectedInstructor(null);
+                }}
+                onViewProfile={handleInstructorPress}
+                onShare={handleInstructorShare}
+                onFavorite={handleInstructorFavorite}
+            />
         </View>
     );
 }
@@ -654,455 +581,261 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#f3f4f6',
     },
-    loadingContainer: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    // Header Section
-    headerSection: {
-        backgroundColor: '#064e3b',
-        paddingBottom: 20,
-        borderBottomLeftRadius: 24,
-        borderBottomRightRadius: 24,
-    },
-    safeHeader: {
-        paddingHorizontal: 20,
-    },
-    topBar: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginTop: 8,
-        marginBottom: 20,
-    },
-    profileButton: {
-        width: 48,
-        height: 48,
-        borderRadius: 24,
-        overflow: 'hidden',
-        borderWidth: 2,
-        borderColor: 'rgba(255,255,255,0.3)',
-    },
-    profileAvatar: {
-        width: '100%',
-        height: '100%',
-    },
-    profileAvatarPlaceholder: {
-        width: '100%',
-        height: '100%',
-        backgroundColor: '#10b981',
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    profileInitial: {
-        color: '#fff',
-        fontSize: 20,
-        fontWeight: '700',
-    },
-    userInfo: {
-        flex: 1,
-        marginLeft: 12,
-    },
-    greeting: {
-        fontSize: 14,
-        color: 'rgba(255,255,255,0.7)',
-    },
-    userName: {
-        fontSize: 20,
-        fontWeight: '700',
-        color: '#fff',
-    },
-    notificationBtn: {
-        width: 44,
-        height: 44,
-        borderRadius: 22,
-        backgroundColor: 'rgba(255,255,255,0.15)',
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    // Search Bar
-    searchBar: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: '#fff',
-        paddingHorizontal: 16,
-        paddingVertical: 14,
-        borderRadius: 14,
-        gap: 10,
-    },
-    searchPlaceholder: {
-        fontSize: 15,
-        color: '#9ca3af',
-    },
-    // Content
-    scrollView: {
-        flex: 1,
-    },
-    scrollContent: {
-        paddingHorizontal: 20,
-        paddingTop: 20,
-    },
-    // Upcoming Lesson Card
-    upcomingCard: {
-        borderRadius: 20,
-        overflow: 'hidden',
-        marginBottom: 24,
-        shadowColor: '#10b981',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.3,
-        shadowRadius: 12,
-        elevation: 6,
-    },
-    upcomingGradient: {
-        padding: 20,
-    },
-    upcomingContent: {
+    header: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
+        paddingHorizontal: 24,
+        paddingTop: 16,
+        paddingBottom: 24,
     },
-    upcomingInfo: {
-        flex: 1,
+    greeting: {
+        fontWeight: '500',
     },
-    upcomingLabel: {
-        color: 'rgba(255,255,255,0.8)',
-        fontSize: 12,
-        fontWeight: '600',
-        marginBottom: 4,
-    },
-    upcomingInstructor: {
-        fontSize: 20,
+    userName: {
         fontWeight: '800',
-        color: '#fff',
-        marginBottom: 4,
+        marginTop: 4,
     },
-    upcomingDate: {
-        fontSize: 14,
-        color: 'rgba(255,255,255,0.9)',
+    avatar: {
+        width: 56, // Increased to 44pt+ safe target
+        height: 56,
+        borderRadius: 20,
     },
-    upcomingIcon: {
-        width: 64,
-        height: 64,
-        borderRadius: 32,
-        backgroundColor: 'rgba(255,255,255,0.2)',
+    avatarPlaceholder: {
+        width: 56,
+        height: 56,
+        borderRadius: 20,
         justifyContent: 'center',
         alignItems: 'center',
     },
-    // Services
-    sectionTitle: {
-        fontSize: 18,
+    confidenceBadge: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+        borderRadius: 20,
+        gap: 4,
+        marginBottom: 8,
+        alignSelf: 'flex-start',
+    },
+    confidenceText: {
         fontWeight: '700',
-        color: '#1f2937',
+        textTransform: 'uppercase',
+        letterSpacing: 0.5,
+    },
+    avatarWrapper: {
+        borderRadius: 20,
+        overflow: 'hidden',
+    },
+    section: {
+        marginBottom: 32,
+    },
+    sectionHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingHorizontal: 24,
         marginBottom: 16,
     },
-    servicesScroll: {
-        marginHorizontal: -20,
-        marginBottom: 20,
+    sectionTitle: {
+        fontWeight: '800',
     },
-    servicesContent: {
-        paddingHorizontal: 20,
-        gap: 16,
-    },
-    serviceCard: {
+    sectionAction: {
+        flexDirection: 'row',
         alignItems: 'center',
-        width: 72,
+        gap: 2,
     },
-    serviceIcon: {
+    sectionActionText: {
+        fontWeight: '600',
+    },
+    nextLessonCard: {
+        marginHorizontal: 24,
+        borderRadius: 24,
+        padding: 20,
+        flexDirection: 'row',
+        alignItems: 'center',
+        shadowColor: '#10b981',
+        shadowOffset: { width: 0, height: 8 },
+        shadowOpacity: 0.2,
+        shadowRadius: 12,
+        elevation: 6,
+    },
+    lessonDateBadge: {
+        backgroundColor: 'rgba(255,255,255,0.2)',
         width: 56,
         height: 56,
         borderRadius: 16,
         justifyContent: 'center',
         alignItems: 'center',
-        marginBottom: 8,
     },
-    serviceLabel: {
-        fontSize: 12,
-        fontWeight: '600',
-        color: '#4b5563',
+    lessonDay: {
+        color: '#fff',
+        fontWeight: '800',
     },
-    // Section Header
-    sectionHeader: {
+    lessonMonth: {
+        color: '#fff',
+        fontWeight: '700',
+        textTransform: 'uppercase',
+    },
+    lessonInfo: {
+        flex: 1,
+        marginLeft: 16,
+    },
+    lessonInstructor: {
+        color: '#fff',
+        fontSize: 18,
+        fontWeight: '700',
+        marginBottom: 4,
+    },
+    lessonTimeRow: {
         flexDirection: 'row',
-        justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: 16,
     },
-    seeAllText: {
+    lessonTime: {
+        color: '#fff',
         fontSize: 14,
         fontWeight: '600',
-        color: '#10b981',
+        marginLeft: 4,
     },
-    // Instructors
-    instructorsScroll: {
-        marginHorizontal: -20,
+    lessonDot: {
+        width: 4,
+        height: 4,
+        borderRadius: 2,
+        backgroundColor: 'rgba(255,255,255,0.5)',
+        marginHorizontal: 8,
     },
-    instructorsContent: {
+    lessonAction: {
+        color: 'rgba(255,255,255,0.8)',
+        fontSize: 12,
+        fontWeight: '500',
+    },
+    horizontalScroll: {
+        paddingLeft: 24,
+        paddingRight: 8,
+    },
+    detranGrid: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
         paddingHorizontal: 20,
         gap: 12,
     },
-    instructorCard: {
-        width: 160,
-        backgroundColor: '#fff',
-        borderRadius: 16,
-        overflow: 'hidden',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.06,
-        shadowRadius: 8,
-        elevation: 2,
-    },
-    photoContainer: {
-        position: 'relative',
-    },
-    photo: {
-        width: '100%',
-        height: 100,
-    },
-    photoPlaceholder: {
-        width: '100%',
-        height: 100,
-        backgroundColor: '#10b981',
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    photoInitial: {
-        fontSize: 32,
-        fontWeight: '700',
-        color: '#fff',
-    },
-    verifiedBadge: {
-        position: 'absolute',
-        top: 8,
-        right: 8,
-        backgroundColor: '#fff',
-        borderRadius: 12,
-        padding: 2,
-    },
-    cardInfo: {
+    detranItem: {
+        width: (SCREEN_WIDTH - 40 - 24) / 3,
         padding: 12,
-    },
-    instructorName: {
-        fontSize: 14,
-        fontWeight: '600',
-        color: '#1f2937',
-        marginBottom: 4,
-    },
-    ratingRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 4,
-        marginBottom: 4,
-    },
-    ratingText: {
-        fontSize: 12,
-        fontWeight: '600',
-        color: '#1f2937',
-    },
-    priceText: {
-        fontSize: 16,
-        fontWeight: '700',
-        color: '#10b981',
-    },
-    // Empty State
-    emptyCard: {
-        backgroundColor: '#fff',
-        borderRadius: 16,
-        padding: 32,
-        alignItems: 'center',
-        marginBottom: 24,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.06,
-        shadowRadius: 8,
-        elevation: 2,
-    },
-    emptyText: {
-        marginTop: 12,
-        fontSize: 14,
-        color: '#9ca3af',
-        textAlign: 'center',
-    },
-    // PWA Banner
-    pwaBanner: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: '#fff',
-        padding: 16,
-        borderRadius: 16,
-        gap: 12,
-        marginTop: 8,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.06,
-        shadowRadius: 8,
-        elevation: 2,
-    },
-    pwaIcon: {
-        width: 48,
-        height: 48,
-        borderRadius: 12,
-        backgroundColor: '#ecfdf5',
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    pwaContent: {
-        flex: 1,
-    },
-    pwaTitle: {
-        fontSize: 15,
-        fontWeight: '600',
-        color: '#1f2937',
-        marginBottom: 2,
-    },
-    pwaSubtitle: {
-        fontSize: 13,
-        color: '#6b7280',
-    },
-    // CTA Card
-    ctaCard: {
         borderRadius: 20,
-        overflow: 'hidden',
-        marginBottom: 32,
-        shadowColor: '#7e22ce',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.3,
-        shadowRadius: 12,
-        elevation: 6,
-        position: 'relative',
+        alignItems: 'center',
+        borderWidth: 1,
     },
-    ctaDismissButton: {
-        position: 'absolute',
-        top: 8,
-        right: 8,
-        zIndex: 10,
-        width: 28,
-        height: 28,
+    detranIcon: {
+        width: 44,
+        height: 44,
         borderRadius: 14,
-        backgroundColor: 'rgba(0,0,0,0.3)',
         justifyContent: 'center',
         alignItems: 'center',
-    },
-    ctaGradient: {
-        padding: 24,
-    },
-    ctaContent: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-    },
-    ctaInfo: {
-        flex: 1,
-        marginRight: 16,
-    },
-    ctaTitle: {
-        fontSize: 20,
-        fontWeight: '800',
-        color: '#fff',
         marginBottom: 8,
     },
-    ctaSubtitle: {
-        fontSize: 14,
-        color: 'rgba(255,255,255,0.9)',
-        marginBottom: 16,
-        lineHeight: 20,
+    detranLabel: {
+        fontSize: 11,
+        fontWeight: '600',
+        textAlign: 'center',
     },
-    ctaButton: {
+    bannerContainer: {
+        paddingHorizontal: 24,
+        marginBottom: 32,
+    },
+    instructorBanner: {
+        borderRadius: 28,
+        padding: 24,
+        overflow: 'hidden',
         flexDirection: 'row',
-        alignItems: 'center',
+    },
+    bannerContent: {
+        flex: 1,
+        zIndex: 1,
+    },
+    bannerTitle: {
+        color: '#fff',
+        fontSize: 20,
+        fontWeight: '800',
+        marginBottom: 8,
+    },
+    bannerDesc: {
+        color: 'rgba(255,255,255,0.9)',
+        fontSize: 13,
+        fontWeight: '500',
+        marginBottom: 16,
+        lineHeight: 18,
+    },
+    bannerCta: {
         backgroundColor: '#fff',
         paddingHorizontal: 16,
         paddingVertical: 10,
         borderRadius: 12,
         alignSelf: 'flex-start',
-        gap: 6,
     },
-    ctaButtonText: {
-        color: '#7e22ce',
-        fontWeight: '700',
+    bannerCtaText: {
+        color: '#10b981',
         fontSize: 14,
+        fontWeight: '700',
     },
-    ctaIcon: {
-        width: 72,
-        height: 72,
-        borderRadius: 36,
-        backgroundColor: 'rgba(255,255,255,0.2)',
-        justifyContent: 'center',
-        alignItems: 'center',
+    bannerImage: {
+        position: 'absolute',
+        right: -20,
+        bottom: -20,
+        width: 140,
+        height: 140,
+        opacity: 0.15,
+        borderRadius: 70,
     },
-    // DETRAN Services Styles
-    detranServicesGrid: {
-        flexDirection: 'row',
-        flexWrap: 'wrap',
-        justifyContent: 'space-between',
-        paddingHorizontal: 16,
-        marginBottom: 16,
+    bannerClose: {
+        position: 'absolute',
+        top: 12,
+        right: 12,
+        padding: 4,
     },
-    detranServiceCard: {
-        width: (SCREEN_WIDTH - 48) / 3,
-        backgroundColor: '#fff',
-        borderRadius: 12,
-        padding: 12,
-        marginBottom: 8,
-        alignItems: 'center',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.05,
-        shadowRadius: 2,
-        elevation: 1,
-    },
-    detranServiceIcon: {
-        width: 40,
-        height: 40,
-        borderRadius: 10,
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginBottom: 6,
-    },
-    detranServiceLabel: {
-        fontSize: 11,
-        fontWeight: '600',
-        textAlign: 'center',
-        lineHeight: 14,
-    },
-    // Modal Styles
     modalOverlay: {
         flex: 1,
         backgroundColor: 'rgba(0,0,0,0.5)',
         justifyContent: 'flex-end',
     },
     modalContent: {
-        borderTopLeftRadius: 24,
-        borderTopRightRadius: 24,
-        paddingTop: 16,
-        maxHeight: '70%',
+        borderTopLeftRadius: 32,
+        borderTopRightRadius: 32,
+        paddingTop: 24,
+        paddingBottom: 40,
+        maxHeight: '80%',
     },
     modalHeader: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        paddingHorizontal: 20,
-        paddingBottom: 16,
-        borderBottomWidth: 1,
-        borderBottomColor: '#e5e7eb',
+        paddingHorizontal: 24,
+        marginBottom: 20,
     },
     modalTitle: {
-        fontSize: 18,
-        fontWeight: '700',
+        fontSize: 20,
+        fontWeight: '800',
     },
-    stateList: {
-        paddingHorizontal: 20,
+    statesList: {
+        paddingHorizontal: 24,
     },
     stateItem: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        paddingVertical: 16,
+        paddingVertical: 18,
         borderBottomWidth: 1,
     },
     stateText: {
         fontSize: 16,
-        fontWeight: '500',
+        fontWeight: '600',
+    },
+    stickyHeader: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        backgroundColor: 'transparent',
     },
 });

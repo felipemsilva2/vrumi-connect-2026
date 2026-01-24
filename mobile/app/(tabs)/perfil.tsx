@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert, ScrollView, Linking, RefreshControl, Image, ActivityIndicator, Switch } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, ScrollView, Linking, RefreshControl, ActivityIndicator, Switch } from 'react-native';
+import { Image } from 'expo-image';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../contexts/AuthContext';
@@ -8,6 +9,7 @@ import { router } from 'expo-router';
 import { supabase } from '../../src/lib/supabase';
 import * as ImagePicker from 'expo-image-picker';
 import { useInstructorStatus } from '../../hooks/useInstructorStatus';
+import ConfirmationModal from '../../components/ConfirmationModal';
 // Biometric auth disabled temporarily - requires native dev build
 // import { useBiometricAuth } from '../../hooks/useBiometricAuth';
 
@@ -32,34 +34,13 @@ export default function PerfilScreen() {
     const [refreshing, setRefreshing] = useState(false);
     const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
     const [uploading, setUploading] = useState(false);
-    const { isInstructor, instructorStatus, instructorInfo, loading: instructorLoading } = useInstructorStatus();
-    // Biometric auth disabled temporarily
-    // const {
-    //     isBiometricSupported,
-    //     isBiometricEnrolled,
-    //     isBiometricEnabled,
-    //     biometricType,
-    //     enableBiometric,
-    //     disableBiometric
-    // } = useBiometricAuth();
-    // const [biometricLoading, setBiometricLoading] = useState(false);
+    const { isInstructor, instructorStatus, instructorInfo, loading: instructorLoading, refresh: refreshInstructor } = useInstructorStatus();
 
-    // const handleBiometricToggle = async (value: boolean) => {
-    //     setBiometricLoading(true);
-    //     try {
-    //         if (value) {
-    //             await enableBiometric();
-    //             Alert.alert('Sucesso', 'Bloqueio biométrico ativado!');
-    //         } else {
-    //             await disableBiometric();
-    //             Alert.alert('Sucesso', 'Bloqueio biométrico desativado.');
-    //         }
-    //     } catch (error: any) {
-    //         Alert.alert('Erro', error.message || 'Não foi possível alterar a configuração.');
-    //     } finally {
-    //         setBiometricLoading(false);
-    //     }
-    // };
+    // Modal states
+    const [showLogoutModal, setShowLogoutModal] = useState(false);
+    const [showPermissionModal, setShowPermissionModal] = useState(false);
+
+    // ... biometric code ...
 
     const fetchStats = useCallback(async () => {
         if (!user?.id) return;
@@ -98,12 +79,6 @@ export default function PerfilScreen() {
         fetchStats();
     }, [fetchStats]);
 
-    const onRefresh = useCallback(() => {
-        setRefreshing(true);
-        fetchStats();
-        fetchAvatarUrl();
-    }, [fetchStats]);
-
     const fetchAvatarUrl = useCallback(async () => {
         if (!user?.id) return;
         try {
@@ -124,7 +99,22 @@ export default function PerfilScreen() {
         fetchAvatarUrl();
     }, [fetchAvatarUrl]);
 
+    const onRefresh = useCallback(async () => {
+        setRefreshing(true);
+        await Promise.all([
+            fetchStats(),
+            fetchAvatarUrl(),
+            refreshInstructor()
+        ]);
+        setRefreshing(false);
+    }, [fetchStats, fetchAvatarUrl, refreshInstructor]);
+
+    const handleAvatarPress = () => {
+        setShowPermissionModal(true);
+    };
+
     const pickAndUploadImage = async () => {
+        setShowPermissionModal(false);
         try {
             // Request permissions
             const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -146,7 +136,8 @@ export default function PerfilScreen() {
             setUploading(true);
             const image = result.assets[0];
             const fileExt = image.uri.split('.').pop() || 'jpg';
-            const fileName = `${user?.id}/${Date.now()}.${fileExt}`;
+            // Use fixed filename 'avatar' to ensure overwriting via upsert, preventing orphan files
+            const fileName = `${user?.id}/avatar.${fileExt}`;
 
             // Fetch image as blob
             const response = await fetch(image.uri);
@@ -165,12 +156,12 @@ export default function PerfilScreen() {
 
             if (uploadError) throw uploadError;
 
-            // Get public URL
+            // Get public URL using a timestamp query param to bust cache
             const { data: urlData } = supabase.storage
                 .from('avatars')
                 .getPublicUrl(fileName);
 
-            const publicUrl = urlData.publicUrl;
+            const publicUrl = `${urlData.publicUrl}?t=${Date.now()}`;
 
             // Update profile
             await supabase
@@ -189,21 +180,13 @@ export default function PerfilScreen() {
     };
 
     const handleLogout = () => {
-        Alert.alert(
-            'Sair',
-            'Tem certeza que deseja sair?',
-            [
-                { text: 'Cancelar', style: 'cancel' },
-                {
-                    text: 'Sair',
-                    style: 'destructive',
-                    onPress: async () => {
-                        await signOut();
-                        router.replace('/(auth)/login');
-                    },
-                },
-            ]
-        );
+        setShowLogoutModal(true);
+    };
+
+    const confirmLogout = async () => {
+        setShowLogoutModal(false);
+        await signOut();
+        router.replace('/(auth)/login');
     };
 
     const handleStatistics = () => {
@@ -231,55 +214,11 @@ export default function PerfilScreen() {
     };
 
     const handlePrivacyPolicy = () => {
-        Linking.openURL('https://vrumi.com.br/politica-de-privacidade');
+        router.push('/connect/politica-texto');
     };
 
     const handleTermsOfUse = () => {
-        Linking.openURL('https://vrumi.com.br/termos-de-uso');
-    };
-
-    const handleDeleteAccount = () => {
-        Alert.alert(
-            'Excluir Conta',
-            'Tem certeza que deseja excluir sua conta? Esta ação é irreversível e todos os seus dados serão permanentemente removidos.',
-            [
-                { text: 'Cancelar', style: 'cancel' },
-                {
-                    text: 'Excluir Conta',
-                    style: 'destructive',
-                    onPress: async () => {
-                        try {
-                            // Call edge function to delete user data
-                            const session = await supabase.auth.getSession();
-                            const response = await fetch(
-                                `${process.env.EXPO_PUBLIC_SUPABASE_URL}/functions/v1/delete-account`,
-                                {
-                                    method: 'POST',
-                                    headers: {
-                                        'Content-Type': 'application/json',
-                                        'Authorization': `Bearer ${session.data.session?.access_token}`,
-                                    },
-                                }
-                            );
-
-                            if (response.ok) {
-                                await signOut();
-                                Alert.alert(
-                                    'Conta Excluída',
-                                    'Sua conta foi excluída com sucesso. Sentiremos sua falta!',
-                                    [{ text: 'OK', onPress: () => router.replace('/(auth)/login') }]
-                                );
-                            } else {
-                                const error = await response.json();
-                                throw new Error(error.message || 'Erro ao excluir conta');
-                            }
-                        } catch (error: any) {
-                            Alert.alert('Erro', error.message || 'Não foi possível excluir sua conta. Entre em contato com o suporte.');
-                        }
-                    },
-                },
-            ]
-        );
+        router.push('/connect/termos');
     };
 
     const userName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Usuário';
@@ -289,6 +228,7 @@ export default function PerfilScreen() {
         <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]} edges={['top']}>
             <ScrollView
                 showsVerticalScrollIndicator={false}
+                contentContainerStyle={styles.scrollContent}
                 refreshControl={
                     <RefreshControl
                         refreshing={refreshing}
@@ -307,7 +247,7 @@ export default function PerfilScreen() {
                 <View style={[styles.userCard, { backgroundColor: theme.card }]}>
                     <TouchableOpacity
                         style={styles.avatarContainer}
-                        onPress={pickAndUploadImage}
+                        onPress={handleAvatarPress}
                         disabled={uploading}
                         accessibilityLabel={uploading ? 'Enviando foto' : 'Alterar foto de perfil'}
                         accessibilityRole="button"
@@ -597,6 +537,19 @@ export default function PerfilScreen() {
 
                     <TouchableOpacity
                         style={[styles.menuItem, { backgroundColor: theme.card }]}
+                        onPress={() => router.push('/connect/privacidade')}
+                        accessibilityLabel="Privacidade e Dados"
+                        accessibilityRole="button"
+                    >
+                        <View style={[styles.menuIcon, { backgroundColor: '#dbeafe' }]}>
+                            <Ionicons name="lock-closed" size={20} color="#3b82f6" />
+                        </View>
+                        <Text style={[styles.menuItemText, { color: theme.text }]}>Privacidade e Dados</Text>
+                        <Ionicons name="chevron-forward" size={18} color={theme.textMuted} />
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                        style={[styles.menuItem, { backgroundColor: theme.card }]}
                         onPress={handlePrivacyPolicy}
                         accessibilityLabel="Política de Privacidade"
                         accessibilityRole="link"
@@ -622,24 +575,6 @@ export default function PerfilScreen() {
                     </TouchableOpacity>
                 </View>
 
-                {/* Danger Zone */}
-                <View style={styles.menuSection}>
-                    <Text style={[styles.menuTitle, { color: theme.textSecondary }]}>Conta</Text>
-
-                    <TouchableOpacity
-                        style={[styles.menuItem, { backgroundColor: theme.card }]}
-                        onPress={handleDeleteAccount}
-                        accessibilityLabel="Excluir minha conta permanentemente"
-                        accessibilityRole="button"
-                    >
-                        <View style={[styles.menuIcon, { backgroundColor: '#fee2e2' }]}>
-                            <Ionicons name="trash" size={20} color="#dc2626" />
-                        </View>
-                        <Text style={[styles.menuItemText, { color: '#dc2626' }]}>Excluir Conta</Text>
-                        <Ionicons name="chevron-forward" size={18} color={theme.textMuted} />
-                    </TouchableOpacity>
-                </View>
-
                 {/* Logout Button */}
                 <View style={styles.logoutSection}>
                     <TouchableOpacity
@@ -653,6 +588,34 @@ export default function PerfilScreen() {
                     </TouchableOpacity>
                 </View>
             </ScrollView>
+
+            {/* Logout Modal */}
+            <ConfirmationModal
+                visible={showLogoutModal}
+                onClose={() => setShowLogoutModal(false)}
+                title="Sair da Conta"
+                message="Tem certeza que deseja sair? Você precisará fazer login novamente para acessar sua conta."
+                icon="log-out-outline"
+                type="warning"
+                confirmText="Sair"
+                cancelText="Cancelar"
+                onConfirm={confirmLogout}
+                onCancel={() => setShowLogoutModal(false)}
+            />
+
+            {/* Permission Primer Modal */}
+            <ConfirmationModal
+                visible={showPermissionModal}
+                onClose={() => setShowPermissionModal(false)}
+                title="Acesso à Galeria"
+                message="Para escolher uma nova foto de perfil, o Vrumi precisa de permissão para acessar sua biblioteca de fotos. Deseja continuar?"
+                icon="image"
+                type="info"
+                confirmText="Continuar"
+                cancelText="Agora não"
+                onConfirm={pickAndUploadImage}
+                onCancel={() => setShowPermissionModal(false)}
+            />
         </SafeAreaView>
     );
 }
@@ -660,6 +623,9 @@ export default function PerfilScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
+    },
+    scrollContent: {
+        paddingBottom: 100,
     },
     header: {
         paddingHorizontal: 24,

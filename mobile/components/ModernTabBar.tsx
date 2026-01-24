@@ -6,13 +6,19 @@ import {
     StyleSheet,
     Animated,
     Dimensions,
+    Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { BlurView } from 'expo-blur';
 import { useTheme } from '../contexts/ThemeContext';
 import { useInstructorStatus } from '../hooks/useInstructorStatus';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const LAST_TAB_KEY = 'vrumi_last_tab';
 
 interface TabConfig {
     name: string;
@@ -25,7 +31,7 @@ const BASE_TABS: TabConfig[] = [
     { name: 'index', label: 'Início', icon: 'home-outline', iconActive: 'home' },
     { name: 'buscar', label: 'Buscar', icon: 'search-outline', iconActive: 'search' },
     { name: 'aulas', label: 'Aulas', icon: 'calendar-outline', iconActive: 'calendar' },
-    { name: 'perfil', label: 'Perfil', icon: 'person-outline', iconActive: 'person' },
+    { name: 'mensagens', label: 'Mensagens', icon: 'chatbubbles-outline', iconActive: 'chatbubbles' },
 ];
 
 const INSTRUCTOR_TAB: TabConfig = {
@@ -38,6 +44,10 @@ const INSTRUCTOR_TAB: TabConfig = {
 export default function ModernTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
     const { theme, isDark } = useTheme();
     const { isInstructor } = useInstructorStatus();
+    const insets = useSafeAreaInsets();
+
+    // Calculate bottom padding - use safe area insets on Android with navigation bar
+    const bottomPadding = Math.max(insets.bottom, 16);
 
     // Dynamically build tabs array
     const TABS = useMemo(() => {
@@ -120,6 +130,8 @@ export default function ModernTabBar({ state, descriptors, navigation }: BottomT
         });
 
         if (!event.defaultPrevented) {
+            Haptics.selectionAsync();
+            AsyncStorage.setItem(LAST_TAB_KEY, routeName).catch(() => { });
             navigation.navigate(routeName);
         }
 
@@ -144,10 +156,15 @@ export default function ModernTabBar({ state, descriptors, navigation }: BottomT
     const activeTabIndex = TABS.findIndex(t => t.name === currentRouteName);
 
     return (
-        <View style={[styles.container, {
-            backgroundColor: isDark ? theme.card : '#ffffff',
-            borderTopColor: theme.cardBorder,
-        }]}>
+        <BlurView
+            intensity={Platform.OS === 'ios' ? 85 : 0}
+            tint={isDark ? 'dark' : 'light'}
+            style={[styles.container, {
+                backgroundColor: isDark ? 'rgba(0,0,0,0.5)' : 'rgba(255,255,255,0.7)',
+                paddingBottom: bottomPadding,
+                height: 64 + bottomPadding,
+            }]}
+        >
             {/* Animated Indicator Line */}
             <Animated.View
                 style={[
@@ -220,22 +237,24 @@ export default function ModernTabBar({ state, descriptors, navigation }: BottomT
                     </TouchableOpacity>
                 );
             })}
-        </View>
+        </BlurView>
     );
 }
 
 const styles = StyleSheet.create({
     container: {
         flexDirection: 'row',
-        height: 80,
-        paddingBottom: 16,
-        borderTopWidth: 1,
+        position: 'absolute',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        borderTopWidth: StyleSheet.hairlineWidth,
+        borderTopColor: 'rgba(255,255,255,0.1)',
         shadowColor: '#000',
         shadowOffset: { width: 0, height: -4 },
         shadowOpacity: 0.08,
         shadowRadius: 12,
         elevation: 12,
-        position: 'relative',
     },
     indicator: {
         position: 'absolute',

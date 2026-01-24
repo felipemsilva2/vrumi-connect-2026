@@ -4,103 +4,101 @@
 
 @layer base {
     :root {
-        /* Vrumi 3.0 Design System Tokens */
+        /* Vrumi 3.0 REDESIGN - Constructivist Data Lab */
 
-        /* Base Colors - White Background */
+        /* Base - Stark White */
         --background: 0 0% 100%;
-        /* #FFFFFF */
-        --foreground: 215 28% 17%;
-        /* #1F2937 */
+        --foreground: 0 0% 0%;
+        /* Pure Black */
 
-        /* Card & Surfaces */
-        --card: 0 0% 100%;
-        /* #FFFFFF */
-        --card-foreground: 215 28% 17%;
-        /* #1F2937 */
+        /* Card - Brutalist */
+        --card: 0 0% 98%;
+        --card-foreground: 0 0% 0%;
+
+        /* Popover */
         --popover: 0 0% 100%;
-        --popover-foreground: 215 28% 17%;
+        --popover-foreground: 0 0% 0%;
 
-        /* Primary - Emerald Green (Vrumi Brand) */
-        --primary: 160 84% 39%;
-        /* #10b981 */
+        /* Primary - Safety Orange (High Visibility) */
+        --primary: 16 100% 50%;
+        /* #FF4500 */
         --primary-foreground: 0 0% 100%;
 
-        /* Secondary - Soft Gray */
-        --secondary: 240 4.8% 95.9%;
-        --secondary-foreground: 240 5.9% 10%;
+        /* Secondary - Industrial Gray */
+        --secondary: 0 0% 90%;
+        --secondary-foreground: 0 0% 0%;
 
         /* Muted */
-        --muted: 240 4.8% 95.9%;
-        --muted-foreground: 240 3.8% 46.1%;
+        --muted: 0 0% 96%;
+        --muted-foreground: 0 0% 40%;
 
-        /* Accent */
-        --accent: 240 4.8% 95.9%;
-        --accent-foreground: 240 5.9% 10%;
+        /* Accent - Volt Green for Success/Active */
+        --accent: 80 100% 50%;
+        /* #ADFF2F */
+        --accent-foreground: 0 0% 0%;
 
         /* Destructive */
-        --destructive: 0 84.2% 60.2%;
-        --destructive-foreground: 0 0% 98%;
+        --destructive: 0 100% 50%;
+        --destructive-foreground: 0 0% 100%;
 
-        /* Borders & Inputs */
-        --border: 240 5.9% 90%;
-        --input: 240 5.9% 90%;
-        --ring: 160 84% 39%;
-        /* Primary Green */
+        /* Borders - High Contrast */
+        --border: 0 0% 0%;
+        /* Black Borders */
+        --input: 0 0% 0%;
+        --ring: 16 100% 50%;
 
-        /* Radius */
-        --radius: 0.75rem;
+        /* Radius - ZERO for Brutalism */
+        --radius: 0px;
 
-        /* Shadows */
-        --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-        --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
-        --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-        --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+        /* Shadows - NO SHADOWS, only Borders */
+        --shadow-sm: none;
+        --shadow: none;
+        --shadow-md: none;
+        --shadow-lg: none;
 
-        /* Vrumi Connect - Dark Slate Theme */
-        --connect-primary: 220 20% 20%;
-        /* Dark Slate #2D3748 */
-        --connect-primary-light: 220 15% 35%;
-        /* Lighter Slate #4A5568 */
-        --connect-primary-dark: 220 25% 12%;
-        /* Darker Slate #1A202C */
-        --connect-accent: 160 84% 39%;
-        /* Vrumi Green #10B981 */
-        --connect-accent-light: 160 70% 50%;
-        /* Light Green */
-        --connect-surface: 220 15% 97%;
-        /* Light Gray Surface #F7FAFC */
+        /* Vrumi Connect Tokens - Mapped to New System */
+        --connect-primary: 0 0% 0%;
+        --connect-primary-light: 0 0% 20%;
+        --connect-primary-dark: 0 0% 0%;
+        --connect-accent: 16 100% 50%;
+        --connect-accent-light: 16 100% 60%;
+        --connect-surface: 0 0% 98%;
     }
 
     .dark {
-        /* Dark Mode */
-        --background: 240 10% 3.9%;
-        --foreground: 0 0% 98%;
+        /* Dark Mode - Constructivist Night */
+        --background: 0 0% 5%;
+        /* #0D0D0D */
+        --foreground: 0 0% 90%;
 
-        --card: 240 10% 3.9%;
-        --card-foreground: 0 0% 98%;
+        --card: 0 0% 5%;
+        --card-foreground: 0 0% 90%;
 
-        --popover: 240 10% 3.9%;
-        --popover-foreground: 0 0% 98%;
+        --popover: 0 0% 8%;
+        --popover-foreground: 0 0% 90%;
 
-        --primary: 160 84% 39%;
-        /* #10b981 */
+        /* Primary - Safety Orange */
+        --primary: 16 100% 50%;
         --primary-foreground: 0 0% 100%;
 
-        --secondary: 240 3.7% 15.9%;
-        --secondary-foreground: 0 0% 98%;
+        /* Secondary */
+        --secondary: 0 0% 15%;
+        --secondary-foreground: 0 0% 90%;
 
-        --muted: 240 3.7% 15.9%;
-        --muted-foreground: 240 5% 64.9%;
+        /* Muted */
+        --muted: 0 0% 15%;
+        --muted-foreground: 0 0% 60%;
 
-        --accent: 240 3.7% 15.9%;
-        --accent-foreground: 0 0% 98%;
+        /* Accent */
+        --accent: 80 100% 50%;
+        --accent-foreground: 0 0% 0%;
 
-        --destructive: 0 62.8% 30.6%;
-        --destructive-foreground: 0 0% 98%;
+        --destructive: 0 100% 50%;
+        --destructive-foreground: 0 0% 100%;
 
-        --border: 240 3.7% 15.9%;
-        --input: 240 3.7% 15.9%;
-        --ring: 160 84% 39%;
+        --border: 0 0% 20%;
+        --input: 0 0% 20%;
+        --ring: 16 100% 50%;
     }
 }
 
@@ -220,7 +218,7 @@
     .preserve-3d {
         transform-style: preserve-3d;
     }
-    
+
     .perspective-1000 {
         perspective: 1000px;
     }
@@ -233,6 +231,7 @@
     .hide-scrollbar::-webkit-scrollbar {
         display: none;
     }
+
     .hide-scrollbar {
         -ms-overflow-style: none;
         scrollbar-width: none;

@@ -12,7 +12,6 @@ config.watchFolders = [path.resolve(workspaceRoot, 'src')];
 // Allow Metro to resolve from parent's src folder but keep mobile's node_modules priority
 config.resolver.extraNodeModules = {
     '@': path.resolve(workspaceRoot, 'src'),
-    'lodash': path.resolve(projectRoot, 'node_modules', 'lodash'),
 };
 
 module.exports = config;

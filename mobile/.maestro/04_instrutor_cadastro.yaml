@@ -1,0 +1,134 @@
+# Teste E2E: Onboarding de Instrutor
+# Testa o fluxo de cadastro de um novo instrutor
+
+appId: com.vrumi.connect
+
+---
+
+# Inicia o app limpo
+- launchApp:
+    clearState: true
+
+# Aguarda a tela de login
+- assertVisible:
+    text: "Entrar"
+
+- takeScreenshot: "01_tela_inicial"
+
+# Clica em "Seja um Instrutor" ou banner similar
+- scrollUntilVisible:
+    element:
+      text: "Torne-se um Instrutor"
+    direction: DOWN
+
+- tapOn:
+    text: "Torne-se um Instrutor"
+
+# Aguarda tela de cadastro de instrutor
+- extendedWaitUntil:
+    visible:
+      text: "Cadastro de Instrutor"
+    timeout: 10000
+
+- takeScreenshot: "02_tela_cadastro"
+
+# Preenche nome completo
+- tapOn:
+    text: "Nome completo"
+
+- inputText: "João Silva Teste"
+
+# Preenche email
+- tapOn:
+    text: "E-mail"
+
+- inputText: "joao.teste@vrumi.com"
+
+# Preenche telefone
+- tapOn:
+    text: "Telefone"
+
+- inputText: "11999998888"
+
+# Preenche CPF
+- tapOn:
+    text: "CPF"
+
+- inputText: "12345678900"
+
+# Scroll para campos adicionais
+- scroll:
+    direction: DOWN
+
+- takeScreenshot: "03_dados_pessoais"
+
+# Preenche senha
+- tapOn:
+    text: "Senha"
+
+- inputText: "Teste123!"
+
+# Confirma senha
+- tapOn:
+    text: "Confirmar senha"
+
+- inputText: "Teste123!"
+
+# Scroll para ver mais campos
+- scroll:
+    direction: DOWN
+
+# Seleciona cidade
+- tapOn:
+    text: "Selecione sua cidade"
+
+- extendedWaitUntil:
+    visible:
+      text: "São Paulo"
+    timeout: 5000
+
+- tapOn:
+    text: "São Paulo"
+
+# Preenche bairro
+- tapOn:
+    text: "Bairro"
+
+- inputText: "Centro"
+
+- takeScreenshot: "04_endereco"
+
+# Scroll para preço
+- scroll:
+    direction: DOWN
+
+# Define preço por hora
+- tapOn:
+    text: "Preço por hora"
+
+- inputText: "120"
+
+# Aceita termos
+- tapOn:
+    text: "Li e aceito"
+
+- takeScreenshot: "05_termos_aceitos"
+
+# Clica em Cadastrar
+- tapOn:
+    text: "Cadastrar"
+
+# Aguarda processamento
+- extendedWaitUntil:
+    visible:
+      text: "Cadastro"
+    timeout: 20000
+
+- takeScreenshot: "06_cadastro_finalizado"
+
+# Verifica se chegou na tela de onboarding
+- assertVisible:
+    text: "Bem-vindo"
+    optional: true
+
+- takeScreenshot: "07_onboarding_instrutor"

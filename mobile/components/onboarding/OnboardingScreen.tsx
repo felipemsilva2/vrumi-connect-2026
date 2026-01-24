@@ -12,7 +12,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useTheme } from '../../contexts/ThemeContext';
-import { useGamification } from '../../contexts/GamificationContext';
+// import { useGamification } from '../../contexts/GamificationContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
@@ -64,7 +64,7 @@ const ONBOARDING_KEY = '@vrumi_onboarding_complete';
 
 export default function OnboardingScreen() {
     const { theme, isDark } = useTheme();
-    const { updateDailyGoal } = useGamification();
+    // const { updateDailyGoal } = useGamification();
     const [currentSlide, setCurrentSlide] = useState(0);
     const [selectedGoal, setSelectedGoal] = useState<number | null>(null);
     const [showGoalSelection, setShowGoalSelection] = useState(false);
@@ -116,7 +116,7 @@ export default function OnboardingScreen() {
 
     const handleComplete = async () => {
         if (selectedGoal !== null) {
-            await updateDailyGoal(selectedGoal);
+            // await updateDailyGoal(selectedGoal);
         }
 
         // Mark onboarding as complete

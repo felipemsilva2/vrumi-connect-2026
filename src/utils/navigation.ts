@@ -2,17 +2,17 @@ import { useLocation } from 'react-router-dom';
 
 /**
  * Returns the appropriate home route based on current location context
- * UX Best Practice: When in dashboard context, logo should go to dashboard home
+ * UX Best Practice: When in admin or connect context, logo should go to respective home
  * When in external/public context, logo should go to marketing homepage
  */
 export const useContextualHomeRoute = (): string => {
   const location = useLocation();
-  const isDashboardContext = location.pathname.startsWith('/painel') ||
-    location.pathname.startsWith('/sala-de-estudos') ||
-    location.pathname.startsWith('/admin') ||
-    location.pathname.startsWith('/biblioteca-de-placas');
+  const isConnectContext = location.pathname.startsWith('/connect');
+  const isAdminContext = location.pathname.startsWith('/admin');
 
-  return isDashboardContext ? '/painel' : '/';
+  if (isAdminContext) return '/admin/painel';
+  if (isConnectContext) return '/connect';
+  return '/';
 };
 
 /**

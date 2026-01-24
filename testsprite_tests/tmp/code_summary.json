@@ -3,165 +3,149 @@
     "TypeScript",
     "React 18",
     "Vite",
-    "React Router DOM",
     "TailwindCSS",
     "Radix UI",
-    "Supabase (Auth, Postgres, Edge Functions / Deno)",
-    "Stripe",
-    "PDF parsing"
+    "React Query",
+    "React Router DOM",
+    "Supabase (PostgreSQL)",
+    "Supabase Edge Functions (Deno)",
+    "Stripe API",
+    "Google Gemini AI"
   ],
   "features": [
     {
-      "name": "Routing",
-      "description": "Navegação do app com React Router, definição de rotas e shell principal.",
-      "files": [
-        "src/App.tsx",
-        "src/main.tsx",
-        "src/pages/Index.tsx",
-        "src/pages/Dashboard.tsx",
-        "src/pages/NotFound.tsx"
-      ]
-    },
-    {
-      "name": "Autenticação",
-      "description": "Login, verificação de papéis (admin) e sessão via Supabase Auth.",
+      "name": "Authentication System",
+      "description": "Complete authentication system with email/password, Google OAuth, password recovery, and session management using Supabase Auth",
       "files": [
         "src/pages/Auth.tsx",
-        "src/hooks/useIsAdmin.ts",
+        "src/hooks/useAuth.ts",
         "src/integrations/supabase/client.ts"
       ]
     },
     {
-      "name": "Cliente Supabase",
-      "description": "Inicialização do cliente Supabase e tipos compartilhados.",
+      "name": "Subscription and Payment System",
+      "description": "Subscription management with Stripe integration, supporting credit card and PIX payments, trial periods, and subscription status management",
       "files": [
-        "src/integrations/supabase/client.ts",
-        "src/integrations/supabase/types.ts"
-      ]
-    },
-    {
-      "name": "Pagamentos",
-      "description": "Fluxo de checkout e validação de pagamento com Stripe e funções Supabase.",
-      "files": [
-        "src/pages/Checkout.tsx",
-        "src/pages/CheckoutSuccess.tsx",
-        "src/pages/CheckoutCancel.tsx",
+        "src/pages/Pricing.tsx",
+        "src/components/subscription/SubscriptionPlans.tsx",
+        "src/hooks/useSubscription.ts",
         "supabase/functions/create-checkout/index.ts",
-        "supabase/functions/verify-payment/index.ts",
         "supabase/functions/stripe-webhook/index.ts"
       ]
     },
     {
-      "name": "Flashcards",
-      "description": "Visualização e geração de flashcards de estudo.",
+      "name": "Study Room with PDF Reader",
+      "description": "Interactive study room with integrated PDF reader, text selection, annotation capabilities, and AI-powered assistance for studying",
       "files": [
-        "src/components/dashboard/FlashcardsView.tsx",
-        "src/components/traffic-signs/FlashcardMode.tsx",
-        "supabase/functions/generate-flashcards/index.ts"
+        "src/pages/StudyRoom.tsx",
+        "src/components/study/PDFReader.tsx",
+        "src/components/study/StudyChat.tsx"
       ]
     },
     {
-      "name": "Geração de Questões",
-      "description": "Ferramentas administrativas para gerar questões e conteúdo de estudo.",
+      "name": "Flashcard System",
+      "description": "Comprehensive flashcard system with spaced repetition algorithm, performance tracking, AI-generated cards, and community sharing",
       "files": [
-        "src/pages/AdminQuestions.tsx",
-        "supabase/functions/generate-questions/index.ts"
+        "src/pages/Flashcards.tsx",
+        "src/components/flashcards/FlashcardDeck.tsx",
+        "src/components/flashcards/SmartStudy.tsx",
+        "src/hooks/useFlashcards.ts"
       ]
     },
     {
-      "name": "Materiais e PDF",
-      "description": "Leitura de PDF, popular materiais e visualizador com anotações.",
+      "name": "Quiz System",
+      "description": "Quiz system with multiple-choice questions, timers, immediate feedback, personalized quiz generation based on user errors, and category-based analytics",
       "files": [
-        "src/components/study-room/PDFViewer.tsx",
-        "src/components/study-room/MobilePDFReader.tsx",
-        "supabase/functions/parse-pdf/index.ts",
-        "supabase/functions/populate-materiais-from-pdf/index.ts"
+        "src/pages/Quiz.tsx",
+        "src/components/quiz/QuizSession.tsx",
+        "src/components/quiz/QuizResults.tsx",
+        "src/hooks/useQuiz.ts"
       ]
     },
     {
-      "name": "Placas de Trânsito",
-      "description": "Biblioteca e desafios de placas, importação e progresso.",
+      "name": "Traffic Signs Library",
+      "description": "Complete database of Brazilian traffic signs with categorization, search and filter capabilities, detailed descriptions and high-quality images",
       "files": [
-        "src/pages/TrafficSignsLibrary.tsx",
-        "src/components/traffic-signs/TimedChallenge.tsx",
-        "src/components/traffic-signs/ProgressIndicator.tsx",
+        "src/pages/TrafficSigns.tsx",
+        "src/components/traffic-signs/SignsGrid.tsx",
+        "src/components/traffic-signs/SignDetail.tsx",
         "supabase/functions/import-traffic-signs/index.ts"
       ]
     },
     {
-      "name": "Administração",
-      "description": "Painéis e operações administrativas (usuários, papéis, assinaturas, logs).",
+      "name": "AI Chat Assistant",
+      "description": "24/7 AI-powered chat assistant for answering questions about traffic laws, explaining signs, and providing personalized study tips using Google Gemini",
       "files": [
-        "src/pages/admin/AdminDashboard.tsx",
-        "src/pages/admin/AdminUsers.tsx",
-        "src/pages/admin/AdminRoles.tsx",
-        "src/pages/admin/AdminSubscriptions.tsx",
-        "src/pages/admin/AdminAuditLogs.tsx"
+        "src/components/study/StudyChat.tsx",
+        "src/services/ai/geminiService.ts",
+        "supabase/functions/ai-chat/index.ts"
       ]
     },
     {
-      "name": "Notificações",
-      "description": "Sistema de notificações, agendamento e fallback.",
+      "name": "Admin Dashboard",
+      "description": "Comprehensive admin panel for user management, content management, subscription control, analytics, and system monitoring",
       "files": [
-        "src/components/notifications/NotificationSystem.tsx",
-        "src/components/notifications/NotificationSettings.tsx",
-        "src/services/NotificationSchedulerService.ts",
-        "src/services/NotificationSystemFallback.ts"
+        "src/AdminApp.tsx",
+        "src/pages/admin/UserManagement.tsx",
+        "src/pages/admin/Analytics.tsx",
+        "src/pages/admin/ContentManagement.tsx",
+        "src/hooks/useIsAdmin.ts"
       ]
     },
     {
-      "name": "Analytics de Estudo",
-      "description": "Cálculo de conquistas, progresso e feedback visual.",
+      "name": "User Profile Management",
+      "description": "User profile with avatar upload, personal information editing, notification preferences, and subscription management",
       "files": [
-        "src/utils/studyAnalytics.ts",
-        "src/utils/userProgress.ts",
-        "src/components/study/ShareProgress.tsx"
+        "src/pages/Profile.tsx",
+        "src/components/profile/ProfileSettings.tsx",
+        "src/components/profile/AvatarUpload.tsx"
       ]
     },
     {
-      "name": "Breadcrumbs e Navegação",
-      "description": "Breadcrumb dinâmico e utilitários de navegação.",
+      "name": "Landing Page",
+      "description": "Public-facing landing page with feature showcase, pricing information, testimonials, and call-to-action for new user registration",
       "files": [
-        "src/components/SmartBreadcrumb.tsx",
-        "src/hooks/useBreadcrumbs.ts",
-        "src/utils/navigation.ts"
+        "src/pages/Index.tsx",
+        "src/components/landing/Hero.tsx",
+        "src/components/landing/Features.tsx",
+        "src/components/landing/PricingSection.tsx"
       ]
     },
     {
-      "name": "Auditoria",
-      "description": "Registro de auditoria de ações via função dedicada.",
+      "name": "Notification System",
+      "description": "Push and email notification system for study reminders, content updates, subscription alerts, and security notifications",
       "files": [
-        "src/hooks/useAuditLog.ts",
-        "supabase/functions/log-audit/index.ts"
+        "src/components/notifications/NotificationCenter.tsx",
+        "src/hooks/useNotifications.ts",
+        "supabase/functions/send-notification/index.ts"
       ]
     },
     {
-      "name": "Study Chat",
-      "description": "Assistente de estudo via função edge.",
+      "name": "PWA Support",
+      "description": "Progressive Web App functionality with offline support, service worker caching, install prompts, and update management",
       "files": [
-        "supabase/functions/study-chat/index.ts"
+        "src/components/PWAInstallPrompt.tsx",
+        "src/hooks/usePWA.ts",
+        "vite.config.ts"
       ]
     },
     {
-      "name": "UI Base",
-      "description": "Biblioteca de componentes UI (Radix + shadcn style).",
+      "name": "Community Features",
+      "description": "Social features including content sharing, user following, rating and commenting on shared flashcards, and gamification with points and rankings",
       "files": [
-        "src/components/ui/button.tsx",
-        "src/components/ui/dialog.tsx",
-        "src/components/ui/accordion.tsx",
-        "src/components/ui/toast.tsx",
-        "src/components/ui/tooltip.tsx"
+        "src/pages/Community.tsx",
+        "src/components/community/SharedContent.tsx",
+        "src/components/community/Leaderboard.tsx"
       ]
     },
     {
-      "name": "Configuração de Build",
-      "description": "Vite, Tailwind e TypeScript configs.",
+      "name": "Analytics and Reporting",
+      "description": "User progress tracking, performance analytics, study time monitoring, category-based insights, and exportable reports",
       "files": [
-        "vite.config.ts",
-        "tailwind.config.ts",
-        "tsconfig.json",
-        "tsconfig.app.json",
-        "tsconfig.node.json"
+        "src/pages/Analytics.tsx",
+        "src/components/analytics/ProgressChart.tsx",
+        "src/components/analytics/PerformanceMetrics.tsx",
+        "src/hooks/useAnalytics.ts"
       ]
     }
   ]

@@ -3,7 +3,7 @@ import { StripeProvider as StripeProviderNative } from '@stripe/stripe-react-nat
 import { Platform } from 'react-native';
 
 // Stripe Publishable Key
-const STRIPE_PUBLISHABLE_KEY = 'pk_live_51R1EmwBn4R59TxYixPJgLpUa5fvifCupEwwcADYLnsSfe1cZWZ8iCGFT3jHOwbZNs9bg4VpYxQIFfs0UPxDmowim00w3KNVrh7';
+const STRIPE_PUBLISHABLE_KEY = process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY || '';
 
 interface StripeContextType {
     isStripeReady: boolean;

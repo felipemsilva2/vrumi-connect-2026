@@ -1,0 +1,119 @@
+# Teste E2E: Fluxo de Agendamento
+# Testa o fluxo completo de agendamento de uma aula
+
+appId: com.vrumi.connect
+
+---
+
+# Inicia o app (assume usuário já logado)
+- launchApp
+
+# Aguarda a home carregar
+- extendedWaitUntil:
+    visible:
+      text: "Buscar instrutor"
+    timeout: 10000
+
+# Vai para aba Buscar
+- tapOn:
+    text: "Buscar"
+
+# Aguarda lista de instrutores
+- extendedWaitUntil:
+    visible:
+      text: "Instrutores"
+    timeout: 10000
+
+- takeScreenshot: "01_lista_instrutores"
+
+# Clica no primeiro instrutor disponível
+- tapOn:
+    index: 0
+    below:
+      text: "Instrutores"
+
+# Aguarda perfil carregar
+- extendedWaitUntil:
+    visible:
+      text: "Agendar aula"
+    timeout: 10000
+
+- takeScreenshot: "02_perfil_instrutor"
+
+# Clica em Agendar aula
+- tapOn:
+    text: "Agendar aula"
+
+# Aguarda tela de agendamento
+- extendedWaitUntil:
+    visible:
+      text: "Selecione uma data"
+    timeout: 10000
+
+- takeScreenshot: "03_selecao_data"
+
+# Seleciona uma data disponível (próximo dia útil)
+- tapOn:
+    text: ".*"
+    enabled: true
+    index: 5  # Pega um dia mais à frente
+
+# Aguarda horários carregarem
+- extendedWaitUntil:
+    visible:
+      text: "Horários disponíveis"
+    timeout: 10000
+
+- takeScreenshot: "04_horarios_disponiveis"
+
+# Seleciona primeiro horário disponível
+- tapOn:
+    index: 0
+    below:
+      text: "Horários disponíveis"
+
+# Clica em Continuar
+- tapOn:
+    text: "Continuar"
+
+# Aguarda resumo do agendamento
+- extendedWaitUntil:
+    visible:
+      text: "Resumo"
+    timeout: 10000
+
+- takeScreenshot: "05_resumo_agendamento"
+
+# Verifica informações do resumo
+- assertVisible:
+    text: "Total"
+
+# Clica em Confirmar e Pagar
+- tapOn:
+    text: "Confirmar"
+
+# Aguarda tela de pagamento
+- extendedWaitUntil:
+    visible:
+      text: "Pagamento"
+    timeout: 10000
+
+- takeScreenshot: "06_tela_pagamento"
+
+# Para aqui - não vamos fazer pagamento real no teste
+# Apenas verificamos que chegou na tela de pagamento
+
+# Volta para home
+- tapOn:
+    id: "arrow-back"
+
+# Confirma cancelamento se aparecer
+- runFlow:
+    when:
+      visible:
+        text: "Cancelar"
+    commands:
+      - tapOn:
+          text: "Sim"
+
+- takeScreenshot: "07_teste_finalizado"

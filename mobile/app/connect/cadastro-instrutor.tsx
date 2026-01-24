@@ -18,6 +18,9 @@ import { useTheme } from '../../contexts/ThemeContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../src/lib/supabase';
 import { useInstructorStatus } from '../../hooks/useInstructorStatus';
+import VehiclePicker from '../../components/VehiclePicker';
+import { getVehicleModel } from '../../data/vehicleModels';
+import ConfirmationModal from '../../components/ConfirmationModal';
 
 export default function InstructorRegistrationScreen() {
     const { theme, isDark } = useTheme();
@@ -25,6 +28,24 @@ export default function InstructorRegistrationScreen() {
     const { refresh } = useInstructorStatus();
     const [step, setStep] = useState(1);
     const [loading, setLoading] = useState(false);
+
+    // Unified Modal State
+    const [modalConfig, setModalConfig] = useState<{
+        visible: boolean;
+        title: string;
+        message: string;
+        type: 'warning' | 'danger' | 'success' | 'info';
+        onConfirm?: () => void;
+    }>({
+        visible: false,
+        title: '',
+        message: '',
+        type: 'warning',
+    });
+
+    const showModal = (title: string, message: string, type: 'warning' | 'danger' | 'success' | 'info' = 'warning', onConfirm?: () => void) => {
+        setModalConfig({ visible: true, title, message, type, onConfirm });
+    };
 
     // Form Data
     const [formData, setFormData] = useState({
@@ -36,7 +57,12 @@ export default function InstructorRegistrationScreen() {
         bio: '',
         // Vehicle Info
         vehicle_model: '',
+        vehicle_model_id: null as string | null,
         vehicle_transmission: 'manual' as 'manual' | 'automatic',
+        vehicle_color: '',
+        vehicle_has_ac: false,
+        vehicle_steering_type: 'hydraulic' as 'hydraulic' | 'electric' | 'mechanical',
+        vehicle_is_adapted: false,
         // Class Info
         categories: [] as string[],
         price_instructor_car: '',
@@ -62,7 +88,7 @@ export default function InstructorRegistrationScreen() {
 
     const validateStep1 = () => {
         if (!formData.full_name || !formData.phone || !formData.cpf || !formData.city || !formData.state) {
-            Alert.alert('Erro', 'Preencha todos os campos obrigatórios');
+            showModal('Erro', 'Preencha todos os campos obrigatórios', 'warning');
             return false;
         }
         return true;
@@ -70,7 +96,7 @@ export default function InstructorRegistrationScreen() {
 
     const validateStep2 = () => {
         if (!formData.vehicle_model) {
-            Alert.alert('Erro', 'Informe o modelo do veículo');
+            showModal('Erro', 'Informe o modelo do veículo', 'warning');
             return false;
         }
         return true;
@@ -78,11 +104,11 @@ export default function InstructorRegistrationScreen() {
 
     const validateStep3 = () => { // Renamed from validateStep2 to validateStep3 because now we have 3 steps
         if (formData.categories.length === 0) {
-            Alert.alert('Erro', 'Selecione pelo menos uma categoria');
+            showModal('Erro', 'Selecione pelo menos uma categoria', 'warning');
             return false;
         }
         if (!formData.price_instructor_car || !formData.price_student_car) {
-            Alert.alert('Erro', 'Informe ambos os preços de aula');
+            showModal('Erro', 'Informe ambos os preços de aula', 'warning');
             return false;
         }
         return true;
@@ -91,7 +117,7 @@ export default function InstructorRegistrationScreen() {
     const handleSubmit = async () => {
         if (!validateStep3()) return;
         if (!user) {
-            Alert.alert('Erro', 'Usuário não autenticado');
+            showModal('Erro', 'Usuário não autenticado', 'danger');
             return;
         }
 
@@ -107,7 +133,7 @@ export default function InstructorRegistrationScreen() {
             const { error } = await supabase.from('instructors').insert({
                 user_id: user.id,
                 full_name: formData.full_name,
-                email: user.email, // Get email from authenticated user
+                email: user.email,
                 phone: formData.phone,
                 cpf: formData.cpf,
                 city: formData.city,
@@ -115,32 +141,48 @@ export default function InstructorRegistrationScreen() {
                 bio: formData.bio,
                 // Vehicle Info
                 vehicle_model: formData.vehicle_model,
+                vehicle_model_id: formData.vehicle_model_id,
                 vehicle_transmission: formData.vehicle_transmission,
+                vehicle_color: formData.vehicle_color || null,
+                vehicle_has_ac: formData.vehicle_has_ac,
+                vehicle_steering_type: formData.vehicle_steering_type,
+                vehicle_is_adapted: formData.vehicle_is_adapted,
                 // Class Info
                 categories: formData.categories as any,
                 price_per_lesson: parseFloat(formData.price_instructor_car?.replace(',', '.') || '0'),
                 price_instructor_car: parseFloat(formData.price_instructor_car?.replace(',', '.') || '0'),
                 price_student_car: parseFloat(formData.price_student_car?.replace(',', '.') || '0'),
-                lesson_duration_minutes: 50, // Default duration
+                lesson_duration_minutes: 50,
                 status: 'pending',
                 photo_url: profile?.avatar_url,
                 is_verified: false,
                 created_at: new Date().toISOString(),
-            });
+            } as any);
 
             if (error) throw error;
 
             await refresh(); // Refresh status hook
 
-            Alert.alert(
+            showModal(
                 'Cadastro Enviado!',
                 'Seu cadastro de instrutor foi enviado para análise. Você será notificado assim que for aprovado.',
-                [{ text: 'OK', onPress: () => router.replace('/(tabs)/perfil') }]
+                'success',
+                () => router.replace('/(tabs)/perfil')
             );
 
         } catch (error: any) {
             console.error('Registration error:', error);
-            Alert.alert('Erro', error.message || 'Não foi possível enviar o cadastro.');
+
+            // Detailed handling for duplicate CPF (code 23505)
+            if (error.code === '23505' || error.message?.includes('instructors_cpf_key')) {
+                showModal(
+                    'CPF Já Cadastrado',
+                    'Este documento já está vinculado a uma conta de instrutor no Vrumi. Se você já tem um cadastro, tente fazer login ou entre em contato com nosso suporte.',
+                    'warning'
+                );
+            } else {
+                showModal('Erro', error.message || 'Não foi possível enviar o cadastro.', 'danger');
+            }
         } finally {
             setLoading(false);
         }
@@ -246,11 +288,26 @@ export default function InstructorRegistrationScreen() {
 
             <View style={styles.inputGroup}>
                 <Text style={[styles.label, { color: theme.textSecondary }]}>Modelo do Veículo</Text>
+                <VehiclePicker
+                    selectedModelId={formData.vehicle_model_id}
+                    onSelect={(model) => {
+                        setFormData(prev => ({
+                            ...prev,
+                            vehicle_model_id: model.id,
+                            vehicle_model: model.displayName,
+                        }));
+                    }}
+                    placeholder="Selecione o modelo"
+                />
+            </View>
+
+            <View style={styles.inputGroup}>
+                <Text style={[styles.label, { color: theme.textSecondary }]}>Cor do Veículo</Text>
                 <TextInput
                     style={[styles.input, { backgroundColor: theme.card, color: theme.text, borderColor: theme.inputBorder }]}
-                    value={formData.vehicle_model}
-                    onChangeText={(text) => handleInputChange('vehicle_model', text)}
-                    placeholder="Ex: Chevrolet Onix 2023"
+                    value={formData.vehicle_color}
+                    onChangeText={(text) => handleInputChange('vehicle_color', text)}
+                    placeholder="Ex: Prata, Branco, Preto"
                     placeholderTextColor={theme.textMuted}
                 />
             </View>
@@ -260,39 +317,94 @@ export default function InstructorRegistrationScreen() {
                 <View style={{ flexDirection: 'row', gap: 12 }}>
                     <TouchableOpacity
                         style={[
-                            styles.categoryChip,
+                            styles.optionButton,
                             {
                                 flex: 1,
-                                height: 56,
-                                borderRadius: 12,
                                 backgroundColor: formData.vehicle_transmission === 'manual' ? theme.primary : theme.card,
                                 borderColor: formData.vehicle_transmission === 'manual' ? theme.primary : theme.inputBorder
                             }
                         ]}
                         onPress={() => handleInputChange('vehicle_transmission', 'manual')}
                     >
-                        <Text style={[styles.categoryChipText, { fontSize: 16, color: formData.vehicle_transmission === 'manual' ? '#fff' : theme.text }]}>
+                        <Text style={{ fontSize: 15, fontWeight: '600', color: formData.vehicle_transmission === 'manual' ? '#fff' : theme.text }}>
                             Manual
                         </Text>
                     </TouchableOpacity>
                     <TouchableOpacity
                         style={[
-                            styles.categoryChip,
+                            styles.optionButton,
                             {
                                 flex: 1,
-                                height: 56,
-                                borderRadius: 12,
                                 backgroundColor: formData.vehicle_transmission === 'automatic' ? theme.primary : theme.card,
                                 borderColor: formData.vehicle_transmission === 'automatic' ? theme.primary : theme.inputBorder
                             }
                         ]}
                         onPress={() => handleInputChange('vehicle_transmission', 'automatic')}
                     >
-                        <Text style={[styles.categoryChipText, { fontSize: 16, color: formData.vehicle_transmission === 'automatic' ? '#fff' : theme.text }]}>
+                        <Text style={{ fontSize: 15, fontWeight: '600', color: formData.vehicle_transmission === 'automatic' ? '#fff' : theme.text }}>
                             Automático
                         </Text>
                     </TouchableOpacity>
                 </View>
+            </View>
+
+            <View style={styles.inputGroup}>
+                <Text style={[styles.label, { color: theme.textSecondary }]}>Tipo de Direção</Text>
+                <View style={{ flexDirection: 'row', gap: 8 }}>
+                    {(['hydraulic', 'electric', 'mechanical'] as const).map((type) => {
+                        const labels = { hydraulic: 'Hidráulica', electric: 'Elétrica', mechanical: 'Mecânica' };
+                        const isSelected = formData.vehicle_steering_type === type;
+                        return (
+                            <TouchableOpacity
+                                key={type}
+                                style={[
+                                    styles.optionButton,
+                                    {
+                                        flex: 1,
+                                        backgroundColor: isSelected ? theme.primary : theme.card,
+                                        borderColor: isSelected ? theme.primary : theme.inputBorder
+                                    }
+                                ]}
+                                onPress={() => handleInputChange('vehicle_steering_type', type)}
+                            >
+                                <Text style={{ fontSize: 13, fontWeight: '600', color: isSelected ? '#fff' : theme.text }}>
+                                    {labels[type]}
+                                </Text>
+                            </TouchableOpacity>
+                        );
+                    })}
+                </View>
+            </View>
+
+            {/* Toggle Options */}
+            <View style={styles.toggleRow}>
+                <TouchableOpacity
+                    style={[
+                        styles.toggleOption,
+                        {
+                            backgroundColor: formData.vehicle_has_ac ? '#dcfce7' : theme.card,
+                            borderColor: formData.vehicle_has_ac ? '#10b981' : theme.inputBorder
+                        }
+                    ]}
+                    onPress={() => handleInputChange('vehicle_has_ac', !formData.vehicle_has_ac)}
+                >
+                    <Ionicons name={formData.vehicle_has_ac ? "checkmark-circle" : "snow-outline"} size={24} color={formData.vehicle_has_ac ? '#10b981' : theme.textMuted} />
+                    <Text style={[styles.toggleText, { color: formData.vehicle_has_ac ? '#166534' : theme.text }]}>Ar Condicionado</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                    style={[
+                        styles.toggleOption,
+                        {
+                            backgroundColor: formData.vehicle_is_adapted ? '#dbeafe' : theme.card,
+                            borderColor: formData.vehicle_is_adapted ? '#3b82f6' : theme.inputBorder
+                        }
+                    ]}
+                    onPress={() => handleInputChange('vehicle_is_adapted', !formData.vehicle_is_adapted)}
+                >
+                    <Ionicons name={formData.vehicle_is_adapted ? "checkmark-circle" : "settings-outline"} size={24} color={formData.vehicle_is_adapted ? '#3b82f6' : theme.textMuted} />
+                    <Text style={[styles.toggleText, { color: formData.vehicle_is_adapted ? '#1e40af' : theme.text }]}>Comandos Duplos</Text>
+                </TouchableOpacity>
             </View>
 
             <View style={styles.buttonRow}>
@@ -389,12 +501,12 @@ export default function InstructorRegistrationScreen() {
                 </Text>
             </View>
 
-            <View style={styles.summaryCard}>
+            <View style={[styles.summaryCard, { backgroundColor: theme.card, borderColor: theme.cardBorder, borderWidth: 1 }]}>
                 <Text style={[styles.summaryTitle, { color: theme.text }]}>Resumo Financeiro</Text>
 
-                <Text style={[styles.summarySubtitle, { color: theme.textMuted }]}>Seu carro (você recebe):</Text>
+                <Text style={[styles.summarySubtitle, { color: theme.textSecondary }]}>Seu carro (você recebe):</Text>
                 <View style={styles.summaryRow}>
-                    <Text style={{ color: theme.textSecondary }}>Valor - 15% taxa:</Text>
+                    <Text style={{ color: theme.textMuted }}>Valor - 15% taxa:</Text>
                     <Text style={{ color: '#10b981', fontWeight: 'bold', fontSize: 16 }}>
                         R$ {(parseFloat(formData.price_instructor_car || '0') * 0.85).toFixed(2)}
                     </Text>
@@ -402,9 +514,9 @@ export default function InstructorRegistrationScreen() {
 
                 <View style={[styles.divider, { backgroundColor: theme.cardBorder }]} />
 
-                <Text style={[styles.summarySubtitle, { color: theme.textMuted }]}>Carro do aluno (você recebe):</Text>
+                <Text style={[styles.summarySubtitle, { color: theme.textSecondary }]}>Carro do aluno (você recebe):</Text>
                 <View style={styles.summaryRow}>
-                    <Text style={{ color: theme.textSecondary }}>Valor - 15% taxa:</Text>
+                    <Text style={{ color: theme.textMuted }}>Valor - 15% taxa:</Text>
                     <Text style={{ color: '#10b981', fontWeight: 'bold', fontSize: 16 }}>
                         R$ {(parseFloat(formData.price_student_car || '0') * 0.85).toFixed(2)}
                     </Text>
@@ -480,6 +592,19 @@ export default function InstructorRegistrationScreen() {
                     {step === 3 && renderStep3()}
                 </ScrollView>
             </KeyboardAvoidingView>
+
+            <ConfirmationModal
+                visible={modalConfig.visible}
+                title={modalConfig.title}
+                message={modalConfig.message}
+                type={modalConfig.type}
+                confirmText="Entendido"
+                onConfirm={() => {
+                    modalConfig.onConfirm?.();
+                    setModalConfig(prev => ({ ...prev, visible: false }));
+                }}
+                onClose={() => setModalConfig(prev => ({ ...prev, visible: false }))}
+            />
         </SafeAreaView>
     );
 }
@@ -598,7 +723,6 @@ const styles = StyleSheet.create({
         marginTop: 6,
     },
     summaryCard: {
-        backgroundColor: '#f8fafc',
         padding: 16,
         borderRadius: 16,
         marginVertical: 12,
@@ -659,5 +783,31 @@ const styles = StyleSheet.create({
         color: '#fff',
         fontSize: 16,
         fontWeight: '700',
+    },
+    optionButton: {
+        height: 52,
+        borderRadius: 12,
+        borderWidth: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    toggleRow: {
+        flexDirection: 'row',
+        gap: 12,
+        marginTop: 8,
+    },
+    toggleOption: {
+        flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: 16,
+        borderRadius: 12,
+        borderWidth: 1,
+        gap: 8,
+    },
+    toggleText: {
+        fontSize: 13,
+        fontWeight: '600',
     },
 });

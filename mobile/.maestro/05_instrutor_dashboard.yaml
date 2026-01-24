@@ -1,0 +1,137 @@
+# Teste E2E: Dashboard do Instrutor
+# Testa o painel do instrutor já cadastrado
+
+appId: com.vrumi.connect
+
+---
+
+# Inicia o app
+- launchApp
+
+# Login como instrutor
+- extendedWaitUntil:
+    visible:
+      text: "Entrar"
+    timeout: 10000
+
+- tapOn:
+    text: "E-mail"
+
+- inputText: ${TEST_INSTRUCTOR_EMAIL}
+
+- tapOn:
+    text: "Senha"
+
+- inputText: ${TEST_INSTRUCTOR_PASSWORD}
+
+- tapOn:
+    text: "Entrar"
+
+# Aguarda home carregar
+- extendedWaitUntil:
+    visible:
+      text: "Início"
+    timeout: 15000
+
+- takeScreenshot: "01_home_instrutor"
+
+# Vai para aba Instrutor
+- tapOn:
+    text: "Instrutor"
+
+# Aguarda dashboard carregar
+- extendedWaitUntil:
+    visible:
+      text: "Painel do Instrutor"
+    timeout: 10000
+
+- takeScreenshot: "02_dashboard_instrutor"
+
+# Verifica cards de estatísticas
+- assertVisible:
+    text: "Ganhos"
+
+- assertVisible:
+    text: "Aulas"
+
+# Verifica banner do Stripe se não configurado
+- runFlow:
+    when:
+      visible:
+        text: "Ative os recebimentos"
+    commands:
+      - takeScreenshot: "03_stripe_banner"
+      - tapOn:
+          text: "Ative os recebimentos"
+      - extendedWaitUntil:
+          visible:
+            text: "Stripe"
+          timeout: 10000
+      - takeScreenshot: "04_stripe_onboarding"
+      - tapOn:
+          id: "arrow-back"
+
+# Testa navegação para Agenda
+- tapOn:
+    text: "Agenda"
+
+- extendedWaitUntil:
+    visible:
+      text: "Minha Agenda"
+    timeout: 10000
+
+- takeScreenshot: "05_agenda"
+
+# Volta para dashboard
+- tapOn:
+    id: "arrow-back"
+
+# Testa navegação para Horários
+- tapOn:
+    text: "Horários"
+
+- extendedWaitUntil:
+    visible:
+      text: "Disponibilidade"
+    timeout: 10000
+
+- takeScreenshot: "06_horarios"
+
+# Volta para dashboard
+- tapOn:
+    id: "arrow-back"
+
+# Testa navegação para Editar Perfil
+- tapOn:
+    text: "Editar Perfil"
+
+- extendedWaitUntil:
+    visible:
+      text: "Salvar"
+    timeout: 10000
+
+- takeScreenshot: "07_editar_perfil"
+
+# Volta para dashboard
+- tapOn:
+    id: "arrow-back"
+
+# Testa navegação para Financeiro
+- tapOn:
+    text: "Financeiro"
+
+- extendedWaitUntil:
+    visible:
+      text: "Extrato"
+    timeout: 10000
+
+- takeScreenshot: "08_financeiro"
+
+# Volta para home
+- tapOn:
+    id: "arrow-back"
+
+- tapOn:
+    text: "Início"
+
+- takeScreenshot: "09_teste_finalizado"

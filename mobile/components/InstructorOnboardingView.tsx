@@ -8,11 +8,12 @@ import {
     ActivityIndicator,
     Alert,
     RefreshControl,
-    Linking
+    Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useFocusEffect } from 'expo-router';
+import * as WebBrowser from 'expo-web-browser';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../src/lib/supabase';
@@ -135,38 +136,52 @@ export default function InstructorOnboardingView() {
 
         setStripeLoading(true);
         try {
-            // Step 1: Create Stripe account if doesn't exist
-            let accountId = status.stripe_account_id;
+            console.log('🔄 [Stripe] Starting onboarding flow...');
 
-            if (!accountId) {
-                const createResponse = await fetch(`${SUPABASE_URL}/functions/v1/connect-create-account`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${session.access_token}`,
-                    },
-                });
-
-                const createResult = await createResponse.json();
-                if (!createResponse.ok) throw new Error(createResult.error || 'Falha ao criar conta Stripe');
-                accountId = createResult.accountId;
-            }
-
-            // Step 2: Get onboarding link
-            const linkResponse = await fetch(`${SUPABASE_URL}/functions/v1/connect-onboarding-link`, {
+            // Single API call - creates account if needed AND generates onboarding link
+            const response = await fetch(`${SUPABASE_URL}/functions/v1/connect-create-account`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${session.access_token}`,
                 },
+                body: JSON.stringify({ generateLink: true }),
             });
 
-            const linkResult = await linkResponse.json();
-            if (!linkResponse.ok) throw new Error(linkResult.error || 'Falha ao gerar link');
+            const result = await response.json();
+            if (!response.ok) {
+                throw new Error(result.error || 'Falha ao configurar Stripe');
+            }
 
-            await Linking.openURL(linkResult.url);
+            console.log('✅ [Stripe] Got onboarding URL, opening browser...');
+
+            if (!result.onboardingUrl) {
+                throw new Error('URL de onboarding não disponível');
+            }
+
+            // Update local state with new account ID if created
+            if (result.accountId && !status.stripe_account_id) {
+                setStatus(prev => ({ ...prev, stripe_account_id: result.accountId }));
+            }
+
+            // Open Stripe onboarding in in-app browser
+            // Using openBrowserAsync for better user experience
+            const browserResult = await WebBrowser.openBrowserAsync(result.onboardingUrl, {
+                presentationStyle: WebBrowser.WebBrowserPresentationStyle.FULL_SCREEN,
+                showTitle: true,
+                enableBarCollapsing: true,
+            });
+
+            console.log('✅ [Stripe] Browser closed:', browserResult.type);
+
+            // After browser closes, verify Stripe status
+            if (browserResult.type === 'cancel' || browserResult.type === 'dismiss') {
+                // User closed browser - check if they completed onboarding
+                await verifyStripeStatus();
+            }
 
         } catch (error: any) {
+            console.error('❌ [Stripe] Error:', error.message);
             Alert.alert('Erro', error.message || 'Erro ao conectar com Stripe');
         } finally {
             setStripeLoading(false);

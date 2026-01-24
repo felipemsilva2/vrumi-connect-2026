@@ -30,7 +30,7 @@
  *    - Palavrão + link
  */
 
-import { validateMessage, ViolationResult } from '../utils/messageValidation';
+import { validateMessage, ViolationResult } from '../messageValidation';
 
 describe('Particionamento de Equivalência - validateMessage', () => {
 

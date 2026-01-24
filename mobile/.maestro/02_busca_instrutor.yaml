@@ -1,0 +1,80 @@
+# Teste E2E: Busca de Instrutor
+# Testa a busca e visualização de perfil de instrutor
+
+appId: com.vrumi.connect
+
+---
+
+# Inicia o app (assume usuário já logado)
+- launchApp
+
+# Aguarda a home carregar
+- extendedWaitUntil:
+    visible:
+      text: "Buscar instrutor"
+    timeout: 10000
+
+# Screenshot da home
+- takeScreenshot: "01_home_inicial"
+
+# Clica na barra de busca
+- tapOn:
+    text: "Buscar instrutor"
+
+# Aguarda modal de busca
+- extendedWaitUntil:
+    visible:
+      text: "Pesquisar"
+    timeout: 5000
+
+- takeScreenshot: "02_modal_busca"
+
+# Digita termo de busca
+- inputText: "São Paulo"
+
+# Aguarda resultados
+- extendedWaitUntil:
+    visible:
+      text: "resultados"
+    timeout: 10000
+
+- takeScreenshot: "03_resultados_busca"
+
+# Clica no primeiro instrutor da lista
+- tapOn:
+    index: 0
+    below:
+      text: "Instrutores"
+
+# Aguarda perfil do instrutor carregar
+- extendedWaitUntil:
+    visible:
+      text: "Agendar aula"
+    timeout: 10000
+
+- takeScreenshot: "04_perfil_instrutor"
+
+# Verifica elementos do perfil
+- assertVisible:
+    text: "Avaliações"
+
+- assertVisible:
+    text: "Sobre"
+
+# Navega para aba Aulas
+- tapOn:
+    text: "Aulas"
+
+- takeScreenshot: "05_aba_aulas"
+
+# Volta para home
+- tapOn:
+    id: "arrow-back"
+
+- tapOn:
+    text: "Início"
+
+- assertVisible:
+    text: "Serviços Vrumi"
+
+- takeScreenshot: "06_volta_home"

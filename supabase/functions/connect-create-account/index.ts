@@ -38,6 +38,17 @@ serve(async (req) => {
     try {
         logStep("Function started");
 
+        // Parse request body
+        let generateLink = true; // Default to generating link for performance
+        try {
+            const body = await req.json();
+            if (body?.generateLink !== undefined) {
+                generateLink = body.generateLink;
+            }
+        } catch {
+            // No body or invalid JSON - use defaults
+        }
+
         // Authenticate user
         const authHeader = req.headers.get("Authorization");
         if (!authHeader) throw new Error("No authorization header provided");
@@ -60,69 +71,82 @@ serve(async (req) => {
             throw new Error("Instructor profile not found");
         }
 
-        // If already has Stripe account, return it
-        if (instructor.stripe_account_id) {
-            logStep("Stripe account already exists", { accountId: instructor.stripe_account_id });
-            return new Response(JSON.stringify({
-                accountId: instructor.stripe_account_id,
-                alreadyExists: true
-            }), {
-                headers: { ...corsHeaders, "Content-Type": "application/json" },
-                status: 200,
-            });
-        }
-
-        // Create Stripe Express account
         const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
             apiVersion: "2025-08-27.basil",
         });
 
-        const account = await stripe.accounts.create({
-            type: "express",
-            country: "BR",
-            email: user.email,
-            default_currency: "brl",
-            capabilities: {
-                card_payments: { requested: true },
-                transfers: { requested: true },
-            },
-            business_type: "individual",
-            business_profile: {
-                mcc: "8299", // Educational services
-                url: "https://vrumi.com.br",
-            },
-            metadata: {
-                instructor_id: instructor.id,
-                user_id: user.id,
-            },
-            settings: {
-                payouts: {
-                    schedule: {
-                        interval: "daily",
+        let accountId = instructor.stripe_account_id;
+        let alreadyExists = !!accountId;
+
+        // Create Stripe account if it doesn't exist
+        if (!accountId) {
+            const account = await stripe.accounts.create({
+                type: "express",
+                country: "BR",
+                email: user.email,
+                default_currency: "brl",
+                capabilities: {
+                    card_payments: { requested: true },
+                    transfers: { requested: true },
+                },
+                business_type: "individual",
+                business_profile: {
+                    mcc: "8299", // Educational services
+                    url: "https://vrumi.com.br",
+                },
+                metadata: {
+                    instructor_id: instructor.id,
+                    user_id: user.id,
+                },
+                settings: {
+                    payouts: {
+                        schedule: {
+                            interval: "daily",
+                        },
                     },
                 },
-            },
-        });
+            });
 
-        logStep("Stripe account created", { accountId: account.id });
+            accountId = account.id;
+            logStep("Stripe account created", { accountId });
 
-        // Save account ID to database
-        const { error: updateError } = await supabaseAdmin
-            .from("instructors")
-            .update({
-                stripe_account_id: account.id,
-                stripe_onboarding_complete: false,
-            })
-            .eq("id", instructor.id);
+            // Save account ID to database
+            const { error: updateError } = await supabaseAdmin
+                .from("instructors")
+                .update({
+                    stripe_account_id: account.id,
+                    stripe_onboarding_complete: false,
+                })
+                .eq("id", instructor.id);
 
-        if (updateError) {
-            logStep("Error saving account ID", { error: updateError.message });
-            // Don't throw - account was created, we can retry saving later
+            if (updateError) {
+                logStep("Error saving account ID", { error: updateError.message });
+            }
+        } else {
+            logStep("Stripe account already exists", { accountId });
+        }
+
+        // Generate onboarding link if requested (default: true for performance)
+        let onboardingUrl: string | null = null;
+        if (generateLink) {
+            const baseReturnUrl = 'https://vrumi.com.br/connect/painel-instrutor';
+
+            const accountLink = await stripe.accountLinks.create({
+                account: accountId,
+                refresh_url: `${baseReturnUrl}?stripe_refresh=true`,
+                return_url: `${baseReturnUrl}?stripe_onboarded=true`,
+                type: "account_onboarding",
+                collect: "eventually_due",
+            });
+
+            onboardingUrl = accountLink.url;
+            logStep("Onboarding link generated", { hasUrl: !!onboardingUrl });
         }
 
         return new Response(JSON.stringify({
-            accountId: account.id,
-            alreadyExists: false
+            accountId,
+            alreadyExists,
+            onboardingUrl,
         }), {
             headers: { ...corsHeaders, "Content-Type": "application/json" },
             status: 200,

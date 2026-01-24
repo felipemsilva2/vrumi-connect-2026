@@ -3,10 +3,17 @@ import * as LocalAuthentication from 'expo-local-authentication';
 import * as SecureStore from 'expo-secure-store';
 
 const BIOMETRIC_ENABLED_KEY = 'biometric_enabled';
+const BIOMETRIC_USER_ID_KEY = 'biometric_user_id';
+const BIOMETRIC_REFRESH_TOKEN_KEY = 'biometric_refresh_token';
 
 interface BiometricAuthResult {
     success: boolean;
     error?: string;
+}
+
+interface BiometricCredentials {
+    userId: string;
+    refreshToken: string;
 }
 
 interface UseBiometricAuthReturn {
@@ -19,6 +26,10 @@ interface UseBiometricAuthReturn {
     enableBiometric: () => Promise<void>;
     disableBiometric: () => Promise<void>;
     checkBiometricPreference: () => Promise<boolean>;
+    saveCredentials: (userId: string, refreshToken: string) => Promise<void>;
+    getCredentials: () => Promise<BiometricCredentials | null>;
+    clearCredentials: () => Promise<void>;
+    hasCredentials: () => Promise<boolean>;
 }
 
 export function useBiometricAuth(): UseBiometricAuthReturn {
@@ -110,6 +121,54 @@ export function useBiometricAuth(): UseBiometricAuthReturn {
         }
     }, []);
 
+    const saveCredentials = useCallback(async (userId: string, refreshToken: string): Promise<void> => {
+        try {
+            await SecureStore.setItemAsync(BIOMETRIC_USER_ID_KEY, userId);
+            await SecureStore.setItemAsync(BIOMETRIC_REFRESH_TOKEN_KEY, refreshToken);
+            await SecureStore.setItemAsync(BIOMETRIC_ENABLED_KEY, 'true');
+            setIsBiometricEnabled(true);
+        } catch (error) {
+            console.error('Error saving biometric credentials:', error);
+            throw new Error('Não foi possível salvar credenciais');
+        }
+    }, []);
+
+    const getCredentials = useCallback(async (): Promise<BiometricCredentials | null> => {
+        try {
+            const userId = await SecureStore.getItemAsync(BIOMETRIC_USER_ID_KEY);
+            const refreshToken = await SecureStore.getItemAsync(BIOMETRIC_REFRESH_TOKEN_KEY);
+
+            if (userId && refreshToken) {
+                return { userId, refreshToken };
+            }
+            return null;
+        } catch (error) {
+            console.error('Error getting biometric credentials:', error);
+            return null;
+        }
+    }, []);
+
+    const clearCredentials = useCallback(async (): Promise<void> => {
+        try {
+            await SecureStore.deleteItemAsync(BIOMETRIC_USER_ID_KEY);
+            await SecureStore.deleteItemAsync(BIOMETRIC_REFRESH_TOKEN_KEY);
+            await SecureStore.deleteItemAsync(BIOMETRIC_ENABLED_KEY);
+            setIsBiometricEnabled(false);
+        } catch (error) {
+            console.error('Error clearing biometric credentials:', error);
+        }
+    }, []);
+
+    const hasCredentials = useCallback(async (): Promise<boolean> => {
+        try {
+            const userId = await SecureStore.getItemAsync(BIOMETRIC_USER_ID_KEY);
+            const refreshToken = await SecureStore.getItemAsync(BIOMETRIC_REFRESH_TOKEN_KEY);
+            return !!(userId && refreshToken);
+        } catch {
+            return false;
+        }
+    }, []);
+
     return {
         isBiometricSupported,
         isBiometricEnrolled,
@@ -120,5 +179,9 @@ export function useBiometricAuth(): UseBiometricAuthReturn {
         enableBiometric,
         disableBiometric,
         checkBiometricPreference,
+        saveCredentials,
+        getCredentials,
+        clearCredentials,
+        hasCredentials,
     };
 }

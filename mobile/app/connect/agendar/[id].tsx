@@ -12,9 +12,10 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { router, useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams, useNavigation } from 'expo-router';
 import { useTheme } from '../../../contexts/ThemeContext';
 import { useAuth } from '../../../contexts/AuthContext';
+import * as Haptics from 'expo-haptics';
 import { supabase } from '../../../src/lib/supabase';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -61,9 +62,35 @@ export default function BookingScreen() {
     const [bookedSlots, setBookedSlots] = useState<string[]>([]);
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
+    const navigation = useNavigation();
 
     const [selectedDate, setSelectedDate] = useState<Date | null>(null);
     const [selectedTime, setSelectedTime] = useState<string | null>(null);
+
+    // Confirm before discarding unsaved selection
+    useEffect(() => {
+        const unsubscribe = navigation.addListener('beforeRemove', (e) => {
+            if (!selectedDate && !selectedTime) return;
+
+            // Prevention is needed
+            e.preventDefault();
+
+            Alert.alert(
+                'Descartar agendamento?',
+                'Você selecionou uma data/horário mas não concluiu o agendamento. Deseja sair mesmo assim?',
+                [
+                    { text: 'Continuar agendando', style: 'cancel', onPress: () => { } },
+                    {
+                        text: 'Sim, sair',
+                        style: 'destructive',
+                        onPress: () => navigation.dispatch(e.data.action),
+                    },
+                ]
+            );
+        });
+
+        return unsubscribe;
+    }, [navigation, selectedDate, selectedTime]);
 
     // Generate dates for the next 14 days
     const availableDates = useMemo(() => {
@@ -298,13 +325,16 @@ export default function BookingScreen() {
                 <View style={styles.header}>
                     <TouchableOpacity
                         style={[styles.backButton, { backgroundColor: theme.card }]}
-                        onPress={() => router.back()}
+                        onPress={() => {
+                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                            router.back();
+                        }}
                     >
                         <Ionicons name="arrow-back" size={22} color={theme.text} />
                     </TouchableOpacity>
                     <View style={styles.headerTitleContainer}>
-                        <Text style={[styles.headerTitle, { color: theme.text }]}>Agendar Aula</Text>
-                        <Text style={[styles.headerSubtitle, { color: theme.textMuted }]}>Com {instructor.full_name.split(' ')[0]}</Text>
+                        <Text style={[styles.headerTitle, { color: theme.text, fontSize: theme.typography.sizes.bodyLarge, fontWeight: theme.typography.weights.extraBold }]}>Agendar Aula</Text>
+                        <Text style={[styles.headerSubtitle, { color: theme.textMuted, fontSize: theme.typography.sizes.bodySmall, fontWeight: theme.typography.weights.semibold, marginTop: 1 }]}>Com {instructor.full_name.split(' ')[0]}</Text>
                     </View>
                     <Image
                         source={{ uri: instructor.photo_url || 'https://via.placeholder.com/40' }}
@@ -320,8 +350,8 @@ export default function BookingScreen() {
                                 <Ionicons name="pricetag" size={20} color="#fff" />
                             </View>
                             <View style={{ flex: 1 }}>
-                                <Text style={[styles.packageLabel, { color: theme.primary }]}>Plano de Aulas Ativo</Text>
-                                <Text style={[styles.packageValue, { color: theme.text }]}>
+                                <Text style={[styles.packageLabel, { color: theme.primary, fontSize: theme.typography.sizes.bodySmall, fontWeight: theme.typography.weights.extraBold }]}>Plano de Aulas Ativo</Text>
+                                <Text style={[styles.packageValue, { color: theme.text, fontSize: theme.typography.sizes.bodySmall + 1, fontWeight: theme.typography.weights.semibold }]}>
                                     {activePackage.lessons_total - activePackage.lessons_used} aulas restantes disponíveis
                                 </Text>
                             </View>
@@ -330,7 +360,7 @@ export default function BookingScreen() {
 
                     {/* Date Selector Smart */}
                     <View style={styles.sectionMargin}>
-                        <Text style={[styles.sectionTitlePremium, { color: theme.text }]}>Data da aula</Text>
+                        <Text style={[styles.sectionTitlePremium, { color: theme.text, fontSize: theme.typography.sizes.bodyLarge, fontWeight: theme.typography.weights.extraBold }]}>Data da aula</Text>
                         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.datesScrollAlt}>
                             {availableDates.map((date, index) => {
                                 const isAvailable = isDateAvailable(date);
@@ -347,16 +377,21 @@ export default function BookingScreen() {
                                                 opacity: isAvailable ? 1 : 0.4,
                                             }
                                         ]}
-                                        onPress={() => isAvailable && setSelectedDate(date)}
+                                        onPress={() => {
+                                            if (isAvailable) {
+                                                Haptics.selectionAsync();
+                                                setSelectedDate(date);
+                                            }
+                                        }}
                                         disabled={!isAvailable}
                                     >
-                                        <Text style={[styles.dateMonthAlt, { color: isSelected ? 'rgba(255,255,255,0.8)' : theme.textMuted }]}>
+                                        <Text style={[styles.dateMonthAlt, { color: isSelected ? 'rgba(255,255,255,0.8)' : theme.textMuted, fontSize: theme.typography.sizes.label, fontWeight: theme.typography.weights.extraBold }]}>
                                             {MONTH_NAMES[date.getMonth()]}
                                         </Text>
-                                        <Text style={[styles.dateNumberAlt, { color: isSelected ? '#fff' : theme.text }]}>
+                                        <Text style={[styles.dateNumberAlt, { color: isSelected ? '#fff' : theme.text, fontSize: theme.typography.sizes.h1, fontWeight: theme.typography.weights.extraBold }]}>
                                             {date.getDate()}
                                         </Text>
-                                        <Text style={[styles.dateDayAlt, { color: isSelected ? '#fff' : theme.textMuted }]}>
+                                        <Text style={[styles.dateDayAlt, { color: isSelected ? '#fff' : theme.textMuted, fontSize: theme.typography.sizes.bodySmall, fontWeight: theme.typography.weights.semibold }]}>
                                             {isToday ? 'Hoje' : DAY_NAMES[date.getDay()]}
                                         </Text>
                                         {isSelected && <View style={styles.selectedDot} />}
@@ -369,12 +404,12 @@ export default function BookingScreen() {
                     {/* Time Selection by Period */}
                     {selectedDate && (
                         <View style={styles.sectionMargin}>
-                            <Text style={[styles.sectionTitlePremium, { color: theme.text }]}>Escolha o melhor horário</Text>
+                            <Text style={[styles.sectionTitlePremium, { color: theme.text, fontSize: theme.typography.sizes.bodyLarge, fontWeight: theme.typography.weights.extraBold }]}>Escolha o melhor horário</Text>
 
                             {timeSlots.length === 0 ? (
                                 <View style={[styles.emptySlotsBox, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
                                     <Ionicons name="calendar-outline" size={32} color={theme.textMuted} />
-                                    <Text style={[styles.noSlotsText, { color: theme.textMuted }]}>
+                                    <Text style={[styles.noSlotsText, { color: theme.textMuted, fontSize: theme.typography.sizes.body }]}>
                                         Sem horários para este dia. Tente outra data.
                                     </Text>
                                 </View>
@@ -402,15 +437,15 @@ export default function BookingScreen() {
                     <View style={styles.footerInfoBox}>
                         {canConfirm ? (
                             <View>
-                                <Text style={[styles.footerSummaryText, { color: theme.textMuted }]}>
+                                <Text style={[styles.footerSummaryText, { color: theme.textMuted, fontSize: theme.typography.sizes.caption, fontWeight: theme.typography.weights.semibold }]}>
                                     {selectedDate?.toLocaleDateString('pt-BR', { day: 'numeric', month: 'short' })} • {selectedTime?.substring(0, 5)}
                                 </Text>
-                                <Text style={[styles.footerPriceText, { color: theme.text }]}>
+                                <Text style={[styles.footerPriceText, { color: theme.text, fontSize: theme.typography.sizes.h2, fontWeight: theme.typography.weights.extraBold }]}>
                                     {activePackage ? 'Usar Pacote' : formatPrice(instructor.price_per_lesson)}
                                 </Text>
                             </View>
                         ) : (
-                            <Text style={[styles.selectPrompt, { color: theme.textMuted }]}>
+                            <Text style={[styles.selectPrompt, { color: theme.textMuted, fontSize: theme.typography.sizes.bodySmall + 1, fontWeight: theme.typography.weights.semibold }]}>
                                 Selecione data e hora
                             </Text>
                         )}
@@ -427,7 +462,7 @@ export default function BookingScreen() {
                         {submitting ? (
                             <ActivityIndicator color="#fff" />
                         ) : (
-                            <Text style={[styles.smartConfirmBtnText, { color: canConfirm ? '#fff' : theme.textMuted }]}>
+                            <Text style={[styles.smartConfirmBtnText, { color: canConfirm ? '#fff' : theme.textMuted, fontSize: theme.typography.sizes.bodyLarge, fontWeight: theme.typography.weights.extraBold }]}>
                                 {canConfirm ? 'Agendar' : 'Aguardando'}
                             </Text>
                         )}
@@ -443,7 +478,7 @@ function PeriodSection({ title, icon, slots, selected, onSelect, theme }: any) {
         <View style={styles.periodContainer}>
             <View style={styles.periodHeader}>
                 <Ionicons name={icon} size={18} color={theme.primary} />
-                <Text style={[styles.periodTitle, { color: theme.textSecondary }]}>{title}</Text>
+                <Text style={[styles.periodTitle, { color: theme.textSecondary, fontSize: theme.typography.sizes.label, fontWeight: theme.typography.weights.bold }]}>{title}</Text>
             </View>
             <View style={styles.slotsGridAlt}>
                 {slots.map((time: string) => {
@@ -458,9 +493,12 @@ function PeriodSection({ title, icon, slots, selected, onSelect, theme }: any) {
                                     borderColor: isSelected ? theme.primary : theme.cardBorder,
                                 }
                             ]}
-                            onPress={() => onSelect(time)}
+                            onPress={() => {
+                                Haptics.selectionAsync();
+                                onSelect(time);
+                            }}
                         >
-                            <Text style={[styles.slotTextAlt, { color: isSelected ? '#fff' : theme.text }]}>
+                            <Text style={[styles.slotTextAlt, { color: isSelected ? '#fff' : theme.text, fontSize: theme.typography.sizes.bodySmall + 1, fontWeight: theme.typography.weights.bold }]}>
                                 {time.substring(0, 5)}
                             </Text>
                         </TouchableOpacity>
@@ -479,8 +517,8 @@ const styles = StyleSheet.create({
     header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 12, gap: 12 },
     backButton: { width: 44, height: 44, borderRadius: 22, justifyContent: 'center', alignItems: 'center' },
     headerTitleContainer: { flex: 1 },
-    headerTitle: { fontSize: 18, fontWeight: '800' },
-    headerSubtitle: { fontSize: 13, fontWeight: '600', marginTop: 1 },
+    headerTitle: { fontWeight: '800' },
+    headerSubtitle: { fontWeight: '600', marginTop: 1 },
     instructorMiniPhoto: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#eee' },
 
     // Scroll
@@ -490,37 +528,37 @@ const styles = StyleSheet.create({
     // Package Banner
     packageBannerPremium: { flexDirection: 'row', alignItems: 'center', padding: 16, borderRadius: 20, gap: 16, marginBottom: 8 },
     packageIconBox: { width: 44, height: 44, borderRadius: 14, justifyContent: 'center', alignItems: 'center' },
-    packageLabel: { fontSize: 13, fontWeight: '800', marginBottom: 2 },
-    packageValue: { fontSize: 14, fontWeight: '600' },
+    packageLabel: { fontWeight: '800', marginBottom: 2 },
+    packageValue: { fontWeight: '600' },
 
     // Sections
     sectionMargin: { marginTop: 24 },
-    sectionTitlePremium: { fontSize: 18, fontWeight: '800', marginBottom: 16 },
+    sectionTitlePremium: { fontWeight: '800', marginBottom: 16 },
 
     // Date Chips
     datesScrollAlt: { marginHorizontal: -20, paddingHorizontal: 20 },
     dateChipAlt: { width: 85, height: 110, borderRadius: 20, padding: 12, marginRight: 12, borderWidth: 1, alignItems: 'center', justifyContent: 'center', position: 'relative' },
-    dateMonthAlt: { fontSize: 11, fontWeight: '800', textTransform: 'uppercase', marginBottom: 4 },
-    dateNumberAlt: { fontSize: 24, fontWeight: '800', marginBottom: 2 },
-    dateDayAlt: { fontSize: 13, fontWeight: '600' },
+    dateMonthAlt: { fontWeight: '800', textTransform: 'uppercase', marginBottom: 4 },
+    dateNumberAlt: { fontWeight: '800', marginBottom: 2 },
+    dateDayAlt: { fontWeight: '600' },
     selectedDot: { position: 'absolute', bottom: 10, width: 4, height: 4, borderRadius: 2, backgroundColor: '#fff' },
 
     // Time Slots
     emptySlotsBox: { padding: 32, borderRadius: 20, borderWidth: 1, alignItems: 'center', gap: 12, borderStyle: 'dashed' },
-    noSlotsText: { fontSize: 15, textAlign: 'center', fontWeight: '500' },
+    noSlotsText: { textAlign: 'center', fontWeight: '500' },
     periodContainer: { marginTop: 24 },
     periodHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 },
-    periodTitle: { fontSize: 14, fontWeight: '700', textTransform: 'uppercase' },
+    periodTitle: { fontWeight: '700', textTransform: 'uppercase' },
     slotsGridAlt: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
     slotChipAlt: { width: (SCREEN_WIDTH - 60) / 3, height: 48, borderRadius: 12, borderWidth: 1, justifyContent: 'center', alignItems: 'center' },
-    slotTextAlt: { fontSize: 15, fontWeight: '700' },
+    slotTextAlt: { fontWeight: '700' },
 
     // Smart Footer
     footerAlt: { position: 'absolute', bottom: 0, left: 0, right: 0, height: 100, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 24, paddingBottom: 20, borderTopWidth: 1, gap: 16 },
     footerInfoBox: { flex: 1 },
-    footerSummaryText: { fontSize: 13, fontWeight: '600', marginBottom: 2 },
-    footerPriceText: { fontSize: 24, fontWeight: '800' },
-    selectPrompt: { fontSize: 15, fontWeight: '600' },
+    footerSummaryText: { fontWeight: '600', marginBottom: 2 },
+    footerPriceText: { fontWeight: '800' },
+    selectPrompt: { fontWeight: '600' },
     smartConfirmBtn: { flex: 1.2, height: 56, borderRadius: 16, justifyContent: 'center', alignItems: 'center' },
-    smartConfirmBtnText: { fontSize: 18, fontWeight: '800' },
+    smartConfirmBtnText: { fontWeight: '800' },
 });

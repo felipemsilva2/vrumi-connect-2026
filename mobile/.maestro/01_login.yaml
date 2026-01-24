@@ -1,0 +1,79 @@
+# Teste E2E: Fluxo de Login
+# Testa o login de um usuário comum no app Vrumi Connect
+
+appId: com.vrumi.connect
+
+---
+
+# Inicia o app
+- launchApp:
+    clearState: true
+
+# Aguarda a tela de login aparecer
+- assertVisible:
+    text: "Entrar"
+    enabled: true
+
+# Screenshot da tela inicial
+- takeScreenshot: "01_tela_login"
+
+# Toca no campo de email
+- tapOn:
+    text: "E-mail"
+
+# Digita o email de teste
+- inputText: ${TEST_USER_EMAIL}
+
+# Toca no campo de senha
+- tapOn:
+    text: "Senha"
+
+# Digita a senha
+- inputText: ${TEST_USER_PASSWORD}
+
+# Screenshot antes de clicar em entrar
+- takeScreenshot: "02_campos_preenchidos"
+
+# Clica no botão Entrar
+- tapOn:
+    text: "Entrar"
+    enabled: true
+
+# Aguarda o carregamento
+- extendedWaitUntil:
+    visible:
+      text: "Início"
+    timeout: 15000
+
+# Screenshot da home logada
+- takeScreenshot: "03_home_logada"
+
+# Verifica elementos da home
+- assertVisible:
+    text: "Serviços Vrumi"
+
+- assertVisible:
+    text: "Buscar instrutor"
+
+# Teste de navegação para perfil
+- tapOn:
+    id: "Perfil"
+
+- assertVisible:
+    text: "Meu Perfil"
+
+- takeScreenshot: "04_tela_perfil"
+
+# Teste de logout
+- tapOn:
+    text: "Sair"
+
+# Confirma logout
+- tapOn:
+    text: "Confirmar"
+
+# Verifica volta para login
+- assertVisible:
+    text: "Entrar"
+
+- takeScreenshot: "05_logout_sucesso"

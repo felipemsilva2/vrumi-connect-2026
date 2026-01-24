@@ -1,9 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../src/lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Supabase URL with fallback (same as used in supabase.ts)
-const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL || 'https://kyuaxjkokntdmcxjurhm.supabase.co';
+const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL || 'https://setup-supabase.com';
 
 // Current versions of legal documents
 export const CONSENT_VERSIONS = {
@@ -45,7 +46,7 @@ export function useConsent(): UseConsentReturn {
     const [error, setError] = useState<string | null>(null);
 
     // Fetch user's consents
-    const fetchConsents = useCallback(async () => {
+    const fetchConsents = useCallback(async (silent = false) => {
         if (!user?.id) {
             setConsents([]);
             setLoading(false);
@@ -53,18 +54,18 @@ export function useConsent(): UseConsentReturn {
         }
 
         try {
-            setLoading(true);
+            if (!silent) setLoading(true);
             setError(null);
 
             const { data, error: fetchError } = await supabase
-                .from('user_consents')
+                .from('user_consents' as any)
                 .select('*')
                 .eq('user_id', user.id)
                 .order('accepted_at', { ascending: false });
 
             if (fetchError) throw fetchError;
 
-            const mappedConsents: Consent[] = (data || []).map(consent => ({
+            const mappedConsents: Consent[] = ((data as any[]) || []).map(consent => ({
                 id: consent.id,
                 consentType: consent.consent_type as ConsentType,
                 version: consent.version,
@@ -75,6 +76,12 @@ export function useConsent(): UseConsentReturn {
             }));
 
             setConsents(mappedConsents);
+
+            // Update cache
+            if (user?.id) {
+                const cacheKey = `@vrumi_consents_${user.id}`;
+                await AsyncStorage.setItem(cacheKey, JSON.stringify(mappedConsents));
+            }
         } catch (err: any) {
             console.error('Error fetching consents:', err);
             setError(err.message || 'Failed to fetch consents');
@@ -82,6 +89,31 @@ export function useConsent(): UseConsentReturn {
             setLoading(false);
         }
     }, [user?.id]);
+
+    // Load initial state from cache to prevent flash
+    useEffect(() => {
+        const loadFromCache = async () => {
+            if (!user?.id) {
+                setLoading(false);
+                return;
+            }
+            try {
+                const cacheKey = `@vrumi_consents_${user.id}`;
+                const cached = await AsyncStorage.getItem(cacheKey);
+                if (cached) {
+                    setConsents(JSON.parse(cached));
+                    // If we have cache, we can stop the initial loading block
+                    setLoading(false);
+                }
+            } catch (e) {
+                console.error('Failed to load consents from cache:', e);
+            } finally {
+                // Trigger background refresh (silent)
+                fetchConsents(true);
+            }
+        };
+        loadFromCache();
+    }, [user?.id, fetchConsents]);
 
     useEffect(() => {
         fetchConsents();
@@ -117,7 +149,7 @@ export function useConsent(): UseConsentReturn {
         try {
             // Insert consent directly into database (no Edge Function needed)
             const { data, error: insertError } = await supabase
-                .from('user_consents')
+                .from('user_consents' as any)
                 .insert({
                     user_id: user.id,
                     consent_type: type,
@@ -166,7 +198,7 @@ export function useConsent(): UseConsentReturn {
             }
 
             const { error: updateError } = await supabase
-                .from('user_consents')
+                .from('user_consents' as any)
                 .update({ revoked_at: new Date().toISOString() })
                 .eq('id', activeConsent.id);
 
