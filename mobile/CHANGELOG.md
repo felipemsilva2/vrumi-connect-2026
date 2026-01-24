@@ -30,6 +30,7 @@
 | BUG-020 | Erro de Audience/Provider no Apple Sign-In | ✅ Corrigido | 23/01/2026 |
 | BUG-022 | Erro de Redirecionamento (Invalid Path) no Google Login | ✅ Corrigido | 23/01/2026 |
 | BUG-023 | Link "Ler documento completo" não abria nada (Termos) | ✅ Corrigido | 23/01/2026 |
+| BUG-024 | Loop de redirecionamento após login (manual e social) | ✅ Corrigido | 24/01/2026 |
 
 #### � Estabilidade
 | ID | Bug | Status | Data Correção |
@@ -37,6 +38,7 @@
 | BUG-014 | Erro de sintaxe em telas de autenticação | ✅ Corrigido | 17/01/2026 |
 | BUG-015 | Falha na Build 38 por erro de importação | ✅ Corrigido | 17/01/2026 |
 | BUG-021 | Tela pulava sozinho ao rolar (Instrutor/Perfil) | ✅ Corrigido | 23/01/2026 |
+| BUG-025 | Páginas em branco ao navegar entre tabs | ✅ Corrigido | 24/01/2026 |
 
 ---
 
@@ -77,5 +79,5 @@
 
 ---
 
-> 📌 **Última atualização**: 23 de Janeiro de 2026 (16:30h)  
+> 📌 **Última atualização**: 24 de Janeiro de 2026 (12:30h)  
 > 👤 **Mantido por**: Equipe de Desenvolvimento Vrumi

@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
 import { View, StyleSheet, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../../contexts/AuthContext';
@@ -40,9 +41,11 @@ export default function InstrutorTab() {
         }
     }, [user?.id]);
 
-    useEffect(() => {
-        checkStatus();
-    }, [checkStatus]);
+    useFocusEffect(
+        useCallback(() => {
+            checkStatus();
+        }, [checkStatus])
+    );
 
     if (loading) {
         return (

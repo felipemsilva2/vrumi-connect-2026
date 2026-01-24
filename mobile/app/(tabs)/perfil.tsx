@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
 import { View, Text, StyleSheet, TouchableOpacity, Alert, ScrollView, Linking, RefreshControl, ActivityIndicator, Switch } from 'react-native';
 import { Image } from 'expo-image';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -75,10 +76,6 @@ export default function PerfilScreen() {
         }
     }, [user?.id]);
 
-    useEffect(() => {
-        fetchStats();
-    }, [fetchStats]);
-
     const fetchAvatarUrl = useCallback(async () => {
         if (!user?.id) return;
         try {
@@ -95,9 +92,12 @@ export default function PerfilScreen() {
         }
     }, [user?.id]);
 
-    useEffect(() => {
-        fetchAvatarUrl();
-    }, [fetchAvatarUrl]);
+    useFocusEffect(
+        useCallback(() => {
+            fetchStats();
+            fetchAvatarUrl();
+        }, [fetchStats, fetchAvatarUrl])
+    );
 
     const onRefresh = useCallback(async () => {
         setRefreshing(true);

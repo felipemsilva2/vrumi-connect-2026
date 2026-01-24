@@ -115,9 +115,6 @@ export function useConsent(): UseConsentReturn {
         loadFromCache();
     }, [user?.id, fetchConsents]);
 
-    useEffect(() => {
-        fetchConsents();
-    }, [fetchConsents]);
 
     // Check if user has valid consent for a specific type
     const hasValidConsent = useCallback((type: ConsentType, minVersion?: string): boolean => {

@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, memo } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
 import {
     View,
     Text,
@@ -100,9 +101,11 @@ export default function BuscarScreen() {
         }
     }, [searchCity, selectedCategory, sortBy]);
 
-    useEffect(() => {
-        fetchInstructors();
-    }, [fetchInstructors]);
+    useFocusEffect(
+        useCallback(() => {
+            fetchInstructors();
+        }, [fetchInstructors])
+    );
 
     const onRefresh = useCallback(() => {
         setRefreshing(true);

@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, Image, ActivityIndicator, RefreshControl, StatusBar } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -81,9 +82,11 @@ export default function MensagensScreen() {
         }
     }, [user]);
 
-    useEffect(() => {
-        fetchRooms();
-    }, [fetchRooms]);
+    useFocusEffect(
+        useCallback(() => {
+            fetchRooms();
+        }, [fetchRooms])
+    );
 
     const formatTime = (dateStr: string | null) => {
         if (!dateStr) return '';

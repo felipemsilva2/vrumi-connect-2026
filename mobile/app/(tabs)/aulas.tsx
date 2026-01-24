@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, memo } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
 import {
     View,
     Text,
@@ -152,25 +153,27 @@ export default function AulasScreen() {
         }
     }, [user?.id]);
 
-    useEffect(() => {
-        const loadCacheAndFetch = async () => {
-            if (!user?.id) return;
+    useFocusEffect(
+        useCallback(() => {
+            const loadCacheAndFetch = async () => {
+                if (!user?.id) return;
 
-            // 1. Try to load from cache
-            const cachedData = await getCache<any>(`bookings_data_${user.id}`);
-            if (cachedData) {
-                const todayStr = new Date().toISOString().split('T')[0];
-                setUpcomingBookings(cachedData.filter((b: any) => ['pending', 'confirmed'].includes(b.status) && b.scheduled_date >= todayStr));
-                setHistoryBookings(cachedData.filter((b: any) => ['completed', 'cancelled'].includes(b.status) || (['pending', 'confirmed'].includes(b.status) && b.scheduled_date < todayStr)).reverse());
-                setLoading(false);
-            }
+                // 1. Try to load from cache
+                const cachedData = await getCache<any>(`bookings_data_${user.id}`);
+                if (cachedData) {
+                    const todayStr = new Date().toISOString().split('T')[0];
+                    setUpcomingBookings(cachedData.filter((b: any) => ['pending', 'confirmed'].includes(b.status) && b.scheduled_date >= todayStr));
+                    setHistoryBookings(cachedData.filter((b: any) => ['completed', 'cancelled'].includes(b.status) || (['pending', 'confirmed'].includes(b.status) && b.scheduled_date < todayStr)).reverse());
+                    setLoading(false);
+                }
 
-            // 2. Fetch fresh data
-            fetchBookings(!!cachedData);
-        };
+                // 2. Fetch fresh data
+                fetchBookings(!!cachedData);
+            };
 
-        loadCacheAndFetch();
-    }, [user?.id, fetchBookings]);
+            loadCacheAndFetch();
+        }, [user?.id, fetchBookings])
+    );
 
     const handleOpenChat = useCallback((booking: Booking) => {
         Haptics.selectionAsync();

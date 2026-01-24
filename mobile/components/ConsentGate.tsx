@@ -20,8 +20,16 @@ export default function ConsentGate({ children }: ConsentGateProps) {
     const [showTerms, setShowTerms] = useState(false);
 
     useEffect(() => {
+        console.log('[ConsentGate] Auth/Consent state:', {
+            authLoading,
+            consentLoading,
+            hasUser: !!user,
+            needsConsent
+        });
+
         // Only check consent if user is authenticated and consent data is loaded
         if (!authLoading && !consentLoading && user) {
+            console.log('[ConsentGate] Setting showTerms:', needsConsent);
             setShowTerms(needsConsent);
         }
     }, [user, authLoading, consentLoading, needsConsent]);
