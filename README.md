@@ -22,6 +22,8 @@ Embora o foco seja o marketplace, a tecnologia de IA e automação é o que esca
 - **Edge Functions (Deno)**: Processamento assíncrono e integração com APIs externas.
 - **Google Gemini API**: Inteligência por trás do tutor e assistente.
 ---
+Demonstração: https://youtu.be/O-6qCOXHoyo
+
 ## 🚀 Engenharia & Inovação
 Este repositório reflete uma mentalidade de **"Construir para Escalar"**:
 *   **Foco em IA**: A arquitetura foi desenhada para que a IA tenha contexto sobre o progresso do aluno e o perfil do instrutor.
