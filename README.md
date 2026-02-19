@@ -22,7 +22,7 @@ Embora o foco seja o marketplace, a tecnologia de IA e automação é o que esca
 - **Edge Functions (Deno)**: Processamento assíncrono e integração com APIs externas.
 - **Google Gemini API**: Inteligência por trás do tutor e assistente.
 ---
-Demonstração: https://youtu.be/O-6qCOXHoyo
+Demonstração: https://youtube.com/shorts/-8HrqXNd1M0?feature=share / https://youtu.be/O-6qCOXHoyo
 
 ## 🚀 Engenharia & Inovação
 Este repositório reflete uma mentalidade de **"Construir para Escalar"**:
